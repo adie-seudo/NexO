@@ -1,0 +1,204 @@
+/* 1. FONT IMPORTS */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap");
+
+/* 2. CSS RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 3. GLOBAL VARIABLES
+Color Palette */
+:root {
+  /* 1.1 Primary Purple Scale */
+  --purple-50: #fcfaff;
+  --purple-100: #f9f5ff;
+  --purple-200: #f4ebff;
+  --purple-300: #e9d7fe;
+  --purple-400: #d6bbfb;
+  --purple-500: #b692f6;
+  --purple-600: #9e77ed;
+  --purple-700: #7f56d9;
+  --purple-800: #6941c6;
+  --purple-900: #53389e;
+  --purple-950: #42307d;
+  --purple-1000: #2c1c5f;
+
+  /* 1.2 Semantic Colors */
+  --status-info: #004aad;
+  --status-pending: #f9943b;
+  --status-success: #00b913;
+  --status-error: #d92d20;
+  --status-error-hover: #e76363; /* Kept for button hover */
+  --status-error-disabled: #f2e9e9; /* Kept for button disabled */
+
+  /* 1.3 Neutral / Gray Scale */
+  --gray-50: #fdfdfd;
+  --gray-100: #fafafa;
+  --gray-200: #f5f5f5;
+  --gray-300: #e9eaeb;
+  --gray-400: #d5d7da;
+  --gray-500: #a4a7ae;
+  --gray-600: #717680;
+  --gray-700: #535862;
+  --gray-800: #414651;
+  --gray-900: #252b37;
+  --gray-950: #181d27;
+  --gray-1000: #0a0d12;
+
+  /* Typography Foundations */
+  --font-heading: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  /* Global Spacing & Radii */
+  --radius-sm: 8px;
+  --radius-md: 20px;
+  --radius-full: 9999px;
+}
+
+/* Base Headings Setup */
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--gray-950);
+  margin-bottom: 0.5rem; /* Standard spacing below headings */
+}
+
+/* 2.1 H1 / Hero Title */
+h1 {
+  font-size: 32px;
+  line-height: 40px;
+}
+
+/* 2.2 H2 / Section Heading */
+h2 {
+  font-size: 26px;
+  line-height: 34px;
+}
+
+/* 2.3 H3 / Card Heading */
+h3 {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+/* --- TEXT UTILITY CLASSES --- */
+
+/* 2.4 Body Large */
+.text-large {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+}
+
+/* 2.5 Body Text (Default for the whole page) */
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--gray-900);
+
+  background-color: var(--gray-50);
+  background-image: linear-gradient(
+    135deg,
+    var(--purple-200) 0%,
+    rgba(244, 235, 255, 0) 60%
+  );
+  min-height: 100vh;
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 2.6 Body Emphasis */
+.text-emphasis {
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 500;
+}
+
+/* 2.8 Caption / Metadata */
+.text-caption {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--gray-600);
+}
+
+/* 5. BUTTON COMPONENTS (Base Shape) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+
+  /* --- 2.7 Button Text Specs --- */
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  /* ----------------------------- */
+
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+/* --- Global Disabled State --- */
+.btn:disabled {
+  cursor: not-allowed; /* This creates the 'stop' sign cursor */
+  pointer-events: auto; /* Ensures the cursor still shows up even if disabled */
+}
+
+/* --- Primary Button --- */
+.btn-primary {
+  background-color: var(--purple-800); /* Solid #6941C6 */
+  border-color: var(--purple-800);
+  color: #ffffff;
+}
+.btn-primary:hover {
+  background-color: var(--purple-500); /* Hover #b692f6 */
+  border-color: var(--purple-500);
+}
+.btn-primary:disabled {
+  background-color: var(--purple-300); /* Muted #E9D7FE */
+  border-color: var(--purple-300);
+  color: #ffffff; /* Keeps text readable */
+}
+
+/* --- Secondary Button (Outline) --- */
+.btn-secondary {
+  background-color: transparent;
+  border-color: var(--purple-800);
+  color: var(--purple-1000);
+}
+.btn-secondary:hover {
+  background-color: var(--purple-200);
+  border-color: var(--purple-200);
+  color: var(--purple-500);
+}
+.btn-secondary:disabled {
+  background-color: transparent;
+  border-color: var(--purple-500);
+  color: var(--purple-500); /* Text fades to match the disabled border */
+}
+
+/* --- Destructive Button --- */
+.btn-destructive {
+  background-color: var(--status-error); /* Solid #D92D20 */
+  border-color: var(--status-error);
+  color: #ffffff;
+}
+.btn-destructive:hover {
+  background-color: var(--status-error-hover); /* Solid #E76363 */
+  border-color: var(--status-error-hover);
+}
+.btn-destructive:disabled {
+  background-color: var(--status-error-disabled); /* Fill #F2E9E9 */
+  border-color: var(--status-error-disabled);
+  color: #ffffff;
+}
