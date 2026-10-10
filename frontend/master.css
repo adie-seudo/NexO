@@ -1,0 +1,854 @@
+/* 1. FONT IMPORTS */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap");
+
+/* 2. CSS RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   3. MASTERLIST VARIABLES (Light Mode)
+   ========================================== */
+:root {
+  /* --- 1.1 Primary Purple Scale --- */
+  --purple-50: #fcfaff;
+  --purple-100: #f9f5ff;
+  --purple-200: #f4ebff;
+  --purple-300: #e9d7fe;
+  --purple-400: #d6bbfb;
+  --purple-500: #b692f6;
+  --purple-600: #9e77ed;
+  --purple-700: #7f56d9;
+  --purple-800: #6941c6;
+  --purple-900: #53389e;
+  --purple-950: #42307d;
+  --purple-1000: #2c1c5f;
+
+  /* --- 1.2 Semantic Colors --- */
+  --status-info: #004aad;
+  --status-pending: #f9943b;
+  --status-success: #00b913;
+  --status-error: #d92d20;
+
+  /* --- 1.3 Neutral / Gray Scale --- */
+  --neutral-50: #fdfdfd;
+  --neutral-100: #fafafa;
+  --neutral-200: #f5f5f5; /* Fixed typo from masterlist */
+  --neutral-300: #e9eaeb;
+  --neutral-400: #d5d7da;
+  --neutral-500: #a4a7ae;
+  --neutral-600: #717680;
+  --neutral-700: #535862;
+  --neutral-800: #414651;
+  --neutral-900: #252b37;
+  --neutral-950: #181d27;
+  --neutral-1000: #0a0d12;
+
+  /* --- 2. Typography System Definitions --- */
+  --font-heading: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --radius-sm: 8px; /* Section 4 Cards */
+  --radius-md: 20px; /* Standard Buttons */
+  --radius-full: 9999px; /* Circular Elements */
+
+  /* --- SEMANTIC THEME TOKENS (Light Mode Mappings) --- */
+  /* Backgrounds */
+  --bg-canvas: var(--neutral-50);
+  --bg-surface: #ffffff;
+  --bg-card: var(--purple-200);
+  --bg-cta: var(--purple-700);
+  --bg-icon-box: var(--purple-100);
+
+  /* Section 4 Specific Cards (Scholarship/Summary) */
+  --bg-summary-card: var(--purple-500);
+  --border-summary-card: var(--purple-800);
+  --text-summary-card: var(--purple-800);
+
+  /* Text Colors */
+  --text-primary: var(--neutral-1000);
+  --text-secondary: var(--neutral-800);
+  --text-muted: var(--neutral-600);
+  --text-inverse: #ffffff;
+  --text-brand: var(--purple-700);
+
+  /* Borders & Shadows */
+  --border-subtle: transparent;
+  --border-strong: var(--neutral-300);
+  --shadow-drawer: 0 4px 16px rgba(0, 0, 0, 0.1);
+  --shadow-card: none;
+
+  /* Badges */
+  --badge-bg: var(--purple-300);
+  --badge-text: var(--purple-700);
+
+  /* 3.1 Buttons: Primary */
+  --btn-primary-bg: var(--purple-800);
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: var(--purple-500);
+  --btn-primary-active: var(--purple-900);
+  --btn-primary-disabled-bg: var(--purple-300);
+  --btn-primary-disabled-text: #ffffff;
+
+  /* 3.2 Buttons: Secondary Outline */
+  --btn-secondary-border: var(--purple-800);
+  --btn-secondary-text: var(--purple-1000);
+  --btn-secondary-hover-bg: var(--purple-200);
+  --btn-secondary-hover-border: var(--purple-200);
+  --btn-secondary-hover-text: var(--purple-800);
+  --btn-secondary-active-bg: var(--purple-200);
+  --btn-secondary-active-border: var(--purple-800);
+  --btn-secondary-active-text: var(--purple-800);
+  --btn-secondary-disabled-border: var(--purple-300);
+  --btn-secondary-disabled-text: var(--purple-500);
+
+  /* 3.3 Buttons: Destructive */
+  --btn-destructive-bg: var(--status-error);
+  --btn-destructive-hover: #e76363;
+  --btn-destructive-active: #912018;
+  --btn-destructive-disabled-bg: #f2e9e9;
+
+  /* CTA Button Specific */
+  --btn-cta-bg: var(--purple-800);
+  --btn-cta-hover: var(--purple-500);
+  --btn-cta-active: var(--purple-900);
+  --btn-cta-text: var(--neutral-50);
+
+  /* 3.4 & 3.5 Buttons: Icon & Circular */
+  --btn-icon-bg: var(--purple-200);
+  --btn-icon-text: var(--purple-800);
+  --btn-icon-hover-bg: var(--purple-800);
+  --btn-icon-hover-text: #ffffff;
+  --btn-icon-active-bg: var(--purple-500);
+  --btn-icon-active-text: #ffffff;
+  --btn-icon-disabled-bg: var(--neutral-100);
+  --btn-icon-disabled-text: var(--neutral-500);
+}
+
+button:disabled,
+.btn:disabled,
+.btn-icon-text:disabled,
+.btn-icon-circle:disabled {
+  cursor: not-allowed !important;
+  pointer-events: auto !important; /* pointer-events: auto is required, otherwise the cursor won't show up */
+}
+
+/* ==========================================
+   4. DARK MODE ALTERNATE MAPPINGS
+   ========================================== */
+body.dark-theme {
+  /* Canvas shifts to deepest grays */
+  --bg-canvas: var(--neutral-1000);
+  --bg-surface: var(--neutral-950);
+  --bg-card: var(--neutral-950);
+  --bg-cta: var(--purple-700);
+  --bg-icon-box: var(--neutral-900);
+
+  /* Section 4 Specific Cards (Dark Mode Contrast) */
+  --bg-summary-card: var(
+    --purple-1000
+  ); /* Deep background to support light text */
+  --border-summary-card: var(--purple-400); /* Visible border */
+  --text-summary-card: var(--purple-200); /* High contrast light purple */
+
+  /* Text brightens */
+  --text-primary: #ffffff;
+  --text-secondary: var(--neutral-200);
+  --text-muted: var(--neutral-500);
+  --text-inverse: var(--neutral-1000);
+  --text-brand: var(--purple-400);
+
+  /* Borders & Shadows */
+  --border-subtle: var(--neutral-900);
+  --border-strong: var(--neutral-800);
+  --shadow-drawer: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  /* Badges */
+  --badge-bg: rgba(214, 187, 251, 0.15); /* Soft transparent wash */
+  --badge-text: var(--purple-400);
+
+  /* 3.1 Buttons: Primary (Lighter for dark background contrast) */
+  --btn-primary-bg: var(--purple-600);
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: var(--purple-500);
+  --btn-primary-active: var(--purple-700);
+  --btn-primary-disabled-bg: var(--neutral-800);
+  --btn-primary-disabled-text: var(--neutral-600);
+
+  /* 3.2 Buttons: Secondary Outline */
+  --btn-secondary-border: var(--purple-500);
+  --btn-secondary-text: var(--purple-400);
+  --btn-secondary-hover-bg: rgba(182, 146, 246, 0.15);
+  --btn-secondary-hover-border: var(--purple-500);
+  --btn-secondary-hover-text: var(--purple-200);
+  --btn-secondary-active-bg: var(--purple-700);
+  --btn-secondary-active-border: var(--purple-700);
+  --btn-secondary-active-text: #ffffff;
+  --btn-secondary-disabled-border: var(--neutral-800);
+  --btn-secondary-disabled-text: var(--neutral-600);
+
+  /* 3.3 Buttons: Destructive */
+  --btn-destructive-bg: #f04438;
+  --btn-destructive-hover: #fda29b;
+  --btn-destructive-active: #b42318;
+  --btn-destructive-disabled-bg: var(--neutral-800);
+
+  /* CTA Specific */
+  --btn-cta-bg: var(--purple-900);
+  --btn-cta-hover: var(--purple-600);
+  --btn-cta-active: var(--purple-200);
+  --btn-cta-text: #ffffff;
+
+  /* 3.4 & 3.5 Buttons: Icon & Circular */
+  --btn-icon-bg: rgba(182, 146, 246, 0.15);
+  --btn-icon-text: var(--purple-400);
+  --btn-icon-hover-bg: var(--purple-600);
+  --btn-icon-hover-text: #ffffff;
+  --btn-icon-active-bg: var(--purple-700);
+  --btn-icon-active-text: #ffffff;
+  --btn-icon-disabled-bg: var(--neutral-950);
+  --btn-icon-disabled-text: var(--neutral-700);
+}
+
+/* ==========================================
+   5. BASE TYPOGRAPHY (Mapped to Masterlist Specs)
+   ========================================== */
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  background-color: var(--bg-canvas);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* 2.1 H1 / Hero Title */
+h1 {
+  font-size: 32px;
+  line-height: 40px;
+}
+@media (min-width: 768px) {
+  h1 {
+    font-size: 36px;
+    line-height: 44px;
+  }
+}
+
+/* 2.2 H2 / Section Heading */
+h2 {
+  font-size: 26px;
+  line-height: 34px;
+}
+@media (min-width: 768px) {
+  h2 {
+    font-size: 30px;
+    line-height: 38px;
+  }
+}
+
+/* 2.3 H3 / Card Heading */
+h3 {
+  font-size: 20px;
+  line-height: 28px;
+}
+@media (min-width: 768px) {
+  h3 {
+    font-size: 22px;
+    line-height: 30px;
+  }
+}
+
+/* 2.4 Body Large */
+.text-large {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+}
+@media (min-width: 768px) {
+  .text-large {
+    font-size: 18px;
+    line-height: 28px;
+  }
+}
+
+/* 2.6 Body Emphasis */
+.text-emphasis {
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+}
+@media (min-width: 768px) {
+  .text-emphasis {
+    font-size: 16px;
+  }
+}
+
+/* 2.8 Caption / Metadata */
+.text-caption {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+@media (min-width: 768px) {
+  .text-caption {
+    font-size: 13px;
+  }
+}
+
+.text-purple {
+  color: var(--text-brand);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   6. GLOBAL BUTTON COMPONENTS
+   ========================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  /* 2.7 Button Text Specification */
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  /* Shape Specification (4.1) */
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+@media (min-width: 768px) {
+  .btn {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn:active {
+  transition: none; /* Instant feedback on click */
+}
+
+/* 3.1 Primary Button */
+.btn-primary {
+  background-color: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--btn-primary-hover);
+  border-color: var(--btn-primary-hover);
+}
+.btn-primary:active:not(:disabled) {
+  background-color: var(--btn-primary-active);
+  border-color: var(--btn-primary-active);
+}
+.btn-primary:disabled {
+  background-color: var(--btn-primary-disabled-bg);
+  border-color: var(--btn-primary-disabled-bg);
+  color: var(--btn-primary-disabled-text);
+}
+
+/* 3.2 Secondary Outline */
+.btn-secondary {
+  background-color: transparent;
+  border-color: var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--btn-secondary-hover-bg);
+  border-color: var(--btn-secondary-hover-border);
+  color: var(--btn-secondary-hover-text);
+}
+.btn-secondary:active:not(:disabled) {
+  background-color: var(--btn-secondary-active-bg);
+  border-color: var(--btn-secondary-active-border);
+  color: var(--btn-secondary-active-text);
+}
+.btn-secondary:disabled {
+  border-color: var(--btn-secondary-disabled-border);
+  color: var(--btn-secondary-disabled-text);
+}
+
+/* 3.3 Destructive Button */
+.btn-destructive {
+  background-color: var(--btn-destructive-bg);
+  border-color: var(--btn-destructive-bg);
+  color: #ffffff;
+}
+.btn-destructive:hover:not(:disabled) {
+  background-color: var(--btn-destructive-hover);
+  border-color: var(--btn-destructive-hover);
+}
+.btn-destructive:active:not(:disabled) {
+  background-color: var(--btn-destructive-active);
+  border-color: var(--btn-destructive-active);
+}
+.btn-destructive:disabled {
+  background-color: var(--btn-destructive-disabled-bg);
+  border-color: var(--btn-destructive-disabled-bg);
+  color: #ffffff;
+}
+
+/* CTA Button Utility */
+.cta-btn {
+  background-color: var(--btn-cta-bg);
+  border-color: var(--btn-cta-bg);
+  color: var(--btn-cta-text);
+}
+.cta-btn:hover {
+  background-color: var(--btn-cta-hover);
+  border-color: var(--btn-cta-hover);
+  color: #ffffff;
+}
+.cta-btn:active {
+  background-color: var(--btn-cta-active);
+  border-color: var(--btn-cta-active);
+}
+
+/* Full Width Utility */
+.full-width-btn {
+  width: 100%;
+  margin-top: 24px; /* Adds space above the button */
+}
+
+/* ==========================================
+   7. ICON & CIRCULAR BUTTONS (3.4 & 3.5)
+   ========================================== */
+.btn-icon-text,
+.btn-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: var(--btn-icon-bg);
+  color: var(--btn-icon-text);
+}
+
+.btn-icon-text {
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+}
+.btn-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+}
+
+.btn-icon-text svg,
+.btn-icon-circle svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.btn-icon-text:hover:not(:disabled),
+.btn-icon-circle:hover:not(:disabled) {
+  background-color: var(--btn-icon-hover-bg);
+  color: var(--btn-icon-hover-text);
+}
+.btn-icon-text:active:not(:disabled),
+.btn-icon-circle:active:not(:disabled) {
+  background-color: var(--btn-icon-active-bg);
+  color: var(--btn-icon-active-text);
+  transition: none;
+}
+.btn-icon-text:disabled,
+.btn-icon-circle:disabled {
+  background-color: var(--btn-icon-disabled-bg);
+  color: var(--btn-icon-disabled-text);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ==========================================
+   8. GLOBAL HEADER & NAVIGATION
+   ========================================== */
+.global-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 72px;
+  padding: 0 20px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-strong);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+}
+
+.global-header.scroll-down {
+  transform: translateY(-100%);
+}
+#header-placeholder {
+  display: contents;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.nexo-logo {
+  height: 40px;
+  width: auto;
+}
+.logo-text {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+/* Hamburger Button */
+.hamburger-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 22px;
+  position: relative;
+  padding: 0;
+  transition: 0.5s ease-in-out;
+}
+.hamburger-btn .bar {
+  display: block;
+  position: absolute;
+  height: 3px;
+  width: 100%;
+  background-color: var(--text-primary);
+  border-radius: var(--radius-full);
+  opacity: 1;
+  left: 0;
+  transition: 0.25s ease-in-out;
+}
+.hamburger-btn .bar:nth-child(1) {
+  top: 0px;
+}
+.hamburger-btn .bar:nth-child(2),
+.hamburger-btn .bar:nth-child(3) {
+  top: 9px;
+}
+.hamburger-btn .bar:nth-child(4) {
+  top: 18px;
+}
+
+.hamburger-btn.open .bar:nth-child(1) {
+  top: 9px;
+  width: 0%;
+  left: 50%;
+}
+.hamburger-btn.open .bar:nth-child(2) {
+  transform: rotate(45deg);
+}
+.hamburger-btn.open .bar:nth-child(3) {
+  transform: rotate(-45deg);
+}
+.hamburger-btn.open .bar:nth-child(4) {
+  top: 9px;
+  width: 0%;
+  left: 50%;
+}
+
+/* Navigation Drawer */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 72px;
+  right: 20px;
+  left: 20px;
+  background-color: var(--bg-surface);
+  z-index: 1001;
+  height: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  box-shadow: var(--shadow-drawer);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95);
+  transform-origin: top right;
+  transition: all 0.25s ease-in-out;
+}
+.nav-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.nav-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-brand);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+/* Base Navigation Link */
+.nav-link {
+  font-size: 16px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 12px 16px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease-in-out;
+}
+
+/* 1. Default Hover (Gray Bar) */
+.nav-link:hover {
+  background-color: var(--neutral-200);
+  color: var(--text-primary);
+}
+body.dark-theme .nav-link:hover {
+  background-color: var(--neutral-800);
+  color: #ffffff;
+}
+
+/* 2. Active Page (Purple Bar - overrides gray hover) */
+.nav-link.active,
+.nav-link.active:hover {
+  background-color: var(--purple-100);
+  color: var(--purple-800);
+  font-weight: 700;
+}
+body.dark-theme .nav-link.active,
+body.dark-theme .nav-link.active:hover {
+  background-color: rgba(182, 146, 246, 0.15); /* Soft transparent purple */
+  color: var(--purple-400);
+}
+
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (min-width: 768px) {
+  .nav-menu {
+    width: 320px;
+    left: auto;
+    right: 20px;
+  }
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  --size: 24px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  width: var(--size);
+  height: var(--size);
+  box-shadow: inset calc(var(--size) * 0.33) calc(var(--size) * -0.25) 0;
+  border-radius: var(--radius-full);
+  color: var(--text-primary);
+  transition: all 500ms;
+  margin: 0;
+}
+.theme-toggle:checked {
+  --ray-size: calc(var(--size) * -0.4);
+  --offset-orthogonal: calc(var(--size) * 0.65);
+  --offset-diagonal: calc(var(--size) * 0.45);
+  transform: scale(0.75);
+  color: var(--status-pending);
+  box-shadow:
+    inset 0 0 0 var(--size),
+    calc(var(--offset-orthogonal) * -1) 0 0 var(--ray-size),
+    var(--offset-orthogonal) 0 0 var(--ray-size),
+    0 calc(var(--offset-orthogonal) * -1) 0 var(--ray-size),
+    0 var(--offset-orthogonal) 0 var(--ray-size),
+    calc(var(--offset-diagonal) * -1) calc(var(--offset-diagonal) * -1) 0
+      var(--ray-size),
+    var(--offset-diagonal) var(--offset-diagonal) 0 var(--ray-size),
+    calc(var(--offset-diagonal) * -1) var(--offset-diagonal) 0 var(--ray-size),
+    var(--offset-diagonal) calc(var(--offset-diagonal) * -1) 0 var(--ray-size);
+}
+
+/* ==========================================
+   9. PAGE LAYOUTS & CARDS
+   ========================================== */
+.landing-page,
+.about-page {
+  padding: 96px 20px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* General Cards (Hero, Feature, Audience, About) */
+.hero-section,
+.feature-card,
+.audience-card,
+.about-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+.hero-section {
+  padding: 40px 24px;
+}
+.hero-section h1 {
+  color: var(--text-primary);
+}
+
+/* --- Section 4: Application & Scholarship Cards --- */
+.summary-card,
+.scholarship-card {
+  background: var(--bg-summary-card);
+  color: var(--text-summary-card);
+  border: 1px solid var(--border-summary-card);
+  border-radius: var(--radius-sm); /* Masterlist 4: 8px */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Nested Card Elements */
+.feature-icon {
+  background-color: var(--bg-icon-box);
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.feature-icon img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+.badge-purple {
+  background-color: var(--badge-bg);
+  color: var(--badge-text);
+}
+
+/* CTA Section */
+.cta-section {
+  background-color: var(--bg-cta);
+  border-radius: var(--radius-md);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+.cta-section h2 {
+  color: #ffffff;
+}
+
+/* Global Footer */
+.global-footer {
+  background-color: var(--bg-canvas);
+  padding: 32px 20px 48px 20px;
+  text-align: center;
+  border-top: 1px solid var(--border-strong);
+}
+.global-footer p {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.footer-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+.footer-links a {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* Card Stacking Layouts */
+.feature-cards,
+.audience-cards,
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Support Contact Text */
+.support-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  width: 100%;
+  margin-top: 16px;
+}
+
+.support-text a {
+  color: var(--text-brand);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.support-text a:hover {
+  text-decoration: underline;
+}
