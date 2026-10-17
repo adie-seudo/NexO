@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Set Up Your Organization Profile - NEXO</title>
+    <link rel="stylesheet" href="css/master.css" />
+  </head>
+  <body class="auth-body provider-setup-body">
+    <!-- Scrollable Organization Profile Container -->
+    <div class="auth-container provider-setup-mode">
+      <!-- Top Bar: Logo & Exit/Cancel Button -->
+      <div class="verify-top-bar">
+        <div class="auth-logo-container">
+          <img
+            src="assets/logo.png"
+            alt="NEXO Logo"
+            class="auth-logo"
+            id="static-auth-logo"
+          />
+        </div>
+        <a
+          href="register.html"
+          class="verify-exit-btn"
+          id="provider-exit-btn"
+          aria-label="Back to Register"
+          >&times;</a
+        >
+      </div>
+
+      <!-- STATE 1: ORGANIZATION PROFILE FORM -->
+      <div id="provider-step-form" style="width: 100%">
+        <!-- Header Text -->
+        <div class="register-header-text provider-header-text">
+          <h2>Set Up Your Organization Profile</h2>
+          <p>Tell us more about your organization</p>
+        </div>
+
+        <!-- On-Screen Notification Banner -->
+        <div id="setup-notification" class="verify-notification"></div>
+
+        <!-- Single Scrollable Form -->
+        <form id="provider-setup-form" novalidate style="width: 100%">
+          <!-- 1. Organization / Institution Name -->
+          <div class="org-field-group">
+            <label for="org-name">Organization / Institution Name</label>
+            <input
+              type="text"
+              id="org-name"
+              class="org-input"
+              placeholder="e g. TechForward Foundation"
+              required
+            />
+          </div>
+
+          <!-- 2. Provider Type (Custom Dropdown matching design) -->
+          <div class="org-field-group">
+            <label>Provider Type</label>
+            <div class="org-dropdown" id="provider-type-dropdown">
+              <button
+                type="button"
+                class="org-dropdown-trigger"
+                id="dropdown-trigger"
+              >
+                <span id="dropdown-selected-text" class="placeholder"
+                  >Select provider types</span
+                >
+                <svg
+                  class="dropdown-arrow"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <ul class="org-dropdown-menu" id="dropdown-menu">
+                <li class="org-dropdown-item" data-value="School / University">
+                  School / University
+                </li>
+                <li class="org-dropdown-item" data-value="Foundation / NGO">
+                  Foundation / NGO
+                </li>
+                <li class="org-dropdown-item" data-value="Government Agency">
+                  Government Agency
+                </li>
+                <li class="org-dropdown-item" data-value="Private Organization">
+                  Private Organization
+                </li>
+              </ul>
+              <input type="hidden" id="org-type" required />
+            </div>
+          </div>
+
+          <!-- 3. Contact Person -->
+          <div class="org-field-group">
+            <label for="org-contact-person">Contact Person</label>
+            <input
+              type="text"
+              id="org-contact-person"
+              class="org-input"
+              placeholder="e g. Juan Dela Cruz"
+              required
+            />
+          </div>
+
+          <!-- 4. Official Email Address -->
+          <div class="org-field-group">
+            <label for="org-email">Official Email Address</label>
+            <input
+              type="email"
+              id="org-email"
+              class="org-input"
+              placeholder="e g. contact@foundation.org"
+              required
+            />
+          </div>
+
+          <!-- 5. Contact Number -->
+          <div class="org-field-group">
+            <label for="org-phone">Contact Number</label>
+            <input
+              type="tel"
+              id="org-phone"
+              class="org-input"
+              inputmode="numeric"
+              placeholder="e g. +63 912 345 6789"
+              required
+            />
+          </div>
+
+          <!-- 6. Organization Address -->
+          <div class="org-field-group">
+            <label for="org-address">Organization Address</label>
+            <input
+              type="text"
+              id="org-address"
+              class="org-input"
+              placeholder="e g. 123 TechForward St. Manila, Ph"
+              required
+            />
+          </div>
+
+          <!-- 7. Website (optional) -->
+          <div class="org-field-group">
+            <label for="org-website">Website (optional)</label>
+            <input
+              type="url"
+              id="org-website"
+              class="org-input"
+              placeholder="e g. https://www.organization.org"
+            />
+          </div>
+
+          <!-- 8. Upload Proof of Organization -->
+          <div class="org-field-group">
+            <label>Upload Proof of Organization</label>
+            <label
+              for="org-proof-file"
+              class="org-upload-box"
+              id="org-upload-box"
+            >
+              <input
+                type="file"
+                id="org-proof-file"
+                accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+                style="display: none"
+              />
+              <img
+                src="assets/upload-icon.png"
+                alt="Upload"
+                class="org-upload-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <div class="org-upload-text-group">
+                <p class="org-upload-main-text" id="upload-status-text">
+                  Drag and drop files here<br />or click to upload
+                </p>
+                <span class="org-upload-sub-text"
+                  >PDF, PNG, JPG (max 10MB)</span
+                >
+              </div>
+            </label>
+          </div>
+
+          <!-- Bottom Action Area: Next Button & Already have an account -->
+          <div class="org-bottom-actions">
+            <button type="submit" class="btn btn-primary auth-submit">
+              Next
+            </button>
+            <p class="org-login-prompt">
+              Already have an account? <a href="index.html">Log In</a>
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- STATE 2: APPLICATION SUBMITTED VIEW (Matches 10969.jpg) -->
+      <div id="provider-step-submitted" class="provider-submitted-view hidden">
+        <div class="submitted-icon-wrapper">
+          <img
+            src="assets/application-icon.png"
+            alt="Application Submitted"
+            class="submitted-main-icon"
+          />
+        </div>
+
+        <h2 class="submitted-title">Application Submitted!</h2>
+        <p class="submitted-subtitle">
+          Your organization has been<br />successfully submitted for review.
+        </p>
+
+        <!-- Soft Purple Info Card -->
+        <div class="submitted-info-card">
+          <img src="assets/i-icon.png" alt="Info" class="submitted-info-icon" />
+          <p class="submitted-info-text">
+            Your application will be reviewed by our admin team. You will be
+            notified via email once there’s an update.
+          </p>
+        </div>
+
+        <!-- Outlined Back to Login Button -->
+        <a href="index.html" class="btn-outline-purple">Back to Login</a>
+      </div>
+    </div>
+
+    <script src="js/provider-setup.js"></script>
+  </body>
+</html>
