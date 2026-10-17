@@ -70,7 +70,7 @@ function initializeHeaderFunctions() {
   const globalHeader = document.querySelector(".global-header");
 
   // --- A. Dynamic Active Link Highlight & Scroll ---
-  const currentPage = window.location.pathname.split("/").pop() || "app.html";
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
   const navLinks = document.querySelectorAll(".nav-link");
 
   navLinks.forEach((link) => {
