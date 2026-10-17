@@ -1,0 +1,117 @@
+<!-- 1. GLOBAL MOBILE HEADER -->
+<header class="global-header">
+  <!-- Logo Area -->
+  <div class="logo-container">
+    <img src="assets/logo.png" alt="NEXO Logo" class="nexo-logo" />
+    <span class="logo-text">NEXO</span>
+  </div>
+
+  <!-- Action buttons container -->
+  <div class="header-actions">
+    <!-- The Dark Mode Toggle -->
+    <label class="theme-toggle-container">
+      <input
+        id="theme-toggle"
+        class="theme-toggle"
+        type="checkbox"
+        aria-label="Toggle Dark Mode"
+      />
+    </label>
+
+    <!-- We wrap both the button and the menu together so hovering over either keeps the drawer open -->
+    <div class="nav-wrapper" id="nav-wrapper">
+      <!-- Hamburger Button -->
+      <button class="hamburger-btn" aria-label="Open Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+
+      <!-- The Drawer / Dropdown -->
+      <nav class="nav-menu" id="nav-menu">
+        <span class="nav-label">MENU</span>
+
+        <!-- Navigation Links with Icons -->
+        <a href="app.html" class="nav-link">
+          <img src="assets/home-icon.png" alt="Home" class="nav-icon" />
+          <span class="nav-text">Home</span>
+        </a>
+        <a href="about.html" class="nav-link">
+          <img src="assets/about-icon.png" alt="About" class="nav-icon" />
+          <span class="nav-text">About Us</span>
+        </a>
+        <a href="policy.html" class="nav-link">
+          <img src="assets/policy-icon.png" alt="Policy" class="nav-icon" />
+          <span class="nav-text">Policy</span>
+        </a>
+        <a href="credits.html" class="nav-link">
+          <img src="assets/credits-icon.png" alt="Credits" class="nav-icon" />
+          <span class="nav-text">Credits</span>
+        </a>
+
+        <div class="nav-buttons">
+          <button class="btn btn-primary" id="header-login-btn">
+            <img src="assets/login-icon.png" alt="Log In" class="nav-icon" />
+            <span class="nav-text">Log In</span>
+          </button>
+          <button class="btn btn-secondary" id="header-register-btn">
+            <img
+              src="assets/register-icon.png"
+              alt="Register"
+              class="nav-icon"
+            />
+            <span class="nav-text">Register</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<!-- Paste this at the very bottom of header.html -->
+<div id="role-select-modal" class="role-modal-overlay" aria-hidden="true">
+  <div class="role-modal-card">
+    <button
+      type="button"
+      class="role-modal-close"
+      id="close-role-modal"
+      aria-label="Close"
+    >
+      &times;
+    </button>
+
+    <h3>Choose Account Type</h3>
+    <p class="role-modal-subtitle">
+      Select how you want to use NEXO before creating your account.
+    </p>
+
+    <div class="role-choice-list">
+      <!-- Option 1: Student -->
+      <button type="button" class="role-choice-btn" id="choose-student-reg">
+        <div class="role-choice-icon">
+          <img src="assets/human-icon.png" alt="Student" />
+        </div>
+        <div class="role-choice-info">
+          <span class="role-choice-title">I am a Student</span>
+          <span class="role-choice-desc"
+            >Find and apply for scholarships (.edu.ph required)</span
+          >
+        </div>
+      </button>
+
+      <!-- Option 2: Provider -->
+      <button type="button" class="role-choice-btn" id="choose-provider-reg">
+        <div class="role-choice-icon">
+          <img src="assets/organization-icon.png" alt="Provider" />
+        </div>
+        <div class="role-choice-info">
+          <span class="role-choice-title">I am a Provider</span>
+          <span class="role-choice-desc"
+            >Post scholarships and manage applicants</span
+          >
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
