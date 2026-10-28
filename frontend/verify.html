@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verify Your Email - NEXO</title>
+    <link rel="stylesheet" href="css/master.css" />
+  </head>
+  <body class="auth-body">
+    <!-- Focused Verification Screen Container -->
+    <div class="auth-container verify-mode">
+      <!-- Top Bar: Centered Logo & Exit/Cancel Button -->
+      <div class="verify-top-bar">
+        <div class="auth-logo-container">
+          <img
+            src="assets/logo.png"
+            alt="NEXO Logo"
+            class="auth-logo"
+            id="static-auth-logo"
+          />
+        </div>
+        <a
+          href="index.html"
+          class="verify-exit-btn"
+          id="verify-exit-btn"
+          aria-label="Cancel and Exit"
+          >&times;</a
+        >
+      </div>
+
+      <!-- STATE 1: OTP INPUT VIEW -->
+      <div id="verify-step-otp">
+        <div class="register-header-text" style="text-align: center">
+          <h2>Verify Your Email</h2>
+          <p id="verify-subtitle">
+            We’ve sent a verification code to your email address.<br /><span
+              class="user-email-display"
+              >you@university.edu.ph</span
+            >
+          </p>
+        </div>
+
+        <!-- On-Screen Notification Banner -->
+        <div id="verify-notification" class="verify-notification"></div>
+
+        <!-- 6-Digit OTP Inputs Form -->
+        <form id="verify-form">
+          <div class="otp-inputs-container">
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              autocomplete="one-time-code"
+              required
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+            <input
+              type="text"
+              maxlength="1"
+              class="otp-input"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              required
+            />
+          </div>
+
+          <!-- Resend Timer Text -->
+          <div class="resend-container">
+            <span>Didn’t receive the code? </span>
+            <button
+              type="button"
+              id="resend-btn"
+              class="resend-link disabled"
+              disabled
+            >
+              Resend <span id="timer-display">(00:45)</span>
+            </button>
+          </div>
+
+          <!-- Verify Code Button -->
+          <button type="submit" class="btn btn-primary auth-submit">
+            Verify Code
+          </button>
+        </form>
+      </div>
+
+      <!-- STATE 2: ANIMATED SUCCESS VIEW (Hidden until 123456 is submitted) -->
+      <div id="verify-step-success" class="verify-success-view hidden">
+        <div class="checkmark-wrapper">
+          <svg
+            class="checkmark"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 52 52"
+          >
+            <circle
+              class="checkmark__circle"
+              cx="26"
+              cy="26"
+              r="25"
+              fill="none"
+            />
+            <path
+              class="checkmark__check"
+              fill="none"
+              d="M14.1 27.2l7.1 7.2 16.7-16.8"
+            />
+          </svg>
+        </div>
+
+        <div class="register-header-text" style="text-align: center">
+          <h2>Email Verified Successfully!</h2>
+          <p>
+            Your email has been verified.<br />You can now continue to your
+            account.
+          </p>
+        </div>
+
+        <a
+          href="index.html"
+          class="btn btn-primary auth-submit"
+          style="
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 28px;
+          "
+        >
+          Continue to Login
+        </a>
+      </div>
+    </div>
+
+    <script src="js/verify.js"></script>
+  </body>
+</html>
