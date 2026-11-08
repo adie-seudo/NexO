@@ -1,3 +1,11 @@
+# Node.js dependencies
 node_modules/
 backend/node_modules/
+npm-debug.log
+
+# Security (Never upload your database links or JWT secrets!)
+.env
+
+# OS generated files
 .DS_Store
+Thumbs.db
