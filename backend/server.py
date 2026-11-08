@@ -148,8 +148,18 @@ def sync_counts(data):
             counts[sid] = counts.get(sid, 0) + 1
     for s in data.get("scholarships", []):
         c = counts.get(s["id"], 0)
-        s["applicantCount"] = f"{c} / 10 Applicants"
+        lim = int(s.get("applicantLimit") or s.get("maxApplicants") or 200)
+        s["applicantLimit"] = lim
+        s["maxApplicants"] = lim
         s["applicantTotal"] = c
+        s["applicantCount"] = f"{c} / {lim} Applicants"
+        if c >= lim and (s.get("status") or "").lower() != "closed":
+            s["status"] = "Quota Full"
+    schol_map = {s["id"]: s for s in data.get("scholarships", [])}
+    for app in data.get("applications", []):
+        sid = app.get("scholarshipId")
+        if sid in schol_map:
+            app["applicantCount"] = schol_map[sid]["applicantCount"]
 
 class NexoHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
@@ -276,6 +286,10 @@ class NexoHandler(BaseHTTPRequestHandler):
         data = read_data()
 
         if path == "/api/scholarships":
+            limit = int(body.get("applicantLimit") or body.get("maxApplicants") or 200)
+            now_dt = datetime.now()
+            posted_at = body.get("postedAt") or body.get("createdAt") or now_dt.isoformat()
+            formatted_posted = body.get("formattedPostedDate") or now_dt.strftime("%b %d, %Y")
             new_sch = {
                 "id": body.get("id", f"schol_{int(time.time()*1000)}"),
                 "title": (body.get("title") or "Untitled Scholarship").strip(),
@@ -284,13 +298,18 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "typeText": body.get("typeText", body.get("type", "Other")),
                 "deadline": body.get("deadline", ""),
                 "formattedDate": body.get("formattedDate", "No Deadline"),
+                "applicantLimit": limit,
+                "maxApplicants": limit,
+                "applicantTotal": 0,
+                "applicantCount": f"0 / {limit} Applicants",
+                "postedAt": posted_at,
+                "formattedPostedDate": formatted_posted,
+                "createdAt": posted_at,
                 "requirements": body.get("requirements", []),
                 "providerName": body.get("providerName", data["settings"].get("orgName", "NEXO")),
                 "providerLogo": body.get("providerLogo", data["settings"].get("logoImage", "")),
                 "providerBanner": body.get("providerBanner", data["settings"].get("bannerImage", "")),
                 "status": body.get("status", "Open"),
-                "applicantCount": "0 / 10 Applicants",
-                "createdAt": datetime.now().isoformat()
             }
             data.setdefault("scholarships", []).insert(0, new_sch)
             data.setdefault("notifications", []).insert(0, {
@@ -336,6 +355,14 @@ class NexoHandler(BaseHTTPRequestHandler):
                 if str(a.get("scholarshipId")) == str(target_sid) and (not a.get("studentEmail") or a.get("studentEmail") == student_email):
                     return self._send_json(400, {"success": False, "error": "You have already applied for this scholarship."})
 
+            for s in data.get("scholarships", []):
+                if str(s.get("id")) == str(target_sid):
+                    limit = int(s.get("applicantLimit") or s.get("maxApplicants") or 200)
+                    curr = len([a for a in data.get("applications", []) if str(a.get("scholarshipId")) == str(target_sid)])
+                    if curr >= limit:
+                        return self._send_json(400, {"success": False, "error": "This scholarship has reached its applicant limit and is now closed."})
+                    break
+
             app_id = body.get("id", f"app_{int(time.time()*1000)}")
             saved_docs = []
             raw_docs = body.get("documents") or body.get("uploadedDocuments") or []
@@ -375,7 +402,7 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "statusText": body.get("statusText", body.get("status", "Submitted")),
                 "submittedAt": body.get("submittedAt", datetime.now().isoformat()),
                 "formattedDate": body.get("formattedDate", datetime.now().strftime("%b %d, %Y")),
-                "applicantCount": body.get("applicantCount", "1 / 10 Applicants"),
+                "applicantCount": body.get("applicantCount") if (body.get("applicantCount") and "/ 10 " not in body.get("applicantCount")) else "1 / 200 Applicants",
                 "documents": saved_docs,
                 "uploadedDocuments": [d["name"] for d in saved_docs],
                 "notes": body.get("notes", ""),

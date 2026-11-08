@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXO | Platform Policies</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("nexo-theme");
+        if (
+          t === "dark" ||
+          (t === null &&
+            (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+  <body class="dashboard-body">
+    <!-- Header Placeholder: Injects Global Header with Mobile Navigation & Dark Mode -->
+    <div id="header-placeholder"></div>
+
+    <main class="doc-page">
+      <!-- Top Navigation & Tab Bar -->
+      <div class="doc-top-bar">
+        <a href="javascript:history.back()" class="doc-back-btn" id="policy-back-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back</span>
+        </a>
+        <div class="doc-tabs">
+          <a href="credits.html" class="doc-tab-pill">Credits</a>
+          <a href="privacy.html" class="doc-tab-pill active">Privacy Policy</a>
+          <a href="terms.html" class="doc-tab-pill">Terms of Service</a>
+        </div>
+      </div>
+
+      <!-- Quick Switcher Banner -->
+      <section class="doc-hero">
+        <div class="doc-academic-tag">
+          <span class="pulse-dot"></span>
+          <span>NEXO Institutional Governance</span>
+        </div>
+        <h1 class="doc-title">Platform Policies &amp; Compliance Hub</h1>
+        <p class="doc-subtitle">
+          NexO maintains transparent data privacy protections and equitable terms of service for both student scholars and scholarship providers under Batangas State University CICS.
+        </p>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+          <a href="privacy.html" class="btn btn-primary" style="text-decoration: none; padding: 10px 20px;">View Data Privacy Notice</a>
+          <a href="terms.html" class="btn btn-secondary" style="text-decoration: none; padding: 10px 20px;">View Terms of Service</a>
+        </div>
+      </section>
+
+      <!-- Privacy Highlights Card -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">🔒</div>
+          <div>
+            <h2>Data Privacy Principles (RA 10173)</h2>
+            <p class="doc-section-lead">Student verification and local document security.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            Our privacy protocol is built around institutional student trust:
+          </p>
+          <ul>
+            <li><strong>Mandatory .edu.ph Email:</strong> Validates collegiate scholar status and prevents fraudulent duplicate accounts.</li>
+            <li><strong>Digital Drop-Box Isolation:</strong> PDF, JPG, and PNG documents are stored strictly in quarantined local directories.</li>
+            <li><strong>Zero External Cloud Tracking:</strong> No personal or academic records are ever shared with third-party advertising or analytics networks.</li>
+          </ul>
+          <p>
+            <a href="privacy.html" style="color: var(--purple-700); font-weight: 600; text-decoration: underline;">Read Full Data Privacy Notice &rarr;</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- Terms Highlights Card -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">📋</div>
+          <div>
+            <h2>Terms of Service Summary</h2>
+            <p class="doc-section-lead">Single application rules and provider listing standards.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            Key operating rules for all users:
+          </p>
+          <ul>
+            <li><strong>Single-Application Constraint:</strong> Each student may apply only once per scholarship grant post to ensure fair distribution.</li>
+            <li><strong>Applicant Quota Limiting:</strong> Providers configure applicant limits (e.g. 200 applicants) with automated cutoff upon quota fulfillment.</li>
+            <li><strong>Authenticity &amp; Confidentiality:</strong> Students must submit authentic records, and providers must keep all submissions confidential.</li>
+          </ul>
+          <p>
+            <a href="terms.html" style="color: var(--purple-700); font-weight: 600; text-decoration: underline;">Read Complete Terms of Service &rarr;</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js" defer></script>
+  </body>
+</html>

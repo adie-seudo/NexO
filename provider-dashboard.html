@@ -140,7 +140,7 @@
               <span class="nav-text">About Us</span>
             </a>
 
-            <a href="#!" class="nav-link">
+            <a href="privacy.html" class="nav-link">
               <img
                 src="assets/policy-icon.png"
                 alt="Policy"
@@ -149,7 +149,7 @@
               />
               <span class="nav-text">Policy</span>
             </a>
-            <a href="#!" class="nav-link">
+            <a href="credits.html" class="nav-link">
               <img
                 src="assets/credits-icon.png"
                 alt="Credits"
@@ -542,6 +542,25 @@
               <p class="error-msg" id="error-schol-deadline"></p>
             </div>
 
+            <div class="input-group">
+              <label for="schol-limit">Applicant Limit (Capacity)</label>
+              <div style="position: relative; width: 100%;">
+                <input
+                  type="number"
+                  id="schol-limit"
+                  min="1"
+                  max="10000"
+                  placeholder="e.g. 50, 100, 200"
+                  value="200"
+                  style="width: 100%; box-sizing: border-box;"
+                />
+              </div>
+              <span style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: block;">
+                Maximum number of student applicants accepted for this scholarship (e.g. 200).
+              </span>
+              <p class="error-msg" id="error-schol-limit"></p>
+            </div>
+
             <div class="modal-actions" id="step-1-normal-actions">
               <button
                 type="button"
@@ -753,6 +772,29 @@
 
                   <strong style="margin-right: 4px">Deadline:</strong>
                   <span id="review-date">Nov 10, 2026</span>
+                </p>
+                <p
+                  class="review-limit"
+                  style="display: flex; align-items: center; margin-top: 4px;"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6b7280"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="margin-right: 6px"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <strong style="margin-right: 4px">Applicant Limit:</strong>
+                  <span id="review-limit">200 Applicants</span>
                 </p>
               </div>
             </div>
@@ -1003,6 +1045,16 @@
         </div>
       </div>
     </div>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
 
     <script src="js/main.js"></script>
     <script src="js/provider.js"></script>

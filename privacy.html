@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXO | Data Privacy Notice</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("nexo-theme");
+        if (
+          t === "dark" ||
+          (t === null &&
+            (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+  <body class="dashboard-body">
+    <!-- Header Placeholder: Injects Global Header with Mobile Navigation & Dark Mode -->
+    <div id="header-placeholder"></div>
+
+    <main class="doc-page">
+      <!-- Top Navigation & Tab Bar -->
+      <div class="doc-top-bar">
+        <a href="javascript:history.back()" class="doc-back-btn" id="privacy-back-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back</span>
+        </a>
+        <div class="doc-tabs">
+          <a href="credits.html" class="doc-tab-pill">Credits</a>
+          <a href="privacy.html" class="doc-tab-pill active">Privacy Policy</a>
+          <a href="terms.html" class="doc-tab-pill">Terms of Service</a>
+        </div>
+      </div>
+
+      <!-- Hero Section -->
+      <section class="doc-hero">
+        <div class="doc-academic-tag">
+          <span class="pulse-dot"></span>
+          <span>RA 10173 &bull; Data Privacy Notice</span>
+        </div>
+        <h1 class="doc-title">Data Privacy Notice &amp; Protection Policy</h1>
+        <p class="doc-subtitle">
+          This Data Privacy Notice outlines how NexO collects, processes, and safeguards institutional student records, verified academic documents, and provider information in compliance with Republic Act No. 10173 (Data Privacy Act of 2012 of the Philippines).
+        </p>
+
+        <!-- Institutional Details Card -->
+        <div class="doc-institution-card">
+          <div class="inst-logo-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="inst-details">
+            <h3>Institutional Data Protection Standard</h3>
+            <p class="inst-sub">Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+            <div class="inst-chips">
+              <span class="inst-chip">Strict Institutional Validation</span>
+              <span class="inst-chip">Local File Storage Protocol</span>
+              <span class="inst-chip">Quarantined Upload Storage</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 1: Institutional .edu.ph Verification -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">01</div>
+          <div>
+            <h2>Collection of Institutional .edu.ph Email Addresses</h2>
+            <p class="doc-section-lead">Student eligibility and authentication protocol.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            To uphold the credibility and fairness of the scholarship distribution process, NexO mandates that all student user registrations utilize an active institutional email address ending with the <strong><code>.edu.ph</code></strong> domain suffix (e.g., <code>student@g.batstate-u.edu.ph</code>).
+          </p>
+          <p>
+            This mandatory requirement serves the following verified purposes:
+          </p>
+          <ul>
+            <li><strong>Enrolled Identity Verification:</strong> Confirms that every applicant is an active, enrolled collegiate student within an accredited Philippine higher education institution.</li>
+            <li><strong>Prevention of Sybil &amp; Duplicate Accounts:</strong> Eliminates illegitimate, bot, or duplicate student accounts, guaranteeing that each student holds only one verified application profile.</li>
+            <li><strong>Official Academic Correspondence:</strong> Guarantees that sensitive status notifications, document verification alerts, and award decisions reach the applicant's official student inbox.</li>
+          </ul>
+          <p>
+            Institutional email addresses are strictly validated during registration and cannot be modified to non-academic domains.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 2: Academic Documents & Digital Drop-Box -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">02</div>
+          <div>
+            <h2>Secure Academic Document Handling via Digital Drop-Box</h2>
+            <p class="doc-section-lead">Upload quarantine, file validation, and restricted reviewer access.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            When submitting a scholarship application, students transmit verified academic proofs through the <strong>Digital Drop-Box</strong>. These documents typically include:
+          </p>
+          <ul>
+            <li>Certificates of Registration (COR) and Enrollment Proofs</li>
+            <li>Official Grade Slips and Transcripts of Records (TOR)</li>
+            <li>Barangay Certificates of Indigency or Income Documentation</li>
+            <li>Valid Government or University-Issued Student Identification Cards</li>
+          </ul>
+          <p>
+            The NexO backend enforces stringent security controls across the upload pipeline:
+          </p>
+          <ul>
+            <li><strong>Strict MIME Type Validation:</strong> Only validated document formats (<code>application/pdf</code>, <code>image/jpeg</code>, <code>image/png</code>) are accepted. Executable scripts, binaries, and unverified archive files are automatically rejected.</li>
+            <li><strong>Per-File Capacity Limiter:</strong> Document file sizes are restricted to an explicit 10MB quota per document slot to prevent server denial of service.</li>
+            <li><strong>Isolated Server Storage:</strong> Uploaded attachments are quarantined within designated local server storage directories (<code>/uploads/</code>) using unique timestamped file signatures to avoid file collision or overwrite.</li>
+            <li><strong>Restricted Reviewer Scoping:</strong> Document files are accessible solely to the authorized scholarship provider evaluating the specific grant applied for. No student document is exposed in public directory feeds.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 3: Local Data Storage Protocols -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">03</div>
+          <div>
+            <h2>Local Data Storage Protocols (Zero External Cloud Transmission)</h2>
+            <p class="doc-section-lead">Host-level isolation with zero third-party commercial data exposure.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            A foundational security tenet of NexO is its <strong>Zero Cloud / Zero Commercial Third-Party Dependency</strong> architecture. All system state, applicant submissions, provider settings, and grant listings are stored and processed strictly within the local host server environment via atomic JSON data files.
+          </p>
+          <div class="doc-callout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <div>
+              <strong>Privacy Assurance:</strong>
+              Your personal data, contact number, institutional email, and uploaded academic records are NEVER transmitted to external commercial databases, public cloud storage, advertising aggregators, or analytical tracking networks.
+            </div>
+          </div>
+          <p>
+            All file writes are performed atomically on the server host filesystem, ensuring transaction integrity without risking remote data leaks.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 4: Applicant Rights Under RA 10173 -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">04</div>
+          <div>
+            <h2>Student Rights Under the Philippine Data Privacy Act</h2>
+            <p class="doc-section-lead">Exercising data subject rights on the NexO platform.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            As a student data subject, you are entitled to statutory rights under RA 10173, including:
+          </p>
+          <ul>
+            <li><strong>Right to be Informed:</strong> You have the right to know how your academic information is processed and reviewed before submitting any application.</li>
+            <li><strong>Right of Access:</strong> You can review your submitted applications, uploaded file names, and provider decision statuses anytime via the <em>Application Tracking Board</em> and <em>View My Submissions</em> console.</li>
+            <li><strong>Right to Rectification:</strong> You may update and correct your contact number, university, degree program, and year level anytime through your <em>Student Settings</em> page.</li>
+            <li><strong>Right to Object &amp; Withdraw:</strong> You may choose not to apply for specific grants or contact the system administrator to request full application removal prior to provider evaluation.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Section 5: Provider Obligations & Contact -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">05</div>
+          <div>
+            <h2>Provider Data Protection Obligations &amp; Inquiries</h2>
+            <p class="doc-section-lead">Confidentiality mandates and institutional contact.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            Scholarship providers registered on NexO agree to treat all student applicant submissions with the highest degree of confidentiality. Providers are strictly prohibited from redistributing, commercializing, or using student documents for any purpose outside evaluating eligibility for their specific published scholarship grant.
+          </p>
+          <p>
+            For privacy inquiries, data rectification assistance, or academic compliance questions, you may contact the project team at:
+          </p>
+          <div class="doc-callout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <div>
+              <strong>Data Privacy Inquiries:</strong><br />
+              Email: <code>privacy@nexo.edu.ph</code> &bull; <code>support@nexo.ph</code><br />
+              Department: College of Informatics and Computing Sciences (CICS), Batangas State University Alangilan Campus.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Action Navigation -->
+      <section class="doc-actions-card">
+        <h3>Explore Platform Policies</h3>
+        <p>Review the Terms of Service governing student applications and provider listings.</p>
+        <div class="doc-action-btns">
+          <a href="terms.html" class="btn btn-primary">Read Terms of Service</a>
+          <a href="credits.html" class="btn btn-secondary">View Academic Credits</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js" defer></script>
+  </body>
+</html>

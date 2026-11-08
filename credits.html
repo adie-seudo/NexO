@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXO | Project Credits &amp; Academic Context</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("nexo-theme");
+        if (
+          t === "dark" ||
+          (t === null &&
+            (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+  <body class="dashboard-body">
+    <!-- Header Placeholder: Injects Global Header with Mobile Navigation & Dark Mode -->
+    <div id="header-placeholder"></div>
+
+    <main class="doc-page">
+      <!-- Top Navigation & Tab Bar -->
+      <div class="doc-top-bar">
+        <a href="javascript:history.back()" class="doc-back-btn" id="credits-back-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Back</span>
+        </a>
+        <div class="doc-tabs">
+          <a href="credits.html" class="doc-tab-pill active">Credits</a>
+          <a href="privacy.html" class="doc-tab-pill">Privacy Policy</a>
+          <a href="terms.html" class="doc-tab-pill">Terms of Service</a>
+        </div>
+      </div>
+
+      <!-- Hero & Academic Context Section -->
+      <section class="doc-hero">
+        <div class="doc-academic-tag">
+          <span class="pulse-dot"></span>
+          <span>Academic Capstone Innovation</span>
+        </div>
+        <h1 class="doc-title">Project Credits &amp; Academic Context</h1>
+        <p class="doc-subtitle">
+          NexO is an institutional centralized scholarship portal engineered as an academic capstone innovation to connect collegiate scholars with scholarship grant providers.
+        </p>
+
+        <!-- Institutional Details Card -->
+        <div class="doc-institution-card">
+          <div class="inst-logo-box">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+          <div class="inst-details">
+            <h3>Batangas State University</h3>
+            <p class="inst-sub">The National Engineering University &bull; Alangilan Campus</p>
+            <div class="inst-chips">
+              <span class="inst-chip">College of Informatics and Computing Sciences (CICS)</span>
+              <span class="inst-chip">IT 314 Web Systems and Technologies</span>
+              <span class="inst-chip">Final Project &bull; AY 2026&ndash;2027</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 1: Project Overview & Core Architecture -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">01</div>
+          <div>
+            <h2>Project Overview &amp; Architecture</h2>
+            <p class="doc-section-lead">Bridging students and aid through local digital innovation.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            NexO was designed to resolve critical inefficiencies in university financial aid distribution: physical queuing, decentralized grant announcements, manual paper validation, and missed application deadlines.
+          </p>
+          <p>
+            The system implements an end-to-end, mobile-first workflow featuring strict institutional <code>.edu.ph</code> student validation, a multi-format <strong>Digital Drop-Box</strong> with local document quarantine, dynamic applicant capacity limiting (preventing over-subscription), and an interactive <strong>Applicant Review Console</strong> with document previews and one-click decisions.
+          </p>
+          <div class="tech-stack-pills">
+            <span class="tech-pill">Semantic HTML5 &amp; CSS3 Variables</span>
+            <span class="tech-pill">Vanilla JavaScript (ES6+)</span>
+            <span class="tech-pill">Node.js Runtime &amp; REST API</span>
+            <span class="tech-pill">Multer Multipart Storage Engine</span>
+            <span class="tech-pill">Atomic JSON Local File Persistence</span>
+            <span class="tech-pill">Strict .edu.ph Domain Verification</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Development Team Roles -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">02</div>
+          <div>
+            <h2>Development Team</h2>
+            <p class="doc-section-lead">CICS IT 314 Web Systems and Technologies Development Group</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <div class="team-grid">
+            <!-- Developer 1 -->
+            <div class="team-card">
+              <div class="team-avatar-box">
+                <span>FS</span>
+              </div>
+              <div class="team-info">
+                <div class="team-role-badge">Full-Stack Lead</div>
+                <h4>Lead Full-Stack Developer</h4>
+                <p>Architected core Node.js backend routes, multipart file handling, atomic JSON data persistence, and system-wide state synchronization.</p>
+              </div>
+            </div>
+
+            <!-- Developer 2 -->
+            <div class="team-card">
+              <div class="team-avatar-box">
+                <span>UI</span>
+              </div>
+              <div class="team-info">
+                <div class="team-role-badge">UI/UX Co-Lead</div>
+                <h4>Frontend &amp; UI/UX Co-Lead</h4>
+                <p>Designed and built the mobile-first component library, adaptive dark/light theme engine, touch navigation drawers, and live application status chips.</p>
+              </div>
+            </div>
+
+            <!-- Developer 3 -->
+            <div class="team-card">
+              <div class="team-avatar-box">
+                <span>BE</span>
+              </div>
+              <div class="team-info">
+                <div class="team-role-badge">Backend Specialist</div>
+                <h4>Backend &amp; Drop-Box Architect</h4>
+                <p>Engineered the Digital Drop-Box pipeline, student institutional email validation, quota enforcement algorithms, and provider decision engine.</p>
+              </div>
+            </div>
+
+            <!-- Developer 4 -->
+            <div class="team-card">
+              <div class="team-avatar-box">
+                <span>QA</span>
+              </div>
+              <div class="team-info">
+                <div class="team-role-badge">QA &amp; Security</div>
+                <h4>QA &amp; Data Security Lead</h4>
+                <p>Conducted end-to-end integration testing, edge-case validation, single-application enforcement checks, and Data Privacy Act compliance audits.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Academic Acknowledgements -->
+      <section class="doc-card">
+        <div class="doc-card-header">
+          <div class="doc-section-num">03</div>
+          <div>
+            <h2>Academic Acknowledgements</h2>
+            <p class="doc-section-lead">Faculty guidance and institutional endorsement.</p>
+          </div>
+        </div>
+        <div class="doc-card-body">
+          <p>
+            We express our deepest appreciation to our course instructor and faculty mentors in the <strong>College of Informatics and Computing Sciences (CICS)</strong> at Batangas State University - The National Engineering University, Alangilan Campus. Their dedicated guidance in <strong>IT 314 Web Systems and Technologies</strong> provided the rigorous technical foundation and standards necessary to bring this project to fruition.
+          </p>
+          <div class="doc-callout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <div>
+              <strong>Academic Disclaimer:</strong>
+              NexO is developed, published, and maintained strictly for academic and demonstration purposes as the Final Project for IT 314. No commercial transactions are processed.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Action Navigation -->
+      <section class="doc-actions-card">
+        <h3>Explore NEXO Portals</h3>
+        <p>Access active scholarship listings or manage your grant postings through the centralized portal.</p>
+        <div class="doc-action-btns">
+          <a href="index.html" class="btn btn-primary" id="credits-portal-btn">Go to Portal Home</a>
+          <a href="about.html" class="btn btn-secondary">Learn About NEXO</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js" defer></script>
+  </body>
+</html>

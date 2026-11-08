@@ -458,7 +458,10 @@ function renderApplicationCards(applications, container) {
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
     const date = app.formattedDate || app.appliedDate || app.date || "Recently Applied";
-    const applicants = app.applicantCount || "1 / 10 Applicants";
+    let applicants = app.applicantCount || "1 / 200 Applicants";
+    if (applicants.includes("/ 10 Applicants")) {
+      applicants = applicants.replace("/ 10 Applicants", "/ 200 Applicants");
+    }
     const docs = app.documents || app.uploadedDocuments || [];
 
     // Optional provider feedback note

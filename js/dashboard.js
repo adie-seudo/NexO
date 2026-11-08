@@ -60,6 +60,8 @@ function cacheDOM() {
   DOM.typeError = document.getElementById("error-schol-type");
   DOM.dateInput = document.getElementById("schol-deadline");
   DOM.dateError = document.getElementById("error-schol-deadline");
+  DOM.limitInput = document.getElementById("schol-limit");
+  DOM.limitError = document.getElementById("error-schol-limit");
 
   // Step 2 & 3 Validation Elements
   DOM.reqList = document.getElementById("requirements-list");
@@ -187,6 +189,13 @@ function goToStep(stepNumber = 1, isEdit = false) {
           day: "numeric",
         });
     }
+
+    const limitVal =
+      DOM.limitInput && DOM.limitInput.value
+        ? parseInt(DOM.limitInput.value, 10)
+        : 200;
+    const reviewLimitEl = document.getElementById("review-limit");
+    if (reviewLimitEl) reviewLimitEl.textContent = `${limitVal} Applicants`;
 
     const reviewReqList = document.querySelector(".review-req-list");
     if (reviewReqList) {
@@ -376,6 +385,21 @@ function validateStep1() {
     } else {
       DOM.dateError.classList.remove("active");
       DOM.dateInput.classList.remove("input-error");
+    }
+  }
+
+  if (DOM.limitInput) {
+    const val = parseInt(DOM.limitInput.value, 10);
+    if (!val || val <= 0) {
+      if (DOM.limitError) {
+        DOM.limitError.textContent = "Please enter a valid applicant limit (at least 1).";
+        DOM.limitError.classList.add("active");
+      }
+      DOM.limitInput.classList.add("input-error");
+      isValid = false;
+    } else {
+      if (DOM.limitError) DOM.limitError.classList.remove("active");
+      DOM.limitInput.classList.remove("input-error");
     }
   }
 
@@ -613,15 +637,26 @@ function createCompactCard(schol) {
       <span class="compact-post-type">${escapeHtml(schol.typeText || schol.type || "Scholarship")}</span>
     </div>
     <p class="compact-post-desc">${escapeHtml(schol.desc)}</p>
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <div class="compact-post-meta">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-          <line x1="16" y1="2" x2="16" y2="6"></line>
-          <line x1="8" y1="2" x2="8" y2="6"></line>
-          <line x1="3" y1="10" x2="21" y2="10"></line>
-        </svg>
-        ${escapeHtml(schol.formattedDate || "No Deadline")}
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+      <div class="compact-post-meta" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          Expires: ${escapeHtml(schol.formattedDate || "No Deadline")}
+        </span>
+        <span style="display: inline-flex; align-items: center; gap: 4px; color: #8b5cf6; font-weight: 600;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          ${escapeHtml(schol.applicantCount || "0 / 200 Applicants")}
+        </span>
       </div>
       <button type="button" class="view-details-btn">View Details</button>
     </div>
@@ -670,6 +705,7 @@ function createDraftCard(draft) {
     editBtn.dataset.desc = draft.desc || "";
     editBtn.dataset.type = draft.type || "";
     editBtn.dataset.date = draft.date || "";
+    editBtn.dataset.limit = draft.applicantLimit || 200;
     if (draft.requirements) {
       editBtn.dataset.requirements = JSON.stringify(draft.requirements);
     }
@@ -819,6 +855,16 @@ function initPublishAndDraft() {
         const draftIdToDelete = currentEditingDraftId;
         const providerName = localStorage.getItem("nexo-provider-name") || "NEXO";
         const providerLogo = localStorage.getItem("nexo-provider-logo") || "";
+        const applicantLimit =
+          DOM.limitInput && DOM.limitInput.value
+            ? parseInt(DOM.limitInput.value, 10)
+            : 200;
+        const now = new Date();
+        const formattedPostedDate = now.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
 
         const payload = {
           title,
@@ -827,11 +873,16 @@ function initPublishAndDraft() {
           typeText: typeSelectedText,
           deadline: DOM.dateInput ? DOM.dateInput.value : "",
           formattedDate,
+          postedAt: now.toISOString(),
+          formattedPostedDate,
+          applicantLimit,
+          maxApplicants: applicantLimit,
+          applicantTotal: 0,
+          applicantCount: `0 / ${applicantLimit} Applicants`,
           requirements: collectedRequirements,
           providerName,
           providerLogo,
           status: "Open",
-          applicantCount: "0 / 10 Applicants",
           draftId: draftIdToDelete,
         };
 
@@ -960,6 +1011,9 @@ function initPublishAndDraft() {
           desc: draftDesc,
           type: typeVal,
           date: dateVal,
+          applicantLimit: DOM.limitInput
+            ? parseInt(DOM.limitInput.value, 10) || 200
+            : 200,
           requirements: collectedRequirements,
         };
 
@@ -1235,6 +1289,8 @@ function initDraftEditing() {
       if (DOM.nameInput) DOM.nameInput.value = continueBtn.dataset.title || "";
       if (DOM.descInput) DOM.descInput.value = continueBtn.dataset.desc || "";
       if (DOM.dateInput) DOM.dateInput.value = continueBtn.dataset.date || "";
+      if (DOM.limitInput)
+        DOM.limitInput.value = continueBtn.dataset.limit || 200;
 
       // Update custom dropdown UI
       if (DOM.typeInput && DOM.typeSelected) {

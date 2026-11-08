@@ -209,10 +209,25 @@ function syncScholarshipApplicantCounts(data) {
     }
   });
 
+  const scholMap = {};
   data.scholarships.forEach((s) => {
     const count = countMap[s.id] || 0;
-    s.applicantCount = `${count} / 10 Applicants`;
+    const limit =
+      parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+    s.applicantLimit = limit;
+    s.maxApplicants = limit;
     s.applicantTotal = count;
+    s.applicantCount = `${count} / ${limit} Applicants`;
+    if (count >= limit && (s.status || "").toLowerCase() !== "closed") {
+      s.status = "Quota Full";
+    }
+    scholMap[s.id] = s;
+  });
+
+  data.applications.forEach((app) => {
+    if (app.scholarshipId && scholMap[app.scholarshipId]) {
+      app.applicantCount = scholMap[app.scholarshipId].applicantCount;
+    }
   });
 }
 
@@ -322,6 +337,18 @@ async function handleRequest(req, res) {
       const data = readData();
       data.scholarships = data.scholarships || [];
 
+      const limit =
+        parseInt(body.applicantLimit || body.maxApplicants || 200, 10) || 200;
+      const now = new Date();
+      const postedAt = body.postedAt || body.createdAt || now.toISOString();
+      const formattedPostedDate =
+        body.formattedPostedDate ||
+        new Date(postedAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+
       const newScholarship = {
         id: body.id || "schol_" + Date.now(),
         title: (body.title || "Untitled Scholarship").trim(),
@@ -330,13 +357,18 @@ async function handleRequest(req, res) {
         typeText: body.typeText || body.type || "Other",
         deadline: body.deadline || "",
         formattedDate: body.formattedDate || "No Deadline",
+        applicantLimit: limit,
+        maxApplicants: limit,
+        applicantTotal: 0,
+        applicantCount: `0 / ${limit} Applicants`,
+        postedAt: postedAt,
+        formattedPostedDate: formattedPostedDate,
+        createdAt: postedAt,
         requirements: Array.isArray(body.requirements) ? body.requirements : [],
         providerName: body.providerName || data.settings.orgName || "NEXO",
         providerLogo: body.providerLogo || data.settings.logoImage || "",
         providerBanner: body.providerBanner || data.settings.bannerImage || "",
         status: body.status || "Open",
-        applicantCount: "0 / 10 Applicants",
-        createdAt: new Date().toISOString(),
       };
 
       data.scholarships.unshift(newScholarship);
@@ -462,6 +494,25 @@ async function handleRequest(req, res) {
         });
       }
 
+      // Check if scholarship has reached applicant quota limit
+      const targetSchol = (data.scholarships || []).find(
+        (s) => String(s.id) === String(targetScholarshipId)
+      );
+      if (targetSchol) {
+        const limit =
+          parseInt(targetSchol.applicantLimit || targetSchol.maxApplicants || 200, 10) ||
+          200;
+        const currentCount = (data.applications || []).filter(
+          (a) => String(a.scholarshipId) === String(targetScholarshipId)
+        ).length;
+        if (currentCount >= limit) {
+          return sendJson(res, 400, {
+            success: false,
+            error: "This scholarship has reached its applicant limit and is now closed.",
+          });
+        }
+      }
+
       const appId = body.id || "app_" + Date.now();
 
       // Process and save uploaded documents to disk using File Handling
@@ -534,7 +585,9 @@ async function handleRequest(req, res) {
             day: "numeric",
             year: "numeric",
           }),
-        applicantCount: body.applicantCount || "1 / 10 Applicants",
+        applicantCount: body.applicantCount && !body.applicantCount.includes("/ 10 ")
+          ? body.applicantCount
+          : "1 / 200 Applicants",
         documents: savedDocuments,
         uploadedDocuments: savedDocuments.map((d) => d.name),
         notes: body.notes || "",

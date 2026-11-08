@@ -122,6 +122,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Format for display
     allScholarships = combined.map((post) => {
+      const limit =
+        parseInt(post.applicantLimit || post.maxApplicants || 200, 10) || 200;
+      let appCount = post.applicantCount;
+      if (!appCount || appCount.includes("/ 10 Applicants")) {
+        const total = parseInt(post.applicantTotal || 0, 10) || 0;
+        appCount = `${total} / ${limit} Applicants`;
+      }
       return {
         id: post.id || "schol_" + Date.now(),
         title: post.title || "Scholarship Program",
@@ -139,7 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
             ? post.requirements
             : [],
         status: post.status || "Open",
-        applicantCount: post.applicantCount || "0 / 10 Applicants",
+        applicantLimit: limit,
+        maxApplicants: limit,
+        applicantTotal: post.applicantTotal || 0,
+        applicantCount: appCount,
+        postedAt: post.postedAt || post.createdAt || "",
+        formattedPostedDate: post.formattedPostedDate || "",
       };
     });
 
@@ -399,12 +411,18 @@ document.addEventListener("DOMContentLoaded", () => {
         ? `<img src="${item.providerLogo}" alt="${item.providerName}">`
         : `<span>${initials || "NX"}</span>`;
 
-      const isClosed = (item.status || "").toLowerCase() === "closed";
+      const isQuotaFull = (item.status || "").toLowerCase().includes("quota");
+      const isClosed =
+        (item.status || "").toLowerCase() === "closed" || isQuotaFull;
       const statusClass = isClosed ? "closed" : "open";
-      const statusText = isClosed ? "Closed" : "Open";
+      const statusText = isQuotaFull
+        ? "Quota Full"
+        : isClosed
+        ? "Closed"
+        : "Open";
 
       const existingApp = studentApplications.find(
-        (a) => String(a.scholarshipId) === String(item.id)
+        (a) => String(a.scholarshipId) === String(item.id),
       );
       const isAlreadyApplied = !!existingApp;
 
@@ -414,10 +432,32 @@ document.addEventListener("DOMContentLoaded", () => {
         let badgeBg = "#10b981";
         if (appStatus.toLowerCase().includes("review")) badgeBg = "#8b5cf6";
         if (appStatus.toLowerCase().includes("rejected")) badgeBg = "#ef4444";
-        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn" data-id="${item.id}" style="background-color: ${badgeBg}; border-color: ${badgeBg}; color: #ffffff;" title="Click to view status on dashboard">✓ Applied (${appStatus})</button>`;
+        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn" data-id="${item.id}" style="background-color: ${badgeBg}; border-color: ${badgeBg}; color: #ffffff;" title="Click to view details">✓ Applied (${appStatus})</button>`;
+      } else if (isClosed) {
+        applyBtnHtml = `<button type="button" class="directory-apply-btn disabled" data-id="${item.id}" disabled>${statusText}</button>`;
       } else {
-        applyBtnHtml = `<button type="button" class="directory-apply-btn ${isClosed ? "disabled" : ""}" data-id="${item.id}" ${isClosed ? "disabled" : ""}>Apply Now</button>`;
+        applyBtnHtml = `<button type="button" class="directory-apply-btn" data-id="${item.id}">Apply Now</button>`;
       }
+
+      const postedDate =
+        item.formattedPostedDate ||
+        (item.postedAt
+          ? new Date(item.postedAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : item.createdAt
+          ? new Date(item.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "Recently");
+
+      const applicantCountDisplay =
+        item.applicantCount ||
+        `0 / ${item.applicantLimit || item.maxApplicants || 200} Applicants`;
 
       card.innerHTML = `
         <div class="directory-card-header">
@@ -433,15 +473,33 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="directory-status-pill ${statusClass}">${statusText}</span>
         </div>
 
-        <div class="directory-meta-row">
-          <span class="directory-deadline-tag">
+        <div class="directory-meta-row" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+          <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 5px; color: #8b5cf6; font-weight: 700;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            ${escapeHtml(applicantCountDisplay)}
+          </span>
+
+          <span class="directory-posted-tag" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12.5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Posted: ${escapeHtml(postedDate)}
+          </span>
+
+          <span class="directory-deadline-tag" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12.5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            ${item.formattedDate}
+            Expires: ${escapeHtml(item.formattedDate || "No Deadline")}
           </span>
         </div>
 
@@ -567,11 +625,74 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Check if student has already applied for this scholarship
+    const postedDate =
+      schol.formattedPostedDate ||
+      (schol.postedAt
+        ? new Date(schol.postedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : schol.createdAt
+        ? new Date(schol.createdAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Recently");
+
+    const postedEl = document.getElementById("modal-schol-posted");
+    if (postedEl) postedEl.textContent = postedDate;
+
+    const applicantsEl = document.getElementById("modal-schol-applicants");
+    if (applicantsEl) {
+      const applicantLimit = schol.applicantLimit || schol.maxApplicants || 200;
+      applicantsEl.textContent =
+        schol.applicantCount || `0 / ${applicantLimit} Applicants`;
+    }
+
+    const daysLeftEl = document.getElementById("modal-schol-days-left");
+    if (daysLeftEl) {
+      if (schol.deadline) {
+        const deadlineDate = new Date(schol.deadline);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil(
+          (deadlineDate - today) / (1000 * 60 * 60 * 24),
+        );
+
+        if (diffDays < 0) {
+          daysLeftEl.textContent = "Expired";
+          daysLeftEl.style.background = "rgba(239, 68, 68, 0.12)";
+          daysLeftEl.style.color = "#ef4444";
+        } else if (diffDays === 0) {
+          daysLeftEl.textContent = "Expires Today";
+          daysLeftEl.style.background = "rgba(245, 158, 11, 0.15)";
+          daysLeftEl.style.color = "#d97706";
+        } else if (diffDays === 1) {
+          daysLeftEl.textContent = "1 day left";
+          daysLeftEl.style.background = "rgba(245, 158, 11, 0.15)";
+          daysLeftEl.style.color = "#d97706";
+        } else {
+          daysLeftEl.textContent = `${diffDays} days left`;
+          daysLeftEl.style.background = "rgba(16, 185, 129, 0.12)";
+          daysLeftEl.style.color = "#10b981";
+        }
+      } else {
+        daysLeftEl.textContent = "Active";
+        daysLeftEl.style.background = "rgba(16, 185, 129, 0.12)";
+        daysLeftEl.style.color = "#10b981";
+      }
+    }
+
     const existingApp = studentApplications.find(
       (a) => String(a.scholarshipId) === String(schol.id)
     );
     const isAlreadyApplied = !!existingApp;
-    const isClosed = (schol.status || "").toLowerCase() === "closed";
+    const isQuotaFull = (schol.status || "").toLowerCase().includes("quota");
+    const isClosed =
+      (schol.status || "").toLowerCase() === "closed" || isQuotaFull;
 
     const bannerEl = document.getElementById("modal-already-applied-banner");
     if (bannerEl) {
@@ -631,13 +752,22 @@ document.addEventListener("DOMContentLoaded", () => {
           </svg>
           Already Applied (${escapeHtml(appStatus)})
         `;
+      } else if (isQuotaFull) {
+        btnOpenDropbox.disabled = true;
+        btnOpenDropbox.classList.add("disabled");
+        btnOpenDropbox.style.background = "";
+        btnOpenDropbox.style.borderColor = "";
+        btnOpenDropbox.style.color = "";
+        btnOpenDropbox.style.cursor = "not-allowed";
+        btnOpenDropbox.style.opacity = "";
+        btnOpenDropbox.innerHTML = "Applicant Limit Reached (Quota Full)";
       } else if (isClosed) {
         btnOpenDropbox.disabled = true;
         btnOpenDropbox.classList.add("disabled");
         btnOpenDropbox.style.background = "";
         btnOpenDropbox.style.borderColor = "";
         btnOpenDropbox.style.color = "";
-        btnOpenDropbox.style.cursor = "";
+        btnOpenDropbox.style.cursor = "not-allowed";
         btnOpenDropbox.style.opacity = "";
         btnOpenDropbox.innerHTML = "Applications are Closed";
       } else {
@@ -707,6 +837,13 @@ document.addEventListener("DOMContentLoaded", () => {
     );
     if (existing) {
       showToast("You have already applied for this scholarship.", true);
+      openDetailsModal(schol);
+      return;
+    }
+
+    const isQuota = (schol.status || "").toLowerCase().includes("quota");
+    if (isQuota) {
+      showToast("This scholarship has reached its applicant limit and is now closed.", true);
       openDetailsModal(schol);
       return;
     }
@@ -936,7 +1073,9 @@ document.addEventListener("DOMContentLoaded", () => {
           day: "numeric",
           year: "numeric",
         }),
-        applicantCount: "1 / 10 Applicants",
+        applicantCount: activeScholarship
+          ? `${(parseInt(activeScholarship.applicantTotal || 0, 10) || 0) + 1} / ${activeScholarship.applicantLimit || activeScholarship.maxApplicants || 200} Applicants`
+          : "1 / 200 Applicants",
         documents: processedDocs,
         uploadedDocuments: processedDocs.map((d) => d.name),
       };
