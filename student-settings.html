@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Settings - NEXO</title>
+    <!-- Master styles -->
+    <link rel="stylesheet" href="css/master.css" />
+    <!-- Shared Settings stylesheet -->
+    <link rel="stylesheet" href="css/settings.css" />
+    <script>
+      (function() {
+        var t = localStorage.getItem("nexo-theme");
+        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+
+    <style>
+      /* Student specific adjustments with generous mobile spacing */
+      .settings-page-main {
+        padding: 20px 18px 140px 18px;
+        padding-top: 92px !important;
+      }
+      .settings-header {
+        margin-bottom: 24px;
+      }
+      .settings-tabs-wrapper {
+        margin-bottom: 24px;
+      }
+      .settings-card {
+        padding: 24px 20px !important;
+        margin-bottom: 24px !important;
+        border-radius: 18px !important;
+      }
+      .settings-card-title {
+        font-size: 17px !important;
+        margin-bottom: 6px !important;
+      }
+      .settings-card-desc {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        margin-bottom: 20px !important;
+      }
+      .settings-form-group {
+        margin-bottom: 22px !important;
+      }
+      .settings-label {
+        font-size: 13.5px !important;
+        margin-bottom: 8px !important;
+      }
+      .settings-input {
+        padding: 13px 14px !important;
+        font-size: 14.5px !important;
+        border-radius: 11px !important;
+      }
+      .settings-hint {
+        margin-top: 7px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+      }
+      .settings-toggle-row {
+        padding: 18px 0 !important;
+        gap: 16px !important;
+      }
+      .student-avatar-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px 0 14px;
+      }
+      .student-avatar-preview-wrap {
+        position: relative;
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        background-color: #D6BBFB !important;
+        border: 4px solid var(--bg-surface, #ffffff);
+        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        cursor: pointer;
+        overflow: visible;
+      }
+      .student-avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        display: none;
+      }
+      .student-avatar-img.has-img {
+        display: block;
+      }
+      .student-avatar-initials {
+        font-size: 34px;
+        font-weight: 800;
+        color: #53389E !important;
+        font-family: var(--font-heading);
+        text-transform: uppercase;
+        user-select: none;
+      }
+      .student-avatar-camera-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--purple-800, #6941c6);
+        border: 2.5px solid var(--bg-surface, #ffffff);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22);
+        cursor: pointer;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+      }
+      .student-avatar-camera-badge:hover {
+        transform: scale(1.1);
+        background-color: var(--purple-700, #7f56d9);
+      }
+    </style>
+  </head>
+
+  <body class="dashboard-body">
+    <!-- ========================================= -->
+    <!-- 1. GLOBAL UNIVERSAL HEADER                -->
+    <!-- ========================================= -->
+    <header class="global-header">
+      <div class="logo-container">
+        <a href="student-dashboard.html" style="text-decoration: none;">
+          <div class="avatar-btn" id="student-header-avatar" style="cursor: pointer" title="Back to Dashboard">JD</div>
+        </a>
+      </div>
+
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <!-- Dark Mode Toggle -->
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <!-- Notification Bell -->
+        <button
+          class="icon-btn notification-btn"
+          id="student-notif-btn"
+          type="button"
+          aria-label="Notifications"
+          aria-expanded="false"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </button>
+
+        <!-- Side Menu Wrapper -->
+        <div class="nav-wrapper" id="nav-wrapper" style="margin-left: 4px">
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- Modern Navigation Menu -->
+          <nav class="nav-menu" id="nav-menu">
+            <span class="nav-label">MENU</span>
+
+            <a href="student-dashboard.html" class="nav-link">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Browse / Explore Scholarships -->
+            <a href="student-browse.html" class="nav-link" id="nav-browse">
+              <img
+                src="assets/draft-icon.png"
+                alt="Browse"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Browse Scholarships</span>
+            </a>
+
+            <!-- View My Submissions -->
+            <a href="student-submissions.html" class="nav-link" id="nav-submissions">
+              <img
+                src="assets/policy-icon.png"
+                alt="Submissions"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">View My Submissions</span>
+            </a>
+
+            <!-- Spacer -->
+            <div class="nav-spacer"></div>
+
+            <a href="student-about.html" class="nav-link">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <!-- Settings (Active) -->
+            <a href="student-settings.html" class="nav-link active">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                id="student-logout-btn"
+                style="text-decoration: none !important;"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="color: white; margin: 0; font-weight: 600; text-decoration: none !important;"
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. MAIN SETTINGS VIEWPORT                 -->
+    <!-- ========================================= -->
+    <main class="settings-page-main">
+      <!-- Back Link & Header Area -->
+      <div class="settings-header">
+        <a href="student-dashboard.html" class="settings-back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back to Dashboard
+        </a>
+        <h1 class="settings-title">Student Settings</h1>
+        <p class="settings-subtitle">
+          Manage your verified academic profile, notification alerts, and account preferences.
+        </p>
+      </div>
+
+      <!-- ========================================= -->
+      <!-- 3. HORIZONTAL SUB-NAVIGATION TABS         -->
+      <!-- ========================================= -->
+      <div class="settings-tabs-wrapper">
+        <div class="settings-tabs-nav" role="tablist">
+          <button
+            type="button"
+            class="settings-tab-btn active"
+            data-tab="panel-student-profile"
+            role="tab"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profile & Academic
+          </button>
+
+          <button
+            type="button"
+            class="settings-tab-btn"
+            data-tab="panel-student-preferences"
+            role="tab"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Preferences
+          </button>
+
+          <button
+            type="button"
+            class="settings-tab-btn"
+            data-tab="panel-student-security"
+            role="tab"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Security
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- TAB 1: PROFILE & ACADEMIC INFORMATION                         -->
+      <!-- ============================================================= -->
+      <section id="panel-student-profile" class="settings-panel active" role="tabpanel">
+        <!-- 1. Profile Photo Card -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Profile Picture</h3>
+          <p class="settings-card-desc">
+            Upload your personal photo. This will appear on scholarship applications and your dashboard.
+          </p>
+
+          <div class="student-avatar-box">
+            <div
+              class="student-avatar-preview-wrap"
+              id="student-avatar-wrap"
+              title="Click to upload profile photo"
+            >
+              <img
+                src=""
+                alt="Student Profile"
+                id="student-avatar-img"
+                class="student-avatar-img"
+              />
+              <span class="student-avatar-initials" id="student-avatar-initials">JD</span>
+              <div class="student-avatar-camera-badge" id="student-avatar-badge" title="Change photo">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Hidden File Input -->
+            <input
+              type="file"
+              id="student-avatar-file-input"
+              accept="image/png, image/jpeg, image/webp"
+              style="display: none;"
+            />
+
+            <div style="display: flex; gap: 8px; justify-content: center; margin-top: 4px;">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="btn-upload-student-avatar"
+                style="padding: 7px 14px; font-size: 13px;"
+              >
+                Change Photo
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="btn-remove-student-avatar"
+                style="padding: 7px 14px; font-size: 13px; color: #ef4444;"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Academic & Basic Information Card -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Academic & Personal Details</h3>
+          <p class="settings-card-desc">
+            Your permanent student identity and academic records.
+          </p>
+
+          <!-- Full Name (PERMANENT / READ-ONLY) -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-fullname">
+              Full Name
+              <span class="status-pill" style="margin-left: 6px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Permanent
+              </span>
+            </label>
+            <input
+              type="text"
+              id="input-student-fullname"
+              class="settings-input"
+              value="Juan Dela Cruz"
+              readonly
+              tabindex="-1"
+            />
+            <span class="settings-hint">
+              Permanently linked to your registered university institutional record. Cannot be renamed.
+            </span>
+          </div>
+
+          <!-- University Email (PERMANENT / READ-ONLY) -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-email">
+              University Email (.edu.ph)
+              <span class="status-pill" style="margin-left: 6px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Verified
+              </span>
+            </label>
+            <input
+              type="email"
+              id="input-student-email"
+              class="settings-input"
+              value="admin@admin.edu.ph"
+              readonly
+              tabindex="-1"
+            />
+            <span class="settings-hint">
+              Used for official scholarship notices and institutional verification.
+            </span>
+          </div>
+
+          <!-- University / Institution -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-university">University / Campus</label>
+            <input
+              type="text"
+              id="input-student-university"
+              class="settings-input"
+              placeholder="e.g. Batangas State University"
+              value="Batangas State University"
+            />
+          </div>
+
+          <!-- Degree Program / Course -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-course">Program / Course</label>
+            <input
+              type="text"
+              id="input-student-course"
+              class="settings-input"
+              placeholder="e.g. BS Information Technology"
+              value="BS Information Technology"
+            />
+          </div>
+
+          <!-- Two Column Row: Year Level & Student ID -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="settings-form-group">
+              <label class="settings-label" for="select-student-year">Year Level</label>
+              <select id="select-student-year" class="settings-input" style="cursor: pointer;">
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year" selected>3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="Post-Graduate">Post-Graduate</option>
+              </select>
+            </div>
+
+            <div class="settings-form-group">
+              <label class="settings-label" for="input-student-id">Student ID / LRN</label>
+              <input
+                type="text"
+                id="input-student-id"
+                class="settings-input"
+                placeholder="e.g. 21-04589"
+                value="21-04589"
+              />
+            </div>
+          </div>
+
+          <!-- Contact Number -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-phone">Contact Number</label>
+            <input
+              type="tel"
+              id="input-student-phone"
+              class="settings-input"
+              placeholder="+63 912 345 6789"
+              value="+63 912 345 6789"
+            />
+          </div>
+
+          <!-- Bio / Career Objective -->
+          <div class="settings-form-group">
+            <label class="settings-label" for="input-student-bio">Academic Goal & Bio</label>
+            <textarea
+              id="input-student-bio"
+              class="settings-input"
+              placeholder="Write a brief statement about your academic journey and scholarship goals..."
+            >Passionate IT student striving for academic excellence and innovation in web technologies.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- TAB 2: PREFERENCES & PERSONALIZATION                          -->
+      <!-- ============================================================= -->
+      <section id="panel-student-preferences" class="settings-panel" role="tabpanel">
+        <!-- Appearance Card -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Theme & Appearance</h3>
+          <p class="settings-card-desc">
+            Customize how NEXO looks on your device.
+          </p>
+
+          <div class="settings-toggle-row">
+            <div class="settings-toggle-info">
+              <span class="settings-toggle-title">Dark Mode Theme</span>
+              <span class="settings-toggle-desc">Switch between light and dark themes</span>
+            </div>
+            <label class="nexo-switch">
+              <input type="checkbox" id="pref-student-dark-mode" />
+              <span class="nexo-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Notification Alerts Card -->
+        <div class="settings-card">
+          <h3 class="settings-card-title">Notification Alerts</h3>
+          <p class="settings-card-desc">
+            Choose what alerts and announcements you receive.
+          </p>
+
+          <div class="settings-toggle-row">
+            <div class="settings-toggle-info">
+              <span class="settings-toggle-title">Scholarship Match Alerts</span>
+              <span class="settings-toggle-desc">Notify me when grants matching my course or university are posted</span>
+            </div>
+            <label class="nexo-switch">
+              <input type="checkbox" id="pref-notif-matches" checked />
+              <span class="nexo-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-toggle-row">
+            <div class="settings-toggle-info">
+              <span class="settings-toggle-title">Application Status Updates</span>
+              <span class="settings-toggle-desc">Alert me when providers review, approve, or update my submissions</span>
+            </div>
+            <label class="nexo-switch">
+              <input type="checkbox" id="pref-notif-status" checked />
+              <span class="nexo-slider"></span>
+            </label>
+          </div>
+
+          <div class="settings-toggle-row">
+            <div class="settings-toggle-info">
+              <span class="settings-toggle-title">Deadline Reminders</span>
+              <span class="settings-toggle-desc">Send reminders 3 days before scholarship deadlines</span>
+            </div>
+            <label class="nexo-switch">
+              <input type="checkbox" id="pref-notif-deadlines" checked />
+              <span class="nexo-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================= -->
+      <!-- TAB 3: ACCOUNT SECURITY                                       -->
+      <!-- ============================================================= -->
+      <section id="panel-student-security" class="settings-panel" role="tabpanel">
+        <div class="settings-card">
+          <h3 class="settings-card-title">Change Password</h3>
+          <p class="settings-card-desc">
+            Ensure your account uses a secure password of at least 8 characters.
+          </p>
+
+          <form id="student-password-form">
+            <div class="settings-form-group">
+              <label class="settings-label" for="student-curr-pass">Current Password</label>
+              <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  id="student-curr-pass"
+                  class="settings-input"
+                  placeholder="Enter current password"
+                />
+                <button type="button" class="password-toggle-btn" data-target="student-curr-pass">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-form-group">
+              <label class="settings-label" for="student-new-pass">New Password</label>
+              <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  id="student-new-pass"
+                  class="settings-input"
+                  placeholder="At least 8 characters"
+                />
+                <button type="button" class="password-toggle-btn" data-target="student-new-pass">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="settings-form-group">
+              <label class="settings-label" for="student-confirm-pass">Confirm New Password</label>
+              <div class="password-input-wrapper">
+                <input
+                  type="password"
+                  id="student-confirm-pass"
+                  class="settings-input"
+                  placeholder="Repeat new password"
+                />
+                <button type="button" class="password-toggle-btn" data-target="student-confirm-pass">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="btn btn-secondary"
+              style="width: 100%; margin-top: 6px; padding: 11px;"
+            >
+              Update Password
+            </button>
+          </form>
+        </div>
+
+        <div class="settings-card">
+          <h3 class="settings-card-title">Session Information</h3>
+          <p class="settings-card-desc">
+            You are currently logged in with your verified institutional session.
+          </p>
+          <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+            <div><strong>Active Account:</strong> admin@admin.edu.ph</div>
+            <div><strong>Role:</strong> Student (Verified Scholar)</div>
+            <div><strong>Status:</strong> <span style="color: #10b981; font-weight: 600;">Active Now</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================= -->
+      <!-- 4. BOTTOM STICKY ACTION BAR               -->
+      <!-- ========================================= -->
+      <div class="settings-action-bar">
+        <div class="settings-action-buttons">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="student-discard-btn"
+            style="padding: 9px 16px; font-size: 13.5px;"
+          >
+            Discard
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary settings-btn-save"
+            id="student-save-btn"
+            style="padding: 9px 20px; font-size: 13.5px;"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- Toast Notifier (Identical to Provider Settings Notifier) -->
+      <div id="student-settings-toast" class="settings-toast">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="student-toast-message">Customization saved</span>
+      </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script src="js/student.js"></script>
+    <script src="js/student-settings.js"></script>
+  </body>
+</html>

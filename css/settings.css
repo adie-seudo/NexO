@@ -1,0 +1,671 @@
+/* ==========================================================================
+   NEXO PROVIDER SETTINGS STYLESHEET (css/settings.css)
+   Mobile-First, Touch-Optimized, Premium Tabbed Settings Interface
+   ========================================================================== */
+
+/* Page Container (Fluid for mobile) */
+.settings-page-main {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 14px 14px 120px 14px;
+  padding-top: 84px !important;
+  box-sizing: border-box;
+}
+
+/* Header Area */
+.settings-header {
+  margin-bottom: 16px;
+}
+
+.settings-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-brand, #7f56d9);
+  text-decoration: none;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: var(--bg-card, #f4ebff);
+  transition: all 0.2s ease;
+}
+
+.settings-back-link:hover {
+  background-color: var(--purple-300, #e9d7fe);
+}
+
+.settings-title {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.settings-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 18px;
+  margin: 0;
+}
+
+/* ==========================================
+   NAVIGATION TABS (Mobile Smooth Scrolling)
+   ========================================== */
+.settings-tabs-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-strong, #e5e7eb);
+  padding-bottom: 4px;
+}
+
+.settings-tabs-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 2px 6px 2px;
+}
+
+.settings-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.settings-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-strong, #e5e7eb);
+  background-color: var(--bg-surface, #ffffff);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.settings-tab-btn:hover {
+  border-color: var(--purple-500, #b692f6);
+  color: var(--text-brand, #7f56d9);
+}
+
+.settings-tab-btn.active {
+  background-color: var(--purple-800, #6941c6);
+  border-color: var(--purple-800, #6941c6);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(105, 65, 198, 0.25);
+}
+
+.settings-tab-btn svg {
+  flex-shrink: 0;
+}
+
+/* Tab Panels */
+.settings-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.settings-panel.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ==========================================
+   SETTINGS CARDS & SECTIONS
+   ========================================== */
+.settings-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-strong, #e5e7eb);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.settings-card-header {
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border-strong, #e5e7eb);
+  padding-bottom: 10px;
+}
+
+.settings-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.settings-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 16px;
+  margin: 0;
+}
+
+/* ==========================================
+   BRAND PROFILE: BANNER & OVERLAPPING LOGO
+   ========================================== */
+.brand-cover-container {
+  position: relative;
+  width: 100%;
+  height: 135px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #7f56d9 0%, #53389e 50%, #301e67 100%);
+  border: 1px solid var(--border-strong, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-img-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.banner-img-preview.has-image {
+  display: block;
+}
+
+.banner-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 3;
+}
+
+.banner-upload-btn,
+.banner-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.banner-upload-btn:hover {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.banner-remove-btn {
+  background-color: rgba(239, 68, 68, 0.8);
+  border-color: rgba(239, 68, 68, 0.5);
+  display: none;
+}
+
+.banner-remove-btn.visible {
+  display: inline-flex;
+}
+
+/* Overlapping Logo / Profile Picture */
+.brand-logo-row {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 10px;
+  margin-top: -38px;
+  margin-bottom: 14px;
+  z-index: 4;
+}
+
+.brand-logo-wrapper {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 3.5px solid var(--bg-surface, #ffffff);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.brand-logo-wrapper.has-fallback {
+  background-color: var(--purple-700, #7f56d9);
+}
+
+.logo-img-preview {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: none;
+  background-color: #ffffff;
+}
+
+.logo-img-preview.has-image {
+  display: block;
+}
+
+.logo-initials-fallback {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.logo-upload-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--purple-800, #6941c6);
+  border: 2px solid var(--bg-surface, #ffffff);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.logo-upload-badge:hover {
+  transform: scale(1.08);
+  background-color: var(--purple-600, #9e77ed);
+}
+
+.logo-action-buttons {
+  margin-bottom: 4px;
+}
+
+.logo-remove-btn {
+  font-size: 11px;
+  color: #ef4444;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  font-weight: 600;
+  display: none;
+}
+
+.logo-remove-btn.visible {
+  display: inline-block;
+}
+
+.brand-specs-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 15px;
+  margin-top: -4px;
+  margin-bottom: 14px;
+}
+
+/* ==========================================
+   INPUT FIELDS & FORM CONTROLS
+   ========================================== */
+.settings-form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.settings-input-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-input-group label .label-optional {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.settings-input {
+  width: 100%;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background-color: var(--bg-canvas, #fdfdfd);
+  border: 1.5px solid var(--border-strong, #e5e7eb);
+  border-radius: 9px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.settings-input:focus {
+  border-color: var(--purple-700, #7f56d9);
+  background-color: var(--bg-surface, #ffffff);
+  box-shadow: 0 0 0 3px rgba(127, 86, 217, 0.15);
+}
+
+.settings-input[readonly],
+.settings-input:disabled {
+  background-color: var(--neutral-200, #f5f5f5);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+textarea.settings-input {
+  min-height: 74px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+/* Password wrapper with visibility toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .settings-input {
+  padding-right: 40px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.input-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 15px;
+  margin-top: 2px;
+}
+
+/* ==========================================
+   SWITCH TOGGLES (iOS style)
+   ========================================== */
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-strong, #e5e7eb);
+}
+
+.settings-toggle-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.settings-toggle-info {
+  flex: 1;
+}
+
+.settings-toggle-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.settings-toggle-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 15px;
+  margin: 0;
+}
+
+/* The Switch */
+.nexo-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 25px;
+  flex-shrink: 0;
+}
+
+.nexo-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.nexo-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--neutral-300, #e9eaeb);
+  transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  border-radius: 34px;
+}
+
+.nexo-slider:before {
+  position: absolute;
+  content: "";
+  height: 19px;
+  width: 19px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.nexo-switch input:checked + .nexo-slider {
+  background-color: var(--purple-700, #7f56d9);
+}
+
+.nexo-switch input:checked + .nexo-slider:before {
+  transform: translateX(19px);
+}
+
+/* Status pill */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+/* ==========================================
+   BOTTOM STICKY ACTION BAR
+   ========================================== */
+.settings-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-surface, #ffffff);
+  border-top: 1px solid var(--border-strong, #e5e7eb);
+  padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 99;
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.settings-action-buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.settings-btn-save {
+  min-width: 120px;
+}
+
+/* ==========================================
+   ELEGANT TOAST NOTIFIER (Matches Website Aura)
+   ========================================== */
+.settings-toast {
+  position: fixed;
+  bottom: 74px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background-color: #181d27;
+  color: #f9fafb;
+  border: 1px solid rgba(127, 86, 217, 0.35);
+  padding: 9px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  max-width: 90vw;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.settings-toast svg {
+  color: var(--purple-400, #d6bbfb);
+  flex-shrink: 0;
+}
+
+.settings-toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.settings-toast.error {
+  background-color: #2b1717;
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.settings-toast.error svg {
+  color: #ef4444;
+}
+
+body.dark-theme .settings-toast {
+  background-color: #241f38;
+  border-color: rgba(167, 139, 250, 0.4);
+  color: #ffffff;
+}
+
+/* ==========================================
+   DARK THEME REFINEMENTS
+   ========================================== */
+body.dark-theme .settings-card {
+  background-color: var(--bg-surface, #1e1b2e);
+  border-color: var(--border-strong, #2f2b42);
+}
+
+body.dark-theme .settings-card-header {
+  border-bottom-color: var(--border-strong, #2f2b42);
+}
+
+body.dark-theme .settings-tab-btn {
+  background-color: var(--bg-surface, #1e1b2e);
+  border-color: var(--border-strong, #2f2b42);
+  color: var(--text-secondary);
+}
+
+body.dark-theme .settings-tab-btn.active {
+  background-color: var(--purple-700, #7f56d9);
+  border-color: var(--purple-700, #7f56d9);
+  color: #ffffff;
+}
+
+body.dark-theme .settings-input {
+  background-color: #13111c;
+  border-color: var(--border-strong, #2f2b42);
+}
+
+body.dark-theme .settings-input:focus {
+  background-color: #181524;
+  border-color: var(--purple-500, #b692f6);
+}
+
+body.dark-theme .settings-input[readonly] {
+  background-color: #252233;
+}
+
+body.dark-theme .settings-toggle-row {
+  border-bottom-color: var(--border-strong, #2f2b42);
+}
+
+body.dark-theme .settings-action-bar {
+  background-color: var(--bg-surface, #1e1b2e);
+  border-top-color: var(--border-strong, #2f2b42);
+}
+
+body.dark-theme .brand-logo-wrapper {
+  border-color: var(--bg-surface, #1e1b2e);
+}
+
+body.dark-theme .logo-upload-badge {
+  border-color: var(--bg-surface, #1e1b2e);
+}

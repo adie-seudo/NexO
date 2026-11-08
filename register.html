@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXO - Create Your Account</title>
+    <link rel="stylesheet" href="css/master.css" />
+  </head>
+  <body>
+    <!-- Full-Screen Dedicated Registration Screen -->
+    <section id="auth-screen" class="auth-container register-mode">
+      <!-- Top Logo -->
+      <div class="auth-logo-container">
+        <img
+          src="assets/logo.png"
+          alt="NEXO Logo"
+          id="static-auth-logo"
+          class="auth-logo"
+        />
+      </div>
+
+      <!-- Registration View -->
+      <div id="register-view" class="auth-view">
+        <!-- Registration Header Text -->
+        <div class="register-header-text">
+          <h2>Create Your Account</h2>
+          <p id="register-subtitle">
+            Join NEXO and get access to scholarships and more opportunities.
+          </p>
+        </div>
+
+        <!-- Locked Single Role Pill (Reads role from Login page) -->
+        <div class="role-badge-container">
+          <div class="role-single-badge" id="register-role-badge">Student</div>
+        </div>
+
+        <form id="register-form">
+          <!-- Full Name -->
+          <div class="input-group" id="group-name">
+            <img
+              src="assets/human-icon.png"
+              class="input-icon"
+              alt="Name"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="input-field">
+              <label for="reg-name">Full Name</label>
+              <input
+                type="text"
+                id="reg-name"
+                placeholder="e.g. Juan Dela Cruz"
+              />
+            </div>
+          </div>
+          <p class="error-text" id="error-name"></p>
+
+          <!-- Email Address -->
+          <div class="input-group" id="group-email">
+            <img
+              src="assets/email-icon.png"
+              class="input-icon"
+              alt="Email"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="input-field">
+              <label for="reg-email">School Email</label>
+              <input
+                type="email"
+                id="reg-email"
+                placeholder="student@university.edu.ph"
+              />
+            </div>
+          </div>
+          <p class="error-text" id="error-email"></p>
+
+          <!-- Password -->
+          <div class="input-group" id="group-pass">
+            <img
+              src="assets/password-icon.png"
+              class="input-icon"
+              alt="Password"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="input-field">
+              <label for="reg-pass">Password</label>
+              <input
+                type="password"
+                id="reg-pass"
+                placeholder="Create a strong password"
+              />
+            </div>
+          </div>
+          <p class="error-text" id="error-pass"></p>
+
+          <!-- Confirm Password -->
+          <div class="input-group" id="group-confirm">
+            <img
+              src="assets/password-icon.png"
+              class="input-icon"
+              alt="Confirm Password"
+              onerror="this.style.display = 'none'"
+            />
+            <div class="input-field">
+              <label for="reg-confirm">Confirm Password</label>
+              <input
+                type="password"
+                id="reg-confirm"
+                placeholder="Type password again"
+              />
+            </div>
+          </div>
+          <p class="error-text" id="error-confirm"></p>
+
+          <button type="submit" class="auth-submit" id="reg-submit-btn">
+            Create Account
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <p>
+            Already have an account?
+            <a href="index.html" class="register-link" id="show-login"
+              >Log In</a
+            >
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Applications - Provider</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function() {
+        var t = localStorage.getItem("nexo-theme");
+        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+
+    <style>
+      /* ========================================= */
+      /* APPLICATIONS PAGE SPECIFIC LAYOUT         */
+      /* ========================================= */
+      .apps-container {
+        padding: 80px 20px 40px;
+        max-width: 600px;
+        margin: 0 auto;
+        color: var(--text-primary);
+      }
+      .apps-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+
+      /* Filter Tabs */
+      .filter-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .filter-tab {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-secondary, #6b7280);
+        font-size: 14px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .filter-tab:hover {
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+        background-color: #f5f3ff;
+      }
+      .filter-tab.active {
+        border-color: #8b5cf6;
+        background-color: #8b5cf6;
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      .dark-theme .filter-tab {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .dark-theme .filter-tab:hover {
+        background-color: #374151;
+      }
+      .dark-theme .filter-tab.active {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+        color: #ffffff;
+      }
+
+      /* Search Bar & Filter Button Alignment */
+      .search-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .search-input-wrapper {
+        flex: 1;
+        position: relative;
+      }
+      .search-input {
+        width: 100%;
+        padding: 10px 10px 10px 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary);
+      }
+      .dark-theme .search-input {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+      }
+
+      .filter-icon-btn {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .dark-theme .filter-icon-btn {
+        background: #1f2937;
+        border-color: #374151;
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        background: var(--card-bg, #ffffff);
+        border: 1px dashed var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        margin-top: 20px;
+      }
+      .dark-theme .empty-state {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      /* ========================================= */
+      /* CUSTOM IN-MENU DROPDOWNS (No OS Prompts)  */
+      /* ========================================= */
+      .nexo-dropdown {
+        position: relative;
+        width: 100%;
+        user-select: none;
+      }
+      .nexo-dropdown-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background-color: #f9fafb;
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .nexo-dropdown-trigger:hover {
+        border-color: #d1d5db;
+      }
+
+      /* Active state when opened */
+      .nexo-dropdown.active .nexo-dropdown-trigger {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+
+      .nexo-dropdown-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 120;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-5px);
+        transition: all 0.2s ease;
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+      .nexo-dropdown.active .nexo-dropdown-list {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .nexo-dropdown-item {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .nexo-dropdown-item:hover {
+        background-color: #f5f3ff;
+        color: #8b5cf6;
+      }
+
+      /* Dark Theme */
+      body.dark-theme .nexo-dropdown-trigger {
+        background-color: #111827;
+        border-color: #374151;
+        color: #f3f4f6;
+      }
+      body.dark-theme .nexo-dropdown-trigger:hover {
+        border-color: #4b5563;
+      }
+      body.dark-theme .nexo-dropdown-list {
+        background: #1f2937;
+        border-color: #374151;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      body.dark-theme .nexo-dropdown-item {
+        color: #f3f4f6;
+      }
+      body.dark-theme .nexo-dropdown-item:hover {
+        background-color: #374151;
+        color: #8b5cf6;
+      }
+
+      /* ========================================= */
+      /* PROVIDER APPLICATION CARDS & FEED         */
+      /* ========================================= */
+      .applications-feed {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 10px;
+      }
+
+      .provider-app-card {
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        cursor: pointer;
+      }
+      .provider-app-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .dark-theme .provider-app-card {
+        background: #1f2937;
+        border-color: #374151;
+      }
+
+      .provider-app-main-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .provider-app-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #6941c6);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(105, 65, 198, 0.25);
+      }
+
+      .provider-app-details {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .provider-app-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .provider-app-student-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .provider-app-badge {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+      }
+      .badge-status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .badge-status-review {
+        background-color: #ede9fe;
+        color: #6d28d9;
+      }
+      .badge-status-approved {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .dark-theme .badge-status-pending {
+        background-color: #78350f;
+        color: #fde68a;
+      }
+      .dark-theme .badge-status-review {
+        background-color: #4c1d95;
+        color: #ddd6fe;
+      }
+      .dark-theme .badge-status-approved {
+        background-color: #14532d;
+        color: #bbf7d0;
+      }
+      .dark-theme .badge-status-rejected {
+        background-color: #7f1d1d;
+        color: #fecaca;
+      }
+
+      .provider-app-program {
+        margin: 2px 0 4px;
+        font-size: 13.5px;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .program-tag {
+        color: #8b5cf6;
+      }
+
+      .provider-app-school {
+        font-size: 12.5px;
+        color: var(--text-secondary, #6b7280);
+        margin: 0 0 8px;
+      }
+
+      .provider-app-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--text-secondary, #6b7280);
+      }
+      .provider-app-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .provider-app-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+      }
+      .dark-theme .provider-app-actions-row {
+        border-color: #374151;
+      }
+
+      .btn-review-app {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+
+      .provider-app-quick-btns {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-quick-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .btn-quick-approve {
+        color: #16a34a;
+      }
+      .btn-quick-approve:hover {
+        background-color: #dcfce7;
+        border-color: #16a34a;
+      }
+      .btn-quick-review {
+        color: #8b5cf6;
+      }
+      .btn-quick-review:hover {
+        background-color: #ede9fe;
+        border-color: #8b5cf6;
+      }
+      .btn-quick-reject {
+        color: #ef4444;
+      }
+      .btn-quick-reject:hover {
+        background-color: #fee2e2;
+        border-color: #ef4444;
+      }
+
+      /* ========================================= */
+      /* MODAL SYSTEM (REVIEW & PREVIEW)           */
+      /* ========================================= */
+      .nexo-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+      }
+      .nexo-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .nexo-modal-container {
+        background: var(--card-bg, #ffffff);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 580px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        padding: 24px;
+        transform: translateY(20px) scale(0.98);
+        transition: transform 0.25s ease;
+        position: relative;
+      }
+      .nexo-modal-overlay.active .nexo-modal-container {
+        transform: translateY(0) scale(1);
+      }
+      .dark-theme .nexo-modal-container {
+        background: #1f2937;
+        border: 1px solid #374151;
+      }
+
+      .modal-close-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+      }
+      .modal-close-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .modal-info-card {
+        background: rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 14px 0;
+      }
+      .dark-theme .modal-info-card {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .modal-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      .modal-info-label {
+        color: var(--text-secondary, #6b7280);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .modal-info-value {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .modal-doc-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        background: var(--card-bg, #ffffff);
+      }
+      .dark-theme .modal-doc-item {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .modal-doc-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .modal-doc-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .modal-doc-name {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 240px;
+      }
+      .modal-doc-size {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+      }
+
+      .btn-doc-view {
+        padding: 6px 12px;
+        font-size: 12.5px;
+        border-radius: 6px;
+        border: 1px solid #8b5cf6;
+        background: #f5f3ff;
+        color: #8b5cf6;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+      }
+      .btn-doc-view:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+      .dark-theme .btn-doc-view {
+        background: #3730a3;
+        color: #e0e7ff;
+      }
+
+      .decision-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .decision-btn {
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+      .decision-approve {
+        background: #16a34a;
+        color: #fff;
+      }
+      .decision-approve:hover {
+        background: #15803d;
+      }
+      .decision-review {
+        background: #8b5cf6;
+        color: #fff;
+      }
+      .decision-review:hover {
+        background: #7c3aed;
+      }
+      .decision-reject {
+        background: #ef4444;
+        color: #fff;
+      }
+      .decision-reject:hover {
+        background: #dc2626;
+      }
+
+      .review-notes-textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary);
+        font-size: 13.5px;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+      .dark-theme .review-notes-textarea {
+        background: #111827;
+        border-color: #374151;
+      }
+    </style>
+  </head>
+
+  <body
+    class="dashboard-body"
+    onclick="
+      document.getElementById('filter-dropdown').classList.remove('show')
+    "
+  >
+    <!-- ========================================= -->
+    <!-- 1. HARDCODED PROVIDER HEADER              -->
+    <!-- ========================================= -->
+    <header class="global-header">
+      <div class="logo-container">
+        <!-- Provider Avatar -->
+        <div class="avatar-btn" style="cursor: default">NX</div>
+      </div>
+
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <button class="icon-btn notification-btn" aria-label="Notifications">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot"></span>
+        </button>
+
+        <!-- Nav Wrapper -->
+        <div
+          class="nav-wrapper"
+          id="nav-wrapper"
+          style="margin-left: 4px; position: relative; z-index: 999"
+        >
+          <!-- Hamburger Button -->
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- The Provider Menu -->
+          <nav class="nav-menu" id="nav-menu">
+            <span class="nav-label">MENU</span>
+
+            <!-- Dashboard / Home -->
+            <a href="provider-dashboard.html" class="nav-link">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Applications (Active Link!) -->
+            <a href="provider-applications.html" class="nav-link active">
+              <img
+                src="assets/draft-icon.png"
+                alt="Applications"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Applications</span>
+            </a>
+
+            <!-- Provider Drafts -->
+            <a href="provider-dashboard.html?view=drafts" class="nav-link" id="nav-drafts">
+              <img
+                src="assets/draft-icon.png"
+                alt="Drafts"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Drafts</span>
+              <span
+                id="draft-badge"
+                style="
+                  display: none;
+                  background-color: #8b5cf6;
+                  color: white;
+                  font-size: 12px;
+                  font-weight: 700;
+                  padding: 2px 8px;
+                  border-radius: 99px;
+                  margin-left: auto;
+                "
+                >0</span
+              >
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <a href="provider-about.html" class="nav-link">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <a href="provider-settings.html" class="nav-link">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                style="text-decoration: none !important;"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="color: white; margin: 0; font-weight: 600; text-decoration: none !important;"
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. APPLICATIONS CONTENT                   -->
+    <!-- ========================================= -->
+    <main class="apps-container">
+      <div style="margin-bottom: 16px">
+        <a
+          href="provider-dashboard.html"
+          class="btn btn-secondary"
+          style="display: inline-block; padding: 6px 12px; font-size: 14px"
+          >&larr; Back</a
+        >
+      </div>
+
+      <h1 class="apps-title">Applications</h1>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button class="filter-tab active" id="tab-all" data-filter="all">All (0)</button>
+        <button class="filter-tab" id="tab-pending" data-filter="pending">Pending (0)</button>
+        <button class="filter-tab" id="tab-reviewed" data-filter="reviewed">Under Review (0)</button>
+        <button class="filter-tab" id="tab-approved" data-filter="approved">Approved (0)</button>
+        <button class="filter-tab" id="tab-rejected" data-filter="rejected">Rejected (0)</button>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="search-bar-container">
+        <div class="search-input-wrapper">
+          <svg
+            class="search-icon"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search applicants by name, email, course..."
+          />
+        </div>
+
+        <!-- Filter Button & Dropdown Wrapper -->
+        <div style="position: relative" id="filter-wrapper">
+          <!-- Filter Toggle Button -->
+          <button
+            class="filter-icon-btn"
+            id="filter-toggle-btn"
+            onclick="
+              document
+                .getElementById('filter-dropdown')
+                .classList.toggle('show');
+              event.stopPropagation();
+            "
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon
+                points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+              ></polygon>
+            </svg>
+          </button>
+          <!-- The Floating Filter Menu -->
+          <div
+            class="filter-dropdown"
+            id="filter-dropdown"
+            onclick="event.stopPropagation()"
+          >
+            <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 700">
+              Filter & Sort
+            </h4>
+
+            <!-- 1. Sort By -->
+            <div class="filter-group">
+              <label>Sort By</label>
+              <div
+                class="nexo-dropdown"
+                onclick="
+                  this.classList.toggle('active');
+                  event.stopPropagation();
+                "
+              >
+                <div class="nexo-dropdown-trigger">
+                  <span class="nexo-dropdown-value">Newest Applied</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list">
+                  <div class="nexo-dropdown-item" data-sort-value="newest">
+                    Newest Applied
+                  </div>
+                  <div class="nexo-dropdown-item" data-sort-value="oldest">
+                    Oldest Applied
+                  </div>
+                  <div class="nexo-dropdown-item" data-sort-value="name">
+                    Student Name (A-Z)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Dynamic Scholarship Filter -->
+            <div class="filter-group">
+              <label>Scholarship</label>
+              <div
+                class="nexo-dropdown"
+                onclick="
+                  this.classList.toggle('active');
+                  event.stopPropagation();
+                "
+              >
+                <div class="nexo-dropdown-trigger">
+                  <span class="nexo-dropdown-value">All Scholarships</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list" id="filter-scholarships-list">
+                  <div class="nexo-dropdown-item" data-program="all">
+                    All Scholarships
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Documents -->
+            <div class="filter-group">
+              <label>Documents</label>
+              <div
+                class="nexo-dropdown"
+                onclick="
+                  this.classList.toggle('active');
+                  event.stopPropagation();
+                "
+              >
+                <div class="nexo-dropdown-trigger">
+                  <span class="nexo-dropdown-value">All Applications</span>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list">
+                  <div class="nexo-dropdown-item" data-doc-filter="all">
+                    All Applications
+                  </div>
+                  <div class="nexo-dropdown-item" data-doc-filter="complete">
+                    100% Complete
+                  </div>
+                  <div class="nexo-dropdown-item" data-doc-filter="missing">
+                    Missing Files
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="apply-filters-btn"
+              style="
+                width: 100%;
+                padding: 8px;
+                font-size: 14px;
+                margin-top: 8px;
+              "
+              onclick="
+                document
+                  .getElementById('filter-dropdown')
+                  .classList.remove('show')
+              "
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State Canvas -->
+      <div class="empty-state" id="apps-empty-state">
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          style="opacity: 0.3; margin-bottom: 12px"
+        >
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          ></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <h3 style="font-size: 18px; margin-bottom: 8px">No Applications Yet</h3>
+        <p style="opacity: 0.7; font-size: 14px; line-height: 1.5">
+          Once students begin applying to your published scholarship posts,
+          their applications will appear here for review.
+        </p>
+      </div>
+
+      <!-- Applications Feed Container (Populated by js/provider-applications.js) -->
+      <div class="applications-feed" id="applications-feed" style="display: none;"></div>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- 3. REVIEW & DECISION MODAL                -->
+    <!-- ========================================= -->
+    <div class="nexo-modal-overlay" id="review-application-modal" role="dialog" aria-modal="true">
+      <div class="nexo-modal-container">
+        <button type="button" class="modal-close-btn" id="close-review-modal" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 28px; margin-bottom: 12px;">
+          <div>
+            <h2 style="font-size: 19px; font-weight: 700; margin: 0 0 2px;" id="modal-student-name">Student Name</h2>
+            <span style="font-size: 13px; color: var(--text-secondary);" id="modal-student-email">student@university.edu.ph</span>
+          </div>
+          <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
+        </div>
+
+        <!-- Student Profile Details -->
+        <div class="modal-info-card">
+          <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px; color: #8b5cf6;">Student Profile Information</div>
+          <div class="modal-info-grid">
+            <div>
+              <div class="modal-info-label">University</div>
+              <div class="modal-info-value" id="modal-student-school">Batangas State University</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Course / Degree</div>
+              <div class="modal-info-value" id="modal-student-course">BS Information Technology</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Year Level</div>
+              <div class="modal-info-value" id="modal-student-year">3rd Year</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Student ID</div>
+              <div class="modal-info-value" id="modal-student-id">21-04589</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Contact Number</div>
+              <div class="modal-info-value" id="modal-student-contact">+63 912 345 6789</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Date Submitted</div>
+              <div class="modal-info-value" id="modal-app-date">Nov 8, 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applied Scholarship Info -->
+        <div style="padding: 10px 14px; background: rgba(139, 92, 246, 0.08); border-radius: 10px; margin-bottom: 16px;">
+          <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #8b5cf6;">Applied Scholarship Program</div>
+          <div style="font-size: 14.5px; font-weight: 700; margin-top: 2px;" id="modal-program-title">Tech for Tomorrow Scholarship</div>
+        </div>
+
+        <!-- Submitted Documents Section -->
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span>Attached Verification Documents</span>
+            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Digital Drop-Box</span>
+          </h4>
+          <div id="modal-documents-list">
+            <!-- Dynamic documents inserted here -->
+          </div>
+        </div>
+
+        <!-- Review Decision Actions -->
+        <div style="border-top: 1px solid var(--border-color, #e5e7eb); padding-top: 16px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">Provider Decision & Feedback</h4>
+          
+          <div class="decision-btn-group">
+            <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Approve
+            </button>
+            <button type="button" class="decision-btn decision-review" id="modal-btn-review">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Under Review
+            </button>
+            <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Reject
+            </button>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">
+              Feedback / Remarks for Student:
+            </label>
+            <textarea
+              id="modal-review-notes"
+              class="review-notes-textarea"
+              placeholder="e.g. Congratulations! Please submit your registration receipt to the financial aid desk..."
+            ></textarea>
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+              <button type="button" class="btn btn-secondary" id="modal-btn-save-notes" style="font-size: 13px; padding: 6px 14px;">
+                Save Notes & Feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document Preview Modal -->
+    <div class="nexo-modal-overlay" id="doc-preview-modal" role="dialog" aria-modal="true">
+      <div class="nexo-modal-container" style="max-width: 680px;">
+        <button type="button" class="modal-close-btn" id="close-doc-preview" aria-label="Close document preview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 32px; margin-bottom: 14px;">
+          <h3 id="doc-preview-title" style="font-size: 16px; margin: 0; font-weight: 700;">Document Preview</h3>
+          <a id="doc-preview-download" href="#" download class="btn btn-primary" style="padding: 6px 12px; font-size: 12.5px; text-decoration: none;">
+            Download
+          </a>
+        </div>
+
+        <div id="doc-preview-body" style="min-height: 250px;">
+          <!-- Embed or Image inserted dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. JAVASCRIPT -->
+    <script src="js/main.js"></script>
+    <script src="js/provider.js"></script>
+    <script src="js/provider-applications.js"></script>
+  </body>
+</html>

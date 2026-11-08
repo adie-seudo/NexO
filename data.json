@@ -1,0 +1,45 @@
+{
+  "scholarships": [],
+  "drafts": [],
+  "applications": [],
+  "notifications": [],
+  "settings": {
+    "orgName": "NEXO",
+    "location": "Batangas City, Philippines",
+    "contactPerson": "Admin Officer",
+    "contactNumber": "+63 912 345 6789",
+    "email": "provider@nexo.edu.ph",
+    "bannerImage": "",
+    "logoImage": "",
+    "bio": "Empowering students through accessible educational opportunities and transparent scholarship management.",
+    "notifications": {
+      "newApplications": true,
+      "emailAlerts": true,
+      "weeklyDigest": false,
+      "systemUpdates": true
+    },
+    "preferences": {
+      "theme": "light",
+      "twoFactor": false
+    }
+  },
+  "studentSettings": {
+    "fullName": "Juan Dela Cruz",
+    "email": "admin@admin.edu.ph",
+    "university": "Batangas State University",
+    "course": "BS Information Technology",
+    "yearLevel": "3rd Year",
+    "studentId": "21-04589",
+    "contactNumber": "+63 912 345 6789",
+    "bio": "Passionate IT student striving for academic excellence and innovation in web technologies.",
+    "profilePicture": "",
+    "notifications": {
+      "scholarshipMatches": true,
+      "applicationUpdates": true,
+      "deadlineReminders": true
+    },
+    "preferences": {
+      "theme": "light"
+    }
+  }
+}

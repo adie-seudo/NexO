@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About Us - Provider</title>
+    <link rel="stylesheet" href="css/master.css" />
+
+    <style>
+      /* 1. Ghost mode by default (No phantom hovers) */
+      #nav-menu {
+        pointer-events: none;
+      }
+
+      /* 2. Solid mode when actively hovering the wrapper or clicked open */
+      .nav-wrapper:hover #nav-menu,
+      #nav-menu.open {
+        pointer-events: auto !important;
+      }
+
+      /* 3. THE TRUE BRIDGE (Placed BEHIND the menu so you can click links) */
+      .nav-wrapper::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: -40px;
+        width: calc(100% + 80px);
+        height: 40px;
+        background: transparent;
+        z-index: -1; /* Pushes the invisible bridge BEHIND the clickable links! */
+      }
+    </style>
+  </head>
+
+  <body class="dashboard-body">
+    <!-- ========================================= -->
+    <!-- 1. HARDCODED PROVIDER HEADER              -->
+    <!-- ========================================= -->
+    <header class="global-header">
+      <div class="logo-container">
+        <!-- Provider Avatar -->
+        <div class="avatar-btn" style="cursor: default">NX</div>
+      </div>
+
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <button class="icon-btn notification-btn" aria-label="Notifications">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot"></span>
+        </button>
+
+        <!-- Clean Wrapper (Added high z-index so it sits above the page) -->
+        <div
+          class="nav-wrapper"
+          id="nav-wrapper"
+          style="margin-left: 4px; position: relative; z-index: 999"
+        >
+          <!-- Hamburger Button -->
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- The Provider Menu -->
+          <nav class="nav-menu" id="nav-menu">
+            <span class="nav-label">MENU</span>
+
+            <!-- Dashboard / Home -->
+            <a href="provider-dashboard.html" class="nav-link">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Applications -->
+            <a href="provider-applications.html" class="nav-link">
+              <img
+                src="assets/draft-icon.png"
+                alt="Applications"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Applications</span>
+            </a>
+
+            <!-- Provider Drafts -->
+            <a href="provider-dashboard.html?view=drafts" class="nav-link" id="nav-drafts">
+              <img
+                src="assets/draft-icon.png"
+                alt="Drafts"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Drafts</span>
+              <!-- This is the badge dashboard.js is looking for! -->
+              <span
+                id="draft-badge"
+                style="
+                  display: none;
+                  background-color: #8b5cf6;
+                  color: white;
+                  font-size: 12px;
+                  font-weight: 700;
+                  padding: 2px 8px;
+                  border-radius: 99px;
+                  margin-left: auto;
+                "
+                >0</span
+              >
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <!-- Provider Info Pages (Active Link!) -->
+            <a href="provider-about.html" class="nav-link active">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+            <a href="#!" class="nav-link">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <a href="provider-settings.html" class="nav-link">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <!-- Secure Provider Logout -->
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                style="text-decoration: none !important;"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="color: white; margin: 0; font-weight: 600; text-decoration: none !important;"
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. MAIN CONTENT (ABOUT PAGE)              -->
+    <!-- ========================================= -->
+    <main class="about-page" style="padding-top: 100px">
+      <section class="about-card mission-card">
+        <h1>Our Mission</h1>
+        <h3>Bridging students and aid</h3>
+        <p>Bridging students and financial aid through digital innovation.</p>
+      </section>
+
+      <section class="about-section">
+        <h2 class="section-title">The Problem We Are Solving</h2>
+        <div class="card-list">
+          <div class="about-card inner-card">
+            <h4>Physical queues</h4>
+            <p>Paper-based submissions take time.</p>
+          </div>
+          <div class="about-card inner-card">
+            <h4>Missed opportunities</h4>
+            <p>Students may miss regional or demographic aid.</p>
+          </div>
+          <div class="about-card inner-card">
+            <h4>Manual processing</h4>
+            <p>Providers manage many paper applications.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="about-section">
+        <h2 class="section-title">Academic Context</h2>
+        <div class="about-card inner-card">
+          <p>
+            Batangas State University<br />
+            The National Engineering University<br />
+            Alangilan Campus • CICS • IT 314
+          </p>
+        </div>
+      </section>
+
+      <section class="partner-wrapper">
+        <div class="about-card partner-card">
+          <span
+            class="text-caption text-purple"
+            style="font-weight: 700; font-size: 14px"
+            >PARTNER WITH NEXO</span
+          >
+          <h3 style="margin-top: 4px; font-size: 16px">
+            Are you an LGU, foundation, or NGO?
+          </h3>
+          <p>
+            Partner with NEXO to post grants, set applicant quotas, and securely
+            review PDF requirements online.
+          </p>
+        </div>
+        <p class="support-text">Questions? Contact us at support@nexo.ph</p>
+      </section>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- 3. GLOBAL FOOTER                          -->
+    <!-- ========================================= -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University</p>
+      <div class="footer-links">
+        <a href="#!">Policy</a>
+        <a href="#!">Credits</a>
+      </div>
+    </footer>
+
+    <!-- 4. JAVASCRIPT -->
+    <script src="js/main.js" defer></script>
+    <script src="js/provider.js" defer></script>
+  </body>
+</html>

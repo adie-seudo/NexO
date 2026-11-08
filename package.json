@@ -1,0 +1,15 @@
+{
+  "name": "nexo-web",
+  "version": "1.0.0",
+  "description": "NEXO Scholarship Platform",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "./start.sh",
+    "node": "node backend/server.js",
+    "python": "python3 backend/server.py"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
