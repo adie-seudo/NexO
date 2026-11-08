@@ -112,25 +112,58 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         currentAvatarBase64 = event.target.result;
         setAvatarPreview(currentAvatarBase64);
         // INSTANTLY update header avatar icon
         updateHeaderAvatar(currentAvatarBase64);
+        try {
+          sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
+          const cached = JSON.parse(localStorage.getItem("nexo_student_settings") || "{}");
+          cached.profilePicture = currentAvatarBase64;
+          localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
+        } catch (_) {}
         showToast("Profile image updated");
+
+        // Auto-save immediately to server so user doesn't lose it if they navigate away
+        try {
+          await fetch(`${API_BASE}/api/student-settings`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profilePicture: currentAvatarBase64 }),
+          });
+        } catch (err) {
+          console.warn("Could not auto-save avatar to server:", err);
+        }
       };
       reader.readAsDataURL(file);
     });
   }
 
   if (btnRemove) {
-    btnRemove.addEventListener("click", () => {
+    btnRemove.addEventListener("click", async () => {
       currentAvatarBase64 = "";
       if (fileInput) fileInput.value = "";
       setAvatarPreview("");
       // INSTANTLY update header avatar icon
       updateHeaderAvatar("");
+      try {
+        sessionStorage.removeItem("nexo-student-avatar");
+        const cached = JSON.parse(localStorage.getItem("nexo_student_settings") || "{}");
+        cached.profilePicture = "";
+        localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
+      } catch (_) {}
       showToast("Profile image removed");
+
+      try {
+        await fetch(`${API_BASE}/api/student-settings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ profilePicture: "" }),
+        });
+      } catch (err) {
+        console.warn("Could not auto-save removed avatar to server:", err);
+      }
     });
   }
 

@@ -52,6 +52,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2800);
   }
 
+  function escapeHtml(text) {
+    if (text === null || text === undefined) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   // -------------------------------------------------------------
   // 2. FETCH REAL-TIME SCHOLARSHIPS FROM BACKEND & DATA.JSON ONLY
   // (No fake seed scholarships - only synchronized provider posts)
@@ -65,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (res.ok) {
         serverOk = true;
         const fullData = await res.json();
-        serverScholarships = Array.isArray(fullData.scholarships) ? fullData.scholarships : [];
+        const serverScholarships = Array.isArray(fullData.scholarships) ? fullData.scholarships : [];
         combined = serverScholarships;
         if (fullData.settings) {
           providerSettings = fullData.settings;
@@ -112,11 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Format for display
     allScholarships = combined.map((post) => {
-      let benefitText = post.benefit || "₱ 10,000 Grant";
-      if (!benefitText.startsWith("₱") && !isNaN(benefitText.replace(/[^0-9]/g, ""))) {
-        benefitText = `₱ ${benefitText} Grant`;
-      }
-
       return {
         id: post.id || "schol_" + Date.now(),
         title: post.title || "Scholarship Program",
@@ -124,7 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
         providerLogo: post.providerLogo || orgLogo,
         providerBanner: post.providerBanner || orgBanner,
         type: post.type || "General",
-        benefit: benefitText,
         deadline: post.deadline || "",
         formattedDate: post.formattedDate || "Open Deadline",
         desc:
@@ -430,7 +434,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="directory-meta-row">
-          <span class="directory-grant-tag">${item.benefit}</span>
           <span class="directory-deadline-tag">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -463,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (btnApply && !isClosed) {
         btnApply.addEventListener("click", () => {
           if (btnApply.classList.contains("already-applied-btn")) {
-            window.location.href = "student-dashboard.html";
+            openDetailsModal(item);
             return;
           }
           openDropboxModal(item);
@@ -496,7 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoBox = document.getElementById("modal-schol-logo");
     const providerEl = document.getElementById("modal-schol-provider");
     const titleEl = document.getElementById("modal-schol-title");
-    const benefitEl = document.getElementById("modal-schol-benefit");
     const deadlineEl = document.getElementById("modal-schol-deadline");
     const descEl = document.getElementById("modal-schol-desc");
     const reqsContainer = document.getElementById("modal-schol-reqs");
@@ -527,35 +529,134 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (providerEl) providerEl.textContent = schol.providerName || "NEXO";
     if (titleEl) titleEl.textContent = schol.title;
-    if (benefitEl) benefitEl.textContent = schol.benefit;
     if (deadlineEl) deadlineEl.textContent = schol.formattedDate;
     if (descEl) descEl.textContent = schol.desc;
 
     if (reqsContainer) {
       reqsContainer.innerHTML = "";
-      schol.requirements.forEach((req) => {
-        const item = document.createElement("div");
-        item.className = "details-checklist-item";
-        item.innerHTML = `
-          <div class="details-check-icon">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          </div>
-          <span>${req}</span>
-        `;
-        reqsContainer.appendChild(item);
-      });
+      const reqList = Array.isArray(schol.requirements) ? schol.requirements : [];
+      if (reqList.length > 0) {
+        reqList.forEach((req) => {
+          const reqTitle =
+            typeof req === "object" && req !== null
+              ? req.title || req.name || ""
+              : String(req);
+          const reqDesc =
+            typeof req === "object" && req !== null && req.desc
+              ? `<span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">${escapeHtml(req.desc)}</span>`
+              : "";
+
+          const item = document.createElement("div");
+          item.className = "details-checklist-item";
+          item.innerHTML = `
+            <div class="details-check-icon">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 600; color: var(--text-primary); font-size: 13.5px;">${escapeHtml(reqTitle)}</span>
+              ${reqDesc}
+            </div>
+          `;
+          reqsContainer.appendChild(item);
+        });
+      } else {
+        reqsContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); margin: 0;">No specific documents required.</p>`;
+      }
     }
 
-    // Disable Proceed button if closed
+    // Check if student has already applied for this scholarship
+    const existingApp = studentApplications.find(
+      (a) => String(a.scholarshipId) === String(schol.id)
+    );
+    const isAlreadyApplied = !!existingApp;
+    const isClosed = (schol.status || "").toLowerCase() === "closed";
+
+    const bannerEl = document.getElementById("modal-already-applied-banner");
+    if (bannerEl) {
+      if (isAlreadyApplied) {
+        const appStatus = existingApp.status || "Submitted";
+        const dateFormatted =
+          existingApp.formattedDate ||
+          (existingApp.submittedAt
+            ? new Date(existingApp.submittedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Recently");
+
+        let statusColor = "#10b981";
+        if (appStatus.toLowerCase().includes("review")) statusColor = "#8b5cf6";
+        if (appStatus.toLowerCase().includes("rejected")) statusColor = "#ef4444";
+
+        bannerEl.style.display = "block";
+        bannerEl.innerHTML = `
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">Application Already Submitted</div>
+              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45;">
+                You have already applied for this scholarship grant on <strong>${escapeHtml(dateFormatted)}</strong>.<br/>
+                Current Status: <span style="font-weight: 700; color: ${statusColor};">${escapeHtml(appStatus)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        bannerEl.style.display = "none";
+        bannerEl.innerHTML = "";
+      }
+    }
+
+    // Configure CTA button
     if (btnOpenDropbox) {
-      const isClosed = (schol.status || "").toLowerCase() === "closed";
-      btnOpenDropbox.disabled = isClosed;
-      btnOpenDropbox.classList.toggle("disabled", isClosed);
-      btnOpenDropbox.innerHTML = isClosed
-        ? "Applications are Closed"
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path><polyline points="12 12 12 17"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg> Proceed to Digital Drop-Box`;
+      if (isAlreadyApplied) {
+        const appStatus = existingApp.status || "Submitted";
+        btnOpenDropbox.disabled = true;
+        btnOpenDropbox.classList.remove("disabled");
+        btnOpenDropbox.style.background = "#10b981";
+        btnOpenDropbox.style.borderColor = "#10b981";
+        btnOpenDropbox.style.color = "#ffffff";
+        btnOpenDropbox.style.cursor = "not-allowed";
+        btnOpenDropbox.style.opacity = "0.95";
+        btnOpenDropbox.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Already Applied (${escapeHtml(appStatus)})
+        `;
+      } else if (isClosed) {
+        btnOpenDropbox.disabled = true;
+        btnOpenDropbox.classList.add("disabled");
+        btnOpenDropbox.style.background = "";
+        btnOpenDropbox.style.borderColor = "";
+        btnOpenDropbox.style.color = "";
+        btnOpenDropbox.style.cursor = "";
+        btnOpenDropbox.style.opacity = "";
+        btnOpenDropbox.innerHTML = "Applications are Closed";
+      } else {
+        btnOpenDropbox.disabled = false;
+        btnOpenDropbox.classList.remove("disabled");
+        btnOpenDropbox.style.background = "";
+        btnOpenDropbox.style.borderColor = "";
+        btnOpenDropbox.style.color = "";
+        btnOpenDropbox.style.cursor = "";
+        btnOpenDropbox.style.opacity = "";
+        btnOpenDropbox.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+            <polyline points="12 12 12 17"></polyline>
+            <polyline points="9 15 12 12 15 15"></polyline>
+          </svg>
+          Proceed to Digital Drop-Box
+        `;
+      }
     }
 
     modalOverlay.classList.add("active");
@@ -601,6 +702,15 @@ document.addEventListener("DOMContentLoaded", () => {
     activeScholarship = schol;
     if (!modalOverlay || !modalViewDropbox) return;
 
+    const existing = studentApplications.find(
+      (a) => String(a.scholarshipId) === String(schol.id)
+    );
+    if (existing) {
+      showToast("You have already applied for this scholarship.", true);
+      openDetailsModal(schol);
+      return;
+    }
+
     if (modalViewDetails) modalViewDetails.style.display = "none";
     modalViewDropbox.style.display = "block";
 
@@ -614,7 +724,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnOpenDropbox) {
     btnOpenDropbox.addEventListener("click", () => {
-      if (activeScholarship) openDropboxModal(activeScholarship);
+      if (!activeScholarship) return;
+      const existing = studentApplications.find(
+        (a) => String(a.scholarshipId) === String(activeScholarship.id)
+      );
+      if (existing) {
+        showToast("You have already submitted an application for this scholarship.", true);
+        return;
+      }
+      openDropboxModal(activeScholarship);
     });
   }
 
@@ -719,6 +837,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Submit Application
   if (btnSubmitDropbox) {
     btnSubmitDropbox.addEventListener("click", async () => {
+      if (!activeScholarship) return;
+      const alreadyApplied = studentApplications.some(
+        (a) => String(a.scholarshipId) === String(activeScholarship.id)
+      );
+      if (alreadyApplied) {
+        showToast("You have already applied for this scholarship.", true);
+        closeModal();
+        return;
+      }
+
       btnSubmitDropbox.disabled = true;
       btnSubmitDropbox.innerHTML = `
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
@@ -778,6 +906,10 @@ document.addEventListener("DOMContentLoaded", () => {
         (studentSettings && studentSettings.yearLevel) || "3rd Year";
       const sPhone =
         (studentSettings && studentSettings.contactNumber) || "+63 912 345 6789";
+      const sAvatar =
+        sessionStorage.getItem("nexo-student-avatar") ||
+        (studentSettings && studentSettings.profilePicture) ||
+        "";
 
       // Build application object
       const newApp = {
@@ -794,6 +926,8 @@ document.addEventListener("DOMContentLoaded", () => {
         course: sCourse,
         yearLevel: sYear,
         contactNumber: sPhone,
+        studentProfilePic: sAvatar,
+        profilePicture: sAvatar,
         status: "Submitted",
         statusText: "Submitted",
         submittedAt: new Date().toISOString(),
@@ -808,15 +942,32 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       // Save to server
+      let saveFailed = false;
       try {
-        await fetch(`${API_BASE}/api/applications`, {
+        const resp = await fetch(`${API_BASE}/api/applications`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newApp),
         });
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          showToast(errData.error || "Failed to submit application", true);
+          saveFailed = true;
+        }
       } catch (err) {
         console.warn("Could not save to /api/applications:", err);
       }
+
+      if (saveFailed) {
+        btnSubmitDropbox.disabled = false;
+        btnSubmitDropbox.innerHTML = "Submit Application";
+        closeModal();
+        return;
+      }
+
+      // Update in-memory state and re-render feed
+      studentApplications.unshift(newApp);
+      renderFeed();
 
       // Save to localStorage
       try {

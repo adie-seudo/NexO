@@ -4426,15 +4426,18 @@ body.dark-theme .directory-apply-btn:disabled {
   text-decoration: underline;
 }
 
-/* Details Modal Banner & Elements (Matching Image 4) */
+/* Details Modal Banner & Elements */
 .details-cover-wrap {
   position: relative;
+  width: 100%;
+  margin-bottom: 34px;
+}
+.details-cover-inner {
   width: 100%;
   height: 140px;
   border-radius: 16px;
   overflow: hidden;
   background: linear-gradient(135deg, #4A154B 0%, #6941C6 50%, #004AAD 100%);
-  margin-bottom: 34px;
 }
 .details-cover-img {
   width: 100%;
@@ -4458,6 +4461,12 @@ body.dark-theme .directory-apply-btn:disabled {
   font-weight: 800;
   color: #6941C6;
   font-size: 18px;
+  z-index: 5;
+}
+body.dark-theme .details-provider-avatar {
+  border-color: var(--bg-surface, #1E1B2E);
+  background: #2E1B4E;
+  color: #D6BBFB;
 }
 .details-verified-pill {
   background-color: #F4EBFF;

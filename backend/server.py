@@ -136,6 +136,11 @@ def save_base64_file(doc, prefix):
         }
 
 def sync_counts(data):
+    default_avatar = data.get("studentSettings", {}).get("profilePicture", "")
+    for app in data.get("applications", []):
+        if not app.get("studentProfilePic") and not app.get("profilePicture") and default_avatar:
+            app["studentProfilePic"] = default_avatar
+            app["profilePicture"] = default_avatar
     counts = {}
     for app in data.get("applications", []):
         sid = app.get("scholarshipId")
@@ -183,7 +188,6 @@ class NexoHandler(BaseHTTPRequestHandler):
         if path == "/api/data":
             data = read_data()
             sync_counts(data)
-            write_data(data)
             return self._send_json(200, data)
 
         if path == "/api/scholarships":
@@ -284,7 +288,6 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "providerName": body.get("providerName", data["settings"].get("orgName", "NEXO")),
                 "providerLogo": body.get("providerLogo", data["settings"].get("logoImage", "")),
                 "providerBanner": body.get("providerBanner", data["settings"].get("bannerImage", "")),
-                "benefit": body.get("benefit", "₱ 10,000 Grant"),
                 "status": body.get("status", "Open"),
                 "applicantCount": "0 / 10 Applicants",
                 "createdAt": datetime.now().isoformat()
@@ -327,6 +330,12 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(201, draft_item)
 
         if path == "/api/applications":
+            target_sid = body.get("scholarshipId", "schol_nexo_tech_01")
+            student_email = body.get("studentEmail") or data.get("studentSettings", {}).get("email", "admin@admin.edu.ph")
+            for a in data.get("applications", []):
+                if str(a.get("scholarshipId")) == str(target_sid) and (not a.get("studentEmail") or a.get("studentEmail") == student_email):
+                    return self._send_json(400, {"success": False, "error": "You have already applied for this scholarship."})
+
             app_id = body.get("id", f"app_{int(time.time()*1000)}")
             saved_docs = []
             raw_docs = body.get("documents") or body.get("uploadedDocuments") or []
@@ -343,6 +352,11 @@ class NexoHandler(BaseHTTPRequestHandler):
                     saved = save_base64_file(doc, f"{app_id}_doc{i+1}")
                     saved_docs.append(saved)
 
+            s_avatar = (
+                body.get("studentProfilePic") or
+                body.get("profilePicture") or
+                data.get("studentSettings", {}).get("profilePicture", "")
+            )
             new_app = {
                 "id": app_id,
                 "scholarshipId": body.get("scholarshipId", "schol_nexo_tech_01"),
@@ -355,6 +369,8 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "course": body.get("course", data["studentSettings"].get("course", "BS Information Technology")),
                 "yearLevel": body.get("yearLevel", data["studentSettings"].get("yearLevel", "3rd Year")),
                 "contactNumber": body.get("contactNumber", data["studentSettings"].get("contactNumber", "+63 912 345 6789")),
+                "studentProfilePic": s_avatar,
+                "profilePicture": s_avatar,
                 "status": body.get("status", "Submitted"),
                 "statusText": body.get("statusText", body.get("status", "Submitted")),
                 "submittedAt": body.get("submittedAt", datetime.now().isoformat()),
@@ -434,6 +450,11 @@ class NexoHandler(BaseHTTPRequestHandler):
             current = data.get("studentSettings", DEFAULT_DATA["studentSettings"])
             current.update(body)
             data["studentSettings"] = current
+            if "profilePicture" in body:
+                for app in data.get("applications", []):
+                    if not app.get("studentEmail") or app.get("studentEmail") == current.get("email"):
+                        app["studentProfilePic"] = current.get("profilePicture", "")
+                        app["profilePicture"] = current.get("profilePicture", "")
             write_data(data)
             return self._send_json(200, {"success": True, "settings": current})
 

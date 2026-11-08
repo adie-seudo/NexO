@@ -11,6 +11,7 @@
 
   let allApplications = [];
   let allScholarships = [];
+  let studentSettings = null;
   let activeFilterTab = "all";
   let activeSearchQuery = "";
   let activeSortOption = "newest";
@@ -96,6 +97,9 @@
         const data = await res.json();
         serverApps = Array.isArray(data.applications) ? data.applications : [];
         serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+        if (data.studentSettings) {
+          studentSettings = data.studentSettings;
+        }
 
         // Cache local copy
         try {
@@ -411,9 +415,20 @@
           })
         : "Recently");
 
+    const avatar =
+      app.studentProfilePic ||
+      app.profilePicture ||
+      (studentSettings && studentSettings.profilePicture) ||
+      "";
+
+    let avatarHtml = `<div class="provider-app-avatar">${escapeHtml(initials)}</div>`;
+    if (avatar) {
+      avatarHtml = `<img src="${avatar}" alt="${escapeHtml(name)}" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />`;
+    }
+
     card.innerHTML = `
       <div class="provider-app-main-row">
-        <div class="provider-app-avatar">${escapeHtml(initials)}</div>
+        ${avatarHtml}
 
         <div class="provider-app-details">
           <div class="provider-app-header-line">
@@ -581,8 +596,34 @@
     currentActiveApp = app;
     isModalOpen = true;
 
+    // Student Avatar in Modal Header
+    const studentName = app.studentName || "Student Applicant";
+    const initials = studentName
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0] || "")
+      .join("")
+      .toUpperCase() || "ST";
+
+    const avatar =
+      app.studentProfilePic ||
+      app.profilePicture ||
+      (studentSettings && studentSettings.profilePicture) ||
+      (typeof localStorage !== "undefined" &&
+        JSON.parse(localStorage.getItem("nexo_student_settings") || "{}").profilePicture) ||
+      "";
+
+    const modalAvatarEl = document.getElementById("modal-student-avatar");
+    if (modalAvatarEl) {
+      if (avatar) {
+        modalAvatarEl.innerHTML = `<img src="${avatar}" alt="${escapeHtml(studentName)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+      } else {
+        modalAvatarEl.innerHTML = escapeHtml(initials);
+      }
+    }
+
     // Populate Fields
-    document.getElementById("modal-student-name").textContent = app.studentName || "Student Applicant";
+    document.getElementById("modal-student-name").textContent = studentName;
     document.getElementById("modal-student-email").textContent = app.studentEmail || "student@university.edu.ph";
     document.getElementById("modal-student-id").textContent = app.studentId || "21-04589";
     document.getElementById("modal-student-school").textContent = app.university || "Batangas State University";

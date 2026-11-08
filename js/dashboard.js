@@ -830,7 +830,6 @@ function initPublishAndDraft() {
           requirements: collectedRequirements,
           providerName,
           providerLogo,
-          benefit: "₱ 10,000 Grant",
           status: "Open",
           applicantCount: "0 / 10 Applicants",
           draftId: draftIdToDelete,

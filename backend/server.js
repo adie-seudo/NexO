@@ -40,7 +40,8 @@ const DEFAULT_DATA = {
       id: "notif_welcome_prov",
       recipient: "provider",
       title: "Welcome to Provider Portal",
-      message: "Manage your scholarship programs and student applications seamlessly.",
+      message:
+        "Manage your scholarship programs and student applications seamlessly.",
       timestamp: new Date().toISOString(),
       formattedTime: "Just now",
       read: false,
@@ -50,7 +51,8 @@ const DEFAULT_DATA = {
       id: "notif_welcome_stud",
       recipient: "student",
       title: "Welcome to Student Portal",
-      message: "Explore available scholarship programs and submit applications online.",
+      message:
+        "Explore available scholarship programs and submit applications online.",
       timestamp: new Date().toISOString(),
       formattedTime: "Just now",
       read: false,
@@ -115,9 +117,11 @@ function readData() {
     if (!parsed.scholarships) parsed.scholarships = [];
     if (!parsed.drafts) parsed.drafts = [];
     if (!parsed.applications) parsed.applications = [];
-    if (!parsed.notifications) parsed.notifications = DEFAULT_DATA.notifications || [];
+    if (!parsed.notifications)
+      parsed.notifications = DEFAULT_DATA.notifications || [];
     if (!parsed.settings) parsed.settings = DEFAULT_DATA.settings;
-    if (!parsed.studentSettings) parsed.studentSettings = DEFAULT_DATA.studentSettings;
+    if (!parsed.studentSettings)
+      parsed.studentSettings = DEFAULT_DATA.studentSettings;
     return parsed;
   } catch (err) {
     console.error("Error reading data.json:", err);
@@ -160,7 +164,9 @@ function saveBase64File(doc, prefix) {
     const diskPath = path.join(UPLOADS_DIR, diskFileName);
 
     fs.writeFileSync(diskPath, buffer);
-    console.log(`[File Handling] Stored document on disk: ${diskPath} (${buffer.length} bytes)`);
+    console.log(
+      `[File Handling] Stored document on disk: ${diskPath} (${buffer.length} bytes)`,
+    );
 
     return {
       name: doc.name || safeName,
@@ -181,9 +187,21 @@ function saveBase64File(doc, prefix) {
   }
 }
 
-// Helper: Recalculate scholarship applicant counts based on current applications
+// Helper: Recalculate scholarship applicant counts based on current applications and keep student avatars synced
 function syncScholarshipApplicantCounts(data) {
-  if (!Array.isArray(data.scholarships) || !Array.isArray(data.applications)) return;
+  if (Array.isArray(data.applications)) {
+    const studentPic =
+      (data.studentSettings && data.studentSettings.profilePicture) || "";
+    data.applications.forEach((app) => {
+      if (!app.studentProfilePic && !app.profilePicture && studentPic) {
+        app.studentProfilePic = studentPic;
+        app.profilePicture = studentPic;
+      }
+    });
+  }
+
+  if (!Array.isArray(data.scholarships) || !Array.isArray(data.applications))
+    return;
   const countMap = {};
   data.applications.forEach((app) => {
     if (app.scholarshipId) {
@@ -212,7 +230,8 @@ const MIME_TYPES = {
   ".ico": "image/x-icon",
   ".pdf": "application/pdf",
   ".doc": "application/msword",
-  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   ".txt": "text/plain; charset=UTF-8",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
@@ -226,7 +245,8 @@ function sendJson(res, statusCode, payload) {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Allow-Headers":
+      "Content-Type, Authorization, X-Requested-With",
   });
   res.end(jsonStr);
 }
@@ -264,13 +284,17 @@ async function handleRequest(req, res) {
     res.writeHead(204, {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+      "Access-Control-Allow-Headers":
+        "Content-Type, Authorization, X-Requested-With",
     });
     res.end();
     return;
   }
 
-  const reqUrl = new URL(req.url, "http://" + (req.headers.host || "localhost:3000"));
+  const reqUrl = new URL(
+    req.url,
+    "http://" + (req.headers.host || "localhost:3000"),
+  );
   const pathname = reqUrl.pathname;
   const method = req.method.toUpperCase();
 
@@ -282,7 +306,6 @@ async function handleRequest(req, res) {
   if (pathname === "/api/data" && method === "GET") {
     const data = readData();
     syncScholarshipApplicantCounts(data);
-    writeData(data);
     return sendJson(res, 200, data);
   }
 
@@ -311,7 +334,6 @@ async function handleRequest(req, res) {
         providerName: body.providerName || data.settings.orgName || "NEXO",
         providerLogo: body.providerLogo || data.settings.logoImage || "",
         providerBanner: body.providerBanner || data.settings.bannerImage || "",
-        benefit: body.benefit || "₱ 10,000 Grant",
         status: body.status || "Open",
         applicantCount: "0 / 10 Applicants",
         createdAt: new Date().toISOString(),
@@ -336,12 +358,14 @@ async function handleRequest(req, res) {
       // If published from an existing draft, remove draft
       if (body.draftId) {
         data.drafts = (data.drafts || []).filter(
-          (d) => String(d.id) !== String(body.draftId)
+          (d) => String(d.id) !== String(body.draftId),
         );
       }
 
       writeData(data);
-      console.log(`[Scholarship Created] "${newScholarship.title}" by ${newScholarship.providerName}`);
+      console.log(
+        `[Scholarship Created] "${newScholarship.title}" by ${newScholarship.providerName}`,
+      );
       return sendJson(res, 201, newScholarship);
     }
   }
@@ -351,7 +375,7 @@ async function handleRequest(req, res) {
     const id = pathname.replace("/api/scholarships/", "");
     const data = readData();
     data.scholarships = (data.scholarships || []).filter(
-      (s) => String(s.id) !== String(id)
+      (s) => String(s.id) !== String(id),
     );
     writeData(data);
     return sendJson(res, 200, { success: true, id });
@@ -400,7 +424,9 @@ async function handleRequest(req, res) {
   if (pathname.startsWith("/api/drafts/") && method === "DELETE") {
     const id = pathname.replace("/api/drafts/", "");
     const data = readData();
-    data.drafts = (data.drafts || []).filter((d) => String(d.id) !== String(id));
+    data.drafts = (data.drafts || []).filter(
+      (d) => String(d.id) !== String(id),
+    );
     writeData(data);
     return sendJson(res, 200, { success: true, id });
   }
@@ -417,6 +443,25 @@ async function handleRequest(req, res) {
       const data = readData();
       data.applications = data.applications || [];
 
+      // Check if student has already applied for this scholarship
+      const studentEmail =
+        body.studentEmail ||
+        (data.studentSettings && data.studentSettings.email) ||
+        "admin@admin.edu.ph";
+      const targetScholarshipId = body.scholarshipId || "schol_nexo_tech_01";
+      const alreadyApplied = data.applications.some(
+        (a) =>
+          String(a.scholarshipId) === String(targetScholarshipId) &&
+          (!a.studentEmail || a.studentEmail === studentEmail)
+      );
+
+      if (alreadyApplied) {
+        return sendJson(res, 400, {
+          success: false,
+          error: "You have already applied for this scholarship.",
+        });
+      }
+
       const appId = body.id || "app_" + Date.now();
 
       // Process and save uploaded documents to disk using File Handling
@@ -424,8 +469,8 @@ async function handleRequest(req, res) {
       const rawDocs = Array.isArray(body.documents)
         ? body.documents
         : Array.isArray(body.uploadedDocuments)
-        ? body.uploadedDocuments
-        : [];
+          ? body.uploadedDocuments
+          : [];
 
       rawDocs.forEach((doc, idx) => {
         if (typeof doc === "string") {
@@ -442,18 +487,43 @@ async function handleRequest(req, res) {
         }
       });
 
+      const sAvatar =
+        body.studentProfilePic ||
+        body.profilePicture ||
+        (data.studentSettings && data.studentSettings.profilePicture) ||
+        "";
+
       const newApp = {
         id: appId,
         scholarshipId: body.scholarshipId || "schol_nexo_tech_01",
         scholarshipTitle: body.scholarshipTitle || "Scholarship Program",
         providerName: body.providerName || data.settings.orgName || "NEXO",
-        studentName: body.studentName || data.studentSettings.fullName || "Student Applicant",
-        studentEmail: body.studentEmail || data.studentSettings.email || "student@university.edu.ph",
-        studentId: body.studentId || data.studentSettings.studentId || "21-04589",
-        university: body.university || data.studentSettings.university || "Batangas State University",
-        course: body.course || data.studentSettings.course || "BS Information Technology",
-        yearLevel: body.yearLevel || data.studentSettings.yearLevel || "3rd Year",
-        contactNumber: body.contactNumber || data.studentSettings.contactNumber || "+63 912 345 6789",
+        studentName:
+          body.studentName ||
+          data.studentSettings.fullName ||
+          "Student Applicant",
+        studentEmail:
+          body.studentEmail ||
+          data.studentSettings.email ||
+          "student@university.edu.ph",
+        studentId:
+          body.studentId || data.studentSettings.studentId || "21-04589",
+        university:
+          body.university ||
+          data.studentSettings.university ||
+          "Batangas State University",
+        course:
+          body.course ||
+          data.studentSettings.course ||
+          "BS Information Technology",
+        yearLevel:
+          body.yearLevel || data.studentSettings.yearLevel || "3rd Year",
+        contactNumber:
+          body.contactNumber ||
+          data.studentSettings.contactNumber ||
+          "+63 912 345 6789",
+        studentProfilePic: sAvatar,
+        profilePicture: sAvatar,
         status: body.status || "Submitted",
         statusText: body.statusText || body.status || "Submitted",
         submittedAt: body.submittedAt || new Date().toISOString(),
@@ -491,34 +561,47 @@ async function handleRequest(req, res) {
       writeData(data);
 
       console.log(
-        `[Application Received] Student "${newApp.studentName}" applied for "${newApp.scholarshipTitle}" with ${savedDocuments.length} files.`
+        `[Application Received] Student "${newApp.studentName}" applied for "${newApp.scholarshipTitle}" with ${savedDocuments.length} files.`,
       );
       return sendJson(res, 201, newApp);
     }
   }
 
   // PATCH /api/applications/:id (Provider updates application status and feedback notes)
-  if (pathname.startsWith("/api/applications/") && (method === "PATCH" || method === "PUT" || method === "POST")) {
+  if (
+    pathname.startsWith("/api/applications/") &&
+    (method === "PATCH" || method === "PUT" || method === "POST")
+  ) {
     const id = pathname.replace("/api/applications/", "").split("/")[0];
     const body = await parseRequestBody(req);
     const data = readData();
     data.applications = data.applications || [];
 
-    const appIndex = data.applications.findIndex((a) => String(a.id) === String(id));
+    const appIndex = data.applications.findIndex(
+      (a) => String(a.id) === String(id),
+    );
     if (appIndex === -1) {
-      return sendJson(res, 404, { success: false, message: "Application not found" });
+      return sendJson(res, 404, {
+        success: false,
+        message: "Application not found",
+      });
     }
 
     const currentApp = data.applications[appIndex];
-    const updatedStatus = body.status !== undefined ? body.status : currentApp.status;
-    const updatedNotes = body.notes !== undefined ? body.notes : (currentApp.notes || "");
+    const updatedStatus =
+      body.status !== undefined ? body.status : currentApp.status;
+    const updatedNotes =
+      body.notes !== undefined ? body.notes : currentApp.notes || "";
 
     data.applications[appIndex] = {
       ...currentApp,
       status: updatedStatus,
       statusText: updatedStatus,
       notes: updatedNotes,
-      feedback: body.feedback !== undefined ? body.feedback : (currentApp.feedback || updatedNotes),
+      feedback:
+        body.feedback !== undefined
+          ? body.feedback
+          : currentApp.feedback || updatedNotes,
       reviewedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -538,7 +621,9 @@ async function handleRequest(req, res) {
     });
 
     writeData(data);
-    console.log(`[Application Managed] App ${id} status updated to: "${updatedStatus}"`);
+    console.log(
+      `[Application Managed] App ${id} status updated to: "${updatedStatus}"`,
+    );
     return sendJson(res, 200, {
       success: true,
       message: `Application updated to ${updatedStatus}`,
@@ -551,7 +636,7 @@ async function handleRequest(req, res) {
     const id = pathname.replace("/api/applications/", "");
     const data = readData();
     data.applications = (data.applications || []).filter(
-      (a) => String(a.id) !== String(id)
+      (a) => String(a.id) !== String(id),
     );
     syncScholarshipApplicantCounts(data);
     writeData(data);
@@ -571,14 +656,31 @@ async function handleRequest(req, res) {
 
       const updated = {
         ...current,
-        orgName: body.orgName !== undefined ? String(body.orgName).trim() : current.orgName,
-        location: body.location !== undefined ? String(body.location).trim() : current.location,
-        contactPerson: body.contactPerson !== undefined ? String(body.contactPerson).trim() : current.contactPerson,
-        contactNumber: body.contactNumber !== undefined ? String(body.contactNumber).trim() : current.contactNumber,
-        email: body.email !== undefined ? String(body.email).trim() : current.email,
+        orgName:
+          body.orgName !== undefined
+            ? String(body.orgName).trim()
+            : current.orgName,
+        location:
+          body.location !== undefined
+            ? String(body.location).trim()
+            : current.location,
+        contactPerson:
+          body.contactPerson !== undefined
+            ? String(body.contactPerson).trim()
+            : current.contactPerson,
+        contactNumber:
+          body.contactNumber !== undefined
+            ? String(body.contactNumber).trim()
+            : current.contactNumber,
+        email:
+          body.email !== undefined ? String(body.email).trim() : current.email,
         bio: body.bio !== undefined ? String(body.bio).trim() : current.bio,
-        bannerImage: body.bannerImage !== undefined ? body.bannerImage : current.bannerImage,
-        logoImage: body.logoImage !== undefined ? body.logoImage : current.logoImage,
+        bannerImage:
+          body.bannerImage !== undefined
+            ? body.bannerImage
+            : current.bannerImage,
+        logoImage:
+          body.logoImage !== undefined ? body.logoImage : current.logoImage,
         notifications: {
           ...current.notifications,
           ...(body.notifications || {}),
@@ -606,19 +708,31 @@ async function handleRequest(req, res) {
     const { currentPassword, newPassword, confirmPassword } = body;
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      return sendJson(res, 400, { success: false, message: "Please fill out all password fields." });
+      return sendJson(res, 400, {
+        success: false,
+        message: "Please fill out all password fields.",
+      });
     }
     if (newPassword.length < 8) {
-      return sendJson(res, 400, { success: false, message: "New password must be at least 8 characters long." });
+      return sendJson(res, 400, {
+        success: false,
+        message: "New password must be at least 8 characters long.",
+      });
     }
     if (newPassword !== confirmPassword) {
-      return sendJson(res, 400, { success: false, message: "New passwords do not match." });
+      return sendJson(res, 400, {
+        success: false,
+        message: "New passwords do not match.",
+      });
     }
 
     const data = readData();
     data.passwordUpdated = new Date().toISOString();
     writeData(data);
-    return sendJson(res, 200, { success: true, message: "Password updated successfully!" });
+    return sendJson(res, 200, {
+      success: true,
+      message: "Password updated successfully!",
+    });
   }
 
   // Email Change Request API
@@ -627,7 +741,10 @@ async function handleRequest(req, res) {
     const { newEmail, reason } = body;
 
     if (!newEmail || !newEmail.includes("@")) {
-      return sendJson(res, 400, { success: false, message: "Please provide a valid new email address." });
+      return sendJson(res, 400, {
+        success: false,
+        message: "Please provide a valid new email address.",
+      });
     }
 
     const data = readData();
@@ -651,7 +768,11 @@ async function handleRequest(req, res) {
   if (pathname === "/api/student-settings") {
     const data = readData();
     if (method === "GET") {
-      return sendJson(res, 200, data.studentSettings || DEFAULT_DATA.studentSettings);
+      return sendJson(
+        res,
+        200,
+        data.studentSettings || DEFAULT_DATA.studentSettings,
+      );
     }
 
     if (method === "POST") {
@@ -662,13 +783,31 @@ async function handleRequest(req, res) {
         ...current,
         fullName: current.fullName,
         email: current.email,
-        university: body.university !== undefined ? String(body.university).trim() : current.university,
-        course: body.course !== undefined ? String(body.course).trim() : current.course,
-        yearLevel: body.yearLevel !== undefined ? String(body.yearLevel).trim() : current.yearLevel,
-        studentId: body.studentId !== undefined ? String(body.studentId).trim() : current.studentId,
-        contactNumber: body.contactNumber !== undefined ? String(body.contactNumber).trim() : current.contactNumber,
+        university:
+          body.university !== undefined
+            ? String(body.university).trim()
+            : current.university,
+        course:
+          body.course !== undefined
+            ? String(body.course).trim()
+            : current.course,
+        yearLevel:
+          body.yearLevel !== undefined
+            ? String(body.yearLevel).trim()
+            : current.yearLevel,
+        studentId:
+          body.studentId !== undefined
+            ? String(body.studentId).trim()
+            : current.studentId,
+        contactNumber:
+          body.contactNumber !== undefined
+            ? String(body.contactNumber).trim()
+            : current.contactNumber,
         bio: body.bio !== undefined ? String(body.bio).trim() : current.bio,
-        profilePicture: body.profilePicture !== undefined ? body.profilePicture : current.profilePicture,
+        profilePicture:
+          body.profilePicture !== undefined
+            ? body.profilePicture
+            : current.profilePicture,
         notifications: {
           ...current.notifications,
           ...(body.notifications || {}),
@@ -681,6 +820,20 @@ async function handleRequest(req, res) {
       };
 
       data.studentSettings = updated;
+
+      // Update student profile picture on existing applications
+      if (
+        body.profilePicture !== undefined &&
+        Array.isArray(data.applications)
+      ) {
+        data.applications.forEach((app) => {
+          if (!app.studentEmail || app.studentEmail === current.email) {
+            app.studentProfilePic = updated.profilePicture;
+            app.profilePicture = updated.profilePicture;
+          }
+        });
+      }
+
       writeData(data);
       return sendJson(res, 200, {
         success: true,
@@ -700,7 +853,8 @@ async function handleRequest(req, res) {
       let filtered = data.notifications;
       if (recipient) {
         filtered = filtered.filter(
-          (n) => !n.recipient || n.recipient === recipient || n.recipient === "all"
+          (n) =>
+            !n.recipient || n.recipient === recipient || n.recipient === "all",
         );
       }
       return sendJson(res, 200, filtered);
@@ -736,7 +890,11 @@ async function handleRequest(req, res) {
       if (targetId) {
         if (String(n.id) === String(targetId)) n.read = true;
       } else if (targetRecipient) {
-        if (!n.recipient || n.recipient === targetRecipient || n.recipient === "all") {
+        if (
+          !n.recipient ||
+          n.recipient === targetRecipient ||
+          n.recipient === "all"
+        ) {
           n.read = true;
         }
       } else {
@@ -745,7 +903,10 @@ async function handleRequest(req, res) {
     });
 
     writeData(data);
-    return sendJson(res, 200, { success: true, message: "Notifications marked as read" });
+    return sendJson(res, 200, {
+      success: true,
+      message: "Notifications marked as read",
+    });
   }
 
   // -------------------------------------------------------------
@@ -806,10 +967,18 @@ const server = http.createServer(handleRequest);
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`\n======================================================`);
   console.log(`  NEXO Scholarship Portal - Local Server Running!`);
-  console.log(`  Provider Dashboard : http://localhost:${PORT}/provider-dashboard.html`);
-  console.log(`  Applications Portal: http://localhost:${PORT}/provider-applications.html`);
-  console.log(`  Student Dashboard  : http://localhost:${PORT}/student-dashboard.html`);
-  console.log(`  Student Directory  : http://localhost:${PORT}/student-browse.html`);
+  console.log(
+    `  Provider Dashboard : http://localhost:${PORT}/provider-dashboard.html`,
+  );
+  console.log(
+    `  Applications Portal: http://localhost:${PORT}/provider-applications.html`,
+  );
+  console.log(
+    `  Student Dashboard  : http://localhost:${PORT}/student-dashboard.html`,
+  );
+  console.log(
+    `  Student Directory  : http://localhost:${PORT}/student-browse.html`,
+  );
   console.log(`  Live JSON Storage  : ${DATA_FILE_BACKEND}`);
   console.log(`  Uploaded Files Dir : ${UPLOADS_DIR}`);
   console.log(`======================================================\n`);

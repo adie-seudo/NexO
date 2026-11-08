@@ -342,6 +342,20 @@ async function loadStudentData() {
     const data = await response.json();
     applications = Array.isArray(data.applications) ? data.applications : [];
 
+    // Sync student settings and header avatar
+    if (data.studentSettings) {
+      try {
+        localStorage.setItem("nexo_student_settings", JSON.stringify(data.studentSettings));
+        if (data.studentSettings.profilePicture) {
+          sessionStorage.setItem("nexo-student-avatar", data.studentSettings.profilePicture);
+          const headerAvatar = document.querySelector(".header-avatar");
+          if (headerAvatar && !headerAvatar.querySelector("img")) {
+            headerAvatar.innerHTML = `<img src="${data.studentSettings.profilePicture}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+          }
+        }
+      } catch (_) {}
+    }
+
     // Cache local copy
     try {
       localStorage.setItem("nexo_applications", JSON.stringify(applications));

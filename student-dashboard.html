@@ -197,7 +197,12 @@
     <main class="student-dash-main">
       <!-- A. STUDENT GREETING SECTION -->
       <section class="student-greeting-section">
-        <p class="student-greeting-sub" id="student-greeting-sub">Good morning,</p>
+        <p class="student-greeting-sub" id="student-greeting-sub"><script>
+          (function() {
+            var h = new Date().getHours();
+            document.write(h >= 5 && h < 12 ? 'Good morning,' : (h >= 12 && h < 18 ? 'Good afternoon,' : 'Good evening,'));
+          })();
+        </script></p>
         <div class="student-name-row">
           <h1 class="student-name-title" id="student-name-title">Juan Dela Cruz</h1>
         </div>
