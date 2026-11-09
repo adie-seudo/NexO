@@ -145,11 +145,23 @@ document.addEventListener("DOMContentLoaded", () => {
     allScholarships = combined.map((post) => {
       const limit =
         parseInt(post.applicantLimit || post.maxApplicants || 200, 10) || 200;
-      let appCount = post.applicantCount;
-      if (!appCount || appCount.includes("/ 10 Applicants")) {
-        const total = parseInt(post.applicantTotal || 0, 10) || 0;
-        appCount = `${total} / ${limit} Applicants`;
+      let liveCount = 0;
+      if (
+        Array.isArray(studentApplications) &&
+        studentApplications.length > 0
+      ) {
+        liveCount = studentApplications.filter(
+          (a) =>
+            (a.scholarshipId &&
+              post.id &&
+              String(a.scholarshipId) === String(post.id)) ||
+            (post.title &&
+              (a.scholarshipTitle === post.title || a.title === post.title)),
+        ).length;
+      } else {
+        liveCount = parseInt(post.applicantTotal || 0, 10) || 0;
       }
+      const appCount = `${liveCount} / ${limit} Applicants`;
       return {
         id: post.id || "schol_" + Date.now(),
         title: post.title || "Scholarship Program",
@@ -166,10 +178,10 @@ document.addEventListener("DOMContentLoaded", () => {
           Array.isArray(post.requirements) && post.requirements.length > 0
             ? post.requirements
             : [],
-        status: post.status || "Open",
+        status: liveCount >= limit ? "Quota Full" : post.status || "Open",
         applicantLimit: limit,
         maxApplicants: limit,
-        applicantTotal: post.applicantTotal || 0,
+        applicantTotal: liveCount,
         applicantCount: appCount,
         postedAt: post.postedAt || post.createdAt || "",
         formattedPostedDate: post.formattedPostedDate || "",
@@ -1171,9 +1183,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Update in-memory state and re-render feed
       studentApplications.unshift(newApp);
-      renderFeed();
 
-      // Save to localStorage
+      // Save application to localStorage
       try {
         const cachedApps = JSON.parse(
           localStorage.getItem("nexo_applications") || "[]",
@@ -1181,6 +1192,45 @@ document.addEventListener("DOMContentLoaded", () => {
         cachedApps.unshift(newApp);
         localStorage.setItem("nexo_applications", JSON.stringify(cachedApps));
       } catch (_) {}
+
+      // Synchronize applicant count in cached scholarships for provider and student POVs
+      try {
+        const cachedSchols = JSON.parse(
+          localStorage.getItem("nexo_scholarships") || "[]",
+        );
+        let updated = false;
+        cachedSchols.forEach((s) => {
+          if (
+            (activeScholarship &&
+              String(s.id) === String(activeScholarship.id)) ||
+            (activeScholarship && s.title === activeScholarship.title)
+          ) {
+            const limit =
+              parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+            const currentTotal = parseInt(s.applicantTotal || 0, 10) || 0;
+            const newTotal = currentTotal + 1;
+            s.applicantTotal = newTotal;
+            s.applicantLimit = limit;
+            s.maxApplicants = limit;
+            s.applicantCount = `${newTotal} / ${limit} Applicants`;
+            if (
+              newTotal >= limit &&
+              (s.status || "").toLowerCase() !== "closed"
+            ) {
+              s.status = "Quota Full";
+            }
+            updated = true;
+          }
+        });
+        if (updated) {
+          localStorage.setItem(
+            "nexo_scholarships",
+            JSON.stringify(cachedSchols),
+          );
+        }
+      } catch (_) {}
+
+      renderFeed();
 
       // Dispatch live notification for provider
       try {

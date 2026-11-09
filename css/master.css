@@ -5030,3 +5030,85 @@ body.dark-theme .doc-callout svg {
 .doc-action-btns a {
   text-decoration: none;
 }
+
+/* ========================================= */
+/* 27. SUBMISSIONS FILTERING & DETAILS MODAL */
+/* ========================================= */
+.filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filter-tab {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-tab:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background-color: rgba(139, 92, 246, 0.08);
+}
+
+.filter-tab.active {
+  border-color: #8b5cf6;
+  background-color: #8b5cf6;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-theme .filter-tab {
+  background: var(--bg-surface);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+body.dark-theme .filter-tab:hover {
+  background-color: rgba(139, 92, 246, 0.18);
+  border-color: #8b5cf6;
+  color: #c4b5fd;
+}
+
+body.dark-theme .filter-tab.active {
+  background-color: #8b5cf6;
+  border-color: #8b5cf6;
+  color: #ffffff;
+}
+
+/* Interactive Card & View Details CTA */
+.student-app-card {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.student-app-card:hover {
+  transform: translateY(-2px);
+  border-color: #8b5cf6;
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.12);
+}
+
+.view-sub-details-btn {
+  transition: all 0.2s ease;
+}
+
+.view-sub-details-btn:hover {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  border-color: #8b5cf6 !important;
+  transform: scale(1.02);
+}

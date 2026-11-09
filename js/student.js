@@ -560,6 +560,9 @@ window.API_BASE =
   (window.location.origin.includes(":3000") ? "" : "http://localhost:3000");
 var API_BASE = window.API_BASE;
 
+let allStudentApplications = [];
+let currentSubmissionsFilter = "all";
+let currentSubmissionsSearch = "";
 let lastStudentAppsHash = "";
 
 async function loadStudentData() {
@@ -567,8 +570,6 @@ async function loadStudentData() {
   const statApproved = document.getElementById("stat-approved");
   const statReview = document.getElementById("stat-review");
   const statRejected = document.getElementById("stat-rejected");
-  const emptyAppsCard = document.getElementById("student-empty-apps");
-  const appsFeed = document.getElementById("student-apps-feed");
 
   let applications = [];
 
@@ -611,6 +612,8 @@ async function loadStudentData() {
     } catch (_) {}
   }
 
+  allStudentApplications = applications;
+
   // Calculate metrics
   let totalCount = applications.length;
   let approvedCount = 0;
@@ -629,36 +632,96 @@ async function loadStudentData() {
     }
   });
 
-  // Update UI Metric Numbers
+  // Update UI Metric Numbers (for Student Dashboard)
   if (statMyApps) statMyApps.textContent = totalCount;
   if (statApproved) statApproved.textContent = approvedCount;
   if (statReview) statReview.textContent = reviewCount;
   if (statRejected) statRejected.textContent = rejectedCount;
 
-  // Prevent DOM wiping if data hasn't changed
-  const currentHash = JSON.stringify(applications);
-  if (currentHash === lastStudentAppsHash) {
-    return;
-  }
-  lastStudentAppsHash = currentHash;
+  // Update Filter Pill Counters (for My Scholarship Submissions)
+  const filterCountAll = document.getElementById("filter-count-all");
+  const filterCountReview = document.getElementById("filter-count-review");
+  const filterCountApproved = document.getElementById("filter-count-approved");
+  const filterCountRejected = document.getElementById("filter-count-rejected");
 
-  // Render Applications or Empty State
-  if (totalCount === 0) {
-    if (emptyAppsCard) emptyAppsCard.style.display = "block";
-    if (appsFeed) {
-      appsFeed.style.display = "none";
-      appsFeed.innerHTML = "";
-    }
-  } else {
-    if (emptyAppsCard) emptyAppsCard.style.display = "none";
-    if (appsFeed) {
-      appsFeed.style.display = "flex";
-      renderApplicationCards(applications, appsFeed);
-    }
-  }
+  if (filterCountAll) filterCountAll.textContent = totalCount;
+  if (filterCountReview) filterCountReview.textContent = reviewCount;
+  if (filterCountApproved) filterCountApproved.textContent = approvedCount;
+  if (filterCountRejected) filterCountRejected.textContent = rejectedCount;
+
+  // Render application feed
+  renderFilteredSubmissions();
 }
 
-// Render student application cards matching Canva reference design
+function renderFilteredSubmissions() {
+  const emptyAppsCard = document.getElementById("student-empty-apps");
+  const filterEmptyCard = document.getElementById("student-filter-empty");
+  const appsFeed = document.getElementById("student-apps-feed");
+  const hasFilterTools = Boolean(
+    document.getElementById("submissions-status-filters"),
+  );
+
+  if (!appsFeed) return;
+
+  if (allStudentApplications.length === 0) {
+    if (emptyAppsCard) emptyAppsCard.style.display = "block";
+    if (filterEmptyCard) filterEmptyCard.style.display = "none";
+    appsFeed.style.display = "none";
+    appsFeed.innerHTML = "";
+    return;
+  }
+
+  if (emptyAppsCard) emptyAppsCard.style.display = "none";
+
+  let listToRender = allStudentApplications;
+
+  // If on Submissions page with filter tools, apply status & search filters
+  if (hasFilterTools) {
+    const query = (currentSubmissionsSearch || "").toLowerCase().trim();
+
+    listToRender = allStudentApplications.filter((app) => {
+      // 1. Status Filter
+      const rawStatus = (app.status || "Submitted").toLowerCase();
+      let matchesStatus = true;
+
+      if (currentSubmissionsFilter === "review") {
+        matchesStatus =
+          rawStatus.includes("review") ||
+          rawStatus.includes("submitted") ||
+          rawStatus.includes("pending") ||
+          (!rawStatus.includes("approved") && !rawStatus.includes("rejected"));
+      } else if (currentSubmissionsFilter === "approved") {
+        matchesStatus = rawStatus.includes("approved");
+      } else if (currentSubmissionsFilter === "rejected") {
+        matchesStatus = rawStatus.includes("rejected");
+      }
+
+      if (!matchesStatus) return false;
+
+      // 2. Search Query Filter
+      if (query) {
+        const title = (app.scholarshipTitle || app.title || "").toLowerCase();
+        const org = (app.providerName || app.organization || "").toLowerCase();
+        return title.includes(query) || org.includes(query);
+      }
+
+      return true;
+    });
+
+    if (listToRender.length === 0) {
+      if (filterEmptyCard) filterEmptyCard.style.display = "block";
+      appsFeed.style.display = "none";
+      appsFeed.innerHTML = "";
+      return;
+    }
+  }
+
+  if (filterEmptyCard) filterEmptyCard.style.display = "none";
+  appsFeed.style.display = "flex";
+  renderApplicationCards(listToRender, appsFeed);
+}
+
+// Render student application cards
 function renderApplicationCards(applications, container) {
   container.innerHTML = "";
 
@@ -667,6 +730,7 @@ function renderApplicationCards(applications, container) {
     card.className = "student-app-card";
     card.style.flexDirection = "column";
     card.style.alignItems = "stretch";
+    card.dataset.appId = app.id || "";
 
     // Resolve Status badge class and text
     const rawStatus = (app.status || "Submitted").toLowerCase();
@@ -709,33 +773,373 @@ function renderApplicationCards(applications, container) {
       applicants = applicants.replace("/ 10 Applicants", "/ 200 Applicants");
     }
     const docs = app.documents || app.uploadedDocuments || [];
+    const hasFeedback = Boolean(app.feedback || app.notes);
 
-    // Optional provider feedback note
-    const feedbackText = app.feedback || app.notes;
-    const feedbackHtml = feedbackText
-      ? `<div class="student-app-feedback">
-          <strong>Provider Note:</strong> ${escapeHtml(feedbackText)}
-         </div>`
-      : "";
-
+    // Follow-up message is hidden from card body per user requirement.
+    // Instead, card has an intuitive prompt and a dedicated "View Full Details" button.
     card.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
+      <div style="display: flex; align-items: flex-start; gap: 14px; width: 100%;">
         ${logoHtml}
-        <div class="student-app-info">
+        <div class="student-app-info" style="flex: 1; min-width: 0;">
           <h4 class="student-app-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
           <p class="student-app-org">${escapeHtml(orgName)} &bull; ${escapeHtml(date)}</p>
-          <span style="font-size: 11px; color: var(--text-secondary);">📎 ${docs.length} Documents Attached</span>
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
+            <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+              ${docs.length} Document(s) Attached
+            </span>
+            ${
+              hasFeedback
+                ? `<span style="font-size: 11px; color: #8b5cf6; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Remarks Available</span>`
+                : ""
+            }
+          </div>
         </div>
         <div class="student-app-status-col">
           <span class="student-app-status-badge ${badgeClass}">${escapeHtml(statusLabel)}</span>
           <span class="student-app-applicants">${escapeHtml(applicants)}</span>
         </div>
       </div>
-      ${feedbackHtml}
+
+      <!-- Action Row: Prominent CTA & Visual Tap Affordance -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); width: 100%; gap: 8px;">
+        <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Tap card to view full details
+        </span>
+        <button type="button" class="btn btn-secondary view-sub-details-btn" data-app-id="${app.id}" style="padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 8px; margin: 0; display: inline-flex; align-items: center; gap: 5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          View Full Details
+        </button>
+      </div>
     `;
+
+    // Clicking either the card or the button opens the full details modal
+    card.addEventListener("click", () => {
+      openSubmissionDetailsModal(app);
+    });
+
+    const btn = card.querySelector(".view-sub-details-btn");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        openSubmissionDetailsModal(app);
+      });
+    }
 
     container.appendChild(card);
   });
+}
+
+// Open the Full Submission Details Modal
+function openSubmissionDetailsModal(app) {
+  let modalOverlay = document.getElementById("student-sub-modal-overlay");
+
+  // Dynamically create modal if not present on page (e.g. from Dashboard)
+  if (!modalOverlay) {
+    modalOverlay = document.createElement("div");
+    modalOverlay.id = "student-sub-modal-overlay";
+    modalOverlay.className = "schol-modal-overlay";
+    modalOverlay.setAttribute("aria-hidden", "true");
+    modalOverlay.innerHTML = `
+      <div class="schol-modal-sheet" id="student-sub-modal-sheet" style="max-width: 560px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">Application Details</h3>
+          </div>
+          <button type="button" id="close-student-sub-modal" style="background: none; border: none; font-size: 26px; line-height: 1; color: var(--text-secondary); cursor: pointer; padding: 2px 6px;">&times;</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
+          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%;">NX</div>
+          <div style="flex: 1; min-width: 0;">
+            <h4 id="modal-sub-title" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;">Scholarship Program</h4>
+            <p id="modal-sub-provider" style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provider Organization</p>
+          </div>
+        </div>
+        <div id="modal-sub-status-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2);">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 2px;">Decision Status</span>
+            <span id="modal-sub-status-text" style="font-size: 15px; font-weight: 800; color: #8b5cf6;">Under Review</span>
+          </div>
+          <div id="modal-sub-badge-wrap">
+            <span class="student-app-status-badge badge-status-review" id="modal-sub-badge">Under Review</span>
+          </div>
+        </div>
+        <div style="margin-bottom: 22px;">
+          <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            Provider Remarks &amp; Follow-Up Message
+          </h5>
+          <div id="modal-sub-feedback-box" style="padding: 14px 16px; border-radius: 12px; background: var(--bg-canvas); border: 1px solid var(--border-color); font-size: 13.5px; line-height: 1.55; color: var(--text-primary);"></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
+            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Date Submitted</span>
+            <strong id="modal-sub-date" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">Nov 8, 2026</strong>
+          </div>
+          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
+            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Grant Capacity</span>
+            <strong id="modal-sub-capacity" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">1 / 200 Applicants</strong>
+          </div>
+        </div>
+        <div style="margin-bottom: 24px;">
+          <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            Attached Verification Documents (<span id="modal-sub-doc-count">0</span>)
+          </h5>
+          <div id="modal-sub-doc-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px dashed var(--border-color); margin-bottom: 24px;">
+          <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
+          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Juan Dela Cruz</p>
+          <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">BS Information Technology &bull; Batangas State University &bull; admin@admin.edu.ph</p>
+        </div>
+        <button type="button" id="btn-close-sub-modal" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px;">
+          Close Details
+        </button>
+      </div>
+    `;
+    document.body.appendChild(modalOverlay);
+  }
+
+  // Populate title & provider
+  const title = app.scholarshipTitle || app.title || "Scholarship Program";
+  const org = app.providerName || app.organization || "NEXO";
+  const titleEl = document.getElementById("modal-sub-title");
+  const provEl = document.getElementById("modal-sub-provider");
+  const logoEl = document.getElementById("modal-sub-logo");
+
+  if (titleEl) titleEl.textContent = title;
+  if (provEl) provEl.textContent = org;
+  if (logoEl) {
+    if (app.logo || app.providerLogo) {
+      logoEl.innerHTML = `<img src="${app.logo || app.providerLogo}" alt="${escapeHtml(org)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    } else {
+      const inits = org
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase();
+      logoEl.textContent = inits || "NX";
+    }
+  }
+
+  // Populate Status
+  const rawStatus = (app.status || "Submitted").toLowerCase();
+  const statusCard = document.getElementById("modal-sub-status-card");
+  const statusText = document.getElementById("modal-sub-status-text");
+  const statusBadge = document.getElementById("modal-sub-badge");
+
+  if (rawStatus.includes("approved")) {
+    if (statusText) {
+      statusText.textContent = "Approved";
+      statusText.style.color = "#10b981";
+    }
+    if (statusBadge) {
+      statusBadge.className = "student-app-status-badge badge-status-approved";
+      statusBadge.textContent = "Approved";
+    }
+    if (statusCard) {
+      statusCard.style.background = "rgba(16, 185, 129, 0.08)";
+      statusCard.style.borderColor = "rgba(16, 185, 129, 0.25)";
+    }
+  } else if (rawStatus.includes("rejected")) {
+    if (statusText) {
+      statusText.textContent = "Rejected";
+      statusText.style.color = "#ef4444";
+    }
+    if (statusBadge) {
+      statusBadge.className = "student-app-status-badge badge-status-rejected";
+      statusBadge.textContent = "Rejected";
+    }
+    if (statusCard) {
+      statusCard.style.background = "rgba(239, 68, 68, 0.08)";
+      statusCard.style.borderColor = "rgba(239, 68, 68, 0.25)";
+    }
+  } else {
+    // Under Review / Submitted
+    if (statusText) {
+      statusText.textContent = "Under Review";
+      statusText.style.color = "#8b5cf6";
+    }
+    if (statusBadge) {
+      statusBadge.className = "student-app-status-badge badge-status-review";
+      statusBadge.textContent = "Under Review";
+    }
+    if (statusCard) {
+      statusCard.style.background = "rgba(139, 92, 246, 0.08)";
+      statusCard.style.borderColor = "rgba(139, 92, 246, 0.25)";
+    }
+  }
+
+  // Populate Provider Feedback / Follow-Up Message
+  const feedbackBox = document.getElementById("modal-sub-feedback-box");
+  const feedbackMsg = app.feedback || app.notes;
+
+  if (feedbackBox) {
+    if (feedbackMsg && feedbackMsg.trim()) {
+      feedbackBox.innerHTML = `
+        <div style="background: rgba(139, 92, 246, 0.08); border-left: 4px solid #8b5cf6; border-radius: 8px; padding: 12px 14px;">
+          <strong style="color: #8b5cf6; font-size: 12.5px; display: block; margin-bottom: 4px;">Official Provider Remarks:</strong>
+          <span style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; color: var(--text-primary);">${escapeHtml(feedbackMsg)}</span>
+        </div>
+      `;
+    } else {
+      let defaultMsg =
+        "Your academic verification files are currently on record with the scholarship evaluation committee. Official follow-up notes from the provider will appear here once processed.";
+      if (rawStatus.includes("approved")) {
+        defaultMsg =
+          "Congratulations! Your scholarship application has been officially approved. Please monitor your institutional university email for disbursement instructions.";
+      } else if (rawStatus.includes("rejected")) {
+        defaultMsg =
+          "Thank you for applying. Your application was reviewed but could not be accepted for this cycle. You are encouraged to explore other grants.";
+      }
+      feedbackBox.innerHTML = `
+        <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${escapeHtml(defaultMsg)}</p>
+      `;
+    }
+  }
+
+  // Populate Dates & Capacity
+  const dateEl = document.getElementById("modal-sub-date");
+  const capEl = document.getElementById("modal-sub-capacity");
+  if (dateEl)
+    dateEl.textContent =
+      app.formattedDate || app.appliedDate || "Recently Applied";
+  if (capEl) {
+    let cap = app.applicantCount || "1 / 200 Applicants";
+    if (cap.includes("/ 10 Applicants"))
+      cap = cap.replace("/ 10 Applicants", "/ 200 Applicants");
+    capEl.textContent = cap;
+  }
+
+  // Populate Documents List
+  const docListEl = document.getElementById("modal-sub-doc-list");
+  const docCountEl = document.getElementById("modal-sub-doc-count");
+  const docs = app.documents || app.uploadedDocuments || [];
+
+  if (docCountEl) docCountEl.textContent = docs.length;
+
+  if (docListEl) {
+    docListEl.innerHTML = "";
+    if (docs.length === 0) {
+      docListEl.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); margin: 0;">No documents were attached to this submission.</p>`;
+    } else {
+      docs.forEach((doc, idx) => {
+        const docName =
+          typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
+        const docSize =
+          typeof doc === "object" && doc.size ? doc.size : "Verified Upload";
+        const isPdf = docName.toLowerCase().endsWith(".pdf");
+
+        const docItem = document.createElement("div");
+        docItem.style.cssText =
+          "display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: var(--bg-canvas); border: 1px solid var(--border-color); gap: 10px;";
+        docItem.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+            <div style="width: 32px; height: 32px; border-radius: 6px; background: ${isPdf ? "rgba(239, 68, 68, 0.12)" : "rgba(139, 92, 246, 0.12)"}; color: ${isPdf ? "#ef4444" : "#8b5cf6"}; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; font-weight: 700;">
+              ${isPdf ? "PDF" : "IMG"}
+            </div>
+            <div style="min-width: 0;">
+              <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(docName)}</p>
+              <span style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(docSize)}</span>
+            </div>
+          </div>
+          <span style="font-size: 11.5px; color: #10b981; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Attached
+          </span>
+        `;
+        docListEl.appendChild(docItem);
+      });
+    }
+  }
+
+  // Populate Student Identity
+  const nameEl = document.getElementById("modal-sub-student-name");
+  const infoEl = document.getElementById("modal-sub-student-info");
+  if (nameEl) nameEl.textContent = app.studentName || "Juan Dela Cruz";
+  if (infoEl) {
+    const course = app.course || "BS Information Technology";
+    const uni = app.university || "Batangas State University";
+    const email = app.studentEmail || "admin@admin.edu.ph";
+    infoEl.textContent = `${course} • ${uni} • ${email}`;
+  }
+
+  // Open Modal
+  modalOverlay.classList.add("active");
+  document.body.style.overflow = "hidden";
+
+  // Modal Close Handlers
+  function closeSubModal() {
+    modalOverlay.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+
+  const closeBtn = document.getElementById("close-student-sub-modal");
+  const bottomCloseBtn = document.getElementById("btn-close-sub-modal");
+
+  if (closeBtn) closeBtn.onclick = closeSubModal;
+  if (bottomCloseBtn) bottomCloseBtn.onclick = closeSubModal;
+
+  modalOverlay.onclick = (e) => {
+    if (e.target === modalOverlay) closeSubModal();
+  };
+
+  const handleEsc = (e) => {
+    if (e.key === "Escape" && modalOverlay.classList.contains("active")) {
+      closeSubModal();
+      document.removeEventListener("keydown", handleEsc);
+    }
+  };
+  document.addEventListener("keydown", handleEsc);
+}
+
+// Initialize Submissions Page Filtering (Status Tabs & Search Bar)
+function initSubmissionsFiltering() {
+  const filterTabsContainer = document.getElementById(
+    "submissions-status-filters",
+  );
+  const searchInput = document.getElementById("submissions-search-input");
+  const resetBtn = document.getElementById("reset-submissions-filter");
+
+  if (!filterTabsContainer && !searchInput) return;
+
+  if (filterTabsContainer) {
+    filterTabsContainer.querySelectorAll(".filter-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        filterTabsContainer
+          .querySelectorAll(".filter-tab")
+          .forEach((t) => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentSubmissionsFilter = tab.dataset.filter || "all";
+        renderFilteredSubmissions();
+      });
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      currentSubmissionsSearch = e.target.value;
+      renderFilteredSubmissions();
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      currentSubmissionsFilter = "all";
+      currentSubmissionsSearch = "";
+      if (searchInput) searchInput.value = "";
+      if (filterTabsContainer) {
+        filterTabsContainer.querySelectorAll(".filter-tab").forEach((t) => {
+          t.classList.toggle("active", t.dataset.filter === "all");
+        });
+      }
+      renderFilteredSubmissions();
+    });
+  }
 }
 
 function escapeHtml(text) {
@@ -777,6 +1181,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initStudentGreeting();
 
   // 4. Load Real-time Data / Empty State
+  initSubmissionsFiltering();
   loadStudentData();
   setInterval(loadStudentData, 3500);
   window.addEventListener("focus", loadStudentData);

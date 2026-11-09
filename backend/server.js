@@ -202,16 +202,15 @@ function syncScholarshipApplicantCounts(data) {
 
   if (!Array.isArray(data.scholarships) || !Array.isArray(data.applications))
     return;
-  const countMap = {};
-  data.applications.forEach((app) => {
-    if (app.scholarshipId) {
-      countMap[app.scholarshipId] = (countMap[app.scholarshipId] || 0) + 1;
-    }
-  });
 
   const scholMap = {};
   data.scholarships.forEach((s) => {
-    const count = countMap[s.id] || 0;
+    const count = data.applications.filter((app) => {
+      if (app.scholarshipId && s.id && String(app.scholarshipId) === String(s.id)) return true;
+      if (s.title && (app.scholarshipTitle === s.title || app.title === s.title)) return true;
+      return false;
+    }).length;
+
     const limit =
       parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
     s.applicantLimit = limit;
@@ -225,8 +224,14 @@ function syncScholarshipApplicantCounts(data) {
   });
 
   data.applications.forEach((app) => {
-    if (app.scholarshipId && scholMap[app.scholarshipId]) {
-      app.applicantCount = scholMap[app.scholarshipId].applicantCount;
+    const matched =
+      scholMap[app.scholarshipId] ||
+      data.scholarships.find(
+        (s) => s.title && (app.scholarshipTitle === s.title || app.title === s.title),
+      );
+    if (matched) {
+      app.applicantCount = matched.applicantCount;
+      if (!app.scholarshipId) app.scholarshipId = matched.id;
     }
   });
 }

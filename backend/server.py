@@ -141,13 +141,12 @@ def sync_counts(data):
         if not app.get("studentProfilePic") and not app.get("profilePicture") and default_avatar:
             app["studentProfilePic"] = default_avatar
             app["profilePicture"] = default_avatar
-    counts = {}
-    for app in data.get("applications", []):
-        sid = app.get("scholarshipId")
-        if sid:
-            counts[sid] = counts.get(sid, 0) + 1
     for s in data.get("scholarships", []):
-        c = counts.get(s["id"], 0)
+        c = 0
+        for app in data.get("applications", []):
+            if (app.get("scholarshipId") and str(app.get("scholarshipId")) == str(s.get("id"))) or \
+               (s.get("title") and (app.get("scholarshipTitle") == s.get("title") or app.get("title") == s.get("title"))):
+                c += 1
         lim = int(s.get("applicantLimit") or s.get("maxApplicants") or 200)
         s["applicantLimit"] = lim
         s["maxApplicants"] = lim
@@ -158,8 +157,16 @@ def sync_counts(data):
     schol_map = {s["id"]: s for s in data.get("scholarships", [])}
     for app in data.get("applications", []):
         sid = app.get("scholarshipId")
-        if sid in schol_map:
-            app["applicantCount"] = schol_map[sid]["applicantCount"]
+        matched = schol_map.get(sid)
+        if not matched:
+            for s in data.get("scholarships", []):
+                if s.get("title") and (app.get("scholarshipTitle") == s.get("title") or app.get("title") == s.get("title")):
+                    matched = s
+                    break
+        if matched:
+            app["applicantCount"] = matched["applicantCount"]
+            if not sid:
+                app["scholarshipId"] = matched["id"]
 
 class NexoHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):

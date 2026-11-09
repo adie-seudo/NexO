@@ -628,24 +628,36 @@ function getCollectedRequirements() {
   return reqs;
 }
 
-function createCompactCard(schol) {
+function createCompactCard(schol, allApplications = null) {
   const card = document.createElement("div");
   card.className = "compact-post-card";
   card.dataset.id = schol.id || "";
 
   const limitNum =
     parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
-  let applicantCountDisplay =
-    schol.applicantCount || `0 / ${limitNum} Applicants`;
-  if (
-    applicantCountDisplay.includes("/ 10 Applicants") ||
-    applicantCountDisplay.includes("/ 10 ")
-  ) {
-    applicantCountDisplay = applicantCountDisplay.replace(
-      /\/ 10\s*(Applicants)?/,
-      `/ ${limitNum} Applicants`,
-    );
+
+  // Dynamically calculate live applicant count against applications
+  let count = 0;
+  let apps = allApplications;
+  if (!Array.isArray(apps)) {
+    try {
+      apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+    } catch (_) {
+      apps = [];
+    }
   }
+
+  if (Array.isArray(apps) && apps.length > 0) {
+    count = apps.filter((a) => {
+      if (a.scholarshipId && schol.id && String(a.scholarshipId) === String(schol.id)) return true;
+      if (schol.title && (a.scholarshipTitle === schol.title || a.title === schol.title)) return true;
+      return false;
+    }).length;
+  } else if (schol.applicantTotal !== undefined) {
+    count = parseInt(schol.applicantTotal, 10) || 0;
+  }
+
+  const applicantCountDisplay = `${count} / ${limitNum} Applicants`;
 
   card.innerHTML = `
     <div class="compact-post-header">
@@ -682,12 +694,14 @@ function createCompactCard(schol) {
     const titleEl = document.getElementById("view-modal-title");
     const typeEl = document.getElementById("view-modal-type");
     const dateEl = document.getElementById("view-modal-date");
+    const applicantsEl = document.getElementById("view-modal-applicants");
     const descEl = document.getElementById("view-modal-desc");
     const modalEl = document.getElementById("view-details-modal");
 
     if (titleEl) titleEl.textContent = schol.title;
     if (typeEl) typeEl.textContent = schol.typeText || schol.type || "";
     if (dateEl) dateEl.textContent = schol.formattedDate || "No Deadline";
+    if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
     if (descEl) descEl.textContent = schol.desc || "";
     if (modalEl) modalEl.classList.add("active");
   });
@@ -792,6 +806,25 @@ async function loadPersistedData() {
     applications.length,
   );
 
+  // Synchronize local cache with accurate live counts
+  if (Array.isArray(scholarships) && Array.isArray(applications)) {
+    scholarships.forEach((s) => {
+      const liveCount = applications.filter(
+        (a) =>
+          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title))
+      ).length;
+      const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+      s.applicantTotal = liveCount;
+      s.applicantLimit = limit;
+      s.maxApplicants = limit;
+      s.applicantCount = `${liveCount} / ${limit} Applicants`;
+    });
+    try {
+      localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+    } catch (_) {}
+  }
+
   // Populate Scholarships Feed
   const feed = document.getElementById("scholarships-feed");
   const allFeed = document.getElementById("all-scholarships-feed");
@@ -806,10 +839,10 @@ async function loadPersistedData() {
       if (emptyState) emptyState.style.display = "none";
       scholarships.forEach((schol, idx) => {
         if (idx < 3) {
-          feed.appendChild(createCompactCard(schol));
+          feed.appendChild(createCompactCard(schol, applications));
         }
         if (allFeed) {
-          allFeed.appendChild(createCompactCard(schol));
+          allFeed.appendChild(createCompactCard(schol, applications));
         }
       });
       if (viewAllBtn) {
