@@ -63,16 +63,19 @@ window.DEFAULT_PROVIDER_BANNER = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA
         window.DEFAULT_PROVIDER_BANNER,
       );
     }
-    // Backfill any existing cached scholarships missing providerBanner
-    if (
-      Array.isArray(schols) &&
-      schols.length > 0 &&
-      window.DEFAULT_PROVIDER_BANNER
-    ) {
+    // Backfill any existing cached scholarships missing providerBanner or stuck with 10 applicant limit
+    if (Array.isArray(schols) && schols.length > 0) {
       let modified = false;
       schols.forEach((s) => {
-        if (!s.providerBanner) {
+        if (!s.providerBanner && window.DEFAULT_PROVIDER_BANNER) {
           s.providerBanner = window.DEFAULT_PROVIDER_BANNER;
+          modified = true;
+        }
+        const limitNum = parseInt(s.applicantLimit || s.maxApplicants || 200, 10);
+        if (limitNum === 10 || (s.applicantCount && s.applicantCount.includes("/ 10 "))) {
+          s.applicantLimit = 200;
+          s.maxApplicants = 200;
+          s.applicantCount = (s.applicantCount || "0 / 200 Applicants").replace("/ 10", "/ 200");
           modified = true;
         }
       });
@@ -154,22 +157,209 @@ function initSplashScreen() {
 }
 
 // ==========================================
-// 3. SAFE HEADER INJECTION
+// 3. SAFE HEADER INJECTION & ROLE-AWARE HYDRATION
 // ==========================================
+const DEFAULT_HEADER_HTML = `
+<header class="global-header">
+  <div class="logo-container">
+    <img src="assets/logo.png" alt="NEXO Logo" class="nexo-logo" onerror="this.style.display='none'" />
+    <span class="logo-text">NEXO</span>
+  </div>
+  <div class="header-actions">
+    <label class="theme-toggle-container">
+      <input id="theme-toggle" class="theme-toggle" type="checkbox" aria-label="Toggle Dark Mode" />
+    </label>
+    <div class="nav-wrapper" id="nav-wrapper">
+      <button class="hamburger-btn" aria-label="Open Menu">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <nav class="nav-menu" id="nav-menu">
+        <span class="nav-label">MENU</span>
+        <a href="index.html" class="nav-link"><img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Home</span></a>
+        <a href="about.html" class="nav-link"><img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">About Us</span></a>
+        <a href="policy.html" class="nav-link"><img src="assets/policy-icon.png" alt="Policy" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Policy</span></a>
+        <a href="credits.html" class="nav-link"><img src="assets/credits-icon.png" alt="Credits" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Credits</span></a>
+        <div class="nav-buttons">
+          <button class="btn btn-primary" id="header-login-btn"><img src="assets/login-icon.png" alt="Log In" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Log In</span></button>
+          <button class="btn btn-secondary" id="header-register-btn"><img src="assets/register-icon.png" alt="Register" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Register</span></button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+`;
+
+function hydrateRoleAwareHeader() {
+  const role =
+    sessionStorage.getItem("nexo-logged-in") ||
+    localStorage.getItem("nexo-logged-in");
+  const navMenu =
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+  const logoContainer = document.querySelector(".logo-container");
+
+  // Determine role dashboard URL
+  let dashboardUrl = "index.html";
+  if (role === "provider") dashboardUrl = "provider-dashboard.html";
+  else if (role === "student") dashboardUrl = "student-dashboard.html";
+
+  // 1. Update logo behavior so clicking logo leads to user dashboard
+  if (logoContainer && role) {
+    logoContainer.style.cursor = "pointer";
+    logoContainer.onclick = () => {
+      window.location.href = dashboardUrl;
+    };
+    const logoLink = logoContainer.closest("a");
+    if (logoLink) logoLink.href = dashboardUrl;
+  }
+
+  // 2. Update doc back buttons (credits.html, privacy.html, terms.html, policy.html, about.html)
+  const docBackButtons = document.querySelectorAll(
+    "#credits-back-btn, #privacy-back-btn, #terms-back-btn, #policy-back-btn, .doc-back-btn",
+  );
+  docBackButtons.forEach((btn) => {
+    btn.setAttribute("href", dashboardUrl);
+    btn.onclick = (e) => {
+      e.preventDefault();
+      window.location.href = dashboardUrl;
+    };
+  });
+
+  // 3. Hydrate side navigation menu if user is authenticated
+  if (navMenu && role === "provider") {
+    navMenu.innerHTML = `
+      <span class="nav-label">MENU</span>
+
+      <a href="provider-dashboard.html" class="nav-link">
+        <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Home</span>
+      </a>
+
+      <a href="provider-applications.html" class="nav-link">
+        <img src="assets/draft-icon.png" alt="Applications" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Applications</span>
+      </a>
+
+      <a href="provider-settings.html" class="nav-link">
+        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Settings</span>
+      </a>
+
+      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+
+      <a href="provider-about.html" class="nav-link">
+        <img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">About Us</span>
+      </a>
+
+      <a href="privacy.html" class="nav-link">
+        <img src="assets/policy-icon.png" alt="Policy" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Policy</span>
+      </a>
+
+      <a href="credits.html" class="nav-link">
+        <img src="assets/credits-icon.png" alt="Credits" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Credits</span>
+      </a>
+
+      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+
+      <div class="nav-buttons">
+        <a href="index.html" class="btn logout-btn" id="header-logout-btn" style="text-decoration: none !important;">
+          <img src="assets/logout-icon.png" alt="Logout" class="nav-icon" onerror="this.style.display='none'" />
+          <span class="nav-text">Log Out</span>
+        </a>
+      </div>
+    `;
+  } else if (navMenu && role === "student") {
+    navMenu.innerHTML = `
+      <span class="nav-label">MENU</span>
+
+      <a href="student-dashboard.html" class="nav-link">
+        <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Home</span>
+      </a>
+
+      <a href="student-browse.html" class="nav-link">
+        <img src="assets/draft-icon.png" alt="Browse" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Browse Scholarships</span>
+      </a>
+
+      <a href="student-submissions.html" class="nav-link">
+        <img src="assets/policy-icon.png" alt="Submissions" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">View My Submissions</span>
+      </a>
+
+      <a href="student-settings.html" class="nav-link">
+        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Settings</span>
+      </a>
+
+      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+
+      <a href="student-about.html" class="nav-link">
+        <img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">About Us</span>
+      </a>
+
+      <a href="privacy.html" class="nav-link">
+        <img src="assets/policy-icon.png" alt="Policy" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Policy</span>
+      </a>
+
+      <a href="credits.html" class="nav-link">
+        <img src="assets/credits-icon.png" alt="Credits" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Credits</span>
+      </a>
+
+      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+
+      <div class="nav-buttons">
+        <a href="index.html" class="btn logout-btn" id="header-logout-btn" style="text-decoration: none !important;">
+          <img src="assets/logout-icon.png" alt="Logout" class="nav-icon" onerror="this.style.display='none'" />
+          <span class="nav-text">Log Out</span>
+        </a>
+      </div>
+    `;
+  }
+
+  // Active link highlight
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  if (navMenu) {
+    navMenu.querySelectorAll(".nav-link").forEach((link) => {
+      if (link.getAttribute("href") === currentPage) {
+        link.classList.add("active");
+      }
+    });
+  }
+}
+
 function initHeaderInjection() {
   const headerPlaceholder = document.getElementById("header-placeholder");
 
   if (headerPlaceholder) {
     fetch("header.html")
-      .then((response) => response.text())
+      .then((response) => {
+        if (!response.ok) throw new Error("Status " + response.status);
+        return response.text();
+      })
       .then((data) => {
         headerPlaceholder.innerHTML = data;
         initializeHeaderFunctions();
+        hydrateRoleAwareHeader();
       })
-      .catch((error) => console.error("Error loading header:", error));
+      .catch((error) => {
+        console.warn("Using fallback header (e.g. file:/// protocol):", error);
+        headerPlaceholder.innerHTML = DEFAULT_HEADER_HTML;
+        initializeHeaderFunctions();
+        hydrateRoleAwareHeader();
+      });
   } else {
-    // Dashboard and About pages do not have a placeholder, so initialize directly
+    // Dashboard and custom pages do not have a placeholder, so initialize directly
     initializeHeaderFunctions();
+    hydrateRoleAwareHeader();
   }
 }
 
@@ -598,5 +788,30 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "verify.html";
       }, 1500);
     };
+  }
+});
+
+// ==========================================
+// 6. GLOBAL DELEGATED LOGOUT HANDLER
+// ==========================================
+document.addEventListener("click", (e) => {
+  const logoutBtn = e.target.closest(
+    ".logout-btn, #student-logout-btn, #header-logout-btn",
+  );
+  if (logoutBtn) {
+    e.preventDefault();
+    try {
+      sessionStorage.removeItem("nexo-logged-in");
+      sessionStorage.removeItem("nexo-student-name");
+      sessionStorage.removeItem("nexo-student-email");
+      sessionStorage.removeItem("nexo-student-intro-played");
+      sessionStorage.removeItem("nexo-student-avatar");
+      sessionStorage.removeItem("nexo-pending-email");
+      sessionStorage.removeItem("nexo-pending-name");
+      localStorage.removeItem("nexo-logged-in");
+      localStorage.removeItem("nexo-student-name");
+      localStorage.removeItem("nexo-student-email");
+    } catch (_) {}
+    window.location.href = "index.html";
   }
 });

@@ -122,18 +122,85 @@ const DEFAULT_STUDENT_NOTIFICATIONS = [
 ];
 
 function getStudentNotificationsFromStorage() {
-  let all = null;
+  let all = [];
   try {
     const raw = localStorage.getItem("nexo_notifications");
     if (raw) all = JSON.parse(raw);
   } catch (_) {}
 
-  if (!Array.isArray(all) || all.length === 0) {
-    all = [...DEFAULT_STUDENT_NOTIFICATIONS];
-    try {
-      localStorage.setItem("nexo_notifications", JSON.stringify(all));
-    } catch (_) {}
+  if (!Array.isArray(all)) all = [];
+
+  // 1. Sync status updates from actual student applications
+  try {
+    const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+    if (Array.isArray(apps)) {
+      apps.forEach((app) => {
+        const notifId = "notif_student_app_" + (app.id || "temp");
+        if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
+          const status = app.status || "Under Review";
+          all.unshift({
+            id: notifId,
+            recipient: "student",
+            title: `Application ${status}`,
+            message: `Your application for "${app.scholarshipTitle || "Scholarship"}" is now ${status}.`,
+            timestamp: app.submittedAt || new Date().toISOString(),
+            formattedTime: app.formattedDate || "Recently",
+            read: false,
+            link: "student-submissions.html",
+            appId: app.id,
+          });
+        }
+      });
+    }
+  } catch (_) {}
+
+  // 2. Sync announcement notifications from active scholarships
+  try {
+    const schols = JSON.parse(
+      localStorage.getItem("nexo_scholarships") || "[]",
+    );
+    if (Array.isArray(schols)) {
+      schols.forEach((s) => {
+        const notifId = "notif_student_schol_" + s.id;
+        if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
+          all.push({
+            id: notifId,
+            recipient: "student",
+            title: "New Scholarship Posted",
+            message: `"${s.title}" is now open for applications. Check eligibility.`,
+            timestamp: s.postedAt || new Date().toISOString(),
+            formattedTime: "Open",
+            read: false,
+            link: "student-browse.html",
+            scholId: s.id,
+          });
+        }
+      });
+    }
+  } catch (_) {}
+
+  // 3. Ensure baseline student notifications exist if none found
+  const studentItems = all.filter(
+    (n) => !n.recipient || n.recipient === "student" || n.recipient === "all",
+  );
+
+  if (studentItems.length === 0) {
+    DEFAULT_STUDENT_NOTIFICATIONS.forEach((dn) => {
+      if (
+        !dn.recipient ||
+        dn.recipient === "student" ||
+        dn.recipient === "all"
+      ) {
+        if (!all.some((n) => n.id === dn.id)) {
+          all.push(dn);
+        }
+      }
+    });
   }
+
+  try {
+    localStorage.setItem("nexo_notifications", JSON.stringify(all));
+  } catch (_) {}
 
   return all.filter(
     (n) => !n.recipient || n.recipient === "student" || n.recipient === "all",

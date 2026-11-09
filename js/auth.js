@@ -115,8 +115,9 @@ function initLoginToggleAndSubmit() {
 
       // 1. PROVIDER ADMIN BYPASS
       if (emailValue === "admin@admin" && passwordValue === "admin") {
-        // Give the browser a memory that we are logged in
+        // Give the browser persistent memory that we are logged in
         sessionStorage.setItem("nexo-logged-in", "provider");
+        localStorage.setItem("nexo-logged-in", "provider");
         window.location.href = "provider-dashboard.html";
         return;
       }
@@ -127,6 +128,9 @@ function initLoginToggleAndSubmit() {
         sessionStorage.setItem("nexo-student-name", "Juan Dela Cruz");
         sessionStorage.setItem("nexo-student-email", "admin@admin.edu.ph");
         sessionStorage.setItem("nexo-student-intro-played", "true");
+        localStorage.setItem("nexo-logged-in", "student");
+        localStorage.setItem("nexo-student-name", "Juan Dela Cruz");
+        localStorage.setItem("nexo-student-email", "admin@admin.edu.ph");
         window.location.href = "student-dashboard.html";
         return;
       }

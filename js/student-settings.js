@@ -262,8 +262,14 @@ document.addEventListener("DOMContentLoaded", () => {
     setAvatarPreview(currentAvatarBase64);
 
     // Sync theme toggle
-    const isDark = document.body.classList.contains("dark-theme");
+    const isDark =
+      document.body.classList.contains("dark-theme") ||
+      document.documentElement.classList.contains("dark-theme");
     if (prefDark) prefDark.checked = isDark;
+    const topToggle =
+      document.getElementById("theme-toggle") ||
+      document.querySelector(".theme-toggle");
+    if (topToggle) topToggle.checked = !isDark;
 
     if (settings.notifications) {
       if (
@@ -356,11 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Synchronize theme with body
       if (prefDark) {
         if (prefDark.checked) {
+          document.documentElement.classList.add("dark-theme");
           document.body.classList.add("dark-theme");
-          localStorage.setItem("theme", "dark");
+          localStorage.setItem("nexo-theme", "dark");
         } else {
+          document.documentElement.classList.remove("dark-theme");
           document.body.classList.remove("dark-theme");
-          localStorage.setItem("theme", "light");
+          localStorage.setItem("nexo-theme", "light");
         }
       }
 
@@ -447,4 +455,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initial load
   loadSettings();
+
+  // Real-time theme switch listener
+  const prefDarkToggle = document.getElementById("pref-student-dark-mode");
+  const topHeaderToggle =
+    document.getElementById("theme-toggle") ||
+    document.querySelector(".theme-toggle");
+
+  if (prefDarkToggle) {
+    prefDarkToggle.addEventListener("change", (e) => {
+      const wantDark = e.target.checked;
+      if (wantDark) {
+        document.documentElement.classList.add("dark-theme");
+        document.body.classList.add("dark-theme");
+        localStorage.setItem("nexo-theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark-theme");
+        document.body.classList.remove("dark-theme");
+        localStorage.setItem("nexo-theme", "light");
+      }
+      if (topHeaderToggle) {
+        topHeaderToggle.checked = !wantDark;
+      }
+      showToast(wantDark ? "Dark theme enabled" : "Light theme enabled");
+    });
+  }
+
+  if (topHeaderToggle && prefDarkToggle) {
+    topHeaderToggle.addEventListener("change", () => {
+      setTimeout(() => {
+        const isDark =
+          document.body.classList.contains("dark-theme") ||
+          document.documentElement.classList.contains("dark-theme");
+        prefDarkToggle.checked = isDark;
+      }, 50);
+    });
+  }
 });

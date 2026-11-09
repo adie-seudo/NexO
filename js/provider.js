@@ -217,18 +217,91 @@ const DEFAULT_NEXO_NOTIFICATIONS = [
 ];
 
 function getProviderNotificationsFromStorage() {
-  let all = null;
+  let all = [];
   try {
     const raw = localStorage.getItem("nexo_notifications");
     if (raw) all = JSON.parse(raw);
   } catch (_) {}
 
-  if (!Array.isArray(all) || all.length === 0) {
-    all = [...DEFAULT_NEXO_NOTIFICATIONS];
-    try {
-      localStorage.setItem("nexo_notifications", JSON.stringify(all));
-    } catch (_) {}
+  if (!Array.isArray(all)) all = [];
+
+  // 1. Sync live from local applications so any applied student generates a provider notification
+  try {
+    const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+    if (Array.isArray(apps)) {
+      apps.forEach((app) => {
+        const notifId = "notif_app_" + (app.id || "temp");
+        if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
+          const docCount = Array.isArray(app.documents)
+            ? app.documents.length
+            : Array.isArray(app.uploadedDocuments)
+              ? app.uploadedDocuments.length
+              : 0;
+          all.unshift({
+            id: notifId,
+            recipient: "provider",
+            title: "New Application Received",
+            message: `${app.studentName || "Juan Dela Cruz"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docCount} document(s).`,
+            timestamp: app.submittedAt || new Date().toISOString(),
+            formattedTime: app.formattedDate || "Just now",
+            read: false,
+            link: "provider-applications.html",
+            appId: app.id,
+          });
+        }
+      });
+    }
+  } catch (_) {}
+
+  // 2. Sync capacity notifications from live scholarships
+  try {
+    const schols = JSON.parse(
+      localStorage.getItem("nexo_scholarships") || "[]",
+    );
+    if (Array.isArray(schols)) {
+      schols.forEach((s) => {
+        const notifId = "notif_schol_cap_" + s.id;
+        if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
+          const limit =
+            parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+          all.push({
+            id: notifId,
+            recipient: "provider",
+            title: "Grant Capacity Active",
+            message: `"${s.title}": Capacity configured for ${limit} applicants.`,
+            timestamp: s.postedAt || new Date().toISOString(),
+            formattedTime: "Active",
+            read: true,
+            link: "provider-dashboard.html",
+            scholId: s.id,
+          });
+        }
+      });
+    }
+  } catch (_) {}
+
+  // 3. If there are still no provider notifications, seed with default provider items
+  const providerItems = all.filter(
+    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",
+  );
+
+  if (providerItems.length === 0) {
+    DEFAULT_NEXO_NOTIFICATIONS.forEach((dn) => {
+      if (
+        !dn.recipient ||
+        dn.recipient === "provider" ||
+        dn.recipient === "all"
+      ) {
+        if (!all.some((n) => n.id === dn.id)) {
+          all.push(dn);
+        }
+      }
+    });
   }
+
+  try {
+    localStorage.setItem("nexo_notifications", JSON.stringify(all));
+  } catch (_) {}
 
   return all.filter(
     (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",

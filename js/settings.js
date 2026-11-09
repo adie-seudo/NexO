@@ -306,9 +306,17 @@ function applySettingsToUI(s) {
   setCheckbox("notif-weekly-digest", !!notifs.weeklyDigest);
   setCheckbox("notif-system-updates", notifs.systemUpdates !== false);
 
-  // Preferences / 2FA
+  // Preferences / 2FA & Dark Mode
   const prefs = s.preferences || {};
   setCheckbox("pref-2fa", !!prefs.twoFactor);
+  const isDark =
+    document.body.classList.contains("dark-theme") ||
+    document.documentElement.classList.contains("dark-theme");
+  setCheckbox("pref-provider-dark-mode", isDark);
+  const topToggle =
+    document.getElementById("theme-toggle") ||
+    document.querySelector(".theme-toggle");
+  if (topToggle) topToggle.checked = !isDark;
 
   markDirty(false);
 }
@@ -361,6 +369,44 @@ function initSettingsFormActions() {
       logoBase64 = null;
       loadSettings();
       markDirty(false);
+    });
+  }
+
+  // Real-time Provider Dark Mode Toggle
+  const providerDarkToggle = document.getElementById(
+    "pref-provider-dark-mode",
+  );
+  const topHeaderToggle =
+    document.getElementById("theme-toggle") ||
+    document.querySelector(".theme-toggle");
+
+  if (providerDarkToggle) {
+    providerDarkToggle.addEventListener("change", (e) => {
+      const wantDark = e.target.checked;
+      if (wantDark) {
+        document.documentElement.classList.add("dark-theme");
+        document.body.classList.add("dark-theme");
+        localStorage.setItem("nexo-theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark-theme");
+        document.body.classList.remove("dark-theme");
+        localStorage.setItem("nexo-theme", "light");
+      }
+      if (topHeaderToggle) {
+        topHeaderToggle.checked = !wantDark;
+      }
+      showToast(wantDark ? "Dark theme enabled" : "Light theme enabled");
+    });
+  }
+
+  if (topHeaderToggle && providerDarkToggle) {
+    topHeaderToggle.addEventListener("change", () => {
+      setTimeout(() => {
+        const isDark =
+          document.body.classList.contains("dark-theme") ||
+          document.documentElement.classList.contains("dark-theme");
+        providerDarkToggle.checked = isDark;
+      }, 50);
     });
   }
 }
@@ -453,6 +499,21 @@ async function saveAllSettings(saveBtn) {
     localStorage.setItem("nexo-provider-name", orgNameVal);
     localStorage.setItem("nexo-provider-logo", finalLogo);
     localStorage.setItem("nexo-provider-banner", finalBanner);
+
+    const wantDark = document.getElementById(
+      "pref-provider-dark-mode",
+    )?.checked;
+    if (wantDark !== undefined) {
+      if (wantDark) {
+        document.documentElement.classList.add("dark-theme");
+        document.body.classList.add("dark-theme");
+        localStorage.setItem("nexo-theme", "dark");
+      } else {
+        document.documentElement.classList.remove("dark-theme");
+        document.body.classList.remove("dark-theme");
+        localStorage.setItem("nexo-theme", "light");
+      }
+    }
 
     // Update all scholarships in local storage so Directory inherits the updated banner
     const cachedSchols = JSON.parse(

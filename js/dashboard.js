@@ -632,6 +632,21 @@ function createCompactCard(schol) {
   const card = document.createElement("div");
   card.className = "compact-post-card";
   card.dataset.id = schol.id || "";
+
+  const limitNum =
+    parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+  let applicantCountDisplay =
+    schol.applicantCount || `0 / ${limitNum} Applicants`;
+  if (
+    applicantCountDisplay.includes("/ 10 Applicants") ||
+    applicantCountDisplay.includes("/ 10 ")
+  ) {
+    applicantCountDisplay = applicantCountDisplay.replace(
+      /\/ 10\s*(Applicants)?/,
+      `/ ${limitNum} Applicants`,
+    );
+  }
+
   card.innerHTML = `
     <div class="compact-post-header">
       <h3 class="compact-post-title">${escapeHtml(schol.title)}</h3>
@@ -656,7 +671,7 @@ function createCompactCard(schol) {
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
-          ${escapeHtml(schol.applicantCount || "0 / 200 Applicants")}
+          ${escapeHtml(applicantCountDisplay)}
         </span>
       </div>
       <button type="button" class="view-details-btn">View Details</button>
