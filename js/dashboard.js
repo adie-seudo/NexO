@@ -392,7 +392,8 @@ function validateStep1() {
     const val = parseInt(DOM.limitInput.value, 10);
     if (!val || val <= 0) {
       if (DOM.limitError) {
-        DOM.limitError.textContent = "Please enter a valid applicant limit (at least 1).";
+        DOM.limitError.textContent =
+          "Please enter a valid applicant limit (at least 1).";
         DOM.limitError.classList.add("active");
       }
       DOM.limitInput.classList.add("input-error");
@@ -755,7 +756,10 @@ async function loadPersistedData() {
       localStorage.setItem("nexo_applications", JSON.stringify(applications));
     } catch (_) {}
   } catch (err) {
-    console.warn("NEXO: Backend /api/data not reached, using local storage cache:", err);
+    console.warn(
+      "NEXO: Backend /api/data not reached, using local storage cache:",
+      err,
+    );
     try {
       const cachedSchols = localStorage.getItem("nexo_scholarships");
       const cachedDrafts = localStorage.getItem("nexo_drafts");
@@ -766,7 +770,12 @@ async function loadPersistedData() {
     } catch (_) {}
   }
 
-  updateStatsUI(scholarships.length, scholarships.length, drafts.length, applications.length);
+  updateStatsUI(
+    scholarships.length,
+    scholarships.length,
+    drafts.length,
+    applications.length,
+  );
 
   // Populate Scholarships Feed
   const feed = document.getElementById("scholarships-feed");
@@ -789,7 +798,8 @@ async function loadPersistedData() {
         }
       });
       if (viewAllBtn) {
-        viewAllBtn.style.display = scholarships.length > 3 ? "inline-block" : "none";
+        viewAllBtn.style.display =
+          scholarships.length > 3 ? "inline-block" : "none";
       }
     } else {
       if (emptyState) emptyState.style.display = "block";
@@ -804,7 +814,8 @@ async function loadPersistedData() {
   if (draftsFeed) {
     draftsFeed.innerHTML = "";
     if (drafts.length > 0) {
-      if (emptyDraftsCard) emptyDraftsCard.setAttribute("style", "display: none !important;");
+      if (emptyDraftsCard)
+        emptyDraftsCard.setAttribute("style", "display: none !important;");
       drafts.forEach((draft) => {
         draftsFeed.appendChild(createDraftCard(draft));
       });
@@ -853,8 +864,13 @@ function initPublishAndDraft() {
 
         const collectedRequirements = getCollectedRequirements();
         const draftIdToDelete = currentEditingDraftId;
-        const providerName = localStorage.getItem("nexo-provider-name") || "NEXO";
+        const providerName =
+          localStorage.getItem("nexo-provider-name") || "NEXO";
         const providerLogo = localStorage.getItem("nexo-provider-logo") || "";
+        const providerBanner =
+          localStorage.getItem("nexo-provider-banner") ||
+          window.DEFAULT_PROVIDER_BANNER ||
+          "";
         const applicantLimit =
           DOM.limitInput && DOM.limitInput.value
             ? parseInt(DOM.limitInput.value, 10)
@@ -882,6 +898,7 @@ function initPublishAndDraft() {
           requirements: collectedRequirements,
           providerName,
           providerLogo,
+          providerBanner,
           status: "Open",
           draftId: draftIdToDelete,
         };
@@ -903,14 +920,52 @@ function initPublishAndDraft() {
 
         // Keep local cache in sync
         try {
-          const cached = JSON.parse(localStorage.getItem("nexo_scholarships") || "[]");
+          const cached = JSON.parse(
+            localStorage.getItem("nexo_scholarships") || "[]",
+          );
           cached.unshift(newSchol);
           localStorage.setItem("nexo_scholarships", JSON.stringify(cached));
           if (draftIdToDelete) {
-            const cachedDrafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
-            const filteredDrafts = cachedDrafts.filter(d => String(d.id) !== String(draftIdToDelete));
+            const cachedDrafts = JSON.parse(
+              localStorage.getItem("nexo_drafts") || "[]",
+            );
+            const filteredDrafts = cachedDrafts.filter(
+              (d) => String(d.id) !== String(draftIdToDelete),
+            );
             localStorage.setItem("nexo_drafts", JSON.stringify(filteredDrafts));
           }
+        } catch (_) {}
+
+        // Dispatch live student notification for offline/local resilience
+        try {
+          const cachedNotifs = JSON.parse(
+            localStorage.getItem("nexo_notifications") || "[]",
+          );
+          const limitDisplay =
+            newSchol.applicantLimit || newSchol.maxApplicants || 200;
+          cachedNotifs.unshift({
+            id: "notif_" + Date.now(),
+            recipient: "student",
+            title: "New Scholarship Available",
+            message: `"${newSchol.title}" is now open for applications. Capacity: ${limitDisplay} slots.`,
+            timestamp: new Date().toISOString(),
+            formattedTime: "Just now",
+            read: false,
+            link: "student-browse.html",
+            scholId: newSchol.id,
+          });
+          localStorage.setItem(
+            "nexo_notifications",
+            JSON.stringify(cachedNotifs),
+          );
+
+          fetch(`${API_BASE}/api/notifications`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cachedNotifs[0]),
+          }).catch(() => {});
+
+          window.dispatchEvent(new CustomEvent("nexo:notification"));
         } catch (_) {}
 
         // If we just published a draft, remove the old draft from UI
@@ -922,7 +977,8 @@ function initPublishAndDraft() {
             draftBadge.textContent = draftCount;
             if (draftCount <= 0) {
               draftBadge.style.display = "none";
-              const emptyDraftsCard = document.getElementById("empty-drafts-card");
+              const emptyDraftsCard =
+                document.getElementById("empty-drafts-card");
               if (emptyDraftsCard) emptyDraftsCard.removeAttribute("style");
             }
           }
@@ -1006,7 +1062,7 @@ function initPublishAndDraft() {
         const collectedRequirements = getCollectedRequirements();
 
         const draftPayload = {
-          id: currentEditingDraftId || ("draft_" + Date.now()),
+          id: currentEditingDraftId || "draft_" + Date.now(),
           title: draftTitle,
           desc: draftDesc,
           type: typeVal,
@@ -1029,13 +1085,20 @@ function initPublishAndDraft() {
             savedDraft = await res.json();
           }
         } catch (e) {
-          console.warn("Could not save draft to data.json directly via server:", e);
+          console.warn(
+            "Could not save draft to data.json directly via server:",
+            e,
+          );
         }
 
         // Keep local cache in sync
         try {
-          const cachedDrafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
-          const idx = cachedDrafts.findIndex(d => String(d.id) === String(savedDraft.id));
+          const cachedDrafts = JSON.parse(
+            localStorage.getItem("nexo_drafts") || "[]",
+          );
+          const idx = cachedDrafts.findIndex(
+            (d) => String(d.id) === String(savedDraft.id),
+          );
           if (idx >= 0) cachedDrafts[idx] = savedDraft;
           else cachedDrafts.unshift(savedDraft);
           localStorage.setItem("nexo_drafts", JSON.stringify(cachedDrafts));
@@ -1161,7 +1224,9 @@ function extractInitials(name) {
   }
   const parts = clean.split(/\s+/);
   if (parts.length === 1) {
-    return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+    return parts[0].length > 1
+      ? parts[0].substring(0, 2).toUpperCase()
+      : parts[0].toUpperCase();
   }
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
@@ -1175,7 +1240,10 @@ async function initDynamicAvatar() {
       try {
         syncProviderProfile(JSON.parse(e.newValue));
       } catch (_) {}
-    } else if (e.key === "nexo-provider-name" || e.key === "nexo-provider-logo") {
+    } else if (
+      e.key === "nexo-provider-name" ||
+      e.key === "nexo-provider-logo"
+    ) {
       syncProviderProfile();
     }
   });
@@ -1202,19 +1270,33 @@ async function syncProviderProfile(incomingSettings = null) {
       if (res.ok) {
         settings = await res.json();
         try {
-          localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+          localStorage.setItem(
+            "nexo_provider_settings",
+            JSON.stringify(settings),
+          );
         } catch (_) {}
       }
     } catch (_) {}
   }
 
-  const orgName = (settings && settings.orgName) || localStorage.getItem("nexo-provider-name") || "NEXO";
-  const logoImage = (settings && settings.logoImage) || localStorage.getItem("nexo-provider-logo") || "";
-  const bannerImage = (settings && settings.bannerImage) || localStorage.getItem("nexo-provider-banner") || "";
+  const orgName =
+    (settings && settings.orgName) ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
+  const logoImage =
+    (settings && settings.logoImage) ||
+    localStorage.getItem("nexo-provider-logo") ||
+    "";
+  const bannerImage =
+    (settings && settings.bannerImage) ||
+    localStorage.getItem("nexo-provider-banner") ||
+    "";
   const initials = extractInitials(orgName);
 
   // 1. Update Welcome Title
-  const welcomeTitle = document.getElementById("dash-welcome-title") || document.querySelector(".welcome-title");
+  const welcomeTitle =
+    document.getElementById("dash-welcome-title") ||
+    document.querySelector(".welcome-title");
   if (welcomeTitle) {
     welcomeTitle.textContent = orgName;
   }
@@ -1232,7 +1314,9 @@ async function syncProviderProfile(incomingSettings = null) {
   }
 
   // 3. Update Welcome Section Avatar
-  const welcomeAvatarWrapper = document.getElementById("welcome-avatar-wrapper");
+  const welcomeAvatarWrapper = document.getElementById(
+    "welcome-avatar-wrapper",
+  );
   const welcomeAvatarImg = document.getElementById("welcome-avatar-img");
   const welcomeAvatarInits = document.getElementById("welcome-avatar-initials");
   if (welcomeAvatarImg && welcomeAvatarInits) {
@@ -1244,7 +1328,8 @@ async function syncProviderProfile(incomingSettings = null) {
     } else {
       welcomeAvatarImg.src = "";
       welcomeAvatarImg.classList.remove("has-img");
-      if (welcomeAvatarWrapper) welcomeAvatarWrapper.classList.remove("has-img");
+      if (welcomeAvatarWrapper)
+        welcomeAvatarWrapper.classList.remove("has-img");
       welcomeAvatarInits.textContent = initials;
       welcomeAvatarInits.style.display = "block";
     }
@@ -1354,12 +1439,16 @@ function initDraftEditing() {
         const draftId = (editBtn && editBtn.dataset.id) || card.dataset.id;
 
         if (draftId) {
-          fetch(`${API_BASE}/api/drafts/${draftId}`, { method: "DELETE" }).catch(
-            console.error,
-          );
+          fetch(`${API_BASE}/api/drafts/${draftId}`, {
+            method: "DELETE",
+          }).catch(console.error);
           try {
-            const cachedDrafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
-            const filtered = cachedDrafts.filter(d => String(d.id) !== String(draftId));
+            const cachedDrafts = JSON.parse(
+              localStorage.getItem("nexo_drafts") || "[]",
+            );
+            const filtered = cachedDrafts.filter(
+              (d) => String(d.id) !== String(draftId),
+            );
             localStorage.setItem("nexo_drafts", JSON.stringify(filtered));
           } catch (_) {}
         }

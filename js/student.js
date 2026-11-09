@@ -22,8 +22,7 @@ function closeSideMenu() {
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const overlay = document.querySelector(".nav-overlay");
 
   if (btn) btn.classList.remove("open");
@@ -52,8 +51,7 @@ window.handleMenuToggle = function (e) {
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const overlay = getNavOverlay();
 
   if (btn && menu) {
@@ -78,9 +76,84 @@ function escapeStudentNotifHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+const DEFAULT_STUDENT_NOTIFICATIONS = [
+  {
+    id: "notif_1001",
+    recipient: "provider",
+    title: "New Application Received",
+    message:
+      'Juan Dela Cruz submitted an application for "Final Test" with 3 documents.',
+    timestamp: new Date().toISOString(),
+    formattedTime: "10 mins ago",
+    read: false,
+    link: "provider-applications.html",
+  },
+  {
+    id: "notif_1002",
+    recipient: "provider",
+    title: "Grant Capacity Active",
+    message: "Applicant quota configured: 0 / 200 active slots remaining.",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    formattedTime: "1 hour ago",
+    read: false,
+    link: "provider-dashboard.html",
+  },
+  {
+    id: "notif_1003",
+    recipient: "student",
+    title: "New Scholarship Posted",
+    message: '"Final Test" is now open for applications. Check requirements.',
+    timestamp: new Date(Date.now() - 1200000).toISOString(),
+    formattedTime: "20 mins ago",
+    read: false,
+    link: "student-browse.html",
+  },
+  {
+    id: "notif_1004",
+    recipient: "student",
+    title: "Document Verification",
+    message:
+      "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    formattedTime: "2 hours ago",
+    read: false,
+    link: "student-dashboard.html",
+  },
+];
+
+function getStudentNotificationsFromStorage() {
+  let all = null;
+  try {
+    const raw = localStorage.getItem("nexo_notifications");
+    if (raw) all = JSON.parse(raw);
+  } catch (_) {}
+
+  if (!Array.isArray(all) || all.length === 0) {
+    all = [...DEFAULT_STUDENT_NOTIFICATIONS];
+    try {
+      localStorage.setItem("nexo_notifications", JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  return all.filter(
+    (n) => !n.recipient || n.recipient === "student" || n.recipient === "all",
+  );
+}
+
 function initNotificationBell() {
   const notifBtn = document.querySelector(".notification-btn");
   if (!notifBtn) return;
+
+  // Ensure unread dot exists inside button
+  let dot =
+    notifBtn.querySelector(".notification-dot") ||
+    document.getElementById("student-notif-dot");
+  if (!dot) {
+    dot = document.createElement("span");
+    dot.className = "notification-dot";
+    dot.id = "student-notif-dot";
+    notifBtn.appendChild(dot);
+  }
 
   let popover = document.getElementById("header-notif-popover");
   if (!popover) {
@@ -91,8 +164,11 @@ function initNotificationBell() {
     popover.setAttribute("aria-label", "Notifications");
     popover.innerHTML = `
       <div class="notif-popover-header">
-        <h4 class="notif-popover-title">Notifications</h4>
-        <span class="notif-badge-count" id="student-notif-badge">0 New</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h4 class="notif-popover-title">Notifications</h4>
+          <span class="notif-badge-count" id="student-notif-badge">0 New</span>
+        </div>
+        <button type="button" class="notif-mark-read-btn" id="student-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
       </div>
       <div class="notif-popover-body" id="student-notif-body">
         <div class="notif-empty-box">
@@ -127,33 +203,109 @@ function initNotificationBell() {
   let lastStudentNotifsHash = "";
 
   async function loadStudentNotifications() {
-    try {
-      const res = await fetch(`${NOTIF_API}/api/notifications?recipient=student`);
-      if (!res.ok) return;
-      const notifs = await res.json();
-      const newHash = JSON.stringify(notifs);
-      if (newHash === lastStudentNotifsHash) return;
+    // 1. Immediately render local state so user gets instant response
+    const localNotifs = getStudentNotificationsFromStorage();
+    const newHash = JSON.stringify(localNotifs);
+    if (newHash !== lastStudentNotifsHash) {
       lastStudentNotifsHash = newHash;
-      renderStudentNotifications(notifs);
+      renderStudentNotifications(localNotifs);
+    }
+
+    // 2. Sync with backend API if server is alive
+    try {
+      const res = await fetch(
+        `${NOTIF_API}/api/notifications?recipient=student`,
+      );
+      if (res.ok) {
+        const serverNotifs = await res.json();
+        if (Array.isArray(serverNotifs) && serverNotifs.length > 0) {
+          try {
+            const cached = JSON.parse(
+              localStorage.getItem("nexo_notifications") || "[]",
+            );
+            serverNotifs.forEach((sn) => {
+              const idx = cached.findIndex(
+                (c) => String(c.id) === String(sn.id),
+              );
+              if (idx >= 0) cached[idx] = sn;
+              else cached.unshift(sn);
+            });
+            localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+          } catch (_) {}
+          const mergedNotifs = getStudentNotificationsFromStorage();
+          renderStudentNotifications(mergedNotifs);
+        }
+      }
     } catch (_) {}
+  }
+
+  function markStudentNotificationRead(id) {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]",
+      );
+      const item = cached.find((n) => String(n.id) === String(id));
+      if (item) {
+        item.read = true;
+        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      }
+    } catch (_) {}
+
+    // Send read request to server if online
+    fetch(`${NOTIF_API}/api/notifications/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+
+    loadStudentNotifications();
+  }
+
+  function markAllStudentNotificationsRead() {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]",
+      );
+      cached.forEach((n) => {
+        if (
+          !n.recipient ||
+          n.recipient === "student" ||
+          n.recipient === "all"
+        ) {
+          n.read = true;
+        }
+      });
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+    } catch (_) {}
+
+    // Send read request to server if online
+    fetch(`${NOTIF_API}/api/notifications/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient: "student" }),
+    }).catch(() => {});
+
+    loadStudentNotifications();
   }
 
   function renderStudentNotifications(notifs) {
     const bodyEl = document.getElementById("student-notif-body");
     const badgeEl = document.getElementById("student-notif-badge");
-    const dot = notifBtn.querySelector(".notification-dot") || document.getElementById("student-notif-dot");
+    const currentDot =
+      notifBtn.querySelector(".notification-dot") ||
+      document.getElementById("student-notif-dot");
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
     const unreadCount = list.filter((n) => !n.read).length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
-    if (dot) {
+    if (currentDot) {
       if (unreadCount > 0) {
-        dot.classList.add("active");
+        currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {
-        dot.classList.remove("active");
+        currentDot.classList.remove("active");
         notifBtn.classList.remove("has-unread");
       }
     }
@@ -179,7 +331,7 @@ function initNotificationBell() {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
         return `
-          <a href="${n.link || 'student-submissions.html'}" class="notif-item ${isUnread ? 'unread' : ''}">
+          <a href="${n.link || "student-submissions.html"}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
             <div class="notif-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
@@ -195,11 +347,39 @@ function initNotificationBell() {
         `;
       })
       .join("");
+
+    // Attach click listeners to individual items
+    bodyEl.querySelectorAll(".notif-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const notifId = item.dataset.id;
+        if (notifId) markStudentNotificationRead(notifId);
+      });
+    });
   }
 
   // Initial load and periodic polling
   loadStudentNotifications();
-  setInterval(loadStudentNotifications, 4000);
+  setInterval(loadStudentNotifications, 3500);
+
+  // Wire "Mark all read" button
+  const markReadBtn = document.getElementById("student-mark-read");
+  if (markReadBtn) {
+    markReadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      markAllStudentNotificationsRead();
+    });
+  }
+
+  // Listen for storage events (other tabs/windows) and custom events
+  window.addEventListener("storage", (e) => {
+    if (e.key === "nexo_notifications") {
+      loadStudentNotifications();
+    }
+  });
+  window.addEventListener("nexo:notification", () => {
+    loadStudentNotifications();
+  });
 
   // Toggle notification popover on bell click
   notifBtn.addEventListener("click", (e) => {
@@ -208,20 +388,8 @@ function initNotificationBell() {
     const willOpen = !popover.classList.contains("open");
     popover.classList.toggle("open", willOpen);
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
-
     if (willOpen) {
-      // Mark student notifications as read
-      fetch(`${NOTIF_API}/api/notifications/read`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: "student" }),
-      }).catch(() => {});
-
-      const dot = notifBtn.querySelector(".notification-dot") || document.getElementById("student-notif-dot");
-      if (dot) dot.classList.remove("active");
-      notifBtn.classList.remove("has-unread");
-      const badgeEl = document.getElementById("student-notif-badge");
-      if (badgeEl) badgeEl.textContent = "0 New";
+      loadStudentNotifications();
     }
   });
 
@@ -289,8 +457,11 @@ function initStudentGreeting() {
     let customAvatar = sessionStorage.getItem("nexo-student-avatar");
     if (!customAvatar) {
       try {
-        const cached = JSON.parse(localStorage.getItem("nexo_student_settings") || "{}");
-        if (cached && cached.profilePicture) customAvatar = cached.profilePicture;
+        const cached = JSON.parse(
+          localStorage.getItem("nexo_student_settings") || "{}",
+        );
+        if (cached && cached.profilePicture)
+          customAvatar = cached.profilePicture;
       } catch (_) {}
     }
 
@@ -345,9 +516,15 @@ async function loadStudentData() {
     // Sync student settings and header avatar
     if (data.studentSettings) {
       try {
-        localStorage.setItem("nexo_student_settings", JSON.stringify(data.studentSettings));
+        localStorage.setItem(
+          "nexo_student_settings",
+          JSON.stringify(data.studentSettings),
+        );
         if (data.studentSettings.profilePicture) {
-          sessionStorage.setItem("nexo-student-avatar", data.studentSettings.profilePicture);
+          sessionStorage.setItem(
+            "nexo-student-avatar",
+            data.studentSettings.profilePicture,
+          );
           const headerAvatar = document.querySelector(".header-avatar");
           if (headerAvatar && !headerAvatar.querySelector("img")) {
             headerAvatar.innerHTML = `<img src="${data.studentSettings.profilePicture}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
@@ -452,12 +629,14 @@ function renderApplicationCards(applications, container) {
       .join("")
       .toUpperCase();
 
-    const logoHtml = app.logo || app.providerLogo
-      ? `<img src="${app.logo || app.providerLogo}" alt="${escapeHtml(orgName)}" class="student-app-logo" />`
-      : `<div class="student-app-logo">${initials || "NX"}</div>`;
+    const logoHtml =
+      app.logo || app.providerLogo
+        ? `<img src="${app.logo || app.providerLogo}" alt="${escapeHtml(orgName)}" class="student-app-logo" />`
+        : `<div class="student-app-logo">${initials || "NX"}</div>`;
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
-    const date = app.formattedDate || app.appliedDate || app.date || "Recently Applied";
+    const date =
+      app.formattedDate || app.appliedDate || app.date || "Recently Applied";
     let applicants = app.applicantCount || "1 / 200 Applicants";
     if (applicants.includes("/ 10 Applicants")) {
       applicants = applicants.replace("/ 10 Applicants", "/ 200 Applicants");
@@ -508,15 +687,17 @@ function escapeHtml(text) {
 document.addEventListener("DOMContentLoaded", () => {
   // 1. Initialize Side Menu Link Listeners
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   if (menu) {
     menu.addEventListener("click", (e) => {
       const link = e.target.closest("a.nav-link, a.btn");
       if (!link) return;
 
       const href = link.getAttribute("href");
-      if (href && (href.startsWith("#") || href.includes(window.location.pathname))) {
+      if (
+        href &&
+        (href.startsWith("#") || href.includes(window.location.pathname))
+      ) {
         closeSideMenu();
       }
     });
@@ -562,7 +743,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (popover && popover.classList.contains("open")) {
-      if (notifBtn && !notifBtn.contains(e.target) && !popover.contains(e.target)) {
+      if (
+        notifBtn &&
+        !notifBtn.contains(e.target) &&
+        !popover.contains(e.target)
+      ) {
         closeNotifications();
       }
     }

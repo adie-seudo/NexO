@@ -96,7 +96,9 @@
       if (res.ok) {
         const data = await res.json();
         serverApps = Array.isArray(data.applications) ? data.applications : [];
-        serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+        serverSchols = Array.isArray(data.scholarships)
+          ? data.scholarships
+          : [];
         if (data.studentSettings) {
           studentSettings = data.studentSettings;
         }
@@ -104,12 +106,18 @@
         // Cache local copy
         try {
           localStorage.setItem("nexo_applications", JSON.stringify(serverApps));
-          localStorage.setItem("nexo_scholarships", JSON.stringify(serverSchols));
+          localStorage.setItem(
+            "nexo_scholarships",
+            JSON.stringify(serverSchols),
+          );
         } catch (_) {}
       }
     } catch (err) {
       if (!isBackground) {
-        console.warn("Backend not reachable directly, reading localStorage fallback:", err);
+        console.warn(
+          "Backend not reachable directly, reading localStorage fallback:",
+          err,
+        );
       }
     }
 
@@ -166,7 +174,8 @@
 
     if (tabAll) tabAll.textContent = `All (${countAll})`;
     if (tabPending) tabPending.textContent = `Pending (${countPending})`;
-    if (tabReviewed) tabReviewed.textContent = `Under Review (${countReviewed})`;
+    if (tabReviewed)
+      tabReviewed.textContent = `Under Review (${countReviewed})`;
     if (tabApproved) tabApproved.textContent = `Approved (${countApproved})`;
     if (tabRejected) tabRejected.textContent = `Rejected (${countRejected})`;
   }
@@ -199,7 +208,9 @@
     sortItems.forEach((item) => {
       item.addEventListener("click", function () {
         activeSortOption = this.dataset.sortValue;
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(".nexo-dropdown-value");
+        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
+          ".nexo-dropdown-value",
+        );
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         this.closest(".nexo-dropdown")?.classList.remove("active");
         renderApplicationsList();
@@ -211,7 +222,9 @@
     docItems.forEach((item) => {
       item.addEventListener("click", function () {
         activeDocFilter = this.dataset.docFilter;
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(".nexo-dropdown-value");
+        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
+          ".nexo-dropdown-value",
+        );
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         this.closest(".nexo-dropdown")?.classList.remove("active");
         renderApplicationsList();
@@ -236,8 +249,8 @@
         allApplications
           .map((a) => a.scholarshipTitle)
           .concat(allScholarships.map((s) => s.title))
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     );
 
     let html = `
@@ -259,7 +272,9 @@
     listEl.querySelectorAll(".nexo-dropdown-item").forEach((item) => {
       item.addEventListener("click", function () {
         activeProgramFilter = this.dataset.program || "all";
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(".nexo-dropdown-value");
+        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
+          ".nexo-dropdown-value",
+        );
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         this.closest(".nexo-dropdown")?.classList.remove("active");
         renderApplicationsList();
@@ -278,7 +293,11 @@
       const status = (app.status || "Submitted").toLowerCase();
       if (activeFilterTab === "all") return true;
       if (activeFilterTab === "pending") {
-        return !status.includes("approved") && !status.includes("review") && !status.includes("rejected");
+        return (
+          !status.includes("approved") &&
+          !status.includes("review") &&
+          !status.includes("rejected")
+        );
       }
       if (activeFilterTab === "reviewed") {
         return status.includes("review");
@@ -295,7 +314,9 @@
     // Filter by Program
     if (activeProgramFilter !== "all") {
       filtered = filtered.filter(
-        (app) => String(app.scholarshipTitle || "").toLowerCase() === activeProgramFilter.toLowerCase()
+        (app) =>
+          String(app.scholarshipTitle || "").toLowerCase() ===
+          activeProgramFilter.toLowerCase(),
       );
     }
 
@@ -306,7 +327,9 @@
         const studentEmail = String(app.studentEmail || "").toLowerCase();
         const studentId = String(app.studentId || "").toLowerCase();
         const course = String(app.course || "").toLowerCase();
-        const scholarshipTitle = String(app.scholarshipTitle || "").toLowerCase();
+        const scholarshipTitle = String(
+          app.scholarshipTitle || "",
+        ).toLowerCase();
 
         return (
           studentName.includes(activeSearchQuery) ||
@@ -333,11 +356,17 @@
 
     // Sort
     if (activeSortOption === "newest") {
-      filtered.sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
+      filtered.sort(
+        (a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0),
+      );
     } else if (activeSortOption === "oldest") {
-      filtered.sort((a, b) => new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0));
+      filtered.sort(
+        (a, b) => new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0),
+      );
     } else if (activeSortOption === "name") {
-      filtered.sort((a, b) => (a.studentName || "").localeCompare(b.studentName || ""));
+      filtered.sort((a, b) =>
+        (a.studentName || "").localeCompare(b.studentName || ""),
+      );
     }
 
     // Empty state handling
@@ -397,12 +426,13 @@
 
     // Initials
     const name = app.studentName || "Student";
-    const initials = name
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0] || "")
-      .join("")
-      .toUpperCase() || "ST";
+    const initials =
+      name
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase() || "ST";
 
     const docsCount = (app.documents || app.uploadedDocuments || []).length;
     const dateFormatted =
@@ -509,22 +539,44 @@
     });
 
     // Quick Actions
-    card.querySelector(".btn-quick-approve").addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await updateApplicationStatus(app.id, "Approved", "Approved via Quick Action.");
-    });
+    card
+      .querySelector(".btn-quick-approve")
+      .addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await updateApplicationStatus(
+          app.id,
+          "Approved",
+          "Approved via Quick Action.",
+        );
+      });
 
-    card.querySelector(".btn-quick-review").addEventListener("click", async (e) => {
-      e.stopPropagation();
-      await updateApplicationStatus(app.id, "Under Review", "Application marked Under Review.");
-    });
+    card
+      .querySelector(".btn-quick-review")
+      .addEventListener("click", async (e) => {
+        e.stopPropagation();
+        await updateApplicationStatus(
+          app.id,
+          "Under Review",
+          "Application marked Under Review.",
+        );
+      });
 
-    card.querySelector(".btn-quick-reject").addEventListener("click", async (e) => {
-      e.stopPropagation();
-      if (confirm(`Are you sure you want to decline the application of ${app.studentName}?`)) {
-        await updateApplicationStatus(app.id, "Rejected", "Application did not meet criteria.");
-      }
-    });
+    card
+      .querySelector(".btn-quick-reject")
+      .addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (
+          confirm(
+            `Are you sure you want to decline the application of ${app.studentName}?`,
+          )
+        ) {
+          await updateApplicationStatus(
+            app.id,
+            "Rejected",
+            "Application did not meet criteria.",
+          );
+        }
+      });
 
     return card;
   }
@@ -556,7 +608,8 @@
     if (btnApprove) {
       btnApprove.addEventListener("click", async () => {
         if (!currentActiveApp) return;
-        const notes = document.getElementById("modal-review-notes")?.value || "";
+        const notes =
+          document.getElementById("modal-review-notes")?.value || "";
         await updateApplicationStatus(currentActiveApp.id, "Approved", notes);
         closeReviewModal();
       });
@@ -565,8 +618,13 @@
     if (btnUnderReview) {
       btnUnderReview.addEventListener("click", async () => {
         if (!currentActiveApp) return;
-        const notes = document.getElementById("modal-review-notes")?.value || "";
-        await updateApplicationStatus(currentActiveApp.id, "Under Review", notes);
+        const notes =
+          document.getElementById("modal-review-notes")?.value || "";
+        await updateApplicationStatus(
+          currentActiveApp.id,
+          "Under Review",
+          notes,
+        );
         closeReviewModal();
       });
     }
@@ -575,7 +633,8 @@
       btnReject.addEventListener("click", async () => {
         if (!currentActiveApp) return;
         if (confirm("Are you sure you want to decline this applicant?")) {
-          const notes = document.getElementById("modal-review-notes")?.value || "";
+          const notes =
+            document.getElementById("modal-review-notes")?.value || "";
           await updateApplicationStatus(currentActiveApp.id, "Rejected", notes);
           closeReviewModal();
         }
@@ -585,8 +644,13 @@
     if (btnSaveNotes) {
       btnSaveNotes.addEventListener("click", async () => {
         if (!currentActiveApp) return;
-        const notes = document.getElementById("modal-review-notes")?.value || "";
-        await updateApplicationStatus(currentActiveApp.id, currentActiveApp.status || "Under Review", notes);
+        const notes =
+          document.getElementById("modal-review-notes")?.value || "";
+        await updateApplicationStatus(
+          currentActiveApp.id,
+          currentActiveApp.status || "Under Review",
+          notes,
+        );
         showToast("Review notes and feedback updated!");
       });
     }
@@ -598,19 +662,21 @@
 
     // Student Avatar in Modal Header
     const studentName = app.studentName || "Student Applicant";
-    const initials = studentName
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((w) => w[0] || "")
-      .join("")
-      .toUpperCase() || "ST";
+    const initials =
+      studentName
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase() || "ST";
 
     const avatar =
       app.studentProfilePic ||
       app.profilePicture ||
       (studentSettings && studentSettings.profilePicture) ||
       (typeof localStorage !== "undefined" &&
-        JSON.parse(localStorage.getItem("nexo_student_settings") || "{}").profilePicture) ||
+        JSON.parse(localStorage.getItem("nexo_student_settings") || "{}")
+          .profilePicture) ||
       "";
 
     const modalAvatarEl = document.getElementById("modal-student-avatar");
@@ -624,17 +690,30 @@
 
     // Populate Fields
     document.getElementById("modal-student-name").textContent = studentName;
-    document.getElementById("modal-student-email").textContent = app.studentEmail || "student@university.edu.ph";
-    document.getElementById("modal-student-id").textContent = app.studentId || "21-04589";
-    document.getElementById("modal-student-school").textContent = app.university || "Batangas State University";
-    document.getElementById("modal-student-course").textContent = app.course || "BS Information Technology";
-    document.getElementById("modal-student-year").textContent = app.yearLevel || "3rd Year";
-    document.getElementById("modal-student-contact").textContent = app.contactNumber || "+63 912 345 6789";
+    document.getElementById("modal-student-email").textContent =
+      app.studentEmail || "student@university.edu.ph";
+    document.getElementById("modal-student-id").textContent =
+      app.studentId || "21-04589";
+    document.getElementById("modal-student-school").textContent =
+      app.university || "Batangas State University";
+    document.getElementById("modal-student-course").textContent =
+      app.course || "BS Information Technology";
+    document.getElementById("modal-student-year").textContent =
+      app.yearLevel || "3rd Year";
+    document.getElementById("modal-student-contact").textContent =
+      app.contactNumber || "+63 912 345 6789";
 
-    document.getElementById("modal-program-title").textContent = app.scholarshipTitle || "Scholarship Program";
+    document.getElementById("modal-program-title").textContent =
+      app.scholarshipTitle || "Scholarship Program";
     document.getElementById("modal-app-date").textContent =
       app.formattedDate ||
-      (app.submittedAt ? new Date(app.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently Applied");
+      (app.submittedAt
+        ? new Date(app.submittedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Recently Applied");
 
     // Status Pill
     const statusPill = document.getElementById("modal-status-badge");
@@ -698,9 +777,15 @@
       const docItem = document.createElement("div");
       docItem.className = "modal-doc-item";
 
-      const docName = typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
+      const docName =
+        typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
       const docUrl = typeof doc === "object" && doc.fileUrl ? doc.fileUrl : "";
-      const docSize = typeof doc === "object" && doc.size ? (typeof doc.size === "number" ? (doc.size / 1024).toFixed(0) + " KB" : doc.size) : "1.2 MB";
+      const docSize =
+        typeof doc === "object" && doc.size
+          ? typeof doc.size === "number"
+            ? (doc.size / 1024).toFixed(0) + " KB"
+            : doc.size
+          : "1.2 MB";
       const isPdf = docName.toLowerCase().endsWith(".pdf");
 
       docItem.innerHTML = `
@@ -731,7 +816,11 @@
 
       // Document preview button
       docItem.querySelector(".btn-doc-view").addEventListener("click", () => {
-        openDocPreview(docName, docUrl, typeof doc === "object" ? doc.data : null);
+        openDocPreview(
+          docName,
+          docUrl,
+          typeof doc === "object" ? doc.data : null,
+        );
       });
 
       docsContainer.appendChild(docItem);
@@ -814,7 +903,9 @@
   // -------------------------------------------------------------
   async function updateApplicationStatus(appId, newStatus, notes = "") {
     // 1. Optimistic UI update
-    const idx = allApplications.findIndex((a) => String(a.id) === String(appId));
+    const idx = allApplications.findIndex(
+      (a) => String(a.id) === String(appId),
+    );
     if (idx >= 0) {
       allApplications[idx].status = newStatus;
       allApplications[idx].statusText = newStatus;
@@ -825,7 +916,45 @@
 
     // Keep localStorage updated
     try {
-      localStorage.setItem("nexo_applications", JSON.stringify(allApplications));
+      localStorage.setItem(
+        "nexo_applications",
+        JSON.stringify(allApplications),
+      );
+    } catch (_) {}
+
+    // Dispatch live student notification
+    try {
+      const notifList = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]",
+      );
+      const targetApp = allApplications.find(
+        (a) => String(a.id) === String(appId),
+      );
+      const scholTitle = targetApp
+        ? targetApp.scholarshipTitle || targetApp.title || "Scholarship Program"
+        : "Scholarship Program";
+      const remarksText = notes ? ` Provider remarks: "${notes}"` : "";
+      const newNotif = {
+        id: "notif_" + Date.now(),
+        recipient: "student",
+        title: `Application Status: ${newStatus}`,
+        message: `Your application for "${scholTitle}" has been updated to "${newStatus}".${remarksText}`,
+        timestamp: new Date().toISOString(),
+        formattedTime: "Just now",
+        read: false,
+        link: "student-submissions.html",
+        appId: appId,
+      };
+      notifList.unshift(newNotif);
+      localStorage.setItem("nexo_notifications", JSON.stringify(notifList));
+
+      fetch(`${API_BASE}/api/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newNotif),
+      }).catch(() => {});
+
+      window.dispatchEvent(new CustomEvent("nexo:notification"));
     } catch (_) {}
 
     updateTabCounters();

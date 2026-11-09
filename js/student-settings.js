@@ -33,7 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
   const activeTabParam = urlParams.get("tab");
   if (activeTabParam) {
-    const matchingBtn = document.querySelector(`[data-tab="${activeTabParam}"]`);
+    const matchingBtn = document.querySelector(
+      `[data-tab="${activeTabParam}"]`,
+    );
     if (matchingBtn) matchingBtn.click();
   }
 
@@ -90,10 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (avatarWrap) avatarWrap.addEventListener("click", triggerAvatarPick);
-  if (avatarBadge) avatarBadge.addEventListener("click", (e) => {
-    e.stopPropagation();
-    triggerAvatarPick();
-  });
+  if (avatarBadge)
+    avatarBadge.addEventListener("click", (e) => {
+      e.stopPropagation();
+      triggerAvatarPick();
+    });
   if (btnUpload) btnUpload.addEventListener("click", triggerAvatarPick);
 
   if (fileInput) {
@@ -119,7 +122,9 @@ document.addEventListener("DOMContentLoaded", () => {
         updateHeaderAvatar(currentAvatarBase64);
         try {
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
-          const cached = JSON.parse(localStorage.getItem("nexo_student_settings") || "{}");
+          const cached = JSON.parse(
+            localStorage.getItem("nexo_student_settings") || "{}",
+          );
           cached.profilePicture = currentAvatarBase64;
           localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
         } catch (_) {}
@@ -149,7 +154,9 @@ document.addEventListener("DOMContentLoaded", () => {
       updateHeaderAvatar("");
       try {
         sessionStorage.removeItem("nexo-student-avatar");
-        const cached = JSON.parse(localStorage.getItem("nexo_student_settings") || "{}");
+        const cached = JSON.parse(
+          localStorage.getItem("nexo_student_settings") || "{}",
+        );
         cached.profilePicture = "";
         localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
       } catch (_) {}
@@ -259,13 +266,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (prefDark) prefDark.checked = isDark;
 
     if (settings.notifications) {
-      if (notifMatches && settings.notifications.scholarshipMatches !== undefined) {
+      if (
+        notifMatches &&
+        settings.notifications.scholarshipMatches !== undefined
+      ) {
         notifMatches.checked = settings.notifications.scholarshipMatches;
       }
-      if (notifStatus && settings.notifications.applicationUpdates !== undefined) {
+      if (
+        notifStatus &&
+        settings.notifications.applicationUpdates !== undefined
+      ) {
         notifStatus.checked = settings.notifications.applicationUpdates;
       }
-      if (notifDeadlines && settings.notifications.deadlineReminders !== undefined) {
+      if (
+        notifDeadlines &&
+        settings.notifications.deadlineReminders !== undefined
+      ) {
         notifDeadlines.checked = settings.notifications.deadlineReminders;
       }
     }
@@ -321,7 +337,10 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(payload),
         });
       } catch (err) {
-        console.warn("Could not save to /api/student-settings via server:", err);
+        console.warn(
+          "Could not save to /api/student-settings via server:",
+          err,
+        );
       }
 
       // Keep local caches updated
@@ -407,7 +426,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const res = await fetch(`${API_BASE}/api/settings/password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ currentPassword: curr, newPassword: newP, confirmPassword: conf }),
+          body: JSON.stringify({
+            currentPassword: curr,
+            newPassword: newP,
+            confirmPassword: conf,
+          }),
         });
         if (res.ok) {
           showToast("Password updated successfully!");

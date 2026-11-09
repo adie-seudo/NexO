@@ -44,15 +44,22 @@ function initSettingsTabs() {
       }
 
       // Smooth scroll the clicked button into view on mobile
-      btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      btn.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
     });
   });
 
   // Check URL query parameters or hash to automatically activate requested tab
   const urlParams = new URLSearchParams(window.location.search);
-  const requestedTab = urlParams.get("tab") || window.location.hash.replace("#", "");
+  const requestedTab =
+    urlParams.get("tab") || window.location.hash.replace("#", "");
   if (requestedTab) {
-    const targetBtn = document.querySelector(`.settings-tab-btn[data-tab="${requestedTab}"]`);
+    const targetBtn = document.querySelector(
+      `.settings-tab-btn[data-tab="${requestedTab}"]`,
+    );
     if (targetBtn) {
       targetBtn.click();
     }
@@ -145,7 +152,8 @@ function initImageUploads() {
         logoPreview.classList.remove("has-image");
         const logoWrapper = document.querySelector(".brand-logo-wrapper");
         if (logoWrapper) logoWrapper.classList.add("has-fallback");
-        const currentName = document.getElementById("org-name")?.value || "NEXO";
+        const currentName =
+          document.getElementById("org-name")?.value || "NEXO";
         const inits = extractInitials(currentName);
         if (logoInitials) {
           logoInitials.textContent = inits;
@@ -189,11 +197,17 @@ async function loadSettings() {
       settings = await res.json();
       // Cache copy in localStorage for offline & quick navigation
       try {
-        localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+        localStorage.setItem(
+          "nexo_provider_settings",
+          JSON.stringify(settings),
+        );
       } catch (_) {}
     }
   } catch (err) {
-    console.warn("NEXO: Backend /api/settings not reachable, loading from local cache:", err);
+    console.warn(
+      "NEXO: Backend /api/settings not reachable, loading from local cache:",
+      err,
+    );
   }
 
   // If backend was offline, read from localStorage fallback
@@ -227,8 +241,10 @@ function applySettingsToUI(s) {
   const contactNumberInput = document.getElementById("contact-number");
   const contactEmailInput = document.getElementById("contact-email");
 
-  if (contactPersonInput && s.contactPerson) contactPersonInput.value = s.contactPerson;
-  if (contactNumberInput && s.contactNumber) contactNumberInput.value = s.contactNumber;
+  if (contactPersonInput && s.contactPerson)
+    contactPersonInput.value = s.contactPerson;
+  if (contactNumberInput && s.contactNumber)
+    contactNumberInput.value = s.contactNumber;
   if (contactEmailInput && s.email) contactEmailInput.value = s.email;
 
   // Current Email Display in Security tab
@@ -310,7 +326,9 @@ function extractInitials(name) {
   }
   const parts = clean.split(/\s+/);
   if (parts.length === 1) {
-    return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+    return parts[0].length > 1
+      ? parts[0].substring(0, 2).toUpperCase()
+      : parts[0].toUpperCase();
   }
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
@@ -323,7 +341,9 @@ function initSettingsFormActions() {
   const discardBtn = document.getElementById("btn-discard-settings");
 
   // Track any form input changes to flag unsaved state
-  const inputs = document.querySelectorAll(".settings-input, .nexo-switch input");
+  const inputs = document.querySelectorAll(
+    ".settings-input, .nexo-switch input",
+  );
   inputs.forEach((input) => {
     input.addEventListener("input", () => markDirty(true));
     input.addEventListener("change", () => markDirty(true));
@@ -356,10 +376,14 @@ async function saveAllSettings(saveBtn) {
     Saving...
   `;
 
-  const orgNameVal = document.getElementById("org-name")?.value.trim() || "NEXO";
-  const locationVal = document.getElementById("org-location")?.value.trim() || "";
-  const contactPersonVal = document.getElementById("contact-person")?.value.trim() || "";
-  const contactNumberVal = document.getElementById("contact-number")?.value.trim() || "";
+  const orgNameVal =
+    document.getElementById("org-name")?.value.trim() || "NEXO";
+  const locationVal =
+    document.getElementById("org-location")?.value.trim() || "";
+  const contactPersonVal =
+    document.getElementById("contact-person")?.value.trim() || "";
+  const contactNumberVal =
+    document.getElementById("contact-number")?.value.trim() || "";
   const emailVal = document.getElementById("contact-email")?.value.trim() || "";
   const bioVal = document.getElementById("org-bio")?.value.trim() || "";
 
@@ -384,10 +408,14 @@ async function saveAllSettings(saveBtn) {
     bannerImage: finalBanner,
     logoImage: finalLogo,
     notifications: {
-      newApplications: document.getElementById("notif-new-apps")?.checked ?? true,
-      emailAlerts: document.getElementById("notif-email-alerts")?.checked ?? true,
-      weeklyDigest: document.getElementById("notif-weekly-digest")?.checked ?? false,
-      systemUpdates: document.getElementById("notif-system-updates")?.checked ?? true,
+      newApplications:
+        document.getElementById("notif-new-apps")?.checked ?? true,
+      emailAlerts:
+        document.getElementById("notif-email-alerts")?.checked ?? true,
+      weeklyDigest:
+        document.getElementById("notif-weekly-digest")?.checked ?? false,
+      systemUpdates:
+        document.getElementById("notif-system-updates")?.checked ?? true,
     },
     preferences: {
       twoFactor: document.getElementById("pref-2fa")?.checked ?? false,
@@ -408,16 +436,38 @@ async function saveAllSettings(saveBtn) {
       console.warn("Backend error saving settings:", res.status);
     }
   } catch (err) {
-    console.warn("Backend /api/settings unreachable, persisting to browser storage:", err);
+    console.warn(
+      "Backend /api/settings unreachable, persisting to browser storage:",
+      err,
+    );
     currentSettings = payload;
   }
 
   // Always mirror to localStorage for instant cross-page sync
   try {
-    localStorage.setItem("nexo_provider_settings", JSON.stringify(currentSettings));
+    localStorage.setItem(
+      "nexo_provider_settings",
+      JSON.stringify(currentSettings),
+    );
+    localStorage.setItem("nexo_settings", JSON.stringify(currentSettings));
     localStorage.setItem("nexo-provider-name", orgNameVal);
     localStorage.setItem("nexo-provider-logo", finalLogo);
     localStorage.setItem("nexo-provider-banner", finalBanner);
+
+    // Update all scholarships in local storage so Directory inherits the updated banner
+    const cachedSchols = JSON.parse(
+      localStorage.getItem("nexo_scholarships") || "[]"
+    );
+    if (Array.isArray(cachedSchols) && cachedSchols.length > 0) {
+      cachedSchols.forEach((s) => {
+        if (!s.providerName || s.providerName === "NEXO" || s.providerName === orgNameVal) {
+          if (finalBanner) s.providerBanner = finalBanner;
+          if (finalLogo) s.providerLogo = finalLogo;
+          if (orgNameVal) s.providerName = orgNameVal;
+        }
+      });
+      localStorage.setItem("nexo_scholarships", JSON.stringify(cachedSchols));
+    }
   } catch (_) {}
 
   // Update header avatar

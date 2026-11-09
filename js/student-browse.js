@@ -75,7 +75,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (res.ok) {
         serverOk = true;
         const fullData = await res.json();
-        const serverScholarships = Array.isArray(fullData.scholarships) ? fullData.scholarships : [];
+        const serverScholarships = Array.isArray(fullData.scholarships)
+          ? fullData.scholarships
+          : [];
         combined = serverScholarships;
         if (fullData.settings) {
           providerSettings = fullData.settings;
@@ -89,8 +91,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Keep local cache exactly in sync with server
         try {
-          localStorage.setItem("nexo_scholarships", JSON.stringify(serverScholarships));
-          localStorage.setItem("nexo_applications", JSON.stringify(studentApplications));
+          localStorage.setItem(
+            "nexo_scholarships",
+            JSON.stringify(serverScholarships),
+          );
+          localStorage.setItem(
+            "nexo_applications",
+            JSON.stringify(studentApplications),
+          );
         } catch (_) {}
       }
     } catch (e) {
@@ -100,25 +108,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // Only fallback to localStorage if server was unreachable
     if (!serverOk) {
       try {
-        combined = JSON.parse(localStorage.getItem("nexo_scholarships") || "[]");
-        studentApplications = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+        combined = JSON.parse(
+          localStorage.getItem("nexo_scholarships") || "[]",
+        );
+        studentApplications = JSON.parse(
+          localStorage.getItem("nexo_applications") || "[]",
+        );
       } catch (_) {}
     }
 
     // Check localStorage for provider settings if not loaded
     if (!providerSettings) {
       try {
-        const cachedSettings = localStorage.getItem("nexo_settings");
+        const cachedSettings =
+          localStorage.getItem("nexo_provider_settings") ||
+          localStorage.getItem("nexo_settings");
         if (cachedSettings) providerSettings = JSON.parse(cachedSettings);
       } catch (_) {}
     }
 
     const orgName =
-      (providerSettings && providerSettings.orgName) || "NEXO";
+      (providerSettings && providerSettings.orgName) ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
     const orgLogo =
-      (providerSettings && providerSettings.logoImage) || "";
+      (providerSettings && providerSettings.logoImage) ||
+      localStorage.getItem("nexo-provider-logo") ||
+      "";
     const orgBanner =
-      (providerSettings && providerSettings.bannerImage) || "";
+      (providerSettings && providerSettings.bannerImage) ||
+      localStorage.getItem("nexo-provider-banner") ||
+      window.DEFAULT_PROVIDER_BANNER ||
+      "";
 
     // Format for display
     allScholarships = combined.map((post) => {
@@ -169,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!providerMenu) return;
 
     const providers = Array.from(
-      new Set(allScholarships.map((s) => s.providerName).filter(Boolean))
+      new Set(allScholarships.map((s) => s.providerName).filter(Boolean)),
     );
 
     let html = `<button type="button" class="directory-dropdown-item ${
@@ -372,7 +393,9 @@ document.addEventListener("DOMContentLoaded", () => {
       let matchesQuery = true;
       if (searchQuery.length > 0) {
         const inTitle = (item.title || "").toLowerCase().includes(searchQuery);
-        const inProvider = (item.providerName || "").toLowerCase().includes(searchQuery);
+        const inProvider = (item.providerName || "")
+          .toLowerCase()
+          .includes(searchQuery);
         const inDesc = (item.desc || "").toLowerCase().includes(searchQuery);
         const inType = (item.type || "").toLowerCase().includes(searchQuery);
         matchesQuery = inTitle || inProvider || inDesc || inType;
@@ -418,8 +441,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const statusText = isQuotaFull
         ? "Quota Full"
         : isClosed
-        ? "Closed"
-        : "Open";
+          ? "Closed"
+          : "Open";
 
       const existingApp = studentApplications.find(
         (a) => String(a.scholarshipId) === String(item.id),
@@ -448,12 +471,12 @@ document.addEventListener("DOMContentLoaded", () => {
               year: "numeric",
             })
           : item.createdAt
-          ? new Date(item.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
-          : "Recently");
+            ? new Date(item.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "Recently");
 
       const applicantCountDisplay =
         item.applicantCount ||
@@ -561,19 +584,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const descEl = document.getElementById("modal-schol-desc");
     const reqsContainer = document.getElementById("modal-schol-reqs");
 
+    const bannerSrc =
+      schol.providerBanner ||
+      schol.bannerImage ||
+      schol.banner ||
+      localStorage.getItem("nexo-provider-banner") ||
+      (providerSettings && providerSettings.bannerImage) ||
+      window.DEFAULT_PROVIDER_BANNER;
+
     if (coverImg) {
-      if (schol.providerBanner) {
-        coverImg.src = schol.providerBanner;
+      if (bannerSrc) {
+        coverImg.src = bannerSrc;
         coverImg.style.display = "block";
       } else {
-        coverImg.src = "assets/auth-banner.png";
-        coverImg.style.display = "block";
+        coverImg.style.display = "none";
+        coverImg.src = "";
       }
+      coverImg.onerror = function () {
+        if (
+          window.DEFAULT_PROVIDER_BANNER &&
+          this.src !== window.DEFAULT_PROVIDER_BANNER
+        ) {
+          this.src = window.DEFAULT_PROVIDER_BANNER;
+          this.style.display = "block";
+        } else {
+          this.style.display = "none";
+        }
+      };
     }
 
+    const logoSrc =
+      schol.providerLogo ||
+      schol.logoImage ||
+      localStorage.getItem("nexo-provider-logo") ||
+      (providerSettings && providerSettings.logoImage);
+
     if (logoBox) {
-      if (schol.providerLogo) {
-        logoBox.innerHTML = `<img src="${schol.providerLogo}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      if (logoSrc) {
+        logoBox.innerHTML = `<img src="${logoSrc}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
       } else {
         const initials = (schol.providerName || "NX")
           .split(" ")
@@ -592,7 +640,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (reqsContainer) {
       reqsContainer.innerHTML = "";
-      const reqList = Array.isArray(schol.requirements) ? schol.requirements : [];
+      const reqList = Array.isArray(schol.requirements)
+        ? schol.requirements
+        : [];
       if (reqList.length > 0) {
         reqList.forEach((req) => {
           const reqTitle =
@@ -634,12 +684,12 @@ document.addEventListener("DOMContentLoaded", () => {
             year: "numeric",
           })
         : schol.createdAt
-        ? new Date(schol.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-        : "Recently");
+          ? new Date(schol.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "Recently");
 
     const postedEl = document.getElementById("modal-schol-posted");
     if (postedEl) postedEl.textContent = postedDate;
@@ -687,7 +737,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const existingApp = studentApplications.find(
-      (a) => String(a.scholarshipId) === String(schol.id)
+      (a) => String(a.scholarshipId) === String(schol.id),
     );
     const isAlreadyApplied = !!existingApp;
     const isQuotaFull = (schol.status || "").toLowerCase().includes("quota");
@@ -710,7 +760,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let statusColor = "#10b981";
         if (appStatus.toLowerCase().includes("review")) statusColor = "#8b5cf6";
-        if (appStatus.toLowerCase().includes("rejected")) statusColor = "#ef4444";
+        if (appStatus.toLowerCase().includes("rejected"))
+          statusColor = "#ef4444";
 
         bannerEl.style.display = "block";
         bannerEl.innerHTML = `
@@ -809,11 +860,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnShare) {
     btnShare.addEventListener("click", () => {
       if (navigator.share && activeScholarship) {
-        navigator.share({
-          title: activeScholarship.title,
-          text: `Check out ${activeScholarship.title} on NEXO!`,
-          url: window.location.href,
-        }).catch(() => {});
+        navigator
+          .share({
+            title: activeScholarship.title,
+            text: `Check out ${activeScholarship.title} on NEXO!`,
+            url: window.location.href,
+          })
+          .catch(() => {});
       } else {
         navigator.clipboard.writeText(window.location.href);
         showToast("Scholarship link copied to clipboard");
@@ -833,7 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modalOverlay || !modalViewDropbox) return;
 
     const existing = studentApplications.find(
-      (a) => String(a.scholarshipId) === String(schol.id)
+      (a) => String(a.scholarshipId) === String(schol.id),
     );
     if (existing) {
       showToast("You have already applied for this scholarship.", true);
@@ -843,7 +896,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const isQuota = (schol.status || "").toLowerCase().includes("quota");
     if (isQuota) {
-      showToast("This scholarship has reached its applicant limit and is now closed.", true);
+      showToast(
+        "This scholarship has reached its applicant limit and is now closed.",
+        true,
+      );
       openDetailsModal(schol);
       return;
     }
@@ -863,10 +919,13 @@ document.addEventListener("DOMContentLoaded", () => {
     btnOpenDropbox.addEventListener("click", () => {
       if (!activeScholarship) return;
       const existing = studentApplications.find(
-        (a) => String(a.scholarshipId) === String(activeScholarship.id)
+        (a) => String(a.scholarshipId) === String(activeScholarship.id),
       );
       if (existing) {
-        showToast("You have already submitted an application for this scholarship.", true);
+        showToast(
+          "You have already submitted an application for this scholarship.",
+          true,
+        );
         return;
       }
       openDropboxModal(activeScholarship);
@@ -976,7 +1035,7 @@ document.addEventListener("DOMContentLoaded", () => {
     btnSubmitDropbox.addEventListener("click", async () => {
       if (!activeScholarship) return;
       const alreadyApplied = studentApplications.some(
-        (a) => String(a.scholarshipId) === String(activeScholarship.id)
+        (a) => String(a.scholarshipId) === String(activeScholarship.id),
       );
       if (alreadyApplied) {
         showToast("You have already applied for this scholarship.", true);
@@ -1033,16 +1092,18 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.getItem("nexo-student-email") ||
         (studentSettings && studentSettings.email) ||
         "admin@admin.edu.ph";
-      const sId =
-        (studentSettings && studentSettings.studentId) || "21-04589";
+      const sId = (studentSettings && studentSettings.studentId) || "21-04589";
       const sSchool =
-        (studentSettings && studentSettings.university) || "Batangas State University";
+        (studentSettings && studentSettings.university) ||
+        "Batangas State University";
       const sCourse =
-        (studentSettings && studentSettings.course) || "BS Information Technology";
+        (studentSettings && studentSettings.course) ||
+        "BS Information Technology";
       const sYear =
         (studentSettings && studentSettings.yearLevel) || "3rd Year";
       const sPhone =
-        (studentSettings && studentSettings.contactNumber) || "+63 912 345 6789";
+        (studentSettings && studentSettings.contactNumber) ||
+        "+63 912 345 6789";
       const sAvatar =
         sessionStorage.getItem("nexo-student-avatar") ||
         (studentSettings && studentSettings.profilePicture) ||
@@ -1051,11 +1112,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // Build application object
       const newApp = {
         id: "app_" + Date.now(),
-        scholarshipId: activeScholarship ? activeScholarship.id : "schol_nexo_tech_01",
+        scholarshipId: activeScholarship
+          ? activeScholarship.id
+          : "schol_nexo_tech_01",
         scholarshipTitle: activeScholarship
           ? activeScholarship.title
           : "Tech for Tomorrow Scholarship",
-        providerName: activeScholarship ? activeScholarship.providerName : "NEXO",
+        providerName: activeScholarship
+          ? activeScholarship.providerName
+          : "NEXO",
         studentName: sName,
         studentEmail: sEmail,
         studentId: sId,
@@ -1111,10 +1176,41 @@ document.addEventListener("DOMContentLoaded", () => {
       // Save to localStorage
       try {
         const cachedApps = JSON.parse(
-          localStorage.getItem("nexo_applications") || "[]"
+          localStorage.getItem("nexo_applications") || "[]",
         );
         cachedApps.unshift(newApp);
         localStorage.setItem("nexo_applications", JSON.stringify(cachedApps));
+      } catch (_) {}
+
+      // Dispatch live notification for provider
+      try {
+        const notifList = JSON.parse(
+          localStorage.getItem("nexo_notifications") || "[]",
+        );
+        const scholName = activeScholarship
+          ? activeScholarship.title
+          : "Scholarship";
+        const newNotif = {
+          id: "notif_" + Date.now(),
+          recipient: "provider",
+          title: "New Application Received",
+          message: `${sName || "Juan Dela Cruz"} applied for "${scholName}" with ${processedDocs.length} document(s).`,
+          timestamp: new Date().toISOString(),
+          formattedTime: "Just now",
+          read: false,
+          link: "provider-applications.html",
+          appId: newApp.id,
+        };
+        notifList.unshift(newNotif);
+        localStorage.setItem("nexo_notifications", JSON.stringify(notifList));
+
+        fetch(`${API_BASE}/api/notifications`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newNotif),
+        }).catch(() => {});
+
+        window.dispatchEvent(new CustomEvent("nexo:notification"));
       } catch (_) {}
 
       setTimeout(() => {
@@ -1124,7 +1220,9 @@ document.addEventListener("DOMContentLoaded", () => {
           </svg>
           Application Submitted!
         `;
-        showToast("Application submitted successfully! Your submission is now Under Review.");
+        showToast(
+          "Application submitted successfully! Your submission is now Under Review.",
+        );
 
         setTimeout(() => {
           closeModal();

@@ -17,8 +17,7 @@ function closeSideMenu() {
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const overlay = document.querySelector(".nav-overlay");
 
   if (btn) btn.classList.remove("open");
@@ -47,8 +46,7 @@ window.handleMenuToggle = function (e) {
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const overlay = getNavOverlay();
 
   if (btn && menu) {
@@ -67,8 +65,7 @@ window.handleMenuToggle = function (e) {
 // =========================================
 document.addEventListener("DOMContentLoaded", function () {
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   if (!menu) return;
 
   // Listen on all anchor/button links inside the nav menu
@@ -88,7 +85,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // If clicking Home while already on provider-dashboard.html, switch view smoothly without reload
     const currentPage = window.location.pathname.split("/").pop();
-    if (currentPage === "provider-dashboard.html" && href === "provider-dashboard.html") {
+    if (
+      currentPage === "provider-dashboard.html" &&
+      href === "provider-dashboard.html"
+    ) {
       closeSideMenu();
       if (window.location.search) {
         window.history.replaceState({}, "", "provider-dashboard.html");
@@ -112,8 +112,7 @@ document.addEventListener("click", function (e) {
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
   const menu =
-    document.getElementById("nav-menu") ||
-    document.querySelector(".nav-menu");
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
 
   if (menu && menu.classList.contains("open")) {
     if (btn && !btn.contains(e.target) && !menu.contains(e.target)) {
@@ -172,9 +171,82 @@ function escapeNotifHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+const DEFAULT_NEXO_NOTIFICATIONS = [
+  {
+    id: "notif_1001",
+    recipient: "provider",
+    title: "New Application Received",
+    message: "Juan Dela Cruz submitted an application for \"Final Test\" with 3 documents.",
+    timestamp: new Date().toISOString(),
+    formattedTime: "10 mins ago",
+    read: false,
+    link: "provider-applications.html",
+  },
+  {
+    id: "notif_1002",
+    recipient: "provider",
+    title: "Grant Capacity Active",
+    message: "Applicant quota configured: 0 / 200 active slots remaining.",
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    formattedTime: "1 hour ago",
+    read: false,
+    link: "provider-dashboard.html",
+  },
+  {
+    id: "notif_1003",
+    recipient: "student",
+    title: "New Scholarship Posted",
+    message: "\"Final Test\" is now open for applications. Check requirements.",
+    timestamp: new Date(Date.now() - 1200000).toISOString(),
+    formattedTime: "20 mins ago",
+    read: false,
+    link: "student-browse.html",
+  },
+  {
+    id: "notif_1004",
+    recipient: "student",
+    title: "Document Verification",
+    message: "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    formattedTime: "2 hours ago",
+    read: true,
+    link: "student-dashboard.html",
+  },
+];
+
+function getProviderNotificationsFromStorage() {
+  let all = null;
+  try {
+    const raw = localStorage.getItem("nexo_notifications");
+    if (raw) all = JSON.parse(raw);
+  } catch (_) {}
+
+  if (!Array.isArray(all) || all.length === 0) {
+    all = [...DEFAULT_NEXO_NOTIFICATIONS];
+    try {
+      localStorage.setItem("nexo_notifications", JSON.stringify(all));
+    } catch (_) {}
+  }
+
+  return all.filter(
+    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all"
+  );
+}
+
 function initNotificationBell() {
   const notifBtn = document.querySelector(".notification-btn");
   if (!notifBtn) return;
+
+  // Ensure unread indicator dot element exists inside the button
+  let dot =
+    notifBtn.querySelector(".notification-dot") ||
+    document.getElementById("notif-dot");
+  if (!dot) {
+    dot = document.createElement("span");
+    dot.className = "notification-dot";
+    dot.id = "notif-dot";
+    notifBtn.appendChild(dot);
+  }
 
   // Find or create the popover
   let popover = document.getElementById("header-notif-popover");
@@ -186,8 +258,11 @@ function initNotificationBell() {
     popover.setAttribute("aria-label", "Notifications");
     popover.innerHTML = `
       <div class="notif-popover-header">
-        <h4 class="notif-popover-title">Notifications</h4>
-        <span class="notif-badge-count" id="provider-notif-badge">0 New</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h4 class="notif-popover-title">Notifications</h4>
+          <span class="notif-badge-count" id="provider-notif-badge">0 New</span>
+        </div>
+        <button type="button" class="notif-mark-read-btn" id="provider-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
       </div>
       <div class="notif-popover-body" id="provider-notif-body">
         <div class="notif-empty-box">
@@ -218,33 +293,109 @@ function initNotificationBell() {
   let lastProviderNotifsHash = "";
 
   async function loadNotifications() {
-    try {
-      const res = await fetch(`${API_BASE}/api/notifications?recipient=provider`);
-      if (!res.ok) return;
-      const notifs = await res.json();
-      const newHash = JSON.stringify(notifs);
-      if (newHash === lastProviderNotifsHash) return;
+    // 1. Immediately render local state so user gets instant response
+    const localNotifs = getProviderNotificationsFromStorage();
+    const newHash = JSON.stringify(localNotifs);
+    if (newHash !== lastProviderNotifsHash) {
       lastProviderNotifsHash = newHash;
-      renderNotifications(notifs);
+      renderNotifications(localNotifs);
+    }
+
+    // 2. Sync with backend API if server is alive
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/notifications?recipient=provider`,
+      );
+      if (res.ok) {
+        const serverNotifs = await res.json();
+        if (Array.isArray(serverNotifs) && serverNotifs.length > 0) {
+          try {
+            const cached = JSON.parse(
+              localStorage.getItem("nexo_notifications") || "[]"
+            );
+            serverNotifs.forEach((sn) => {
+              const idx = cached.findIndex(
+                (c) => String(c.id) === String(sn.id)
+              );
+              if (idx >= 0) cached[idx] = sn;
+              else cached.unshift(sn);
+            });
+            localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+          } catch (_) {}
+          const mergedNotifs = getProviderNotificationsFromStorage();
+          renderNotifications(mergedNotifs);
+        }
+      }
     } catch (_) {}
+  }
+
+  function markNotificationRead(id) {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]"
+      );
+      const item = cached.find((n) => String(n.id) === String(id));
+      if (item) {
+        item.read = true;
+        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      }
+    } catch (_) {}
+
+    // Send read request to server if online
+    fetch(`${API_BASE}/api/notifications/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    }).catch(() => {});
+
+    loadNotifications();
+  }
+
+  function markAllNotificationsRead() {
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]"
+      );
+      cached.forEach((n) => {
+        if (
+          !n.recipient ||
+          n.recipient === "provider" ||
+          n.recipient === "all"
+        ) {
+          n.read = true;
+        }
+      });
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+    } catch (_) {}
+
+    // Send read request to server if online
+    fetch(`${API_BASE}/api/notifications/read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ recipient: "provider" }),
+    }).catch(() => {});
+
+    loadNotifications();
   }
 
   function renderNotifications(notifs) {
     const bodyEl = document.getElementById("provider-notif-body");
     const badgeEl = document.getElementById("provider-notif-badge");
-    const dot = notifBtn.querySelector(".notification-dot") || document.getElementById("notif-dot");
+    const currentDot =
+      notifBtn.querySelector(".notification-dot") ||
+      document.getElementById("notif-dot");
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
     const unreadCount = list.filter((n) => !n.read).length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
-    if (dot) {
+    if (currentDot) {
       if (unreadCount > 0) {
-        dot.classList.add("active");
+        currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {
-        dot.classList.remove("active");
+        currentDot.classList.remove("active");
         notifBtn.classList.remove("has-unread");
       }
     }
@@ -270,7 +421,7 @@ function initNotificationBell() {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
         return `
-          <a href="${n.link || 'provider-applications.html'}" class="notif-item ${isUnread ? 'unread' : ''}">
+          <a href="${n.link || 'provider-applications.html'}" class="notif-item ${isUnread ? 'unread' : ''}" data-id="${n.id}">
             <div class="notif-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -287,11 +438,39 @@ function initNotificationBell() {
         `;
       })
       .join("");
+
+    // Attach click listeners to individual items
+    bodyEl.querySelectorAll(".notif-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const notifId = item.dataset.id;
+        if (notifId) markNotificationRead(notifId);
+      });
+    });
   }
 
   // Initial load & periodic polling
   loadNotifications();
-  setInterval(loadNotifications, 4000);
+  setInterval(loadNotifications, 3500);
+
+  // Wire "Mark all read" button
+  const markReadBtn = document.getElementById("provider-mark-read");
+  if (markReadBtn) {
+    markReadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      markAllNotificationsRead();
+    });
+  }
+
+  // Listen for storage events (other tabs/windows) and custom events
+  window.addEventListener("storage", (e) => {
+    if (e.key === "nexo_notifications") {
+      loadNotifications();
+    }
+  });
+  window.addEventListener("nexo:notification", () => {
+    loadNotifications();
+  });
 
   // Toggle dropdown on bell click
   notifBtn.addEventListener("click", (e) => {
@@ -301,20 +480,8 @@ function initNotificationBell() {
     const willOpen = !popover.classList.contains("open");
     popover.classList.toggle("open", willOpen);
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
-
     if (willOpen) {
-      // Mark provider notifications as read
-      fetch(`${API_BASE}/api/notifications/read`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: "provider" }),
-      }).catch(() => {});
-
-      const dot = notifBtn.querySelector(".notification-dot") || document.getElementById("notif-dot");
-      if (dot) dot.classList.remove("active");
-      notifBtn.classList.remove("has-unread");
-      const badgeEl = document.getElementById("provider-notif-badge");
-      if (badgeEl) badgeEl.textContent = "0 New";
+      loadNotifications();
     }
   });
 
@@ -336,7 +503,11 @@ function initNotificationBell() {
 
   // Close when clicking outside
   document.addEventListener("click", (e) => {
-    if (popover.classList.contains("open") && !popover.contains(e.target) && !notifBtn.contains(e.target)) {
+    if (
+      popover.classList.contains("open") &&
+      !popover.contains(e.target) &&
+      !notifBtn.contains(e.target)
+    ) {
       closeNotifications();
     }
   });
@@ -349,11 +520,15 @@ function initNotificationBell() {
   });
 
   // Close when scrolling page
-  window.addEventListener("scroll", () => {
-    if (popover.classList.contains("open")) {
-      closeNotifications();
-    }
-  }, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (popover.classList.contains("open")) {
+        closeNotifications();
+      }
+    },
+    { passive: true },
+  );
 }
 
 function syncGlobalHeaderAvatar() {
@@ -369,9 +544,12 @@ function syncGlobalHeaderAvatar() {
     let inits = "NX";
     if (name && !name.toUpperCase().startsWith("NEXO")) {
       const parts = name.trim().split(/\s+/);
-      inits = parts.length === 1
-        ? (parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase())
-        : (parts[0][0] + parts[1][0]).toUpperCase();
+      inits =
+        parts.length === 1
+          ? parts[0].length > 1
+            ? parts[0].substring(0, 2).toUpperCase()
+            : parts[0].toUpperCase()
+          : (parts[0][0] + parts[1][0]).toUpperCase();
     }
     avatarBtn.textContent = inits;
   }
