@@ -206,8 +206,17 @@ function syncScholarshipApplicantCounts(data) {
   const scholMap = {};
   data.scholarships.forEach((s) => {
     const count = data.applications.filter((app) => {
-      if (app.scholarshipId && s.id && String(app.scholarshipId) === String(s.id)) return true;
-      if (s.title && (app.scholarshipTitle === s.title || app.title === s.title)) return true;
+      if (
+        app.scholarshipId &&
+        s.id &&
+        String(app.scholarshipId) === String(s.id)
+      )
+        return true;
+      if (
+        s.title &&
+        (app.scholarshipTitle === s.title || app.title === s.title)
+      )
+        return true;
       return false;
     }).length;
 
@@ -227,7 +236,9 @@ function syncScholarshipApplicantCounts(data) {
     const matched =
       scholMap[app.scholarshipId] ||
       data.scholarships.find(
-        (s) => s.title && (app.scholarshipTitle === s.title || app.title === s.title),
+        (s) =>
+          s.title &&
+          (app.scholarshipTitle === s.title || app.title === s.title),
       );
     if (matched) {
       app.applicantCount = matched.applicantCount;
@@ -489,7 +500,7 @@ async function handleRequest(req, res) {
       const alreadyApplied = data.applications.some(
         (a) =>
           String(a.scholarshipId) === String(targetScholarshipId) &&
-          (!a.studentEmail || a.studentEmail === studentEmail)
+          (!a.studentEmail || a.studentEmail === studentEmail),
       );
 
       if (alreadyApplied) {
@@ -501,19 +512,22 @@ async function handleRequest(req, res) {
 
       // Check if scholarship has reached applicant quota limit
       const targetSchol = (data.scholarships || []).find(
-        (s) => String(s.id) === String(targetScholarshipId)
+        (s) => String(s.id) === String(targetScholarshipId),
       );
       if (targetSchol) {
         const limit =
-          parseInt(targetSchol.applicantLimit || targetSchol.maxApplicants || 200, 10) ||
-          200;
+          parseInt(
+            targetSchol.applicantLimit || targetSchol.maxApplicants || 200,
+            10,
+          ) || 200;
         const currentCount = (data.applications || []).filter(
-          (a) => String(a.scholarshipId) === String(targetScholarshipId)
+          (a) => String(a.scholarshipId) === String(targetScholarshipId),
         ).length;
         if (currentCount >= limit) {
           return sendJson(res, 400, {
             success: false,
-            error: "This scholarship has reached its applicant limit and is now closed.",
+            error:
+              "This scholarship has reached its applicant limit and is now closed.",
           });
         }
       }
@@ -590,9 +604,10 @@ async function handleRequest(req, res) {
             day: "numeric",
             year: "numeric",
           }),
-        applicantCount: body.applicantCount && !body.applicantCount.includes("/ 10 ")
-          ? body.applicantCount
-          : "1 / 200 Applicants",
+        applicantCount:
+          body.applicantCount && !body.applicantCount.includes("/ 10 ")
+            ? body.applicantCount
+            : "1 / 200 Applicants",
         documents: savedDocuments,
         uploadedDocuments: savedDocuments.map((d) => d.name),
         notes: body.notes || "",

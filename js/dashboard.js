@@ -649,8 +649,17 @@ function createCompactCard(schol, allApplications = null) {
 
   if (Array.isArray(apps) && apps.length > 0) {
     count = apps.filter((a) => {
-      if (a.scholarshipId && schol.id && String(a.scholarshipId) === String(schol.id)) return true;
-      if (schol.title && (a.scholarshipTitle === schol.title || a.title === schol.title)) return true;
+      if (
+        a.scholarshipId &&
+        schol.id &&
+        String(a.scholarshipId) === String(schol.id)
+      )
+        return true;
+      if (
+        schol.title &&
+        (a.scholarshipTitle === schol.title || a.title === schol.title)
+      )
+        return true;
       return false;
     }).length;
   } else if (schol.applicantTotal !== undefined) {
@@ -811,10 +820,13 @@ async function loadPersistedData() {
     scholarships.forEach((s) => {
       const liveCount = applications.filter(
         (a) =>
-          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
-          (s.title && (a.scholarshipTitle === s.title || a.title === s.title))
+          (a.scholarshipId &&
+            s.id &&
+            String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
       ).length;
-      const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+      const limit =
+        parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
       s.applicantTotal = liveCount;
       s.applicantLimit = limit;
       s.maxApplicants = limit;
