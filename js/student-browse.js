@@ -146,17 +146,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const limit =
         parseInt(post.applicantLimit || post.maxApplicants || 200, 10) || 200;
       let liveCount = 0;
-      if (
-        Array.isArray(studentApplications) &&
-        studentApplications.length > 0
-      ) {
+      if (Array.isArray(studentApplications) && studentApplications.length > 0) {
         liveCount = studentApplications.filter(
           (a) =>
-            (a.scholarshipId &&
-              post.id &&
-              String(a.scholarshipId) === String(post.id)) ||
-            (post.title &&
-              (a.scholarshipTitle === post.title || a.title === post.title)),
+            (a.scholarshipId && post.id && String(a.scholarshipId) === String(post.id)) ||
+            (post.title && (a.scholarshipTitle === post.title || a.title === post.title))
         ).length;
       } else {
         liveCount = parseInt(post.applicantTotal || 0, 10) || 0;
@@ -178,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Array.isArray(post.requirements) && post.requirements.length > 0
             ? post.requirements
             : [],
-        status: liveCount >= limit ? "Quota Full" : post.status || "Open",
+        status: liveCount >= limit ? "Quota Full" : (post.status || "Open"),
         applicantLimit: limit,
         maxApplicants: limit,
         applicantTotal: liveCount,
@@ -1201,32 +1195,24 @@ document.addEventListener("DOMContentLoaded", () => {
         let updated = false;
         cachedSchols.forEach((s) => {
           if (
-            (activeScholarship &&
-              String(s.id) === String(activeScholarship.id)) ||
+            (activeScholarship && String(s.id) === String(activeScholarship.id)) ||
             (activeScholarship && s.title === activeScholarship.title)
           ) {
-            const limit =
-              parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+            const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
             const currentTotal = parseInt(s.applicantTotal || 0, 10) || 0;
             const newTotal = currentTotal + 1;
             s.applicantTotal = newTotal;
             s.applicantLimit = limit;
             s.maxApplicants = limit;
             s.applicantCount = `${newTotal} / ${limit} Applicants`;
-            if (
-              newTotal >= limit &&
-              (s.status || "").toLowerCase() !== "closed"
-            ) {
+            if (newTotal >= limit && (s.status || "").toLowerCase() !== "closed") {
               s.status = "Quota Full";
             }
             updated = true;
           }
         });
         if (updated) {
-          localStorage.setItem(
-            "nexo_scholarships",
-            JSON.stringify(cachedSchols),
-          );
+          localStorage.setItem("nexo_scholarships", JSON.stringify(cachedSchols));
         }
       } catch (_) {}
 
