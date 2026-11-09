@@ -523,10 +523,21 @@ function initStudentGreeting() {
   });
 
   // Resolve student name dynamically from settings or session
+  const currentStudentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
   let studentSettings = null;
   try {
     const raw = localStorage.getItem("nexo_student_settings");
-    if (raw) studentSettings = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.email || !currentStudentEmail || parsed.email.toLowerCase() === currentStudentEmail) {
+        studentSettings = parsed;
+      }
+    }
   } catch (_) {}
 
   const savedName =
@@ -582,8 +593,13 @@ async function loadStudentData() {
     const data = await response.json();
     applications = Array.isArray(data.applications) ? data.applications : [];
 
-    // Sync student settings and header avatar
-    if (data.studentSettings) {
+    // Sync student settings and header avatar ONLY if it belongs to current active student
+    if (
+      data.studentSettings &&
+      data.studentSettings.email &&
+      currentStudentEmail &&
+      data.studentSettings.email.toLowerCase() === currentStudentEmail
+    ) {
       try {
         localStorage.setItem(
           "nexo_student_settings",
@@ -929,8 +945,8 @@ function openSubmissionDetailsModal(app) {
         </div>
         <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px dashed var(--border-color); margin-bottom: 24px;">
           <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
-          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Adrian Del Mundo</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">BS Information Technology &bull; Batangas State University &bull; admin@admin.edu.ph</p>
+          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Student Scholar</p>
+          <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">Verified Student Account</p>
         </div>
         <button type="button" id="btn-close-sub-modal" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px;">
           Close Details
@@ -1263,12 +1279,12 @@ function openSubmissionDetailsModal(app) {
   // Populate Student Identity
   const nameEl = document.getElementById("modal-sub-student-name");
   const infoEl = document.getElementById("modal-sub-student-info");
-  if (nameEl) nameEl.textContent = app.studentName || "Adrian Del Mundo";
+  if (nameEl) nameEl.textContent = app.studentName || "Student Scholar";
   if (infoEl) {
-    const course = app.course || "BS Information Technology";
-    const uni = app.university || "Batangas State University";
-    const email = app.studentEmail || "adrian@batstate-u.edu.ph";
-    infoEl.textContent = `${course} • ${uni} • ${email}`;
+    const course = app.course || "";
+    const uni = app.university || "";
+    const email = app.studentEmail || "";
+    infoEl.textContent = [course, uni, email].filter(Boolean).join(" • ") || "Verified Student Account";
   }
 
   // Open Modal

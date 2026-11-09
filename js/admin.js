@@ -262,6 +262,24 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       updated = true;
     }
+    if (!users.some((u) => u.email === "24-02924@g.batstate-u.edu.ph")) {
+      users.push({
+        id: "usr_stud_2402924",
+        email: "24-02924@g.batstate-u.edu.ph",
+        password: "password123",
+        role: "student",
+        name: "",
+        university: "Batangas State University",
+        course: "",
+        yearLevel: "",
+        studentId: "24-02924",
+        createdAt: "2026-11-09T08:00:00.000Z",
+        formattedDate: "Nov 9, 2026",
+        status: "active",
+        notes: "Student Account created via Admin Panel",
+      });
+      updated = true;
+    }
 
     if (updated) {
       try {

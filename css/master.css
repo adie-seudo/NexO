@@ -4239,15 +4239,13 @@ body.dark-theme .directory-dropdown-item.active {
   background-color: #2E1B4E;
   color: #D6BBFB;
 }
-  color: #D6BBFB;
-}
 
 /* Directory Scholarship Cards (20px radius, 0 9px 14px shadow) */
 .directory-card {
   background-color: var(--bg-surface, #ffffff);
-  border: 1px solid var(--border-color, #EAECF0);
+  border: 1.5px solid var(--border-color, #D0D5DD);
   border-radius: 20px;
-  padding: 20px 18px;
+  padding: 20px 20px;
   box-shadow: 0 9px 14px rgba(0, 0, 0, 0.08);
   margin-bottom: 16px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -4255,14 +4253,18 @@ body.dark-theme .directory-dropdown-item.active {
   flex-direction: column;
   gap: 12px;
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 .directory-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.11);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.12);
 }
 body.dark-theme .directory-card {
   background-color: #131722;
-  border-color: #2A3142;
+  border: 1.5px solid #2A3142;
   box-shadow: 0 9px 14px rgba(0, 0, 0, 0.35);
 }
 
@@ -4271,6 +4273,8 @@ body.dark-theme .directory-card {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 .directory-card-brand {
   display: flex;
@@ -4280,12 +4284,13 @@ body.dark-theme .directory-card {
   flex: 1;
 }
 .directory-card-logo {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   border: 1.5px solid var(--border-color, #EAECF0);
   background-color: #F4EBFF;
   color: #6941C6;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4308,7 +4313,9 @@ body.dark-theme .directory-card {
   font-weight: 750;
   color: var(--text-primary);
   margin: 0 0 2px 0;
-  line-height: 1.3;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .directory-card-provider {
   font-size: 12.5px;
@@ -4327,6 +4334,7 @@ body.dark-theme .directory-card {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
 }
 .directory-status-pill.open {
   background-color: #AEFFB9;
@@ -4345,7 +4353,43 @@ body.dark-theme .directory-status-pill.closed {
   color: #9CA3AF;
 }
 
-/* Meta Row (Grant & Deadline) */
+/* Meta Wrap (Applicant count on row 1, Posted & Expires together on row 2) */
+.directory-card-meta-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 2px 0;
+}
+.directory-applicants-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #8b5cf6;
+  font-weight: 700;
+  font-size: 13px;
+}
+.directory-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  line-height: 1.4;
+  margin: 0;
+}
+.directory-date-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4.5px;
+}
+.directory-date-dot {
+  opacity: 0.45;
+  font-size: 11px;
+}
+
 .directory-meta-row {
   display: flex;
   align-items: center;
@@ -4374,6 +4418,11 @@ body.dark-theme .directory-status-pill.closed {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* Card Footer (View Details link & Apply Now button) */
@@ -4381,7 +4430,10 @@ body.dark-theme .directory-status-pill.closed {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-top: 4px;
+  width: 100%;
+  min-width: 0;
 }
 .directory-view-details-btn {
   background: transparent;
@@ -4391,7 +4443,8 @@ body.dark-theme .directory-status-pill.closed {
   font-weight: 700;
   cursor: pointer;
   padding: 6px 0;
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   transition: opacity 0.15s ease;
 }
 .directory-view-details-btn:hover {
@@ -4411,6 +4464,11 @@ body.dark-theme .directory-view-details-btn {
   font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+.directory-apply-btn.already-applied-btn {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
 }
 .directory-apply-btn:hover:not(:disabled) {
   background-color: #7F56D9;
@@ -5358,10 +5416,14 @@ body.dark-theme .nav-alert-dot {
 /* Scholarship Description Word Wrap & Break */
 .modal-schol-desc,
 #modal-schol-desc,
-.directory-card-desc,
 #dropbox-schol-desc {
   overflow-wrap: anywhere !important;
   word-break: break-word !important;
   white-space: pre-line;
+}
+
+.directory-card-desc {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
 }
 

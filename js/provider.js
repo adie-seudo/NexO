@@ -242,7 +242,7 @@ function getProviderNotificationsFromStorage() {
             id: notifId,
             recipient: "provider",
             title: "New Application Received",
-            message: `${app.studentName || "Adrian Del Mundo"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
+            message: `${app.studentName || "Student Scholar"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
             timestamp: app.submittedAt || new Date().toISOString(),
             formattedTime: app.formattedDate || "Just now",
             read: false,

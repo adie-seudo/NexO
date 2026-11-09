@@ -38,26 +38,35 @@ window.DEFAULT_PROVIDER_BANNER = "";
     ) {
       localStorage.removeItem("nexo_applications");
     }
-    const schols = JSON.parse(
+    const FAKE_SCHOL_IDS = new Set([
+      "schol_nexo_stem",
+      "schol_nexo_academic",
+      "schol_nexo_tech",
+      "schol_nexo_tech_01",
+      "schol_1794124026316",
+      "schol_1794126664376",
+      "schol_1794126637109",
+    ]);
+
+    let schols = JSON.parse(
       localStorage.getItem("nexo_scholarships") || "[]",
     );
-    if (
-      schols.some(
-        (s) =>
-          s.id === "schol_nexo_tech_01" ||
-          s.id === "schol_1794124026316" ||
-          s.id === "schol_1794126664376" ||
-          s.id === "schol_1794126637109",
-      )
-    ) {
-      localStorage.removeItem("nexo_scholarships");
+    if (Array.isArray(schols) && schols.some((s) => s && FAKE_SCHOL_IDS.has(s.id))) {
+      schols = schols.filter((s) => s && !FAKE_SCHOL_IDS.has(s.id));
+      localStorage.setItem("nexo_scholarships", JSON.stringify(schols));
     }
 
     // Purge old leftover Signal Twice test banner from localStorage
-    const savedProvBanner = localStorage.getItem("nexo-provider-banner");
-    if (savedProvBanner && savedProvBanner.startsWith("data:image")) {
-      localStorage.removeItem("nexo-provider-banner");
-    }
+    localStorage.removeItem("nexo-provider-banner");
+    localStorage.removeItem("provider-banner-preview");
+    try {
+      const pSet = JSON.parse(localStorage.getItem("nexo-provider-settings") || "{}");
+      if (pSet && (pSet.bannerImage || pSet.banner)) {
+        pSet.bannerImage = "";
+        pSet.banner = "";
+        localStorage.setItem("nexo-provider-settings", JSON.stringify(pSet));
+      }
+    } catch (_) {}
 
     // Clean any cached scholarships stuck with leftover test banner
     if (Array.isArray(schols) && schols.length > 0) {
@@ -101,6 +110,44 @@ window.DEFAULT_PROVIDER_BANNER = "";
         localStorage.setItem("nexo_scholarships", JSON.stringify(schols));
       }
     }
+
+    // Purge ANY legacy "Juan Dela Cruz" or "admin@admin.edu.ph" residuals from memory
+    if (localStorage.getItem("nexo-student-name") === "Juan Dela Cruz") {
+      localStorage.removeItem("nexo-student-name");
+    }
+    if (sessionStorage.getItem("nexo-student-name") === "Juan Dela Cruz") {
+      sessionStorage.removeItem("nexo-student-name");
+    }
+    if (localStorage.getItem("nexo-student-email") === "admin@admin.edu.ph") {
+      localStorage.removeItem("nexo-student-email");
+    }
+    if (sessionStorage.getItem("nexo-student-email") === "admin@admin.edu.ph") {
+      sessionStorage.removeItem("nexo-student-email");
+    }
+
+    const rawSettings = localStorage.getItem("nexo_student_settings");
+    if (rawSettings) {
+      const s = JSON.parse(rawSettings);
+      if (s.fullName === "Juan Dela Cruz" || s.email === "admin@admin.edu.ph") {
+        localStorage.removeItem("nexo_student_settings");
+      }
+    }
+
+    const rawUsers = localStorage.getItem("nexo_users");
+    if (rawUsers) {
+      let uList = JSON.parse(rawUsers);
+      if (Array.isArray(uList)) {
+        const cleanUsers = uList.filter(
+          (u) =>
+            u.email !== "admin@admin.edu.ph" &&
+            u.name !== "Juan Dela Cruz" &&
+            u.fullName !== "Juan Dela Cruz",
+        );
+        if (cleanUsers.length !== uList.length) {
+          localStorage.setItem("nexo_users", JSON.stringify(cleanUsers));
+        }
+      }
+    }
   } catch (_) {}
 })();
 
@@ -115,11 +162,23 @@ function getDynamicInitials(name) {
 }
 
 function isStudentProfileComplete() {
+  const currentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
   let settings = null;
   try {
     const raw = localStorage.getItem("nexo_student_settings");
-    if (raw) settings = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.email || !currentEmail || parsed.email.toLowerCase() === currentEmail) {
+        settings = parsed;
+      }
+    }
   } catch (_) {}
+
   const name =
     (settings && settings.fullName) ||
     sessionStorage.getItem("nexo-student-name") ||
@@ -137,6 +196,12 @@ function isStudentProfileComplete() {
 }
 
 function syncGlobalStudentIdentity() {
+  const currentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
   const avatarEl = document.getElementById("student-header-avatar");
   const storedName =
     sessionStorage.getItem("nexo-student-name") ||
@@ -145,7 +210,12 @@ function syncGlobalStudentIdentity() {
   let studentSettings = null;
   try {
     const raw = localStorage.getItem("nexo_student_settings");
-    if (raw) studentSettings = JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.email || !currentEmail || parsed.email.toLowerCase() === currentEmail) {
+        studentSettings = parsed;
+      }
+    }
   } catch (_) {}
 
   const effectiveName = (studentSettings && studentSettings.fullName) || storedName;
@@ -924,6 +994,8 @@ document.addEventListener("click", (e) => {
       localStorage.removeItem("nexo-logged-in");
       localStorage.removeItem("nexo-student-name");
       localStorage.removeItem("nexo-student-email");
+      localStorage.removeItem("nexo-student-avatar");
+      localStorage.removeItem("nexo_student_settings");
     } catch (_) {}
     window.location.href = "index.html";
   }

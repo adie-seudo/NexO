@@ -120,10 +120,26 @@ const DEFAULT_DATA = {
       university: "Batangas State University",
       course: "BS Information Technology",
       yearLevel: "3rd Year",
+      studentId: "21-04589",
       createdAt: "2026-11-01T08:00:00.000Z",
       formattedDate: "Nov 1, 2026",
       status: "active",
       notes: "Verified Student Account",
+    },
+    {
+      id: "usr_stud_2402924",
+      email: "24-02924@g.batstate-u.edu.ph",
+      password: "password123",
+      role: "student",
+      name: "",
+      university: "Batangas State University",
+      course: "",
+      yearLevel: "",
+      studentId: "24-02924",
+      createdAt: "2026-11-09T08:00:00.000Z",
+      formattedDate: "Nov 9, 2026",
+      status: "active",
+      notes: "Student Account created via Admin Panel",
     },
   ],
 };
@@ -550,7 +566,7 @@ async function handleRequest(req, res) {
       const studentEmail =
         body.studentEmail ||
         (data.studentSettings && data.studentSettings.email) ||
-        "admin@admin.edu.ph";
+        "adrian@batstate-u.edu.ph";
       const targetScholarshipId = body.scholarshipId || "schol_nexo_tech_01";
       const alreadyApplied = data.applications.some(
         (a) =>
@@ -981,10 +997,40 @@ async function handleRequest(req, res) {
     });
   }
 
-  // 6. STUDENT SETTINGS API
+  // 6. STUDENT SETTINGS API (Multi-Account Profile Isolation)
   if (pathname === "/api/student-settings") {
     const data = readData();
+    const queryEmail = (reqUrl.searchParams.get("email") || "").toLowerCase().trim();
+
     if (method === "GET") {
+      if (queryEmail) {
+        data.studentProfiles = data.studentProfiles || {};
+        if (data.studentProfiles[queryEmail]) {
+          return sendJson(res, 200, data.studentProfiles[queryEmail]);
+        }
+        const matched = (data.users || []).find((u) => (u.email || "").toLowerCase() === queryEmail);
+        const profile = {
+          fullName: (matched && matched.name) || "",
+          email: queryEmail,
+          university: (matched && matched.university) || (queryEmail.includes("batstate-u") ? "Batangas State University" : ""),
+          course: (matched && matched.course) || "",
+          yearLevel: (matched && matched.yearLevel) || "",
+          studentId: (matched && matched.studentId) || (queryEmail.split("@")[0].match(/^\d{2}-\d{4,6}$/) ? queryEmail.split("@")[0] : ""),
+          contactNumber: "",
+          bio: "",
+          profilePicture: "",
+          notifications: {
+            scholarshipMatches: true,
+            applicationUpdates: true,
+            deadlineReminders: true,
+          },
+          preferences: {
+            theme: "light",
+          },
+        };
+        return sendJson(res, 200, profile);
+      }
+
       return sendJson(
         res,
         200,
@@ -992,14 +1038,38 @@ async function handleRequest(req, res) {
       );
     }
 
-    if (method === "POST") {
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
       const body = await parseRequestBody(req);
-      const current = data.studentSettings || DEFAULT_DATA.studentSettings;
+      const email = (body.email || queryEmail || (data.studentSettings && data.studentSettings.email) || "").toLowerCase().trim();
+      data.studentProfiles = data.studentProfiles || {};
+
+      const current = data.studentProfiles[email] || {
+        fullName: "",
+        email: email,
+        university: email.includes("batstate-u") ? "Batangas State University" : "",
+        course: "",
+        yearLevel: "",
+        studentId: email.split("@")[0].match(/^\d{2}-\d{4,6}$/) ? email.split("@")[0] : "",
+        contactNumber: "",
+        bio: "",
+        profilePicture: "",
+        notifications: {
+          scholarshipMatches: true,
+          applicationUpdates: true,
+          deadlineReminders: true,
+        },
+        preferences: {
+          theme: "light",
+        },
+      };
 
       const updated = {
         ...current,
-        fullName: current.fullName,
-        email: current.email,
+        fullName:
+          body.fullName !== undefined
+            ? String(body.fullName).trim()
+            : current.fullName,
+        email: email || current.email,
         university:
           body.university !== undefined
             ? String(body.university).trim()
@@ -1036,6 +1106,19 @@ async function handleRequest(req, res) {
         updatedAt: new Date().toISOString(),
       };
 
+      data.studentProfiles[email] = updated;
+
+      // Update data.users if name or course updated
+      if (Array.isArray(data.users) && email) {
+        const u = data.users.find((user) => (user.email || "").toLowerCase() === email);
+        if (u) {
+          if (body.fullName !== undefined) u.name = String(body.fullName).trim();
+          if (body.university !== undefined) u.university = String(body.university).trim();
+          if (body.course !== undefined) u.course = String(body.course).trim();
+          if (body.studentId !== undefined) u.studentId = String(body.studentId).trim();
+        }
+      }
+
       data.studentSettings = updated;
 
       // Update student profile picture on existing applications
@@ -1044,7 +1127,7 @@ async function handleRequest(req, res) {
         Array.isArray(data.applications)
       ) {
         data.applications.forEach((app) => {
-          if (!app.studentEmail || app.studentEmail === current.email) {
+          if (!app.studentEmail || app.studentEmail === email) {
             app.studentProfilePic = updated.profilePicture;
             app.profilePicture = updated.profilePicture;
           }

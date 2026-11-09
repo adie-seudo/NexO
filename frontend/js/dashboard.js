@@ -851,7 +851,7 @@ function initDynamicAvatar() {
       initials = word.length > 1 ? word.substring(0, 2) : word;
     }
   } else if (nameParts.length >= 2) {
-    // If multiple words (like "Juan Dela Cruz"), take first letter of first and last word
+    // If multiple words (like first and last name), take first letter of first and last word
     const firstLetter = nameParts[0][0];
     const lastLetter = nameParts[nameParts.length - 1][0];
     initials = (firstLetter + lastLetter).toUpperCase();

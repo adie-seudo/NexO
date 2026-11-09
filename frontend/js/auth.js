@@ -103,8 +103,13 @@ function initLoginToggleAndSubmit() {
       }
 
       // 2. STUDENT ADMIN BYPASS (NEW)
-      if (emailValue === "admin@admin.edu.ph" && passwordValue === "admin") {
+      if (emailValue === "adrian@batstate-u.edu.ph" && passwordValue === "password123") {
         sessionStorage.setItem("nexo-logged-in", "student");
+        sessionStorage.setItem("nexo-student-name", "Adrian Del Mundo");
+        sessionStorage.setItem("nexo-student-email", "adrian@batstate-u.edu.ph");
+        localStorage.setItem("nexo-logged-in", "student");
+        localStorage.setItem("nexo-student-name", "Adrian Del Mundo");
+        localStorage.setItem("nexo-student-email", "adrian@batstate-u.edu.ph");
         window.location.href = "student-dashboard.html";
         return;
       }
@@ -184,7 +189,7 @@ function initRegisterPage() {
       registerSubtitle.textContent =
         "Join NEXO and get access to scholarships and more opportunities.";
       if (regNameLabel) regNameLabel.textContent = "Full Name";
-      if (regNameInput) regNameInput.placeholder = "Juan Dela Cruz";
+      if (regNameInput) regNameInput.placeholder = "Adrian Del Mundo";
       if (regEmailInput) regEmailInput.placeholder = "you@university.edu.ph";
       if (regNameIcon) {
         regNameIcon.src = "assets/human-icon.png";

@@ -206,40 +206,51 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   async function loadSettings() {
     let settings = null;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/student-settings`);
-      if (res.ok) {
-        settings = await res.json();
-      }
-    } catch (e) {
-      console.warn("Could not fetch /api/student-settings from server:", e);
-    }
-
-    if (!settings) {
-      try {
-        const cached = localStorage.getItem("nexo_student_settings");
-        if (cached) settings = JSON.parse(cached);
-      } catch (_) {}
-    }
-
-    const currentEmail =
+    const currentEmail = (
       sessionStorage.getItem("nexo-student-email") ||
       localStorage.getItem("nexo-student-email") ||
-      "";
+      ""
+    ).toLowerCase();
     const currentName =
       sessionStorage.getItem("nexo-student-name") ||
       localStorage.getItem("nexo-student-name") ||
       "";
 
+    try {
+      const queryParam = currentEmail ? `?email=${encodeURIComponent(currentEmail)}` : "";
+      const res = await fetch(`${API_BASE}/api/student-settings${queryParam}`);
+      if (res.ok) {
+        const fetched = await res.json();
+        if (fetched && (!fetched.email || !currentEmail || fetched.email.toLowerCase() === currentEmail)) {
+          settings = fetched;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch /api/student-settings from server:", e);
+    }
+
+    if (!settings && currentEmail) {
+      try {
+        const raw =
+          localStorage.getItem(`nexo_student_settings_${currentEmail}`) ||
+          localStorage.getItem("nexo_student_settings");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (!parsed.email || parsed.email.toLowerCase() === currentEmail) {
+            settings = parsed;
+          }
+        }
+      } catch (_) {}
+    }
+
     if (!settings) {
       settings = {
         fullName: currentName,
         email: currentEmail,
-        university: "",
+        university: currentEmail.includes("batstate-u") ? "Batangas State University" : "",
         course: "",
         yearLevel: "",
-        studentId: "",
+        studentId: currentEmail.split("@")[0].match(/^\d{2}-\d{4,6}$/) ? currentEmail.split("@")[0] : "",
         contactNumber: "",
         bio: "",
         profilePicture: "",
@@ -257,6 +268,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Populate UI inputs
     const nameInput = document.getElementById("input-student-fullname");
     const emailInput = document.getElementById("input-student-email");
+    const sessionEmailEl = document.getElementById("session-active-email");
+    if (sessionEmailEl && currentEmail) {
+      sessionEmailEl.textContent = currentEmail;
+    }
     const uniInput = document.getElementById("input-student-university");
     const courseInput = document.getElementById("input-student-course");
     const yearSelect = document.getElementById("select-student-year");
@@ -384,14 +399,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Keep local caches updated
       try {
         localStorage.setItem("nexo_student_settings", JSON.stringify(payload));
-        if (payload.fullName) {
-          sessionStorage.setItem("nexo-student-name", payload.fullName);
-          localStorage.setItem("nexo-student-name", payload.fullName);
-        }
         if (payload.email) {
+          localStorage.setItem(`nexo_student_settings_${payload.email.toLowerCase()}`, JSON.stringify(payload));
           sessionStorage.setItem("nexo-student-email", payload.email);
           localStorage.setItem("nexo-student-email", payload.email);
         }
+        sessionStorage.setItem("nexo-student-name", payload.fullName || "");
+        localStorage.setItem("nexo-student-name", payload.fullName || "");
         if (currentAvatarBase64) {
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
         } else {

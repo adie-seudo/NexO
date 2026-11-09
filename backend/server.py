@@ -93,6 +93,21 @@ DEFAULT_DATA = {
             "formattedDate": "Nov 1, 2026",
             "status": "active",
             "notes": "Verified Student Account"
+        },
+        {
+            "id": "usr_stud_2402924",
+            "email": "24-02924@g.batstate-u.edu.ph",
+            "password": "password123",
+            "role": "student",
+            "name": "",
+            "university": "Batangas State University",
+            "course": "",
+            "yearLevel": "",
+            "studentId": "24-02924",
+            "createdAt": "2026-11-09T08:00:00.000Z",
+            "formattedDate": "Nov 9, 2026",
+            "status": "active",
+            "notes": "Student Account created via Admin Panel"
         }
     ]
 }
@@ -302,6 +317,30 @@ class NexoHandler(BaseHTTPRequestHandler):
 
         if path == "/api/student-settings":
             data = read_data()
+            query_email = (query.get("email", [""])[0] or "").strip().lower()
+            if query_email:
+                profiles = data.setdefault("studentProfiles", {})
+                if query_email in profiles:
+                    return self._send_json(200, profiles[query_email])
+                matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == query_email), None)
+                prof = {
+                    "fullName": (matched.get("name") if matched else "") or "",
+                    "email": query_email,
+                    "university": (matched.get("university") if matched else "") or ("Batangas State University" if "batstate-u" in query_email else ""),
+                    "course": (matched.get("course") if matched else "") or "",
+                    "yearLevel": (matched.get("yearLevel") if matched else "") or "",
+                    "studentId": (matched.get("studentId") if matched else "") or (query_email.split("@")[0] if len(query_email.split("@")[0].split("-")) == 2 else ""),
+                    "contactNumber": "",
+                    "bio": "",
+                    "profilePicture": "",
+                    "notifications": {
+                        "scholarshipMatches": True,
+                        "applicationUpdates": True,
+                        "deadlineReminders": True
+                    },
+                    "preferences": {"theme": "light"}
+                }
+                return self._send_json(200, prof)
             return self._send_json(200, data.get("studentSettings", DEFAULT_DATA["studentSettings"]))
 
         if path == "/api/users":
@@ -427,7 +466,7 @@ class NexoHandler(BaseHTTPRequestHandler):
 
         if path == "/api/applications":
             target_sid = body.get("scholarshipId", "schol_nexo_tech_01")
-            student_email = body.get("studentEmail") or data.get("studentSettings", {}).get("email", "admin@admin.edu.ph")
+            student_email = body.get("studentEmail") or data.get("studentSettings", {}).get("email", "adrian@batstate-u.edu.ph")
             for a in data.get("applications", []):
                 if str(a.get("scholarshipId")) == str(target_sid) and (not a.get("studentEmail") or a.get("studentEmail") == student_email):
                     return self._send_json(400, {"success": False, "error": "You have already applied for this scholarship."})
@@ -611,8 +650,21 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {"success": True, "settings": current})
 
         if path == "/api/student-settings":
-            current = data.get("studentSettings", DEFAULT_DATA["studentSettings"])
+            email = (body.get("email") or query.get("email", [""])[0] or data.get("studentSettings", {}).get("email", "")).strip().lower()
+            profiles = data.setdefault("studentProfiles", {})
+            current = profiles.get(email) or data.get("studentSettings", DEFAULT_DATA["studentSettings"]).copy()
             current.update(body)
+            if email:
+                current["email"] = email
+                profiles[email] = current
+                for u in data.get("users", []):
+                    if (u.get("email") or "").strip().lower() == email:
+                        if "fullName" in body:
+                            u["name"] = body["fullName"]
+                        if "university" in body:
+                            u["university"] = body["university"]
+                        if "course" in body:
+                            u["course"] = body["course"]
             data["studentSettings"] = current
             if "profilePicture" in body:
                 for app in data.get("applications", []):

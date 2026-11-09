@@ -127,9 +127,12 @@ function initLoginToggleAndSubmit() {
       } catch (_) {}
 
       try {
-        const res = await fetch("http://localhost:3000/api/users", {
-          cache: "no-store",
-        }).catch(() => null);
+        let res = await fetch("/api/users", { cache: "no-store" }).catch(() => null);
+        if (!res || !res.ok) {
+          res = await fetch("http://localhost:3000/api/users", {
+            cache: "no-store",
+          }).catch(() => null);
+        }
         if (res && res.ok) {
           userList = await res.json();
           localStorage.setItem("nexo_users", JSON.stringify(userList));
@@ -154,6 +157,14 @@ function initLoginToggleAndSubmit() {
             password: "password123",
             role: "student",
             name: "Adrian Del Mundo",
+            status: "active",
+          },
+          {
+            id: "usr_stud_2402924",
+            email: "24-02924@g.batstate-u.edu.ph",
+            password: "password123",
+            role: "student",
+            name: "",
             status: "active",
           },
         ];
@@ -239,6 +250,13 @@ function initLoginToggleAndSubmit() {
         window.location.href = "provider-dashboard.html";
         return;
       } else {
+        const lastStudentEmail = localStorage.getItem("nexo-student-email");
+        if (lastStudentEmail && lastStudentEmail.toLowerCase() !== matchedUser.email.toLowerCase()) {
+          // Different student account logging in - clear stale cached settings & avatar
+          localStorage.removeItem("nexo_student_settings");
+          localStorage.removeItem("nexo-student-avatar");
+          sessionStorage.removeItem("nexo-student-avatar");
+        }
         sessionStorage.setItem("nexo-logged-in", "student");
         sessionStorage.setItem(
           "nexo-student-name",

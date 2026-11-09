@@ -112,6 +112,23 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     }
 
+    const FAKE_SCHOL_IDS = new Set([
+      "schol_nexo_stem",
+      "schol_nexo_academic",
+      "schol_nexo_tech",
+      "schol_nexo_tech_01",
+      "schol_1794124026316",
+      "schol_1794126664376",
+      "schol_1794126637109",
+    ]);
+
+    if (Array.isArray(combined) && combined.some((s) => s && FAKE_SCHOL_IDS.has(s.id))) {
+      combined = combined.filter((s) => s && !FAKE_SCHOL_IDS.has(s.id));
+      try {
+        localStorage.setItem("nexo_scholarships", JSON.stringify(combined));
+      } catch (_) {}
+    }
+
     // Check localStorage for provider settings if not loaded
     if (!providerSettings) {
       try {
@@ -419,7 +436,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (filtered.length === 0) {
       feedContainer.innerHTML = "";
-      if (emptyState) emptyState.style.display = "block";
+      if (emptyState) {
+        emptyState.style.display = "block";
+        const emptyTitle = emptyState.querySelector(".student-empty-title");
+        const emptyDesc = emptyState.querySelector(".student-empty-desc");
+        const resetBtn = document.getElementById("browse-reset-btn");
+        if (allScholarships.length === 0) {
+          if (emptyTitle) emptyTitle.textContent = "No scholarships posted yet";
+          if (emptyDesc) {
+            emptyDesc.textContent =
+              "Scholarships published by providers will appear here automatically.";
+          }
+          if (resetBtn) resetBtn.style.display = "none";
+        } else {
+          if (emptyTitle) emptyTitle.textContent = "No matching scholarships";
+          if (emptyDesc) {
+            emptyDesc.textContent =
+              "We couldn't find any scholarship matching your search or selected filter. Try clearing your search.";
+          }
+          if (resetBtn) resetBtn.style.display = "inline-flex";
+        }
+      }
       return;
     }
 
@@ -458,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let applyBtnHtml = "";
       if (isAlreadyApplied) {
-        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn view-submission-btn" data-id="${item.id}" data-app-id="${existingApp.id}" style="background-color: #8b5cf6; border-color: #8b5cf6; color: #ffffff;" title="One-tap navigation to view your application submission">View My Submission</button>`;
+        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn" data-id="${item.id}" data-app-id="${existingApp.id}">✓ Applied (Under Review)</button>`;
       } else if (isClosed) {
         applyBtnHtml = `<button type="button" class="directory-apply-btn disabled" data-id="${item.id}" disabled>${statusText}</button>`;
       } else {
@@ -479,7 +516,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 day: "numeric",
                 year: "numeric",
               })
-            : "Recently");
+            : "Nov 9, 2026");
 
       const applicantCountDisplay =
         item.applicantCount ||
@@ -492,17 +529,17 @@ document.addEventListener("DOMContentLoaded", () => {
               ${logoHtml}
             </div>
             <div class="directory-card-titles">
-              <h3 class="directory-card-title">${item.title}</h3>
-              <p class="directory-card-provider">${item.providerName}</p>
+              <h3 class="directory-card-title">${escapeHtml(item.title || "Scholarship Program")}</h3>
+              <p class="directory-card-provider">${escapeHtml(item.providerName || "NEXO")}</p>
             </div>
           </div>
           <span class="directory-status-pill ${statusClass}">${statusText}</span>
         </div>
 
-        <div class="directory-meta-row" style="display: flex; flex-direction: column; gap: 7px; margin: 8px 0 10px 0;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 6px; color: #8b5cf6; font-weight: 700; font-size: 13px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="directory-card-meta-wrap">
+          <div>
+            <span class="directory-applicants-tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -512,28 +549,28 @@ document.addEventListener("DOMContentLoaded", () => {
             </span>
           </div>
 
-          <div class="directory-dates-pill" style="display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.04); padding: 5px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); width: fit-content; max-width: 100%;">
-            <span style="display: inline-flex; align-items: center; gap: 5px;">
+          <div class="directory-dates-row">
+            <span class="directory-date-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <strong>Posted:</strong> ${escapeHtml(postedDate)}
+              Posted: ${escapeHtml(postedDate)}
             </span>
-            <span style="opacity: 0.4;">•</span>
-            <span style="display: inline-flex; align-items: center; gap: 5px;">
+            <span class="directory-date-dot">•</span>
+            <span class="directory-date-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <strong>Expires:</strong> ${escapeHtml(item.formattedDate || "No Deadline")}
+              Expires: ${escapeHtml(item.formattedDate || "No Deadline")}
             </span>
           </div>
         </div>
 
-        <p class="directory-card-desc">${item.desc}</p>
+        <p class="directory-card-desc">${escapeHtml(item.desc || "")}</p>
 
         <div class="directory-card-footer">
           <button type="button" class="directory-view-details-btn" data-id="${item.id}">View Details</button>
@@ -612,7 +649,7 @@ document.addEventListener("DOMContentLoaded", () => {
         bannerSrc &&
         typeof bannerSrc === "string" &&
         bannerSrc.trim() &&
-        !bannerSrc.startsWith("data:image/png;base64,iVBORw0KGgo")
+        !bannerSrc.startsWith("data:image")
       ) {
         coverImg.src = bannerSrc;
         coverImg.style.display = "block";
@@ -949,7 +986,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dDesc) {
       dDesc.textContent =
         schol.desc ||
-        `Financial assistance program offered by ${schol.providerName || "NEXO"}.`;
+        "Submit your required documents securely below.";
     }
 
     // Render slots dynamically synchronized with active scholarship requirements
@@ -1690,7 +1727,7 @@ document.addEventListener("DOMContentLoaded", () => {
           id: "notif_" + Date.now(),
           recipient: "provider",
           title: "New Application Received",
-          message: `${sName || "Adrian Del Mundo"} applied for "${scholName}" with ${docNotice}.`,
+          message: `${sName || "Student Scholar"} applied for "${scholName}" with ${docNotice}.`,
           timestamp: new Date().toISOString(),
           formattedTime: "Just now",
           read: false,

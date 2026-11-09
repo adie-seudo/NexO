@@ -319,10 +319,12 @@
             <button
               type="button"
               id="close-schol-modal"
-              style="background: transparent; border: none; font-size: 20px; cursor: pointer; color: var(--text-primary); display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 8px;"
+              class="btn-back-nav"
+              style="margin-bottom: 0;"
               aria-label="Back"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Back
             </button>
             <button
               type="button"
@@ -347,40 +349,41 @@
           <!-- Provider Name -->
           <div style="margin-bottom: 12px;">
             <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0; display: flex; align-items: center; gap: 6px;">
-              <span id="modal-schol-provider">TechForward Foundation</span>
+              <span id="modal-schol-provider">NEXO</span>
             </h4>
           </div>
 
           <!-- Scholarship Title -->
           <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 8px 0; line-height: 1.3;" id="modal-schol-title">
-            Tech for Tomorrow Scholarship
+            Scholarship Program
           </h2>
 
           <!-- Scholarship Key Metadata (Applicants, Posted Date, Deadline / Expiration) -->
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; font-size: 13px; font-weight: 600;">
-            <!-- Applicant Capacity -->
-            <span id="modal-schol-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; background: rgba(139, 92, 246, 0.08); padding: 5px 10px; border-radius: 8px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              <span id="modal-schol-applicants">0 / 200 Applicants</span>
-            </span>
-
-            <!-- Unified Date Pill (Identical layout to Directory Feed Card) -->
-            <div class="directory-card-date-badge" style="margin: 0; padding: 5px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
-              <span style="display: inline-flex; align-items: center; gap: 4px;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <span>Posted: <span id="modal-schol-posted" style="color: var(--text-primary); font-weight: 700;">Nov 8, 2026</span></span>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+            <!-- Row 1: Applicants & Status Badge -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span id="modal-schol-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span id="modal-schol-applicants">0 / 200 Applicants</span>
               </span>
-              <span class="directory-card-date-sep">&bull;</span>
-              <span style="display: inline-flex; align-items: center; gap: 4px;">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <span>Expires: <span id="modal-schol-deadline" style="color: var(--text-primary); font-weight: 700;">Nov 19, 2026</span></span>
+
+              <span id="modal-schol-days-left" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                Active
               </span>
             </div>
 
-            <!-- Days Left Badge -->
-            <span id="modal-schol-days-left" style="font-size: 11.5px; font-weight: 700; padding: 4px 8px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
-              Active
-            </span>
+            <!-- Row 2: Posted & Expires Together -->
+            <div class="directory-dates-row" style="font-size: 12.5px;">
+              <span class="directory-date-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>Posted: <strong id="modal-schol-posted" style="color: var(--text-primary);">Nov 9, 2026</strong></span>
+              </span>
+              <span class="directory-date-dot">&bull;</span>
+              <span class="directory-date-item">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Expires: <strong id="modal-schol-deadline" style="color: var(--text-primary);">Nov 30, 2026</strong></span>
+              </span>
+            </div>
           </div>
 
           <!-- About the Scholarship -->
@@ -438,7 +441,7 @@
           <div class="dropbox-step-card">
             <span class="dropbox-schol-pill">SCHOLARSHIP</span>
             <h3 style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0;" id="dropbox-schol-title">
-              Tech for Tomorrow Scholarship
+              Scholarship Program
             </h3>
             <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0; line-height: 1.45;" id="dropbox-schol-desc">
               Submit your required documents securely below.

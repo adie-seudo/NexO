@@ -204,7 +204,12 @@
           })();
         </script></p>
         <div class="student-name-row">
-          <h1 class="student-name-title" id="student-name-title">Adrian Del Mundo</h1>
+          <h1 class="student-name-title" id="student-name-title"><script>
+            (function() {
+              var n = sessionStorage.getItem("nexo-student-name") || localStorage.getItem("nexo-student-name");
+              document.write(n && n.trim() ? n : "Student Scholar");
+            })();
+          </script><noscript>Student Scholar</noscript></h1>
         </div>
         <p class="student-motto">
           Keep going! Your education journey opens more oppurtunities.
