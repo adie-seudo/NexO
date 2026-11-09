@@ -6,9 +6,12 @@
     <title>Provider Dashboard - NEXO</title>
     <link rel="stylesheet" href="css/master.css" />
     <script>
-      (function() {
+      (function () {
         var t = localStorage.getItem("nexo-theme");
-        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+        if (
+          t === "dark" ||
+          (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
           document.documentElement.classList.add("dark-theme");
         }
       })();
@@ -16,8 +19,6 @@
   </head>
 
   <body class="dashboard-body">
-
-
     <!-- 1. GLOBAL UNIVERSAL HEADER -->
     <header class="global-header">
       <!-- Profile Area -->
@@ -176,7 +177,7 @@
               <a
                 href="index.html"
                 class="btn logout-btn"
-                style="text-decoration: none !important;"
+                style="text-decoration: none !important"
               >
                 <img
                   src="assets/logout-icon.png"
@@ -186,7 +187,12 @@
                 />
                 <span
                   class="nav-text"
-                  style="color: white; margin: 0; font-weight: 600; text-decoration: none !important;"
+                  style="
+                    color: white;
+                    margin: 0;
+                    font-weight: 600;
+                    text-decoration: none !important;
+                  "
                   >Log Out</span
                 >
               </a>
@@ -195,8 +201,6 @@
         </div>
       </div>
     </header>
-
-
 
     <!-- ========================================= -->
     <!-- 2. HERO COVER PHOTO (Top Edge-to-Edge)    -->
@@ -247,7 +251,12 @@
           <p>Total<br />Scholarships</p>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-item" style="cursor: pointer;" onclick="window.location.href = 'provider-applications.html'" title="View Applications">
+        <div
+          class="stat-item"
+          style="cursor: pointer"
+          onclick="window.location.href = 'provider-applications.html'"
+          title="View Applications"
+        >
           <h2 id="stat-applicants">0</h2>
           <p>Total<br />Applicants</p>
         </div>
@@ -544,7 +553,7 @@
 
             <div class="input-group">
               <label for="schol-limit">Applicant Limit (Capacity)</label>
-              <div style="position: relative; width: 100%;">
+              <div style="position: relative; width: 100%">
                 <input
                   type="number"
                   id="schol-limit"
@@ -552,11 +561,19 @@
                   max="10000"
                   placeholder="e.g. 50, 100, 200"
                   value="200"
-                  style="width: 100%; box-sizing: border-box;"
+                  style="width: 100%; box-sizing: border-box"
                 />
               </div>
-              <span style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: block;">
-                Maximum number of student applicants accepted for this scholarship (e.g. 200).
+              <span
+                style="
+                  font-size: 12px;
+                  color: var(--text-secondary);
+                  margin-top: 4px;
+                  display: block;
+                "
+              >
+                Maximum number of student applicants accepted for this
+                scholarship (e.g. 200).
               </span>
               <p class="error-msg" id="error-schol-limit"></p>
             </div>
@@ -775,7 +792,7 @@
                 </p>
                 <p
                   class="review-limit"
-                  style="display: flex; align-items: center; margin-top: 4px;"
+                  style="display: flex; align-items: center; margin-top: 4px"
                 >
                   <svg
                     width="14"
@@ -1048,7 +1065,10 @@
 
     <!-- Global Footer -->
     <footer class="global-footer">
-      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <p>
+        Copyright 2026 Batangas State University &bull; Alangilan Campus &bull;
+        CICS
+      </p>
       <div class="footer-links">
         <a href="privacy.html">Privacy Policy</a>
         <a href="terms.html">Terms of Service</a>

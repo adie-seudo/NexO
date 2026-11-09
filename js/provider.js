@@ -176,7 +176,8 @@ const DEFAULT_NEXO_NOTIFICATIONS = [
     id: "notif_1001",
     recipient: "provider",
     title: "New Application Received",
-    message: "Juan Dela Cruz submitted an application for \"Final Test\" with 3 documents.",
+    message:
+      'Juan Dela Cruz submitted an application for "Final Test" with 3 documents.',
     timestamp: new Date().toISOString(),
     formattedTime: "10 mins ago",
     read: false,
@@ -196,7 +197,7 @@ const DEFAULT_NEXO_NOTIFICATIONS = [
     id: "notif_1003",
     recipient: "student",
     title: "New Scholarship Posted",
-    message: "\"Final Test\" is now open for applications. Check requirements.",
+    message: '"Final Test" is now open for applications. Check requirements.',
     timestamp: new Date(Date.now() - 1200000).toISOString(),
     formattedTime: "20 mins ago",
     read: false,
@@ -206,7 +207,8 @@ const DEFAULT_NEXO_NOTIFICATIONS = [
     id: "notif_1004",
     recipient: "student",
     title: "Document Verification",
-    message: "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
+    message:
+      "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
     timestamp: new Date(Date.now() - 7200000).toISOString(),
     formattedTime: "2 hours ago",
     read: true,
@@ -229,7 +231,7 @@ function getProviderNotificationsFromStorage() {
   }
 
   return all.filter(
-    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all"
+    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",
   );
 }
 
@@ -311,11 +313,11 @@ function initNotificationBell() {
         if (Array.isArray(serverNotifs) && serverNotifs.length > 0) {
           try {
             const cached = JSON.parse(
-              localStorage.getItem("nexo_notifications") || "[]"
+              localStorage.getItem("nexo_notifications") || "[]",
             );
             serverNotifs.forEach((sn) => {
               const idx = cached.findIndex(
-                (c) => String(c.id) === String(sn.id)
+                (c) => String(c.id) === String(sn.id),
               );
               if (idx >= 0) cached[idx] = sn;
               else cached.unshift(sn);
@@ -332,7 +334,7 @@ function initNotificationBell() {
   function markNotificationRead(id) {
     try {
       const cached = JSON.parse(
-        localStorage.getItem("nexo_notifications") || "[]"
+        localStorage.getItem("nexo_notifications") || "[]",
       );
       const item = cached.find((n) => String(n.id) === String(id));
       if (item) {
@@ -354,7 +356,7 @@ function initNotificationBell() {
   function markAllNotificationsRead() {
     try {
       const cached = JSON.parse(
-        localStorage.getItem("nexo_notifications") || "[]"
+        localStorage.getItem("nexo_notifications") || "[]",
       );
       cached.forEach((n) => {
         if (
@@ -421,7 +423,7 @@ function initNotificationBell() {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
         return `
-          <a href="${n.link || 'provider-applications.html'}" class="notif-item ${isUnread ? 'unread' : ''}" data-id="${n.id}">
+          <a href="${n.link || "provider-applications.html"}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
             <div class="notif-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
