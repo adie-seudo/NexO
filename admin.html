@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>NEXO | Developer Admin Console</title>
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+    <link rel="stylesheet" href="css/master.css" />
+
+    <!-- Instant Dark Mode Check (Prevents white flash) -->
+    <script>
+      (function () {
+        const savedTheme = localStorage.getItem("nexo-theme");
+        if (
+          savedTheme === "dark" ||
+          (savedTheme === null &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.documentElement.classList.add("dark-theme");
+          document.addEventListener("DOMContentLoaded", () => {
+            document.body.classList.add("dark-theme");
+          });
+        }
+      })();
+    </script>
+
+    <style>
+      /* Developer Admin Specialized Styles */
+      .admin-layout {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 24px 16px 80px 16px;
+      }
+      .admin-header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .admin-pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: adminPulse 2s infinite;
+      }
+      @keyframes adminPulse {
+        0% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+        70% {
+          transform: scale(1);
+          box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+        }
+        100% {
+          transform: scale(0.95);
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+      }
+      .admin-stats-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .admin-stat-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 14px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+      .admin-stat-num {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1.2;
+      }
+      .admin-stat-lbl {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-top: 4px;
+      }
+      .admin-tabs-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 20px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+      .admin-tab-btn {
+        background: transparent;
+        border: none;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-bottom: 2.5px solid transparent;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+      }
+      .admin-tab-btn:hover {
+        color: var(--text-primary);
+      }
+      .admin-tab-btn.active {
+        color: #8b5cf6;
+        border-bottom-color: #8b5cf6;
+      }
+      .admin-tab-count {
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        font-weight: 800;
+      }
+      .admin-tab-btn.active .admin-tab-count {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+      .admin-account-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      .admin-account-card:hover {
+        border-color: rgba(139, 92, 246, 0.35);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+      }
+      .admin-account-card.is-banned {
+        border-color: rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.03);
+      }
+      .admin-account-avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: rgba(139, 92, 246, 0.12);
+        color: #8b5cf6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
+      .admin-account-card.is-provider .admin-account-avatar {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+      }
+      .admin-status-chip {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .status-chip-active {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+      }
+      .status-chip-banned {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      .admin-card-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--border-color);
+        padding-top: 12px;
+      }
+      .btn-admin-action {
+        padding: 7px 12px;
+        font-size: 12.5px;
+        font-weight: 700;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-canvas);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+      }
+      .btn-admin-action:hover {
+        background: var(--border-color);
+      }
+      .btn-admin-ban {
+        color: #f59e0b;
+        border-color: rgba(245, 158, 11, 0.35);
+      }
+      .btn-admin-ban:hover {
+        background: rgba(245, 158, 11, 0.12);
+      }
+      .btn-admin-unban {
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.35);
+      }
+      .btn-admin-unban:hover {
+        background: rgba(16, 185, 129, 0.12);
+      }
+      .btn-admin-delete {
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.35);
+        margin-left: auto;
+      }
+      .btn-admin-delete:hover {
+        background: rgba(239, 68, 68, 0.12);
+      }
+      .admin-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 16px;
+      }
+      .admin-modal-overlay.active {
+        display: flex;
+      }
+      .admin-modal-sheet {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 480px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .role-picker-btn {
+        flex: 1;
+        padding: 12px;
+        border-radius: 10px;
+        border: 2px solid var(--border-color);
+        background: var(--bg-canvas);
+        color: var(--text-secondary);
+        font-weight: 700;
+        font-size: 13.5px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+      }
+      .role-picker-btn.active {
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+        background: rgba(139, 92, 246, 0.08);
+      }
+      .admin-clean-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--bg-canvas);
+        border: 1px solid var(--border-color);
+        margin-bottom: 8px;
+        gap: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Top Global App Bar -->
+    <header
+      style="
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+        padding: 12px 20px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      "
+    >
+      <div
+        style="
+          max-width: 1040px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        "
+      >
+        <div style="display: flex; align-items: center; gap: 12px">
+          <a
+            href="index.html"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              text-decoration: none;
+              color: inherit;
+            "
+          >
+            <img
+              src="assets/logo.png"
+              alt="NEXO"
+              style="width: 28px; height: 28px; object-fit: contain"
+            />
+            <span
+              style="
+                font-size: 17px;
+                font-weight: 800;
+                letter-spacing: -0.5px;
+                color: var(--text-primary);
+              "
+              >NEXO</span
+            >
+          </a>
+          <span class="admin-header-badge">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            Developer Console
+          </span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span
+            style="
+              font-size: 12px;
+              color: #10b981;
+              font-weight: 700;
+              display: none;
+              align-items: center;
+              gap: 6px;
+            "
+            id="live-sync-indicator"
+          >
+            <span class="admin-pulse-dot"></span>
+            JSON Synced
+          </span>
+          <button
+            type="button"
+            id="btn-admin-theme"
+            title="Toggle Light / Dark Mode"
+            style="
+              background: var(--bg-canvas);
+              border: 1px solid var(--border-color);
+              border-radius: 8px;
+              padding: 6px 10px;
+              cursor: pointer;
+              color: var(--text-primary);
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <a
+            href="index.html"
+            style="
+              font-size: 13px;
+              font-weight: 700;
+              color: var(--text-secondary);
+              text-decoration: none;
+              padding: 6px 10px;
+              border-radius: 8px;
+              border: 1px solid var(--border-color);
+              background: var(--bg-canvas);
+            "
+          >
+            Exit Admin &rarr;
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="admin-layout">
+      <!-- Welcome Header -->
+      <div
+        style="
+          margin-bottom: 24px;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 16px;
+        "
+      >
+        <div>
+          <h1
+            style="
+              font-size: 24px;
+              font-weight: 800;
+              color: var(--text-primary);
+              margin: 0 0 6px 0;
+            "
+          >
+            Administrator & Developer Console
+          </h1>
+          <p
+            style="
+              font-size: 13.5px;
+              color: var(--text-secondary);
+              margin: 0;
+              line-height: 1.4;
+            "
+          >
+            File-handling engine and database sanitizer for NEXO. Manage accounts, ban/delete users, and clean crowded JSON data.
+          </p>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="btn-open-create-user"
+            style="
+              padding: 10px 16px;
+              font-size: 13.5px;
+              font-weight: 700;
+              border-radius: 10px;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add New Account
+          </button>
+
+          <button
+            type="button"
+            class="btn-admin-action"
+            id="btn-export-json"
+            title="Download current data.json file"
+            style="padding: 10px 14px"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export data.json
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Summary Stats Strip -->
+      <div class="admin-stats-strip">
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="stat-student-count">0</div>
+          <div class="admin-stat-lbl">Verified Students</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="stat-provider-count">0</div>
+          <div class="admin-stat-lbl">Active Providers</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="stat-schol-count">0</div>
+          <div class="admin-stat-lbl">Scholarships Posted</div>
+        </div>
+        <div class="admin-stat-card">
+          <div class="admin-stat-num" id="stat-app-count">0</div>
+          <div class="admin-stat-lbl">Student Applications</div>
+        </div>
+      </div>
+
+      <!-- Separate Navigation Tabs -->
+      <div class="admin-tabs-nav">
+        <button
+          type="button"
+          class="admin-tab-btn active"
+          data-tab="students"
+          id="tab-btn-students"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          Student Accounts
+          <span class="admin-tab-count" id="badge-tab-students">0</span>
+        </button>
+
+        <button
+          type="button"
+          class="admin-tab-btn"
+          data-tab="providers"
+          id="tab-btn-providers"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          Provider Accounts
+          <span class="admin-tab-count" id="badge-tab-providers">0</span>
+        </button>
+
+        <button
+          type="button"
+          class="admin-tab-btn"
+          data-tab="cleaner"
+          id="tab-btn-cleaner"
+          style="color: #f59e0b"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Crowded Database Cleaner
+        </button>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB 1: STUDENT ACCOUNTS                                  -->
+      <!-- ======================================================== -->
+      <section id="section-students" class="admin-tab-content">
+        <!-- Search and Filter Tools -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+          "
+        >
+          <div
+            style="
+              flex: 1;
+              min-width: 220px;
+              position: relative;
+              display: flex;
+              align-items: center;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--text-secondary)"
+              stroke-width="2"
+              style="position: absolute; left: 12px; pointer-events: none"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="search-students"
+              placeholder="Search students by email, name, or course..."
+              style="
+                width: 100%;
+                padding: 10px 12px 10px 36px;
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-surface);
+                color: var(--text-primary);
+                font-size: 13.5px;
+              "
+            />
+          </div>
+
+          <select
+            id="filter-student-status"
+            style="
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border-color);
+              background: var(--bg-surface);
+              color: var(--text-primary);
+              font-size: 13px;
+              font-weight: 600;
+            "
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="banned">Banned Only</option>
+          </select>
+        </div>
+
+        <!-- Student Cards Container -->
+        <div id="students-list-container">
+          <!-- Populated dynamically by admin.js -->
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 2: PROVIDER ACCOUNTS                                 -->
+      <!-- ======================================================== -->
+      <section
+        id="section-providers"
+        class="admin-tab-content"
+        style="display: none"
+      >
+        <!-- Search and Filter Tools -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+          "
+        >
+          <div
+            style="
+              flex: 1;
+              min-width: 220px;
+              position: relative;
+              display: flex;
+              align-items: center;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--text-secondary)"
+              stroke-width="2"
+              style="position: absolute; left: 12px; pointer-events: none"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="search-providers"
+              placeholder="Search providers by email or organization..."
+              style="
+                width: 100%;
+                padding: 10px 12px 10px 36px;
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-surface);
+                color: var(--text-primary);
+                font-size: 13.5px;
+              "
+            />
+          </div>
+
+          <select
+            id="filter-provider-status"
+            style="
+              padding: 10px 14px;
+              border-radius: 10px;
+              border: 1px solid var(--border-color);
+              background: var(--bg-surface);
+              color: var(--text-primary);
+              font-size: 13px;
+              font-weight: 600;
+            "
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="banned">Banned Only</option>
+          </select>
+        </div>
+
+        <!-- Provider Cards Container -->
+        <div id="providers-list-container">
+          <!-- Populated dynamically by admin.js -->
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB 3: CROWDED DATABASE CLEANER                          -->
+      <!-- ======================================================== -->
+      <section
+        id="section-cleaner"
+        class="admin-tab-content"
+        style="display: none"
+      >
+        <div
+          style="
+            background: rgba(245, 158, 11, 0.06);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              color: #d97706;
+              font-weight: 700;
+              font-size: 14.5px;
+            "
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Developer File Storage Sanitizer
+          </div>
+          <p
+            style="
+              margin: 6px 0 0 0;
+              font-size: 13px;
+              color: var(--text-secondary);
+              line-height: 1.5;
+            "
+          >
+            Quick tools to clean crowded JSON files from test submissions, remove test scholarships without manual JSON editing, or reset back to clean defaults.
+          </p>
+        </div>
+
+        <!-- Cleaner Actions Grid -->
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+          "
+        >
+          <!-- Action 1: Clear All Applications -->
+          <div class="admin-stat-card" style="padding: 18px">
+            <h4
+              style="
+                margin: 0 0 6px 0;
+                font-size: 15px;
+                color: var(--text-primary);
+              "
+            >
+              Purge All Student Applications
+            </h4>
+            <p
+              style="
+                margin: 0 0 14px 0;
+                font-size: 12.5px;
+                color: var(--text-secondary);
+                line-height: 1.4;
+              "
+            >
+              Removes all submitted student applications from
+              <code>data.json</code> and resets scholarship applicant counters to 0.
+            </p>
+            <button
+              type="button"
+              class="btn-admin-action"
+              id="btn-purge-apps"
+              style="
+                color: #ef4444;
+                border-color: rgba(239, 68, 68, 0.4);
+                background: rgba(239, 68, 68, 0.06);
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+              </svg>
+              Purge All Applications (<span id="cleaner-app-count">0</span>)
+            </button>
+          </div>
+
+          <!-- Action 2: Clear Drafts -->
+          <div class="admin-stat-card" style="padding: 18px">
+            <h4
+              style="
+                margin: 0 0 6px 0;
+                font-size: 15px;
+                color: var(--text-primary);
+              "
+            >
+              Clear Test Drafts
+            </h4>
+            <p
+              style="
+                margin: 0 0 14px 0;
+                font-size: 12.5px;
+                color: var(--text-secondary);
+                line-height: 1.4;
+              "
+            >
+              Clears unfinished scholarship drafts saved in
+              <code>data.json</code> by providers.
+            </p>
+            <button
+              type="button"
+              class="btn-admin-action"
+              id="btn-purge-drafts"
+              style="
+                color: #f59e0b;
+                border-color: rgba(245, 158, 11, 0.4);
+                background: rgba(245, 158, 11, 0.06);
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+              </svg>
+              Clear Drafts (<span id="cleaner-draft-count">0</span>)
+            </button>
+          </div>
+
+          <!-- Action 3: Factory Reset -->
+          <div class="admin-stat-card" style="padding: 18px">
+            <h4
+              style="
+                margin: 0 0 6px 0;
+                font-size: 15px;
+                color: var(--text-primary);
+              "
+            >
+              Reset to Factory Default State
+            </h4>
+            <p
+              style="
+                margin: 0 0 14px 0;
+                font-size: 12.5px;
+                color: var(--text-secondary);
+                line-height: 1.4;
+              "
+            >
+              Resets <code>data.json</code> back to clean state: default admin accounts, clean scholarships, 0 test applications.
+            </p>
+            <button
+              type="button"
+              class="btn-admin-action"
+              id="btn-factory-reset"
+              style="
+                color: #ef4444;
+                border-color: rgba(239, 68, 68, 0.4);
+                background: rgba(239, 68, 68, 0.06);
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"
+                ></path>
+              </svg>
+              Reset All Test Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Individual Scholarship Post Purger -->
+        <div style="margin-bottom: 24px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 12px;
+            "
+          >
+            <h3
+              style="
+                font-size: 16px;
+                font-weight: 800;
+                margin: 0;
+                color: var(--text-primary);
+              "
+            >
+              Individual Scholarship Post Cleaner
+            </h3>
+            <span style="font-size: 12px; color: var(--text-secondary)"
+              >Delete single test posts directly</span
+            >
+          </div>
+          <div id="cleaner-scholarships-list">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 1: ADD NEW ACCOUNT MODAL                           -->
+    <!-- ======================================================== -->
+    <div id="admin-create-modal" class="admin-modal-overlay">
+      <div class="admin-modal-sheet">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 8px">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#8b5cf6"
+              stroke-width="2.5"
+            >
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            <h3
+              style="
+                margin: 0;
+                font-size: 18px;
+                font-weight: 800;
+                color: var(--text-primary);
+              "
+            >
+              Create New Account
+            </h3>
+          </div>
+          <button
+            type="button"
+            id="close-create-modal"
+            style="
+              background: none;
+              border: none;
+              font-size: 24px;
+              color: var(--text-secondary);
+              cursor: pointer;
+            "
+          >
+            &times;
+          </button>
+        </div>
+
+        <form id="form-create-account">
+          <!-- Role Picker -->
+          <div style="margin-bottom: 18px">
+            <label
+              style="
+                display: block;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: var(--text-secondary);
+                margin-bottom: 8px;
+              "
+              >Select Account Role</label
+            >
+            <div style="display: flex; gap: 10px">
+              <button
+                type="button"
+                class="role-picker-btn active"
+                id="role-btn-student"
+                data-role="student"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Verified Student
+              </button>
+              <button
+                type="button"
+                class="role-picker-btn"
+                id="role-btn-provider"
+                data-role="provider"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                Scholarship Provider
+              </button>
+            </div>
+          </div>
+
+          <!-- Email Input -->
+          <div style="margin-bottom: 16px">
+            <label
+              for="input-user-email"
+              style="
+                display: block;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+              "
+              >Account Email Address *</label
+            >
+            <input
+              type="email"
+              id="input-user-email"
+              required
+              placeholder="e.g., student@batstate-u.edu.ph"
+              style="
+                width: 100%;
+                padding: 11px 14px;
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-canvas);
+                color: var(--text-primary);
+                font-size: 14px;
+                box-sizing: border-box;
+              "
+            />
+            <small
+              id="email-hint"
+              style="
+                display: block;
+                font-size: 11px;
+                color: var(--text-secondary);
+                margin-top: 4px;
+              "
+            >
+              Recommended: Use .edu.ph for student accounts.
+            </small>
+          </div>
+
+          <!-- Name / Org Input -->
+          <div style="margin-bottom: 16px">
+            <label
+              for="input-user-name"
+              id="label-user-name"
+              style="
+                display: block;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+              "
+              >Full Name / Identity (Optional)</label
+            >
+            <input
+              type="text"
+              id="input-user-name"
+              placeholder="e.g., Maria Santos"
+              style="
+                width: 100%;
+                padding: 11px 14px;
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-canvas);
+                color: var(--text-primary);
+                font-size: 14px;
+                box-sizing: border-box;
+              "
+            />
+          </div>
+
+          <!-- Initial Status -->
+          <div style="margin-bottom: 22px">
+            <label
+              for="select-user-status"
+              style="
+                display: block;
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+              "
+              >Account Status</label
+            >
+            <select
+              id="select-user-status"
+              style="
+                width: 100%;
+                padding: 11px 14px;
+                border-radius: 10px;
+                border: 1px solid var(--border-color);
+                background: var(--bg-canvas);
+                color: var(--text-primary);
+                font-size: 14px;
+                font-weight: 600;
+                box-sizing: border-box;
+              "
+            >
+              <option value="active">Active (Can log in immediately)</option>
+              <option value="banned">Banned / Suspended (Login restricted)</option>
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 10px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="btn-cancel-create"
+              style="flex: 1; padding: 12px"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="btn-submit-create"
+              style="flex: 1; padding: 12px; font-weight: 700"
+            >
+              Save to Database
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 2: CONFIRM CASCADE DELETE ACCOUNT MODAL            -->
+    <!-- ======================================================== -->
+    <div id="admin-confirm-modal" class="admin-modal-overlay">
+      <div class="admin-modal-sheet" style="max-width: 440px">
+        <div style="text-align: center; margin-bottom: 16px">
+          <div
+            style="
+              width: 54px;
+              height: 54px;
+              border-radius: 50%;
+              background: rgba(239, 68, 68, 0.12);
+              color: #ef4444;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 12px;
+            "
+          >
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              ></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <h3
+            style="
+              margin: 0 0 6px 0;
+              font-size: 19px;
+              font-weight: 800;
+              color: var(--text-primary);
+            "
+            id="confirm-modal-title"
+          >
+            Delete Account Permanently?
+          </h3>
+          <p
+            style="
+              margin: 0;
+              font-size: 13.5px;
+              color: var(--text-secondary);
+              line-height: 1.5;
+            "
+            id="confirm-modal-desc"
+          >
+            Are you sure? This will remove the account and all associated posts/applications from the local JSON file.
+          </p>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="btn-cancel-confirm"
+            style="flex: 1; padding: 11px"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            id="btn-execute-confirm"
+            style="
+              flex: 1;
+              padding: 11px;
+              background: #ef4444;
+              color: white;
+              font-weight: 700;
+              border: none;
+              border-radius: 8px;
+            "
+          >
+            Yes, Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifier -->
+    <div
+      id="admin-toast"
+      style="
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 10000;
+        background: #1a1f2c;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 13.5px;
+        font-weight: 600;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        transform: translateY(100px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      "
+    >
+      <span id="admin-toast-text">Success</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/admin.js"></script>
+  </body>
+</html>

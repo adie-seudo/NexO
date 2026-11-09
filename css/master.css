@@ -3012,6 +3012,8 @@ body.dark-theme .review-pill {
   color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 .review-req-list {
   list-style: none;
@@ -4051,11 +4053,11 @@ body.dark-theme .schol-card-footer {
   flex-shrink: 0;
 }
 
-/* Details Modal Sheet */
+/* Details & Application Modal Sheet (Mobile-First Full-Screen) */
 .schol-modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.55);
+  background-color: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(4px);
   z-index: 10000;
   display: none;
@@ -4069,15 +4071,28 @@ body.dark-theme .schol-card-footer {
 .schol-modal-sheet {
   background-color: var(--bg-surface, #ffffff);
   width: 100%;
-  max-width: 600px;
-  max-height: 85vh;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  padding: 20px 18px 30px;
+  height: 100%;
+  max-height: 100vh;
+  border-radius: 0;
+  padding: 16px 18px 40px;
   overflow-y: auto;
   box-sizing: border-box;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
-  animation: slideUp 0.25s ease-out forwards;
+  box-shadow: none;
+  animation: slideUp 0.22s ease-out forwards;
+}
+@media (min-width: 641px) {
+  .schol-modal-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+  .schol-modal-sheet {
+    max-width: 620px;
+    height: auto;
+    max-height: 92vh;
+    border-radius: 20px;
+    padding: 22px 24px 32px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  }
 }
 @keyframes slideUp {
   from { transform: translateY(100%); }
@@ -4086,7 +4101,6 @@ body.dark-theme .schol-card-footer {
 body.dark-theme .schol-modal-sheet {
   background-color: #131722;
   border: 1px solid #2a3142;
-  border-bottom: none;
 }
 
 /* ======================================================= */
@@ -4117,39 +4131,41 @@ body.dark-theme .schol-modal-sheet {
   box-shadow: 0 0 0 3px rgba(127, 86, 217, 0.12) !important;
 }
 
-/* 3 Filter Dropdown Pills Row */
+/* 3 Filter Dropdown Pills Row (Fix: Unclipped, Interactive, High z-index) */
 .directory-filter-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 18px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.directory-filter-row::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  overflow: visible !important;
+  position: relative;
+  z-index: 100;
 }
 .directory-filter-dropdown {
   position: relative;
   flex-shrink: 0;
 }
+.directory-filter-dropdown.is-open {
+  z-index: 1100;
+}
 .directory-pill-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 8px 16px;
+  min-height: 38px;
   border-radius: 100px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   background-color: var(--bg-surface, #ffffff);
-  border: 1px solid var(--border-color, #D0D5DD);
+  border: 1.5px solid var(--border-color, #D0D5DD);
   color: var(--text-secondary, #344054);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
   user-select: none;
+  touch-action: manipulation;
 }
 .directory-pill-btn:hover {
   border-color: #7F56D9;
@@ -4158,7 +4174,7 @@ body.dark-theme .schol-modal-sheet {
 .directory-pill-btn.active,
 .directory-pill-btn.is-filtered {
   background-color: #F4EBFF;
-  border-color: #D6BBFB;
+  border-color: #7F56D9;
   color: #6941C6;
 }
 body.dark-theme .directory-pill-btn {
@@ -4169,7 +4185,7 @@ body.dark-theme .directory-pill-btn {
 body.dark-theme .directory-pill-btn.active,
 body.dark-theme .directory-pill-btn.is-filtered {
   background-color: #2E1B4E;
-  border-color: #7F56D9;
+  border-color: #8B5CF6;
   color: #D6BBFB;
 }
 .directory-dropdown-menu {
@@ -4179,43 +4195,50 @@ body.dark-theme .directory-pill-btn.is-filtered {
   background: var(--bg-surface, #ffffff);
   border: 1px solid var(--border-color, #EAECF0);
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
-  min-width: 170px;
-  padding: 6px;
-  z-index: 1000;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
+  min-width: 185px;
+  padding: 8px;
+  z-index: 1200;
   display: none;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 .directory-dropdown-menu.show {
-  display: flex;
+  display: flex !important;
 }
 body.dark-theme .directory-dropdown-menu {
   background-color: #1A1F2C;
   border-color: #374151;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
 }
 .directory-dropdown-item {
   background: transparent;
   border: none;
   text-align: left;
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 10px 14px;
+  min-height: 40px;
+  font-size: 13.5px;
   font-weight: 500;
   color: var(--text-primary);
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease;
+  pointer-events: auto;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  touch-action: manipulation;
 }
 .directory-dropdown-item:hover,
 .directory-dropdown-item.active {
   background-color: #F4EBFF;
   color: #6941C6;
-  font-weight: 600;
+  font-weight: 700;
 }
 body.dark-theme .directory-dropdown-item:hover,
 body.dark-theme .directory-dropdown-item.active {
   background-color: #2E1B4E;
+  color: #D6BBFB;
+}
   color: #D6BBFB;
 }
 
@@ -4533,32 +4556,168 @@ body.dark-theme .dropbox-schol-pill {
 .dropbox-slot-card {
   background: var(--bg-surface, #ffffff);
   border: 1.5px solid var(--border-color, #EAECF0);
-  border-radius: 14px;
-  padding: 12px 14px;
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 10px;
-  cursor: pointer;
+  margin-bottom: 14px;
   transition: all 0.2s ease;
+  position: relative;
 }
 .dropbox-slot-card:hover {
   border-color: #7F56D9;
-  background-color: rgba(127, 86, 217, 0.02);
 }
 .dropbox-slot-card.has-file {
-  border-color: #AEFFB9;
-  background-color: rgba(174, 255, 185, 0.08);
+  border-color: #10B981;
+  background-color: rgba(16, 185, 129, 0.05);
+}
+.dropbox-slot-card.is-follow-up {
+  border-color: #F59E0B;
+  background-color: rgba(245, 158, 11, 0.06);
 }
 body.dark-theme .dropbox-slot-card {
   background-color: #1A1F2C;
   border-color: #374151;
 }
-.dropbox-slot-icon-box {
-  width: 36px;
-  height: 36px;
+body.dark-theme .dropbox-slot-card.is-follow-up {
+  border-color: #D97706;
+  background-color: rgba(245, 158, 11, 0.1);
+}
+body.dark-theme .dropbox-slot-card.has-file {
+  border-color: #10B981;
+  background-color: rgba(16, 185, 129, 0.08);
+}
+.dropbox-slot-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+}
+.dropbox-slot-info {
+  flex: 1;
+  min-width: 0;
+}
+.dropbox-slot-title {
+  margin: 0 0 3px 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+.dropbox-slot-desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.dropbox-slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.btn-slot-upload {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
   border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  background-color: #7F56D9;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+.btn-slot-upload:hover {
+  background-color: #6941C6;
+}
+.btn-followup-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--bg-canvas, #F9FAFB);
+  border: 1.5px solid var(--border-color, #D0D5DD);
+  color: var(--text-secondary, #344054);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+.btn-followup-toggle:hover {
+  border-color: #F59E0B;
+  color: #D97706;
+  background: rgba(245, 158, 11, 0.08);
+}
+.btn-followup-toggle.active {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #F59E0B;
+  color: #D97706;
+}
+body.dark-theme .btn-followup-toggle {
+  background: #242A38;
+  border-color: #374151;
+  color: #D1D5DB;
+}
+body.dark-theme .btn-followup-toggle:hover,
+body.dark-theme .btn-followup-toggle.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #F59E0B;
+  color: #FCD34D;
+}
+.btn-slot-remove {
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+.btn-slot-remove:hover {
+  background: rgba(239, 68, 68, 0.18);
+}
+.dropbox-error-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  color: #EF4444;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  line-height: 1.45;
+}
+body.dark-theme .dropbox-error-box {
+  background: rgba(239, 68, 68, 0.15);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.dropbox-slot-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background: #F4EBFF;
   color: #6941C6;
   display: flex;
@@ -4569,6 +4728,13 @@ body.dark-theme .dropbox-slot-card {
 .dropbox-slot-card.has-file .dropbox-slot-icon-box {
   background: #E6F9ED;
   color: #008013;
+}
+.dropbox-slot-card.is-follow-up .dropbox-slot-icon-box {
+  background: rgba(245, 158, 11, 0.15);
+  color: #D97706;
+}
+.settings-toast, #student-browse-toast {
+  z-index: 20000 !important;
 }
 .dropbox-info-banner {
   background-color: #F8F9FA;

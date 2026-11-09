@@ -22,12 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let filterStatus = "all";
 
   // Document Uploads State for Digital Drop-Box
-  const uploadedFiles = {
-    cor: null,
-    indigency: null,
-    grades: null,
-    income: null,
-  };
+  let uploadedFiles = {};
 
   // -------------------------------------------------------------
   // 1. TOAST NOTIFIER HELPER
@@ -239,34 +234,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (menuType) menuType.classList.remove("show");
     if (menuProvider) menuProvider.classList.remove("show");
     if (menuStatus) menuStatus.classList.remove("show");
-  }
-
-  if (btnType) {
-    btnType.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = menuType.classList.contains("show");
-      closeAllDropdowns();
-      if (!isOpen) menuType.classList.add("show");
+    document.querySelectorAll(".directory-filter-dropdown").forEach((el) => {
+      el.classList.remove("is-open");
     });
   }
 
-  if (btnProvider) {
-    btnProvider.addEventListener("click", (e) => {
+  function setupFilterDropdown(btn, menu, wrapperId) {
+    if (!btn || !menu) return;
+    const wrapper = document.getElementById(wrapperId);
+    const toggleHandler = (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      const isOpen = menuProvider.classList.contains("show");
+      const isOpen = menu.classList.contains("show");
       closeAllDropdowns();
-      if (!isOpen) menuProvider.classList.add("show");
-    });
+      if (!isOpen) {
+        menu.classList.add("show");
+        if (wrapper) wrapper.classList.add("is-open");
+      }
+    };
+    btn.onclick = toggleHandler;
   }
 
-  if (btnStatus) {
-    btnStatus.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = menuStatus.classList.contains("show");
-      closeAllDropdowns();
-      if (!isOpen) menuStatus.classList.add("show");
-    });
-  }
+  setupFilterDropdown(btnType, menuType, "dropdown-wrapper-type");
+  setupFilterDropdown(btnProvider, menuProvider, "dropdown-wrapper-provider");
+  setupFilterDropdown(btnStatus, menuStatus, "dropdown-wrapper-status");
 
   document.addEventListener("click", () => {
     closeAllDropdowns();
@@ -275,9 +266,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function wireDropdownItems() {
     // Type Items
     document.querySelectorAll("[data-filter-type]").forEach((item) => {
-      item.onclick = (e) => {
+      const handleSelect = (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        filterType = item.getAttribute("data-filter-type");
+        filterType = item.getAttribute("data-filter-type") || "all";
         document
           .querySelectorAll("[data-filter-type]")
           .forEach((i) => i.classList.remove("active"));
@@ -291,13 +283,15 @@ document.addEventListener("DOMContentLoaded", () => {
         closeAllDropdowns();
         renderFeed();
       };
+      item.onclick = handleSelect;
     });
 
     // Provider Items
     document.querySelectorAll("[data-filter-provider]").forEach((item) => {
-      item.onclick = (e) => {
+      const handleSelect = (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        filterProvider = item.getAttribute("data-filter-provider");
+        filterProvider = item.getAttribute("data-filter-provider") || "all";
         document
           .querySelectorAll("[data-filter-provider]")
           .forEach((i) => i.classList.remove("active"));
@@ -312,13 +306,15 @@ document.addEventListener("DOMContentLoaded", () => {
         closeAllDropdowns();
         renderFeed();
       };
+      item.onclick = handleSelect;
     });
 
     // Status Items
     document.querySelectorAll("[data-filter-status]").forEach((item) => {
-      item.onclick = (e) => {
+      const handleSelect = (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        filterStatus = item.getAttribute("data-filter-status");
+        filterStatus = item.getAttribute("data-filter-status") || "all";
         document
           .querySelectorAll("[data-filter-status]")
           .forEach((i) => i.classList.remove("active"));
@@ -333,6 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
         closeAllDropdowns();
         renderFeed();
       };
+      item.onclick = handleSelect;
     });
   }
   wireDropdownItems();
@@ -859,6 +856,11 @@ document.addEventListener("DOMContentLoaded", () => {
   function closeModal() {
     if (modalOverlay) modalOverlay.classList.remove("active");
     document.body.style.overflow = "";
+    uploadedFiles = {};
+    if (btnSubmitDropbox) {
+      btnSubmitDropbox.disabled = false;
+      btnSubmitDropbox.innerHTML = "Submit Application";
+    }
   }
 
   if (btnCloseModal) btnCloseModal.addEventListener("click", closeModal);
@@ -923,6 +925,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const dTitle = document.getElementById("dropbox-schol-title");
     if (dTitle) dTitle.textContent = schol.title;
 
+    const dDesc = document.getElementById("dropbox-schol-desc");
+    if (dDesc) {
+      dDesc.textContent =
+        schol.desc ||
+        `Financial assistance program offered by ${schol.providerName || "NEXO"}.`;
+    }
+
+    // Render slots dynamically synchronized with active scholarship requirements
+    renderDropboxSlots(schol);
+
     modalOverlay.classList.add("active");
     document.body.style.overflow = "hidden";
   }
@@ -952,26 +964,237 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnCloseDropbox) btnCloseDropbox.addEventListener("click", closeModal);
 
-  // File slot handlers
-  const slots = ["cor", "indigency", "grades", "income"];
-  slots.forEach((key) => {
-    const slotCard = document.getElementById(`slot-${key}`);
-    const fileInput = document.getElementById(`file-${key}`);
-    const iconBox = document.getElementById(`icon-${key}`);
-    const titleEl = document.getElementById(`title-${key}`);
-    const metaEl = document.getElementById(`meta-${key}`);
-    const actionBox = document.getElementById(`action-${key}`);
+  function renderDropboxSlots(schol) {
+    const container = document.getElementById("dropbox-slots-container");
+    if (!container) return;
+    container.innerHTML = "";
+    uploadedFiles = {};
 
-    if (slotCard && fileInput) {
-      slotCard.addEventListener("click", (e) => {
-        // If clicking delete button, reset slot
-        if (e.target.closest(".btn-slot-delete")) {
-          e.stopPropagation();
-          resetSlot(key);
-          return;
+    let reqList =
+      Array.isArray(schol.requirements) && schol.requirements.length > 0
+        ? schol.requirements
+        : [];
+
+    // Fallback if no specific requirements configured
+    if (reqList.length === 0) {
+      reqList = [
+        {
+          title: "Certificate of Registration (COR)",
+          desc: "Upload current semester registration or enrollment form.",
+        },
+        {
+          title: "Latest Grades / Transcript of Records",
+          desc: "Upload official grades or copy of grades from previous semester.",
+        },
+      ];
+    }
+
+    reqList.forEach((req, idx) => {
+      const slotKey = "req_slot_" + idx;
+      const reqTitle =
+        typeof req === "object" && req !== null
+          ? req.title || req.name || `Requirement ${idx + 1}`
+          : String(req);
+      const reqDesc =
+        typeof req === "object" && req !== null && req.desc
+          ? req.desc
+          : "PDF, JPG, PNG - Max 5MB";
+
+      uploadedFiles[slotKey] = null;
+
+      const slotCard = document.createElement("div");
+      slotCard.className = "dropbox-slot-card";
+      slotCard.id = `slot-${slotKey}`;
+      slotCard.dataset.slot = slotKey;
+
+      slotCard.innerHTML = `
+        <input type="file" id="file-${slotKey}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+        <div class="dropbox-slot-header">
+          <div class="dropbox-slot-icon-box" id="icon-${slotKey}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+              <polyline points="12 12 12 17"></polyline>
+              <polyline points="9 15 12 12 15 15"></polyline>
+            </svg>
+          </div>
+          <div class="dropbox-slot-info">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+              <h5 class="dropbox-slot-title" id="title-${slotKey}">${escapeHtml(reqTitle)}</h5>
+              <span class="dropbox-slot-status-pill" id="badge-${slotKey}" style="font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: rgba(0,0,0,0.05); color: var(--text-secondary);">
+                Required
+              </span>
+            </div>
+            <p class="dropbox-slot-desc" id="meta-${slotKey}">${escapeHtml(reqDesc)} &bull; (Max 5MB)</p>
+          </div>
+        </div>
+        <div class="dropbox-slot-actions" id="actions-${slotKey}">
+          <!-- Populated by updateSlotUI -->
+        </div>
+      `;
+
+      container.appendChild(slotCard);
+
+      const fileInput = slotCard.querySelector(`#file-${slotKey}`);
+
+      function updateSlotUI() {
+        const iconBox = slotCard.querySelector(`#icon-${slotKey}`);
+        const metaEl = slotCard.querySelector(`#meta-${slotKey}`);
+        const badgeEl = slotCard.querySelector(`#badge-${slotKey}`);
+        const actionsEl = slotCard.querySelector(`#actions-${slotKey}`);
+        const current = uploadedFiles[slotKey];
+
+        if (current && current.status === "uploaded" && current.file) {
+          // 1. FILE ATTACHED STATE
+          slotCard.className = "dropbox-slot-card has-file";
+          const file = current.file;
+          const isPdf = file.name.toLowerCase().endsWith(".pdf");
+          const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+
+          if (badgeEl) {
+            badgeEl.style.background = "rgba(16, 185, 129, 0.15)";
+            badgeEl.style.color = "#10B981";
+            badgeEl.textContent = "File Attached";
+          }
+
+          if (iconBox) {
+            iconBox.innerHTML = isPdf
+              ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E53935"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="2"></polyline><text x="7" y="18" fill="#fff" font-size="6" font-weight="bold">PDF</text></svg>`
+              : `<svg width="20" height="20" viewBox="0 0 24 24" fill="#6941C6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="#fff"></circle><polyline points="21 15 16 10 5 21" fill="none" stroke="#fff" stroke-width="2"></polyline></svg>`;
+          }
+
+          if (metaEl) {
+            metaEl.innerHTML = `<span style="font-weight: 700; color: var(--text-primary);">${escapeHtml(file.name)}</span> &bull; ${formattedSize}`;
+          }
+
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 10px; padding: 8px 12px;">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(file.name)}</span>
+                </div>
+                <button type="button" class="btn-slot-remove" id="btn-remove-${slotKey}" title="Remove Attached File">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>Remove</span>
+                </button>
+              </div>
+            `;
+            const btnRemove = actionsEl.querySelector(`#btn-remove-${slotKey}`);
+            if (btnRemove) {
+              btnRemove.onclick = (e) => {
+                e.stopPropagation();
+                uploadedFiles[slotKey] = null;
+                if (fileInput) fileInput.value = "";
+                updateSlotUI();
+                showToast(`Removed ${file.name}`);
+              };
+            }
+          }
+        } else if (current && current.status === "to_follow_up") {
+          // 2. TO FOLLOW UP LATER STATE
+          slotCard.className = "dropbox-slot-card is-follow-up";
+          if (badgeEl) {
+            badgeEl.style.background = "rgba(245, 158, 11, 0.15)";
+            badgeEl.style.color = "#D97706";
+            badgeEl.textContent = "To Follow Up Later";
+          }
+
+          if (iconBox) {
+            iconBox.innerHTML = `
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            `;
+          }
+
+          if (metaEl) {
+            metaEl.innerHTML = `<span style="color: #D97706; font-weight: 600;">Submission deferred &bull; No file attached</span>`;
+          }
+
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
+                <span style="font-size: 12.5px; color: #D97706; font-weight: 600;">Deferred to My Submissions</span>
+                <button type="button" class="btn-slot-upload" id="btn-upload-instead-${slotKey}" style="flex: none; min-height: 40px; padding: 0 16px;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload File Instead</span>
+                </button>
+              </div>
+            `;
+            const btnUploadInstead = actionsEl.querySelector(`#btn-upload-instead-${slotKey}`);
+            if (btnUploadInstead) {
+              btnUploadInstead.onclick = (e) => {
+                e.stopPropagation();
+                uploadedFiles[slotKey] = null;
+                updateSlotUI();
+                fileInput.click();
+              };
+            }
+          }
+        } else {
+          // 3. EMPTY DEFAULT STATE
+          slotCard.className = "dropbox-slot-card";
+          if (badgeEl) {
+            badgeEl.style.background = "rgba(0,0,0,0.06)";
+            badgeEl.style.color = "var(--text-secondary)";
+            badgeEl.textContent = "Required";
+          }
+
+          if (iconBox) {
+            iconBox.innerHTML = `
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path>
+                <polyline points="12 12 12 17"></polyline>
+                <polyline points="9 15 12 12 15 15"></polyline>
+              </svg>
+            `;
+          }
+
+          if (metaEl) {
+            metaEl.textContent = `${reqDesc} • (Max 5MB)`;
+          }
+
+          if (actionsEl) {
+            actionsEl.innerHTML = `
+              <button type="button" class="btn-slot-upload" id="btn-upload-${slotKey}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Upload File</span>
+              </button>
+              <button type="button" class="btn-followup-toggle" id="btn-toggle-${slotKey}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>Follow Up Later</span>
+              </button>
+            `;
+
+            const btnUpload = actionsEl.querySelector(`#btn-upload-${slotKey}`);
+            const btnToggle = actionsEl.querySelector(`#btn-toggle-${slotKey}`);
+
+            if (btnUpload) {
+              btnUpload.onclick = (e) => {
+                e.stopPropagation();
+                fileInput.click();
+              };
+            }
+
+            if (btnToggle) {
+              btnToggle.onclick = (e) => {
+                e.stopPropagation();
+                uploadedFiles[slotKey] = {
+                  status: "to_follow_up",
+                  file: null,
+                  reqTitle: reqTitle,
+                  reqDesc: reqDesc,
+                };
+                updateSlotUI();
+                showToast(`"${reqTitle}" marked as To Follow Up later`);
+              };
+            }
+          }
         }
-        fileInput.click();
-      });
+      }
+
+      updateSlotUI();
 
       fileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
@@ -983,68 +1206,75 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        uploadedFiles[key] = file;
-        const isPdf = file.name.endsWith(".pdf");
-        const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+        uploadedFiles[slotKey] = {
+          status: "uploaded",
+          file: file,
+          reqTitle: reqTitle,
+          reqDesc: reqDesc,
+        };
 
-        slotCard.classList.add("has-file");
+        // Hide inline error box if it was active
+        const errorBox = document.getElementById("dropbox-error-box");
+        if (errorBox) errorBox.style.display = "none";
 
-        // Icon
-        if (iconBox) {
-          iconBox.innerHTML = isPdf
-            ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E53935"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="2"></polyline><text x="7" y="18" fill="#fff" font-size="6" font-weight="bold">PDF</text></svg>`
-            : `<svg width="20" height="20" viewBox="0 0 24 24" fill="#6941C6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="#fff"></circle><polyline points="21 15 16 10 5 21" fill="none" stroke="#fff" stroke-width="2"></polyline></svg>`;
-        }
-
-        // Title and size
-        if (metaEl) {
-          metaEl.innerHTML = `<span style="font-weight: 600; color: var(--text-primary);">${file.name}</span> &bull; ${formattedSize}`;
-        }
-
-        // Action: Green Checkmark + Trash Button
-        if (actionBox) {
-          actionBox.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#008013">
-                <circle cx="12" cy="12" r="10" fill="#E6F9ED"/>
-                <path d="M9 12l2 2 4-4" fill="none" stroke="#008013" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <button type="button" class="btn-slot-delete" title="Remove File" style="background: transparent; border: none; cursor: pointer; color: #9CA3AF; padding: 4px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </div>
-          `;
-        }
-
-        showToast(`${file.name} uploaded`);
+        updateSlotUI();
+        showToast(`${file.name} attached for ${reqTitle}`);
       });
-    }
-  });
+    });
+  }
 
-  function resetSlot(key) {
-    uploadedFiles[key] = null;
-    const slotCard = document.getElementById(`slot-${key}`);
-    const fileInput = document.getElementById(`file-${key}`);
-    const iconBox = document.getElementById(`icon-${key}`);
-    const metaEl = document.getElementById(`meta-${key}`);
-    const actionBox = document.getElementById(`action-${key}`);
+  function resetSlot(slotKey, reqTitle, reqDesc) {
+    uploadedFiles[slotKey] = null;
+    const slotCard = document.getElementById(`slot-${slotKey}`);
+    if (!slotCard) return;
+    const fileInput = slotCard.querySelector(`#file-${slotKey}`);
+    const iconBox = slotCard.querySelector(`#icon-${slotKey}`);
+    const metaEl = slotCard.querySelector(`#meta-${slotKey}`);
+    const actionBox = slotCard.querySelector(`#action-${slotKey}`);
+    const btnToggle = slotCard.querySelector(`#btn-toggle-${slotKey}`);
 
     if (fileInput) fileInput.value = "";
-    if (slotCard) slotCard.classList.remove("has-file");
+    slotCard.classList.remove("has-file");
+    slotCard.classList.remove("is-follow-up");
+
+    if (btnToggle) {
+      btnToggle.classList.remove("active");
+      btnToggle.innerHTML = `
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span>Follow Up Later</span>
+      `;
+    }
+
     if (iconBox) {
       iconBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path><polyline points="12 12 12 17"></polyline><polyline points="9 15 12 12 15 15"></polyline></svg>`;
     }
     if (metaEl) {
-      metaEl.textContent = "(PDF, JPG, PNG - Max 5MB)";
+      metaEl.textContent = `${reqDesc} • (Max 5MB)`;
     }
     if (actionBox) {
       actionBox.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     }
   }
 
-  // Submit Application
+  // Submit Application Flow with Confirmation Modal and Validation
+  const confirmModalOverlay = document.getElementById("confirm-app-modal-overlay");
+  const btnCloseConfirmModal = document.getElementById("btn-close-confirm-modal");
+  const btnBackFromConfirm = document.getElementById("btn-back-from-confirm");
+  const btnFinalConfirmSubmit = document.getElementById("btn-final-confirm-submit");
+  const confirmScholTitle = document.getElementById("confirm-modal-schol-title");
+  const confirmDocsSummary = document.getElementById("confirm-modal-docs-summary");
+  const errorBox = document.getElementById("dropbox-error-box");
+  const errorText = document.getElementById("dropbox-error-text");
+
+  function closeConfirmModal() {
+    if (confirmModalOverlay) confirmModalOverlay.classList.remove("active");
+  }
+
+  if (btnCloseConfirmModal) btnCloseConfirmModal.onclick = closeConfirmModal;
+  if (btnBackFromConfirm) btnBackFromConfirm.onclick = closeConfirmModal;
+
   if (btnSubmitDropbox) {
-    btnSubmitDropbox.addEventListener("click", async () => {
+    btnSubmitDropbox.addEventListener("click", () => {
       if (!activeScholarship) return;
       const alreadyApplied = studentApplications.some(
         (a) => String(a.scholarshipId) === String(activeScholarship.id),
@@ -1055,45 +1285,164 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      btnSubmitDropbox.disabled = true;
-      btnSubmitDropbox.innerHTML = `
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
-          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-          <path d="M12 2a10 10 0 0 1 10 10"></path>
-        </svg>
-        Uploading Documents & Submitting...
-      `;
+      // Mandatory validation: Student CANNOT submit if NOT AT LEAST ONE file is attached!
+      const attachedKeys = Object.keys(uploadedFiles).filter((k) => {
+        const item = uploadedFiles[k];
+        return item && item.status === "uploaded" && item.file instanceof File;
+      });
 
-      // Convert uploaded file objects to Base64 documents for local file handling
-      const docPromises = Object.keys(uploadedFiles)
-        .filter((k) => uploadedFiles[k] !== null)
-        .map((k) => {
-          const file = uploadedFiles[k];
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve({
-                name: file.name,
-                size: file.size,
-                type: file.type || "application/octet-stream",
-                data: reader.result,
-                slot: k,
-              });
-            };
-            reader.onerror = () => {
-              resolve({
-                name: file.name,
-                size: file.size,
-                type: file.type || "application/octet-stream",
-                data: null,
-                slot: k,
-              });
-            };
-            reader.readAsDataURL(file);
-          });
+      if (attachedKeys.length === 0) {
+        if (errorBox) {
+          errorBox.style.display = "flex";
+          if (errorText) {
+            errorText.textContent =
+              "Cannot submit application: Please upload at least one required document. Applications cannot be submitted with zero attached files.";
+          }
+          errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        showToast(
+          "Please attach at least one required document before submitting. You cannot submit an application with zero uploaded files.",
+          true,
+        );
+        return;
+      }
+
+      if (errorBox) errorBox.style.display = "none";
+
+      // Populate & Open Confirmation Modal
+      if (confirmScholTitle) {
+        confirmScholTitle.textContent = activeScholarship.title || "Scholarship Program";
+      }
+
+      if (confirmDocsSummary) {
+        let summaryHtml = "";
+        attachedKeys.forEach((k) => {
+          const item = uploadedFiles[k];
+          const isPdf = item.file.name.toLowerCase().endsWith(".pdf");
+          summaryHtml += `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                ${escapeHtml(item.reqTitle)}
+              </span>
+              <span style="font-size: 11.5px; font-weight: 700; color: #10b981; flex-shrink: 0; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 6px;">
+                ${isPdf ? "PDF" : "IMG"} Attached
+              </span>
+            </div>
+          `;
         });
 
-      const processedDocs = await Promise.all(docPromises);
+        const followUpKeys = Object.keys(uploadedFiles).filter((k) => {
+          const item = uploadedFiles[k];
+          return item && item.status === "to_follow_up";
+        });
+
+        followUpKeys.forEach((k) => {
+          const item = uploadedFiles[k];
+          summaryHtml += `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                ${escapeHtml(item.reqTitle)}
+              </span>
+              <span style="font-size: 11.5px; font-weight: 700; color: #D97706; flex-shrink: 0; background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 6px;">
+                To Follow Up Later
+              </span>
+            </div>
+          `;
+        });
+
+        confirmDocsSummary.innerHTML = summaryHtml;
+      }
+
+      if (confirmModalOverlay) confirmModalOverlay.classList.add("active");
+    });
+  }
+
+  // Final Confirmed Submission Execution
+  if (btnFinalConfirmSubmit) {
+    btnFinalConfirmSubmit.addEventListener("click", async () => {
+      closeConfirmModal();
+
+      const attachedKeys = Object.keys(uploadedFiles).filter((k) => {
+        const item = uploadedFiles[k];
+        return item && item.status === "uploaded" && item.file instanceof File;
+      });
+
+      if (attachedKeys.length === 0) return;
+
+      if (btnSubmitDropbox) {
+        btnSubmitDropbox.disabled = true;
+        btnSubmitDropbox.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+            <path d="M12 2a10 10 0 0 1 10 10"></path>
+          </svg>
+          Submitting Application...
+        `;
+      }
+
+      // 1. Process files actually attached by student
+      const attachedPromises = attachedKeys.map((k) => {
+        const item = uploadedFiles[k];
+        const file = item.file;
+        const reqTitle = item.reqTitle || file.name;
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              name: file.name,
+              title: reqTitle,
+              requirement: reqTitle,
+              size: file.size,
+              type: file.type || "application/octet-stream",
+              data: reader.result,
+              status: "attached",
+              isFollowUp: false,
+              slot: k,
+            });
+          };
+          reader.onerror = () => {
+            resolve({
+              name: file.name,
+              title: reqTitle,
+              requirement: reqTitle,
+              size: file.size,
+              type: file.type || "application/octet-stream",
+              data: null,
+              status: "attached",
+              isFollowUp: false,
+              slot: k,
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      const processedAttachedDocs = await Promise.all(attachedPromises);
+
+      // 2. Process requirements student chose to follow up later
+      const followUpKeys = Object.keys(uploadedFiles).filter((k) => {
+        const item = uploadedFiles[k];
+        return item && item.status === "to_follow_up";
+      });
+
+      const followUpDocs = followUpKeys.map((k) => {
+        const item = uploadedFiles[k];
+        return {
+          name: `${item.reqTitle} (To Follow Up)`,
+          title: item.reqTitle,
+          requirement: item.reqTitle,
+          size: 0,
+          type: "to_follow_up",
+          data: null,
+          status: "to_follow_up",
+          isFollowUp: true,
+          slot: k,
+        };
+      });
+
+      const processedDocs = [...processedAttachedDocs, ...followUpDocs];
 
       // Student details from settings or session
       const sName =
@@ -1154,7 +1503,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ? `${(parseInt(activeScholarship.applicantTotal || 0, 10) || 0) + 1} / ${activeScholarship.applicantLimit || activeScholarship.maxApplicants || 200} Applicants`
           : "1 / 200 Applicants",
         documents: processedDocs,
-        uploadedDocuments: processedDocs.map((d) => d.name),
+        uploadedDocuments: processedAttachedDocs.map((d) => d.name),
       };
 
       // Save to server
@@ -1240,11 +1589,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const scholName = activeScholarship
           ? activeScholarship.title
           : "Scholarship";
+        const docNotice =
+          followUpDocs.length > 0
+            ? `${processedAttachedDocs.length} document(s) (${followUpDocs.length} to follow up)`
+            : `${processedAttachedDocs.length} document(s)`;
         const newNotif = {
           id: "notif_" + Date.now(),
           recipient: "provider",
           title: "New Application Received",
-          message: `${sName || "Juan Dela Cruz"} applied for "${scholName}" with ${processedDocs.length} document(s).`,
+          message: `${sName || "Juan Dela Cruz"} applied for "${scholName}" with ${docNotice}.`,
           timestamp: new Date().toISOString(),
           formattedTime: "Just now",
           read: false,

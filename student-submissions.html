@@ -104,10 +104,13 @@
 
       <!-- FILTER TOOLS SECTION (Status Tabs & Search Filter for easy navigation) -->
       <section class="submissions-filter-section" id="submissions-filter-section" style="margin-bottom: 20px;">
-        <!-- Status Filter Tabs / Pills -->
+        <!-- Status Filter Tabs / Pills (Separated Submitted & Under Review) -->
         <div class="filter-tabs" id="submissions-status-filters" role="tablist" aria-label="Filter Submissions by Status">
           <button type="button" class="filter-tab active" data-filter="all" id="filter-tab-all" role="tab" aria-selected="true">
             All (<span id="filter-count-all">0</span>)
+          </button>
+          <button type="button" class="filter-tab" data-filter="submitted" id="filter-tab-submitted" role="tab" aria-selected="false">
+            Submitted (<span id="filter-count-submitted">0</span>)
           </button>
           <button type="button" class="filter-tab" data-filter="review" id="filter-tab-review" role="tab" aria-selected="false">
             Under Review (<span id="filter-count-review">0</span>)

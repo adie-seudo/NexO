@@ -98,6 +98,32 @@ const DEFAULT_DATA = {
       theme: "light",
     },
   },
+  users: [
+    {
+      id: "usr_prov_admin",
+      email: "admin@admin",
+      role: "provider",
+      name: "NEXO Foundation",
+      orgName: "NEXO Foundation",
+      createdAt: "2026-11-01T08:00:00.000Z",
+      formattedDate: "Nov 1, 2026",
+      status: "active",
+      notes: "Default Administrator & System Provider Account",
+    },
+    {
+      id: "usr_stud_admin",
+      email: "admin@admin.edu.ph",
+      role: "student",
+      name: "Juan Dela Cruz",
+      university: "Batangas State University",
+      course: "BS Information Technology",
+      yearLevel: "3rd Year",
+      createdAt: "2026-11-01T08:00:00.000Z",
+      formattedDate: "Nov 1, 2026",
+      status: "active",
+      notes: "Default Verified Student Account",
+    },
+  ],
 };
 
 // Helper: Read data from data.json
@@ -119,6 +145,8 @@ function readData() {
     if (!parsed.applications) parsed.applications = [];
     if (!parsed.notifications)
       parsed.notifications = DEFAULT_DATA.notifications || [];
+    if (!parsed.users)
+      parsed.users = DEFAULT_DATA.users || [];
     if (!parsed.settings) parsed.settings = DEFAULT_DATA.settings;
     if (!parsed.studentSettings)
       parsed.studentSettings = DEFAULT_DATA.studentSettings;
@@ -146,7 +174,22 @@ function writeData(data) {
 
 // Helper: Save a base64 encoded document to local uploads folder
 function saveBase64File(doc, prefix) {
-  if (!doc || !doc.data) return doc;
+  if (!doc) return null;
+  const isFollowUp = doc.isFollowUp || doc.status === "to_follow_up" || doc.type === "to_follow_up";
+  if (!doc.data || isFollowUp) {
+    return {
+      name: doc.name || `${doc.requirement || doc.title || "Requirement"} (To Follow Up)`,
+      title: doc.title || doc.requirement || "Requirement",
+      requirement: doc.requirement || doc.title || "Requirement",
+      size: 0,
+      type: "to_follow_up",
+      fileUrl: "",
+      uploadedAt: new Date().toISOString(),
+      status: "to_follow_up",
+      isFollowUp: true,
+      slot: doc.slot || "",
+    };
+  }
   try {
     // Expected format: data:application/pdf;base64,... or data:image/png;base64,...
     const matches = doc.data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -170,19 +213,29 @@ function saveBase64File(doc, prefix) {
 
     return {
       name: doc.name || safeName,
+      title: doc.title || doc.requirement || doc.name || safeName,
+      requirement: doc.requirement || doc.title || doc.name || safeName,
       size: doc.size || buffer.length,
       type: doc.type || (matches ? matches[1] : "application/octet-stream"),
       fileUrl: `/uploads/${diskFileName}`,
       uploadedAt: new Date().toISOString(),
+      status: "attached",
+      isFollowUp: false,
+      slot: doc.slot || "",
     };
   } catch (err) {
     console.error("Error saving document to uploads:", err);
     return {
       name: doc.name || "document",
+      title: doc.title || doc.requirement || "Document",
+      requirement: doc.requirement || doc.title || "Document",
       size: doc.size || 0,
       type: doc.type || "application/octet-stream",
       fileUrl: "",
       error: "Could not save file to disk",
+      status: "attached",
+      isFollowUp: false,
+      slot: doc.slot || "",
     };
   }
 }
@@ -544,18 +597,31 @@ async function handleRequest(req, res) {
 
       rawDocs.forEach((doc, idx) => {
         if (typeof doc === "string") {
+          const isFollowUp = doc.includes("(To Follow Up)");
+          const cleanTitle = doc.replace(" (To Follow Up)", "").trim();
           savedDocuments.push({
             name: doc,
-            size: "1.2 MB",
-            type: "application/pdf",
+            title: cleanTitle,
+            requirement: cleanTitle,
+            size: isFollowUp ? 0 : "1.2 MB",
+            type: isFollowUp ? "to_follow_up" : "application/pdf",
             fileUrl: "",
             uploadedAt: new Date().toISOString(),
+            status: isFollowUp ? "to_follow_up" : "attached",
+            isFollowUp: isFollowUp,
           });
         } else if (doc && typeof doc === "object") {
           const saved = saveBase64File(doc, `${appId}_doc${idx + 1}`);
-          savedDocuments.push(saved);
+          if (saved) savedDocuments.push(saved);
         }
       });
+
+      const attachedDocs = savedDocuments.filter(
+        (d) => !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up" && (d.size > 0 || d.fileUrl || d.data)
+      );
+      const followUpDocs = savedDocuments.filter(
+        (d) => d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up" || (typeof d.name === "string" && d.name.includes("(To Follow Up)"))
+      );
 
       const sAvatar =
         body.studentProfilePic ||
@@ -609,7 +675,7 @@ async function handleRequest(req, res) {
             ? body.applicantCount
             : "1 / 200 Applicants",
         documents: savedDocuments,
-        uploadedDocuments: savedDocuments.map((d) => d.name),
+        uploadedDocuments: attachedDocs.map((d) => d.name),
         notes: body.notes || "",
         reviewedAt: null,
       };
@@ -617,13 +683,18 @@ async function handleRequest(req, res) {
       data.applications.unshift(newApp);
       syncScholarshipApplicantCounts(data);
 
-      // Add live provider notification about new applicant
+      // Add live provider notification about new applicant strictly counting attached files
+      const docNotice =
+        followUpDocs.length > 0
+          ? `${attachedDocs.length} document(s) (${followUpDocs.length} to follow up)`
+          : `${attachedDocs.length} document(s)`;
+
       data.notifications = data.notifications || [];
       data.notifications.unshift({
         id: "notif_" + Date.now(),
         recipient: "provider",
         title: "New Application Received",
-        message: `${newApp.studentName} applied for "${newApp.scholarshipTitle}" with ${savedDocuments.length} document(s).`,
+        message: `${newApp.studentName} applied for "${newApp.scholarshipTitle}" with ${docNotice}.`,
         timestamp: new Date().toISOString(),
         formattedTime: "Just now",
         read: false,
@@ -634,7 +705,7 @@ async function handleRequest(req, res) {
       writeData(data);
 
       console.log(
-        `[Application Received] Student "${newApp.studentName}" applied for "${newApp.scholarshipTitle}" with ${savedDocuments.length} files.`,
+        `[Application Received] Student "${newApp.studentName}" applied for "${newApp.scholarshipTitle}" with ${attachedDocs.length} attached files (${followUpDocs.length} to follow up).`,
       );
       return sendJson(res, 201, newApp);
     }
@@ -666,6 +737,78 @@ async function handleRequest(req, res) {
     const updatedNotes =
       body.notes !== undefined ? body.notes : currentApp.notes || "";
 
+    // Handle Follow-Up Document Upload by Student
+    if (body.followUpDocument) {
+      const fu = body.followUpDocument;
+      let savedDoc = null;
+      if (fu && fu.data) {
+        savedDoc = saveBase64File(fu, `${id}_followup_${Date.now()}`);
+      }
+      if (!savedDoc) {
+        savedDoc = {
+          name: fu.name || "FollowUp_Document.pdf",
+          title: fu.requirement || fu.title || "Required Document",
+          requirement: fu.requirement || fu.title || "Required Document",
+          size: fu.size || "1.2 MB",
+          type: fu.type || "application/pdf",
+          fileUrl: fu.fileUrl || "",
+          uploadedAt: new Date().toISOString(),
+          status: "attached",
+          isFollowUp: false,
+        };
+      }
+
+      // Update documents array: replace the matching to_follow_up requirement
+      let docs = Array.isArray(currentApp.documents)
+        ? [...currentApp.documents]
+        : [];
+      const targetReq = (fu.requirement || fu.title || fu.name || "").toLowerCase().trim();
+      let replaced = false;
+
+      docs = docs.map((d) => {
+        const dTitle = typeof d === "string" ? d : d.requirement || d.title || d.name || "";
+        const isFu = typeof d === "string" ? d.includes("(To Follow Up)") : (d.isFollowUp || d.status === "to_follow_up");
+        if (isFu && dTitle.toLowerCase().includes(targetReq)) {
+          replaced = true;
+          return savedDoc;
+        }
+        return d;
+      });
+
+      if (!replaced) {
+        // Fallback: replace first follow-up or push
+        const firstFuIdx = docs.findIndex((d) =>
+          typeof d === "string" ? d.includes("(To Follow Up)") : (d.isFollowUp || d.status === "to_follow_up")
+        );
+        if (firstFuIdx !== -1) {
+          docs[firstFuIdx] = savedDoc;
+        } else {
+          docs.push(savedDoc);
+        }
+      }
+
+      currentApp.documents = docs;
+      currentApp.uploadedDocuments = docs
+        .filter((d) => (typeof d === "string" ? !d.includes("(To Follow Up)") : !d.isFollowUp))
+        .map((d) => (typeof d === "string" ? d : d.name));
+
+      // Live Provider Notification: Follow-up document attached!
+      data.notifications = data.notifications || [];
+      data.notifications.unshift({
+        id: "notif_" + Date.now(),
+        recipient: "provider",
+        title: "Follow-Up Document Submitted",
+        message: `${currentApp.studentName} attached "${savedDoc.name}" for "${currentApp.scholarshipTitle}".`,
+        timestamp: new Date().toISOString(),
+        formattedTime: "Just now",
+        read: false,
+        link: "provider-applications.html",
+        appId: id,
+      });
+
+      console.log(`[Student Follow-Up Uploaded] App ${id}: "${savedDoc.name}" for ${savedDoc.requirement}`);
+    }
+
     data.applications[appIndex] = {
       ...currentApp,
       status: updatedStatus,
@@ -679,27 +822,26 @@ async function handleRequest(req, res) {
       updatedAt: new Date().toISOString(),
     };
 
-    // Add live student notification about status change
-    data.notifications = data.notifications || [];
-    data.notifications.unshift({
-      id: "notif_" + Date.now(),
-      recipient: "student",
-      title: `Application Status: ${updatedStatus}`,
-      message: `Your application for "${currentApp.scholarshipTitle}" is now ${updatedStatus}.`,
-      timestamp: new Date().toISOString(),
-      formattedTime: "Just now",
-      read: false,
-      link: "student-submissions.html",
-      appId: id,
-    });
+    // If status changed by provider, notify student
+    if (body.status !== undefined && body.status !== currentApp.status) {
+      data.notifications = data.notifications || [];
+      data.notifications.unshift({
+        id: "notif_" + Date.now(),
+        recipient: "student",
+        title: `Application Status: ${updatedStatus}`,
+        message: `Your application for "${currentApp.scholarshipTitle}" is now ${updatedStatus}.`,
+        timestamp: new Date().toISOString(),
+        formattedTime: "Just now",
+        read: false,
+        link: "student-submissions.html",
+        appId: id,
+      });
+    }
 
     writeData(data);
-    console.log(
-      `[Application Managed] App ${id} status updated to: "${updatedStatus}"`,
-    );
     return sendJson(res, 200, {
       success: true,
-      message: `Application updated to ${updatedStatus}`,
+      message: `Application updated successfully`,
       application: data.applications[appIndex],
     });
   }
@@ -980,6 +1122,263 @@ async function handleRequest(req, res) {
       success: true,
       message: "Notifications marked as read",
     });
+  }
+
+  // ==========================================================================
+  // 7. DEVELOPER ADMINISTRATOR & USER ACCOUNTS ENGINE
+  // ==========================================================================
+
+  // GET /api/users - List all registered and admin-created accounts
+  if (pathname === "/api/users" && method === "GET") {
+    const data = readData();
+    data.users = data.users || [];
+    return sendJson(res, 200, data.users);
+  }
+
+  // POST /api/users - Create new account (Student or Provider) with file handling
+  if (pathname === "/api/users" && method === "POST") {
+    const body = await parseRequestBody(req);
+    const data = readData();
+    data.users = data.users || [];
+
+    const email = (body.email || "").trim().toLowerCase();
+    const role = (body.role || "student").trim().toLowerCase(); // "student" or "provider"
+    const name =
+      (body.name || "").trim() ||
+      (role === "provider" ? "Scholarship Provider" : "Verified Student");
+    const university =
+      (body.university || "Batangas State University").trim();
+    const course = (body.course || "BS Information Technology").trim();
+    const status = body.status === "banned" ? "banned" : "active";
+
+    if (!email) {
+      return sendJson(res, 400, { success: false, error: "Email is required" });
+    }
+
+    // Check if user already exists
+    const existing = data.users.find((u) => u.email.toLowerCase() === email);
+    if (existing) {
+      return sendJson(res, 400, {
+        success: false,
+        error: `An account with email "${email}" already exists.`,
+      });
+    }
+
+    const newUser = {
+      id: "usr_" + (role === "provider" ? "prov_" : "stud_") + Date.now(),
+      email: email,
+      role: role,
+      name: name,
+      orgName: role === "provider" ? name : undefined,
+      university: role === "student" ? university : undefined,
+      course: role === "student" ? course : undefined,
+      status: status,
+      createdAt: new Date().toISOString(),
+      formattedDate: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      notes:
+        body.notes ||
+        (body.createdByAdmin
+          ? "Created by Developer Admin"
+          : "Registered Account"),
+    };
+
+    data.users.unshift(newUser);
+    writeData(data);
+
+    console.log(`[Admin File Handling] Created ${role} account: ${email}`);
+    return sendJson(res, 201, { success: true, user: newUser });
+  }
+
+  // PATCH /api/users/:id - Update user status (Ban / Unban / Edit)
+  if (
+    pathname.startsWith("/api/users/") &&
+    (method === "PATCH" || method === "PUT")
+  ) {
+    const id = pathname.replace("/api/users/", "").split("/")[0];
+    const body = await parseRequestBody(req);
+    const data = readData();
+    data.users = data.users || [];
+
+    const userIdx = data.users.findIndex((u) => String(u.id) === String(id));
+    if (userIdx === -1) {
+      return sendJson(res, 404, {
+        success: false,
+        error: "User account not found",
+      });
+    }
+
+    if (body.status !== undefined) {
+      data.users[userIdx].status =
+        body.status === "banned" ? "banned" : "active";
+    }
+    if (body.name !== undefined) data.users[userIdx].name = body.name;
+    if (body.notes !== undefined) data.users[userIdx].notes = body.notes;
+    data.users[userIdx].updatedAt = new Date().toISOString();
+
+    writeData(data);
+    return sendJson(res, 200, { success: true, user: data.users[userIdx] });
+  }
+
+  // DELETE /api/users/:id - Delete or Ban Account (Cascade purges posts & applications)
+  if (pathname.startsWith("/api/users/") && method === "DELETE") {
+    const id = pathname.replace("/api/users/", "").split("/")[0];
+    const data = readData();
+    data.users = data.users || [];
+
+    const user = data.users.find((u) => String(u.id) === String(id));
+    if (!user) {
+      return sendJson(res, 404, {
+        success: false,
+        error: "User account not found",
+      });
+    }
+
+    // 1. Remove user account from users list
+    data.users = data.users.filter((u) => String(u.id) !== String(id));
+
+    let removedPostsCount = 0;
+    let removedAppsCount = 0;
+
+    // 2. Cascade cleanup based on role
+    if (user.role === "student") {
+      // Remove all applications submitted by this student
+      const initialAppCount = (data.applications || []).length;
+      data.applications = (data.applications || []).filter((a) => {
+        const emailMatch =
+          (a.studentEmail || "").toLowerCase() === user.email.toLowerCase();
+        const idMatch = user.studentId && a.studentId === user.studentId;
+        return !emailMatch && !idMatch;
+      });
+      removedAppsCount = initialAppCount - (data.applications || []).length;
+      // Recalculate scholarship applicant numbers
+      syncScholarshipApplicantCounts(data);
+    } else if (user.role === "provider") {
+      // Find all scholarships posted by this provider
+      const providerScholarshipIds = (data.scholarships || [])
+        .filter((s) => {
+          const nameMatch =
+            s.providerName &&
+            (s.providerName === user.name ||
+              s.providerName === user.orgName ||
+              s.providerName === user.email);
+          const emailMatch =
+            s.providerEmail &&
+            s.providerEmail.toLowerCase() === user.email.toLowerCase();
+          return nameMatch || emailMatch;
+        })
+        .map((s) => String(s.id));
+
+      removedPostsCount = providerScholarshipIds.length;
+
+      // Remove scholarships
+      data.scholarships = (data.scholarships || []).filter(
+        (s) => !providerScholarshipIds.includes(String(s.id)),
+      );
+
+      // Remove drafts
+      data.drafts = (data.drafts || []).filter(
+        (d) => !providerScholarshipIds.includes(String(d.id)),
+      );
+
+      // Remove all applications submitted for those deleted scholarships
+      const initialAppCount = (data.applications || []).length;
+      data.applications = (data.applications || []).filter(
+        (a) => !providerScholarshipIds.includes(String(a.scholarshipId)),
+      );
+      removedAppsCount = initialAppCount - (data.applications || []).length;
+    }
+
+    writeData(data);
+    console.log(
+      `[Admin Cascade Delete] Removed ${user.email} (${removedPostsCount} posts, ${removedAppsCount} apps)`,
+    );
+    return sendJson(res, 200, {
+      success: true,
+      message: `Account "${user.email}" deleted. Removed ${removedPostsCount} scholarship post(s) and ${removedAppsCount} student application(s).`,
+      deletedId: id,
+      deletedRole: user.role,
+      removedPostsCount,
+      removedAppsCount,
+    });
+  }
+
+  // POST /api/admin/clean-database - Crowded Database Cleaning Engine
+  if (pathname === "/api/admin/clean-database" && method === "POST") {
+    const body = await parseRequestBody(req);
+    const data = readData();
+
+    if (body.action === "clear_applications") {
+      const count = (data.applications || []).length;
+      data.applications = [];
+      syncScholarshipApplicantCounts(data);
+      writeData(data);
+      return sendJson(res, 200, {
+        success: true,
+        message: `Successfully cleared all ${count} applications from data.json.`,
+      });
+    }
+
+    if (body.action === "clear_drafts") {
+      const count = (data.drafts || []).length;
+      data.drafts = [];
+      writeData(data);
+      return sendJson(res, 200, {
+        success: true,
+        message: `Successfully cleared all ${count} drafts from data.json.`,
+      });
+    }
+
+    if (body.action === "delete_scholarship" && body.id) {
+      const targetId = String(body.id);
+      data.scholarships = (data.scholarships || []).filter(
+        (s) => String(s.id) !== targetId,
+      );
+      const prevApps = (data.applications || []).length;
+      data.applications = (data.applications || []).filter(
+        (a) => String(a.scholarshipId) !== targetId,
+      );
+      const appsRemoved = prevApps - (data.applications || []).length;
+      syncScholarshipApplicantCounts(data);
+      writeData(data);
+      return sendJson(res, 200, {
+        success: true,
+        message: `Scholarship deleted. ${appsRemoved} associated application(s) removed.`,
+      });
+    }
+
+    if (body.action === "reset_factory_data") {
+      data.applications = [];
+      data.drafts = [];
+      data.notifications = DEFAULT_DATA.notifications;
+      data.users = DEFAULT_DATA.users;
+      (data.scholarships || []).forEach((s) => {
+        s.applicantTotal = 0;
+        s.applicantCount = `0 / ${s.applicantLimit || 200} Applicants`;
+      });
+      writeData(data);
+      return sendJson(res, 200, {
+        success: true,
+        message:
+          "Database sanitized and reset to clean factory state with default accounts.",
+      });
+    }
+
+    return sendJson(res, 400, { success: false, error: "Invalid clean action" });
+  }
+
+  // GET /api/admin/export-database - Download current data.json
+  if (pathname === "/api/admin/export-database" && method === "GET") {
+    const data = readData();
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+      "Content-Disposition": 'attachment; filename="nexo_database_backup.json"',
+      "Access-Control-Allow-Origin": "*",
+    });
+    return res.end(JSON.stringify(data, null, 2));
   }
 
   // -------------------------------------------------------------

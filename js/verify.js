@@ -169,6 +169,53 @@ function initFormAndNotifications() {
       if (enteredCode === "123456") {
         clearInterval(countdownTimer);
 
+        // Sync new verified student to file handling and localStorage database
+        const pendingEmail = sessionStorage.getItem("nexo-pending-email");
+        const pendingName =
+          sessionStorage.getItem("nexo-pending-name") || "Verified Student";
+
+        if (pendingEmail) {
+          const newStudentUser = {
+            email: pendingEmail,
+            role: "student",
+            name: pendingName,
+            status: "active",
+          };
+
+          fetch("http://localhost:3000/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newStudentUser),
+          }).catch(() => {});
+
+          try {
+            let uList = [];
+            const cached = localStorage.getItem("nexo_users");
+            if (cached) uList = JSON.parse(cached);
+            if (
+              !uList.some(
+                (u) =>
+                  (u.email || "").toLowerCase() === pendingEmail.toLowerCase(),
+              )
+            ) {
+              uList.unshift({
+                id: "usr_stud_" + Date.now(),
+                email: pendingEmail,
+                role: "student",
+                name: pendingName,
+                status: "active",
+                createdAt: new Date().toISOString(),
+                formattedDate: new Date().toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                }),
+              });
+              localStorage.setItem("nexo_users", JSON.stringify(uList));
+            }
+          } catch (_) {}
+        }
+
         if (DOM.verifyStepOtp) DOM.verifyStepOtp.classList.add("hidden");
         if (DOM.verifyExitBtn) DOM.verifyExitBtn.style.display = "none";
         if (DOM.verifyStepSuccess)
@@ -176,6 +223,7 @@ function initFormAndNotifications() {
 
         // Wipe memory to prevent data leaks after successful verification
         sessionStorage.removeItem("nexo-pending-email");
+        sessionStorage.removeItem("nexo-pending-name");
       } else {
         showNotification(
           "Invalid verification code. For testing, please use 123456.",

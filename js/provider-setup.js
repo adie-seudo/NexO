@@ -350,6 +350,55 @@ function initFormValidation() {
       // HARD STOP: If anything failed, stop the function
       if (!isValid) return;
 
+      // Sync registered provider account to backend file handling and localStorage
+      const orgEmailVal = orgEmail ? orgEmail.value.trim() : "";
+      const orgNameVal = orgName
+        ? orgName.value.trim()
+        : "Scholarship Provider";
+      if (orgEmailVal) {
+        const newProviderUser = {
+          email: orgEmailVal,
+          role: "provider",
+          name: orgNameVal,
+          orgName: orgNameVal,
+          status: "active",
+        };
+
+        fetch("http://localhost:3000/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newProviderUser),
+        }).catch(() => {});
+
+        try {
+          let uList = [];
+          const cached = localStorage.getItem("nexo_users");
+          if (cached) uList = JSON.parse(cached);
+          if (
+            !uList.some(
+              (u) =>
+                (u.email || "").toLowerCase() === orgEmailVal.toLowerCase(),
+            )
+          ) {
+            uList.unshift({
+              id: "usr_prov_" + Date.now(),
+              email: orgEmailVal,
+              role: "provider",
+              name: orgNameVal,
+              orgName: orgNameVal,
+              status: "active",
+              createdAt: new Date().toISOString(),
+              formattedDate: new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+            });
+            localStorage.setItem("nexo_users", JSON.stringify(uList));
+          }
+        } catch (_) {}
+      }
+
       // Hide active general notification if it was showing
       if (DOM.notificationEl) DOM.notificationEl.classList.remove("show");
 

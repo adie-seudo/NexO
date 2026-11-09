@@ -103,8 +103,22 @@ def write_data(data):
         return False
 
 def save_base64_file(doc, prefix):
-    if not doc or not isinstance(doc, dict) or "data" not in doc:
+    if not doc or not isinstance(doc, dict):
         return doc
+    is_follow_up = doc.get("isFollowUp") or doc.get("status") == "to_follow_up" or doc.get("type") == "to_follow_up"
+    if not doc.get("data") or is_follow_up:
+        return {
+            "name": doc.get("name") or f"{doc.get('requirement') or doc.get('title') or 'Requirement'} (To Follow Up)",
+            "title": doc.get("title") or doc.get("requirement") or "Requirement",
+            "requirement": doc.get("requirement") or doc.get("title") or "Requirement",
+            "size": 0,
+            "type": "to_follow_up",
+            "fileUrl": "",
+            "uploadedAt": datetime.now().isoformat(),
+            "status": "to_follow_up",
+            "isFollowUp": True,
+            "slot": doc.get("slot", "")
+        }
     try:
         raw_data = doc["data"]
         if "," in raw_data:
@@ -121,18 +135,28 @@ def save_base64_file(doc, prefix):
         
         return {
             "name": doc.get("name", safe_name),
+            "title": doc.get("title") or doc.get("requirement") or safe_name,
+            "requirement": doc.get("requirement") or doc.get("title") or safe_name,
             "size": doc.get("size", len(file_bytes)),
             "type": doc.get("type", "application/octet-stream"),
             "fileUrl": f"/uploads/{disk_filename}",
-            "uploadedAt": datetime.now().isoformat()
+            "uploadedAt": datetime.now().isoformat(),
+            "status": "attached",
+            "isFollowUp": False,
+            "slot": doc.get("slot", "")
         }
     except Exception as e:
         print("Error saving file:", e)
         return {
             "name": doc.get("name", "document"),
+            "title": doc.get("title") or doc.get("requirement") or "Document",
+            "requirement": doc.get("requirement") or doc.get("title") or "Document",
             "size": 0,
             "type": "application/octet-stream",
-            "fileUrl": ""
+            "fileUrl": "",
+            "status": "attached",
+            "isFollowUp": False,
+            "slot": doc.get("slot", "")
         }
 
 def sync_counts(data):
@@ -249,6 +273,24 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(200, data.get("settings", DEFAULT_DATA["settings"]))
 
         if path == "/api/student-settings":
+            data = read_data()
+            return self._send_json(200, data.get("studentSettings", DEFAULT_DATA["studentSettings"]))
+
+        if path == "/api/users":
+            data = read_data()
+            return self._send_json(200, data.get("users", []))
+
+        if path == "/api/admin/export-database":
+            data = read_data()
+            json_bytes = json.dumps(data, indent=2).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Disposition", 'attachment; filename="nexo_database_backup.json"')
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Content-Length", str(len(json_bytes)))
+            self.end_headers()
+            self.wfile.write(json_bytes)
+            return
             data = read_data()
             return self._send_json(200, data.get("studentSettings", DEFAULT_DATA["studentSettings"]))
 
@@ -375,16 +417,26 @@ class NexoHandler(BaseHTTPRequestHandler):
             raw_docs = body.get("documents") or body.get("uploadedDocuments") or []
             for i, doc in enumerate(raw_docs):
                 if isinstance(doc, str):
+                    is_fu = "(To Follow Up)" in doc
+                    clean_t = doc.replace(" (To Follow Up)", "").strip()
                     saved_docs.append({
                         "name": doc,
-                        "size": "1.2 MB",
-                        "type": "application/pdf",
+                        "title": clean_t,
+                        "requirement": clean_t,
+                        "size": 0 if is_fu else "1.2 MB",
+                        "type": "to_follow_up" if is_fu else "application/pdf",
                         "fileUrl": "",
-                        "uploadedAt": datetime.now().isoformat()
+                        "uploadedAt": datetime.now().isoformat(),
+                        "status": "to_follow_up" if is_fu else "attached",
+                        "isFollowUp": is_fu
                     })
                 elif isinstance(doc, dict):
                     saved = save_base64_file(doc, f"{app_id}_doc{i+1}")
-                    saved_docs.append(saved)
+                    if saved:
+                        saved_docs.append(saved)
+
+            attached_docs = [d for d in saved_docs if not d.get("isFollowUp") and d.get("status") != "to_follow_up" and d.get("type") != "to_follow_up"]
+            follow_up_docs = [d for d in saved_docs if d.get("isFollowUp") or d.get("status") == "to_follow_up" or d.get("type") == "to_follow_up" or "(To Follow Up)" in str(d.get("name", ""))]
 
             s_avatar = (
                 body.get("studentProfilePic") or
@@ -411,16 +463,18 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "formattedDate": body.get("formattedDate", datetime.now().strftime("%b %d, %Y")),
                 "applicantCount": body.get("applicantCount") if (body.get("applicantCount") and "/ 10 " not in body.get("applicantCount")) else "1 / 200 Applicants",
                 "documents": saved_docs,
-                "uploadedDocuments": [d["name"] for d in saved_docs],
+                "uploadedDocuments": [d["name"] for d in attached_docs],
                 "notes": body.get("notes", ""),
                 "reviewedAt": None
             }
             data.setdefault("applications", []).insert(0, new_app)
+
+            doc_notice = f"{len(attached_docs)} document(s) ({len(follow_up_docs)} to follow up)" if len(follow_up_docs) > 0 else f"{len(attached_docs)} document(s)"
             data.setdefault("notifications", []).insert(0, {
                 "id": f"notif_{int(time.time()*1000)}",
                 "recipient": "provider",
                 "title": "New Application Received",
-                "message": f"{new_app['studentName']} applied for \"{new_app['scholarshipTitle']}\" with {len(saved_docs)} document(s).",
+                "message": f"{new_app['studentName']} applied for \"{new_app['scholarshipTitle']}\" with {doc_notice}.",
                 "timestamp": datetime.now().isoformat(),
                 "formattedTime": "Just now",
                 "read": False,
@@ -443,17 +497,65 @@ class NexoHandler(BaseHTTPRequestHandler):
                     if "feedback" in body:
                         a["feedback"] = body["feedback"]
                     a["reviewedAt"] = datetime.now().isoformat()
-                    data.setdefault("notifications", []).insert(0, {
-                        "id": f"notif_{int(time.time()*1000)}",
-                        "recipient": "student",
-                        "title": f"Application Status: {a.get('status', 'Updated')}",
-                        "message": f"Your application for \"{a.get('scholarshipTitle', 'Scholarship')}\" is now {a.get('status', 'Updated')}.",
-                        "timestamp": datetime.now().isoformat(),
-                        "formattedTime": "Just now",
-                        "read": False,
-                        "link": "student-submissions.html",
-                        "appId": app_id
-                    })
+
+                    # Handle Follow-Up Document Upload
+                    if "followUpDocument" in body:
+                        fu = body["followUpDocument"]
+                        saved_doc = save_base64_file(fu, f"{app_id}_followup_{int(time.time()*1000)}")
+                        if not saved_doc:
+                            saved_doc = {
+                                "name": fu.get("name", "Document.pdf"),
+                                "title": fu.get("requirement", fu.get("title", "Document")),
+                                "requirement": fu.get("requirement", fu.get("title", "Document")),
+                                "size": fu.get("size", "1.2 MB"),
+                                "type": fu.get("type", "application/pdf"),
+                                "fileUrl": fu.get("fileUrl", ""),
+                                "uploadedAt": datetime.now().isoformat(),
+                                "status": "attached",
+                                "isFollowUp": False
+                            }
+                        
+                        docs = a.get("documents", [])
+                        req_target = fu.get("requirement", fu.get("title", "")).lower()
+                        replaced = False
+                        new_docs = []
+                        for d in docs:
+                            d_title = (d if isinstance(d, str) else d.get("requirement", d.get("title", d.get("name", "")))).lower()
+                            is_fu = "(to follow up)" in d.lower() if isinstance(d, str) else (d.get("isFollowUp") or d.get("status") == "to_follow_up")
+                            if is_fu and req_target in d_title and not replaced:
+                                new_docs.append(saved_doc)
+                                replaced = True
+                            else:
+                                new_docs.append(d)
+                        if not replaced:
+                            new_docs.append(saved_doc)
+                        a["documents"] = new_docs
+                        a["uploadedDocuments"] = [d.get("name", d) if isinstance(d, dict) else d for d in new_docs if not ((d.get("isFollowUp") or d.get("status") == "to_follow_up") if isinstance(d, dict) else "(to follow up)" in d.lower())]
+
+                        data.setdefault("notifications", []).insert(0, {
+                            "id": f"notif_{int(time.time()*1000)}",
+                            "recipient": "provider",
+                            "title": "Follow-Up Document Submitted",
+                            "message": f"{a.get('studentName', 'Student')} attached a document for \"{a.get('scholarshipTitle', 'Scholarship')}\".",
+                            "timestamp": datetime.now().isoformat(),
+                            "formattedTime": "Just now",
+                            "read": False,
+                            "link": "provider-applications.html",
+                            "appId": app_id
+                        })
+
+                    if "status" in body:
+                        data.setdefault("notifications", []).insert(0, {
+                            "id": f"notif_{int(time.time()*1000)}",
+                            "recipient": "student",
+                            "title": f"Application Status: {a.get('status', 'Updated')}",
+                            "message": f"Your application for \"{a.get('scholarshipTitle', 'Scholarship')}\" is now {a.get('status', 'Updated')}.",
+                            "timestamp": datetime.now().isoformat(),
+                            "formattedTime": "Just now",
+                            "read": False,
+                            "link": "student-submissions.html",
+                            "appId": app_id
+                        })
                     write_data(data)
                     return self._send_json(200, {"success": True, "application": a})
             return self._send_json(404, {"success": False, "message": "Application not found"})
@@ -492,6 +594,83 @@ class NexoHandler(BaseHTTPRequestHandler):
             write_data(data)
             return self._send_json(200, {"success": True, "settings": current})
 
+        if path == "/api/users":
+            email = (body.get("email") or "").strip().lower()
+            role = (body.get("role") or "student").strip().lower()
+            name = (body.get("name") or "").strip() or ("Scholarship Provider" if role == "provider" else "Verified Student")
+            status = "banned" if body.get("status") == "banned" else "active"
+            if not email:
+                return self._send_json(400, {"success": False, "error": "Email is required"})
+            
+            users = data.get("users", [])
+            if any(u.get("email", "").lower() == email for u in users):
+                return self._send_json(400, {"success": False, "error": f"An account with email {email} already exists."})
+            
+            new_user = {
+                "id": f"usr_{'prov_' if role == 'provider' else 'stud_'}{int(time.time()*1000)}",
+                "email": email,
+                "role": role,
+                "name": name,
+                "orgName": name if role == "provider" else None,
+                "status": status,
+                "createdAt": datetime.now().isoformat(),
+                "formattedDate": datetime.now().strftime("%b %d, %Y"),
+                "notes": body.get("notes") or ("Created by Developer Admin" if body.get("createdByAdmin") else "Registered Account")
+            }
+            users.insert(0, new_user)
+            data["users"] = users
+            write_data(data)
+            return self._send_json(201, {"success": True, "user": new_user})
+
+        if path.startswith("/api/users/"):
+            uid = path.replace("/api/users/", "").split("/")[0]
+            users = data.get("users", [])
+            for u in users:
+                if str(u.get("id")) == str(uid):
+                    if "status" in body:
+                        u["status"] = "banned" if body["status"] == "banned" else "active"
+                    if "name" in body:
+                        u["name"] = body["name"]
+                    write_data(data)
+                    return self._send_json(200, {"success": True, "user": u})
+            return self._send_json(404, {"error": "User not found"})
+
+        if path == "/api/admin/clean-database":
+            action = body.get("action")
+            if action == "clear_applications":
+                count = len(data.get("applications", []))
+                data["applications"] = []
+                sync_counts(data)
+                write_data(data)
+                return self._send_json(200, {"success": True, "message": f"Cleared all {count} applications."})
+            
+            if action == "clear_drafts":
+                count = len(data.get("drafts", []))
+                data["drafts"] = []
+                write_data(data)
+                return self._send_json(200, {"success": True, "message": f"Cleared all {count} drafts."})
+            
+            if action == "delete_scholarship" and body.get("id"):
+                target_id = str(body["id"])
+                data["scholarships"] = [s for s in data.get("scholarships", []) if str(s.get("id")) != target_id]
+                prev_apps = len(data.get("applications", []))
+                data["applications"] = [a for a in data.get("applications", []) if str(a.get("scholarshipId")) != target_id]
+                removed = prev_apps - len(data["applications"])
+                sync_counts(data)
+                write_data(data)
+                return self._send_json(200, {"success": True, "message": f"Deleted scholarship and {removed} applications."})
+
+            if action == "reset_factory_data":
+                data["applications"] = []
+                data["drafts"] = []
+                data["notifications"] = DEFAULT_DATA.get("notifications", [])
+                data["users"] = DEFAULT_DATA.get("users", [])
+                for s in data.get("scholarships", []):
+                    s["applicantTotal"] = 0
+                    s["applicantCount"] = f"0 / {s.get('applicantLimit', 200)} Applicants"
+                write_data(data)
+                return self._send_json(200, {"success": True, "message": "Database reset to factory defaults."})
+
         return self._send_json(404, {"error": "Not Found"})
 
     def do_PATCH(self):
@@ -501,6 +680,40 @@ class NexoHandler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         data = read_data()
+
+        if path.startswith("/api/users/"):
+            uid = path.replace("/api/users/", "").split("/")[0]
+            users = data.get("users", [])
+            target_user = next((u for u in users if str(u.get("id")) == str(uid)), None)
+            if not target_user:
+                return self._send_json(404, {"error": "User not found"})
+            
+            data["users"] = [u for u in users if str(u.get("id")) != str(uid)]
+            removed_posts = 0
+            removed_apps = 0
+
+            if target_user.get("role") == "student":
+                pre_apps = len(data.get("applications", []))
+                data["applications"] = [a for a in data.get("applications", []) if (a.get("studentEmail") or "").lower() != target_user.get("email", "").lower()]
+                removed_apps = pre_apps - len(data["applications"])
+                sync_counts(data)
+            elif target_user.get("role") == "provider":
+                prov_name = target_user.get("name") or target_user.get("orgName")
+                prov_email = (target_user.get("email") or "").lower()
+                prov_schols = [str(s.get("id")) for s in data.get("scholarships", []) if s.get("providerName") == prov_name or (s.get("providerEmail") or "").lower() == prov_email]
+                removed_posts = len(prov_schols)
+                data["scholarships"] = [s for s in data.get("scholarships", []) if str(s.get("id")) not in prov_schols]
+                data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) not in prov_schols]
+                pre_apps = len(data.get("applications", []))
+                data["applications"] = [a for a in data.get("applications", []) if str(a.get("scholarshipId")) not in prov_schols]
+                removed_apps = pre_apps - len(data["applications"])
+
+            write_data(data)
+            return self._send_json(200, {
+                "success": True,
+                "message": f"Account deleted. Removed {removed_posts} posts and {removed_apps} applications.",
+                "deletedId": uid
+            })
 
         if path.startswith("/api/scholarships/"):
             sid = path.replace("/api/scholarships/", "")

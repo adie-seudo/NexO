@@ -103,9 +103,9 @@ function initLoginToggleAndSubmit() {
       setLoginRole("Provider");
     });
   }
-  // Login Form Submission (With Admin Bypass)
+  // Login Form Submission (With Admin Bypass & Dynamic User Accounts)
   if (loginForm) {
-    loginForm.addEventListener("submit", (e) => {
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const emailValue = loginEmailInput
         ? loginEmailInput.value.trim().toLowerCase()
@@ -113,9 +113,76 @@ function initLoginToggleAndSubmit() {
       const passwordValue = loginPasswordInput ? loginPasswordInput.value : "";
       const isStudent = btnStudent && btnStudent.classList.contains("active");
 
+      // 0. Check dynamic registered & admin-created accounts
+      let userList = [];
+      try {
+        const cached = localStorage.getItem("nexo_users");
+        if (cached) userList = JSON.parse(cached);
+      } catch (_) {}
+
+      try {
+        const res = await fetch("http://localhost:3000/api/users", {
+          cache: "no-store",
+        }).catch(() => null);
+        if (res && res.ok) {
+          userList = await res.json();
+          localStorage.setItem("nexo_users", JSON.stringify(userList));
+        }
+      } catch (_) {}
+
+      const matchedUser = userList.find(
+        (u) => (u.email || "").toLowerCase() === emailValue,
+      );
+
+      // Check if user is banned
+      if (matchedUser && matchedUser.status === "banned") {
+        if (emailGroup) emailGroup.classList.add("input-error", "has-error");
+        if (emailError) {
+          emailError.textContent =
+            "Access Denied: This account has been banned by the administrator.";
+          emailError.style.display = "block";
+        }
+        return;
+      }
+
+      // If registered or admin-created account exists and is active
+      if (matchedUser) {
+        if (matchedUser.role === "provider") {
+          sessionStorage.setItem("nexo-logged-in", "provider");
+          sessionStorage.setItem(
+            "nexo-provider-name",
+            matchedUser.name || matchedUser.orgName || "Provider",
+          );
+          sessionStorage.setItem("nexo-provider-email", matchedUser.email);
+          localStorage.setItem("nexo-logged-in", "provider");
+          localStorage.setItem(
+            "nexo-provider-name",
+            matchedUser.name || matchedUser.orgName || "Provider",
+          );
+          localStorage.setItem("nexo-provider-email", matchedUser.email);
+          window.location.href = "provider-dashboard.html";
+          return;
+        } else {
+          sessionStorage.setItem("nexo-logged-in", "student");
+          sessionStorage.setItem(
+            "nexo-student-name",
+            matchedUser.name || "Student User",
+          );
+          sessionStorage.setItem("nexo-student-email", matchedUser.email);
+          sessionStorage.setItem("nexo-student-intro-played", "true");
+          localStorage.setItem("nexo-logged-in", "student");
+          localStorage.setItem(
+            "nexo-student-name",
+            matchedUser.name || "Student User",
+          );
+          localStorage.setItem("nexo-student-email", matchedUser.email);
+          window.location.href = "student-dashboard.html";
+          return;
+        }
+      }
+
       // 1. PROVIDER ADMIN BYPASS
       if (emailValue === "admin@admin" && passwordValue === "admin") {
-        // Give the browser persistent memory that we are logged in
         sessionStorage.setItem("nexo-logged-in", "provider");
         localStorage.setItem("nexo-logged-in", "provider");
         window.location.href = "provider-dashboard.html";
@@ -148,12 +215,17 @@ function initLoginToggleAndSubmit() {
           if (emailGroup)
             emailGroup.classList.remove("input-error", "has-error");
           if (emailError) emailError.style.display = "none";
+          sessionStorage.setItem("nexo-logged-in", "student");
+          sessionStorage.setItem("nexo-student-email", emailValue);
+          localStorage.setItem("nexo-logged-in", "student");
+          localStorage.setItem("nexo-student-email", emailValue);
+          window.location.href = "student-dashboard.html";
         }
       } else {
         if (emailGroup) emailGroup.classList.add("input-error", "has-error");
         if (emailError) {
           emailError.textContent =
-            "Invalid credentials. Try 'admin' for both fields to test.";
+            "Invalid credentials. Enter a registered provider email or test with 'admin@admin'.";
           emailError.style.display = "block";
         }
       }

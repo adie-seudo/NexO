@@ -344,13 +344,29 @@
     // Filter by Document Status
     if (activeDocFilter === "complete") {
       filtered = filtered.filter((app) => {
-        const docs = app.documents || app.uploadedDocuments || [];
-        return docs.length >= 2;
+        const rawDocs = app.documents || app.uploadedDocuments || [];
+        const attached = rawDocs.filter((d) => {
+          if (typeof d === "string") return !d.includes("(To Follow Up)");
+          return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+        });
+        const followUps = rawDocs.filter((d) => {
+          if (typeof d === "string") return d.includes("(To Follow Up)");
+          return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+        });
+        return attached.length > 0 && followUps.length === 0;
       });
     } else if (activeDocFilter === "missing") {
       filtered = filtered.filter((app) => {
-        const docs = app.documents || app.uploadedDocuments || [];
-        return docs.length < 2;
+        const rawDocs = app.documents || app.uploadedDocuments || [];
+        const attached = rawDocs.filter((d) => {
+          if (typeof d === "string") return !d.includes("(To Follow Up)");
+          return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+        });
+        const followUps = rawDocs.filter((d) => {
+          if (typeof d === "string") return d.includes("(To Follow Up)");
+          return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+        });
+        return followUps.length > 0 || attached.length === 0;
       });
     }
 
@@ -434,7 +450,16 @@
         .join("")
         .toUpperCase() || "ST";
 
-    const docsCount = (app.documents || app.uploadedDocuments || []).length;
+    const rawDocs = app.documents || app.uploadedDocuments || [];
+    const attachedDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return !d.includes("(To Follow Up)");
+      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+    });
+    const followUpDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return d.includes("(To Follow Up)");
+      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+    });
+    const docsCount = attachedDocs.length;
     const dateFormatted =
       app.formattedDate ||
       (app.submittedAt
@@ -490,7 +515,12 @@
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                 <polyline points="14 2 14 8 20 8"></polyline>
               </svg>
-              ${docsCount} Files Attached
+              ${docsCount} ${docsCount === 1 ? "File" : "Files"} Attached
+              ${
+                followUpDocs.length > 0
+                  ? ` &bull; <span style="color: #D97706; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${followUpDocs.length} To Follow Up</span>`
+                  : ""
+              }
             </span>
           </div>
         </div>
@@ -762,9 +792,18 @@
     if (!docsContainer) return;
 
     docsContainer.innerHTML = "";
-    const docs = app.documents || app.uploadedDocuments || [];
+    const rawDocs = app.documents || app.uploadedDocuments || [];
 
-    if (docs.length === 0) {
+    const attachedDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return !d.includes("(To Follow Up)");
+      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+    });
+    const followUpDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return d.includes("(To Follow Up)");
+      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+    });
+
+    if (attachedDocs.length === 0 && followUpDocs.length === 0) {
       docsContainer.innerHTML = `
         <div style="text-align: center; padding: 20px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">
           <p style="margin: 0; font-size: 13.5px;">No documents were attached to this submission.</p>
@@ -773,58 +812,132 @@
       return;
     }
 
-    docs.forEach((doc, idx) => {
-      const docItem = document.createElement("div");
-      docItem.className = "modal-doc-item";
-
-      const docName =
-        typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
-      const docUrl = typeof doc === "object" && doc.fileUrl ? doc.fileUrl : "";
-      const docSize =
-        typeof doc === "object" && doc.size
-          ? typeof doc.size === "number"
-            ? (doc.size / 1024).toFixed(0) + " KB"
-            : doc.size
-          : "1.2 MB";
-      const isPdf = docName.toLowerCase().endsWith(".pdf");
-
-      docItem.innerHTML = `
-        <div class="modal-doc-info">
-          <div class="modal-doc-icon ${isPdf ? "is-pdf" : "is-img"}">
-            ${
-              isPdf
-                ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E53935"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="2"></polyline><text x="7" y="18" fill="#fff" font-size="6" font-weight="bold">PDF</text></svg>`
-                : `<svg width="20" height="20" viewBox="0 0 24 24" fill="#6941C6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="#fff"></circle><polyline points="21 15 16 10 5 21" fill="none" stroke="#fff" stroke-width="2"></polyline></svg>`
-            }
-          </div>
-          <div>
-            <h5 class="modal-doc-name" title="${escapeHtml(docName)}">${escapeHtml(docName)}</h5>
-            <span class="modal-doc-size">${escapeHtml(docSize)} &bull; Ready for verification</span>
-          </div>
-        </div>
-
-        <div class="modal-doc-actions">
-          <button type="button" class="btn-doc-view" title="Preview Document">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            View File
-          </button>
-        </div>
+    // 1. Attached Documents Section
+    if (attachedDocs.length > 0) {
+      const attachedHeader = document.createElement("div");
+      attachedHeader.style.cssText =
+        "display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; margin-top: 4px;";
+      attachedHeader.innerHTML = `
+        <span style="font-size: 11.5px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Attached Verification Files (${attachedDocs.length})
+        </span>
+        <span style="font-size: 11px; color: var(--text-secondary);">Ready for Verification</span>
       `;
+      docsContainer.appendChild(attachedHeader);
 
-      // Document preview button
-      docItem.querySelector(".btn-doc-view").addEventListener("click", () => {
-        openDocPreview(
-          docName,
-          docUrl,
-          typeof doc === "object" ? doc.data : null,
-        );
+      attachedDocs.forEach((doc, idx) => {
+        const docItem = document.createElement("div");
+        docItem.className = "modal-doc-item";
+
+        const docName =
+          typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
+        const docUrl =
+          typeof doc === "object" && doc.fileUrl ? doc.fileUrl : "";
+        const docSize =
+          typeof doc === "object" && doc.size
+            ? typeof doc.size === "number"
+              ? (doc.size / 1024).toFixed(0) + " KB"
+              : doc.size
+            : "1.2 MB";
+        const isPdf = docName.toLowerCase().endsWith(".pdf");
+        const reqTag =
+          typeof doc === "object" && (doc.requirement || doc.title)
+            ? `<span style="font-size: 11px; font-weight: 600; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 2px 7px; border-radius: 4px; margin-left: 6px; display: inline-block;">${escapeHtml(doc.requirement || doc.title)}</span>`
+            : "";
+
+        docItem.innerHTML = `
+          <div class="modal-doc-info">
+            <div class="modal-doc-icon ${isPdf ? "is-pdf" : "is-img"}">
+              ${
+                isPdf
+                  ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="#E53935"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8" fill="none" stroke="#fff" stroke-width="2"></polyline><text x="7" y="18" fill="#fff" font-size="6" font-weight="bold">PDF</text></svg>`
+                  : `<svg width="20" height="20" viewBox="0 0 24 24" fill="#6941C6"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5" fill="#fff"></circle><polyline points="21 15 16 10 5 21" fill="none" stroke="#fff" stroke-width="2"></polyline></svg>`
+              }
+            </div>
+            <div>
+              <h5 class="modal-doc-name" title="${escapeHtml(docName)}">${escapeHtml(docName)}${reqTag}</h5>
+              <span class="modal-doc-size">${escapeHtml(docSize)} &bull; Ready for verification</span>
+            </div>
+          </div>
+
+          <div class="modal-doc-actions">
+            <button type="button" class="btn-doc-view" title="Preview Document">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              View File
+            </button>
+          </div>
+        `;
+
+        docItem.querySelector(".btn-doc-view").addEventListener("click", () => {
+          openDocPreview(
+            docName,
+            docUrl,
+            typeof doc === "object" ? doc.data : null,
+          );
+        });
+
+        docsContainer.appendChild(docItem);
       });
+    }
 
-      docsContainer.appendChild(docItem);
-    });
+    // 2. Requirements To Follow Up Section
+    if (followUpDocs.length > 0) {
+      const followUpHeader = document.createElement("div");
+      followUpHeader.style.cssText =
+        "display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 8px; padding-top: 10px; border-top: 1px dashed var(--border-color);";
+      followUpHeader.innerHTML = `
+        <span style="font-size: 11.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Requirements To Follow Up (${followUpDocs.length})
+        </span>
+        <span style="font-size: 11px; color: #D97706; font-weight: 600;">Student Opted to Submit Later</span>
+      `;
+      docsContainer.appendChild(followUpHeader);
+
+      followUpDocs.forEach((doc) => {
+        const itemEl = document.createElement("div");
+        itemEl.className = "modal-doc-item";
+        itemEl.style.cssText =
+          "background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.25);";
+
+        const reqTitle =
+          typeof doc === "object"
+            ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
+            : String(doc).replace(" (To Follow Up)", "");
+
+        itemEl.innerHTML = `
+          <div class="modal-doc-info" style="min-width: 0;">
+            <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #D97706;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div style="min-width: 0;">
+              <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">
+                ${escapeHtml(reqTitle)}
+                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 4px; margin-left: 6px; display: inline-block;">To Follow Up</span>
+              </h5>
+              <span style="font-size: 11.5px; color: var(--text-secondary); display: block; margin-top: 2px;">
+                Student chose to submit this document later &bull; Cannot be reviewed yet
+              </span>
+            </div>
+          </div>
+
+          <div class="modal-doc-actions">
+            <span style="background: rgba(245, 158, 11, 0.12); color: #D97706; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              No File Attached
+            </span>
+          </div>
+        `;
+        docsContainer.appendChild(itemEl);
+      });
+    }
   }
 
   // -------------------------------------------------------------

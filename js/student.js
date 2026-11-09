@@ -616,8 +616,9 @@ async function loadStudentData() {
 
   // Calculate metrics
   let totalCount = applications.length;
-  let approvedCount = 0;
+  let submittedCount = 0;
   let reviewCount = 0;
+  let approvedCount = 0;
   let rejectedCount = 0;
 
   applications.forEach((app) => {
@@ -626,25 +627,29 @@ async function loadStudentData() {
       approvedCount++;
     } else if (status.includes("rejected")) {
       rejectedCount++;
-    } else {
-      // Pending, Submitted, Under Review
+    } else if (status.includes("review")) {
       reviewCount++;
+    } else {
+      // Submitted / Initial application
+      submittedCount++;
     }
   });
 
   // Update UI Metric Numbers (for Student Dashboard)
   if (statMyApps) statMyApps.textContent = totalCount;
   if (statApproved) statApproved.textContent = approvedCount;
-  if (statReview) statReview.textContent = reviewCount;
+  if (statReview) statReview.textContent = reviewCount + submittedCount;
   if (statRejected) statRejected.textContent = rejectedCount;
 
   // Update Filter Pill Counters (for My Scholarship Submissions)
   const filterCountAll = document.getElementById("filter-count-all");
+  const filterCountSubmitted = document.getElementById("filter-count-submitted");
   const filterCountReview = document.getElementById("filter-count-review");
   const filterCountApproved = document.getElementById("filter-count-approved");
   const filterCountRejected = document.getElementById("filter-count-rejected");
 
   if (filterCountAll) filterCountAll.textContent = totalCount;
+  if (filterCountSubmitted) filterCountSubmitted.textContent = submittedCount;
   if (filterCountReview) filterCountReview.textContent = reviewCount;
   if (filterCountApproved) filterCountApproved.textContent = approvedCount;
   if (filterCountRejected) filterCountRejected.textContent = rejectedCount;
@@ -680,16 +685,18 @@ function renderFilteredSubmissions() {
     const query = (currentSubmissionsSearch || "").toLowerCase().trim();
 
     listToRender = allStudentApplications.filter((app) => {
-      // 1. Status Filter
+      // 1. Status Filter (Separating Submitted and Under Review)
       const rawStatus = (app.status || "Submitted").toLowerCase();
       let matchesStatus = true;
 
-      if (currentSubmissionsFilter === "review") {
+      if (currentSubmissionsFilter === "submitted") {
         matchesStatus =
-          rawStatus.includes("review") ||
           rawStatus.includes("submitted") ||
-          rawStatus.includes("pending") ||
-          (!rawStatus.includes("approved") && !rawStatus.includes("rejected"));
+          (!rawStatus.includes("review") &&
+            !rawStatus.includes("approved") &&
+            !rawStatus.includes("rejected"));
+      } else if (currentSubmissionsFilter === "review") {
+        matchesStatus = rawStatus.includes("review");
       } else if (currentSubmissionsFilter === "approved") {
         matchesStatus = rawStatus.includes("approved");
       } else if (currentSubmissionsFilter === "rejected") {
@@ -772,7 +779,15 @@ function renderApplicationCards(applications, container) {
     if (applicants.includes("/ 10 Applicants")) {
       applicants = applicants.replace("/ 10 Applicants", "/ 200 Applicants");
     }
-    const docs = app.documents || app.uploadedDocuments || [];
+    const rawDocs = app.documents || app.uploadedDocuments || [];
+    const attachedDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return !d.includes("(To Follow Up)");
+      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+    });
+    const followUpDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return d.includes("(To Follow Up)");
+      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+    });
     const hasFeedback = Boolean(app.feedback || app.notes);
 
     // Follow-up message is hidden from card body per user requirement.
@@ -786,8 +801,13 @@ function renderApplicationCards(applications, container) {
           <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
             <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-              ${docs.length} Document(s) Attached
+              ${attachedDocs.length} ${attachedDocs.length === 1 ? "File" : "Files"} Attached
             </span>
+            ${
+              followUpDocs.length > 0
+                ? `<span style="font-size: 11px; color: #D97706; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${followUpDocs.length} To Follow Up</span>`
+                : ""
+            }
             ${
               hasFeedback
                 ? `<span style="font-size: 11px; color: #8b5cf6; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Remarks Available</span>`
@@ -1018,21 +1038,39 @@ function openSubmissionDetailsModal(app) {
   // Populate Documents List
   const docListEl = document.getElementById("modal-sub-doc-list");
   const docCountEl = document.getElementById("modal-sub-doc-count");
-  const docs = app.documents || app.uploadedDocuments || [];
+  const rawDocs = app.documents || app.uploadedDocuments || [];
 
-  if (docCountEl) docCountEl.textContent = docs.length;
+  const attachedDocs = rawDocs.filter((d) => {
+    if (typeof d === "string") return !d.includes("(To Follow Up)");
+    return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+  });
+  const followUpDocs = rawDocs.filter((d) => {
+    if (typeof d === "string") return d.includes("(To Follow Up)");
+    return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+  });
+
+  if (docCountEl) docCountEl.textContent = attachedDocs.length;
 
   if (docListEl) {
     docListEl.innerHTML = "";
-    if (docs.length === 0) {
+    if (attachedDocs.length === 0 && followUpDocs.length === 0) {
       docListEl.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary); margin: 0;">No documents were attached to this submission.</p>`;
     } else {
-      docs.forEach((doc, idx) => {
+      // 1. Attached Files
+      attachedDocs.forEach((doc, idx) => {
         const docName =
           typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
         const docSize =
-          typeof doc === "object" && doc.size ? doc.size : "Verified Upload";
+          typeof doc === "object" && doc.size
+            ? typeof doc.size === "number"
+              ? (doc.size / 1024).toFixed(0) + " KB"
+              : doc.size
+            : "Verified Upload";
         const isPdf = docName.toLowerCase().endsWith(".pdf");
+        const reqLabel =
+          typeof doc === "object" && (doc.requirement || doc.title)
+            ? doc.requirement || doc.title
+            : "";
 
         const docItem = document.createElement("div");
         docItem.style.cssText =
@@ -1043,7 +1081,9 @@ function openSubmissionDetailsModal(app) {
               ${isPdf ? "PDF" : "IMG"}
             </div>
             <div style="min-width: 0;">
-              <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(docName)}</p>
+              <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${escapeHtml(docName)}${reqLabel && reqLabel !== docName ? ` <span style="font-size: 10.5px; font-weight: 600; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 1.5px 5px; border-radius: 4px; margin-left: 4px;">${escapeHtml(reqLabel)}</span>` : ""}
+              </p>
               <span style="font-size: 11px; color: var(--text-secondary);">${escapeHtml(docSize)}</span>
             </div>
           </div>
@@ -1054,6 +1094,152 @@ function openSubmissionDetailsModal(app) {
         `;
         docListEl.appendChild(docItem);
       });
+
+      // 2. Requirements To Follow Up (With Direct In-Modal Upload Ability)
+      if (followUpDocs.length > 0) {
+        followUpDocs.forEach((doc, fuIdx) => {
+          const reqTitle =
+            typeof doc === "object"
+              ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
+              : String(doc).replace(" (To Follow Up)", "");
+
+          const fuItem = document.createElement("div");
+          fuItem.style.cssText =
+            "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 12px; background: rgba(245, 158, 11, 0.06); border: 1.5px dashed rgba(245, 158, 11, 0.4); gap: 10px; margin-top: 6px;";
+          fuItem.innerHTML = `
+            <input type="file" id="fu-file-input-${fuIdx}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div style="min-width: 0;">
+                  <p style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${escapeHtml(reqTitle)}
+                  </p>
+                  <span style="font-size: 11px; color: #D97706; font-weight: 600;">Incomplete &bull; Pending Document Upload</span>
+                </div>
+              </div>
+              <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
+                To Follow Up
+              </span>
+            </div>
+
+            <button type="button" class="btn btn-primary" id="btn-upload-fu-${fuIdx}" style="width: 100%; min-height: 40px; padding: 0 14px; font-size: 13px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span>Upload Document Now</span>
+            </button>
+          `;
+
+          const fileInput = fuItem.querySelector(`#fu-file-input-${fuIdx}`);
+          const btnUploadFu = fuItem.querySelector(`#btn-upload-fu-${fuIdx}`);
+
+          if (btnUploadFu && fileInput) {
+            btnUploadFu.onclick = () => fileInput.click();
+
+            fileInput.onchange = async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              if (file.size > 5 * 1024 * 1024) {
+                alert("File size exceeds 5MB limit. Please choose a smaller file.");
+                fileInput.value = "";
+                return;
+              }
+
+              btnUploadFu.disabled = true;
+              btnUploadFu.innerHTML = `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                  <path d="M12 2a10 10 0 0 1 10 10"></path>
+                </svg>
+                Uploading...
+              `;
+
+              const reader = new FileReader();
+              reader.onload = async () => {
+                const base64Data = reader.result;
+                const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+
+                const followUpPayload = {
+                  followUpDocument: {
+                    name: file.name,
+                    title: reqTitle,
+                    requirement: reqTitle,
+                    size: formattedSize,
+                    type: file.type || "application/pdf",
+                    data: base64Data,
+                    status: "attached",
+                    isFollowUp: false,
+                  },
+                };
+
+                try {
+                  const res = await fetch(`http://localhost:3000/api/applications/${app.id}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(followUpPayload),
+                  }).catch(() => null);
+
+                  if (res && res.ok) {
+                    const resData = await res.json();
+                    if (resData.application) {
+                      Object.assign(app, resData.application);
+                    }
+                  } else {
+                    const updatedDocs = (app.documents || []).map((d) => {
+                      const dName = typeof d === "string" ? d : d.requirement || d.title || d.name || "";
+                      if (dName.toLowerCase().includes(reqTitle.toLowerCase())) {
+                        return {
+                          name: file.name,
+                          title: reqTitle,
+                          requirement: reqTitle,
+                          size: formattedSize,
+                          type: file.type || "application/pdf",
+                          status: "attached",
+                          isFollowUp: false,
+                        };
+                      }
+                      return d;
+                    });
+                    app.documents = updatedDocs;
+                    app.uploadedDocuments = updatedDocs
+                      .filter((d) => (typeof d === "string" ? !d.includes("(To Follow Up)") : !d.isFollowUp))
+                      .map((d) => (typeof d === "string" ? d : d.name));
+                  }
+                } catch (err) {
+                  console.warn("Could not patch application follow-up doc:", err);
+                }
+
+                try {
+                  const cached = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+                  const idx = cached.findIndex((a) => String(a.id) === String(app.id));
+                  if (idx !== -1) {
+                    cached[idx] = app;
+                    localStorage.setItem("nexo_applications", JSON.stringify(cached));
+                  }
+                } catch (_) {}
+
+                openSubmissionDetailsModal(app);
+                alert(`"${file.name}" has been uploaded successfully and submitted to the scholarship provider!`);
+              };
+              reader.readAsDataURL(file);
+            };
+          }
+
+          docListEl.appendChild(fuItem);
+        });
+      }
+
+      // 3. Document Integrity Notice
+      const lockNotice = document.createElement("div");
+      lockNotice.style.cssText =
+        "margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;";
+      lockNotice.innerHTML = `
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked to maintain verification integrity. Only requirements designated as <em>"To Follow Up"</em> allow additional file attachments.</span>
+      `;
+      docListEl.appendChild(lockNotice);
     }
   }
 

@@ -232,16 +232,28 @@ function getProviderNotificationsFromStorage() {
       apps.forEach((app) => {
         const notifId = "notif_app_" + (app.id || "temp");
         if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
-          const docCount = Array.isArray(app.documents)
-            ? app.documents.length
+          const rawDocs = Array.isArray(app.documents)
+            ? app.documents
             : Array.isArray(app.uploadedDocuments)
-              ? app.uploadedDocuments.length
-              : 0;
+              ? app.uploadedDocuments
+              : [];
+          const attachedDocs = rawDocs.filter((d) => {
+            if (typeof d === "string") return !d.includes("(To Follow Up)");
+            return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+          });
+          const followUpDocs = rawDocs.filter((d) => {
+            if (typeof d === "string") return d.includes("(To Follow Up)");
+            return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+          });
+          const docNotice =
+            followUpDocs.length > 0
+              ? `${attachedDocs.length} document(s) (${followUpDocs.length} to follow up)`
+              : `${attachedDocs.length} document(s)`;
           all.unshift({
             id: notifId,
             recipient: "provider",
             title: "New Application Received",
-            message: `${app.studentName || "Juan Dela Cruz"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docCount} document(s).`,
+            message: `${app.studentName || "Juan Dela Cruz"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
             timestamp: app.submittedAt || new Date().toISOString(),
             formattedTime: app.formattedDate || "Just now",
             read: false,
