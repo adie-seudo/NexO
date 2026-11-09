@@ -173,17 +173,6 @@ function escapeNotifHtml(text) {
 
 const DEFAULT_NEXO_NOTIFICATIONS = [
   {
-    id: "notif_1001",
-    recipient: "provider",
-    title: "New Application Received",
-    message:
-      'Juan Dela Cruz submitted an application for "Final Test" with 3 documents.',
-    timestamp: new Date().toISOString(),
-    formattedTime: "10 mins ago",
-    read: false,
-    link: "provider-applications.html",
-  },
-  {
     id: "notif_1002",
     recipient: "provider",
     title: "Grant Capacity Active",
@@ -253,7 +242,7 @@ function getProviderNotificationsFromStorage() {
             id: notifId,
             recipient: "provider",
             title: "New Application Received",
-            message: `${app.studentName || "Juan Dela Cruz"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
+            message: `${app.studentName || "Adrian Del Mundo"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
             timestamp: app.submittedAt || new Date().toISOString(),
             formattedTime: app.formattedDate || "Just now",
             read: false,
@@ -292,12 +281,13 @@ function getProviderNotificationsFromStorage() {
     }
   } catch (_) {}
 
-  // 3. If there are still no provider notifications, seed with default provider items
+  // 3. Seed default provider items only on first initialization
+  const initialized = localStorage.getItem("nexo_provider_notifs_initialized");
   const providerItems = all.filter(
     (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",
   );
 
-  if (providerItems.length === 0) {
+  if (!initialized && providerItems.length === 0) {
     DEFAULT_NEXO_NOTIFICATIONS.forEach((dn) => {
       if (
         !dn.recipient ||
@@ -309,6 +299,7 @@ function getProviderNotificationsFromStorage() {
         }
       }
     });
+    localStorage.setItem("nexo_provider_notifs_initialized", "true");
   }
 
   try {
@@ -416,26 +407,25 @@ function initNotificationBell() {
     } catch (_) {}
   }
 
-  function markNotificationRead(id) {
+  function deleteProviderNotification(id) {
     try {
-      const cached = JSON.parse(
+      let cached = JSON.parse(
         localStorage.getItem("nexo_notifications") || "[]",
       );
-      const item = cached.find((n) => String(n.id) === String(id));
-      if (item) {
-        item.read = true;
-        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
-      }
+      cached = cached.filter((n) => String(n.id) !== String(id));
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
     } catch (_) {}
 
-    // Send read request to server if online
-    fetch(`${API_BASE}/api/notifications/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+    // Send delete request to server if online
+    fetch(`${API_BASE}/api/notifications/${id}`, {
+      method: "DELETE",
     }).catch(() => {});
 
     loadNotifications();
+  }
+
+  function markNotificationRead(id) {
+    deleteProviderNotification(id);
   }
 
   function markAllNotificationsRead() {
@@ -474,11 +464,11 @@ function initNotificationBell() {
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
-    const unreadCount = list.filter((n) => !n.read).length;
+    const unreadCount = list.length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
     if (currentDot) {
-      if (unreadCount > 0) {
+      if (list.length > 0) {
         currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {
@@ -526,11 +516,11 @@ function initNotificationBell() {
       })
       .join("");
 
-    // Attach click listeners to individual items
+    // Attach click listeners to individual items: clicking permanently deletes notification so it won't flood
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
       item.addEventListener("click", () => {
         const notifId = item.dataset.id;
-        if (notifId) markNotificationRead(notifId);
+        if (notifId) deleteProviderNotification(notifId);
       });
     });
   }

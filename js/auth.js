@@ -113,7 +113,13 @@ function initLoginToggleAndSubmit() {
       const passwordValue = loginPasswordInput ? loginPasswordInput.value : "";
       const isStudent = btnStudent && btnStudent.classList.contains("active");
 
-      // 0. Check dynamic registered & admin-created accounts
+      // Clear previous error states
+      if (emailGroup) emailGroup.classList.remove("input-error", "has-error");
+      if (emailError) emailError.style.display = "none";
+      const passwordGroup = loginPasswordInput ? loginPasswordInput.closest(".input-group") : null;
+      if (passwordGroup) passwordGroup.classList.remove("input-error", "has-error");
+
+      // 0. Load dynamic registered & admin-created accounts
       let userList = [];
       try {
         const cached = localStorage.getItem("nexo_users");
@@ -130,12 +136,47 @@ function initLoginToggleAndSubmit() {
         }
       } catch (_) {}
 
+      // Fallback baseline accounts if none loaded
+      if (!userList || userList.length === 0) {
+        userList = [
+          {
+            id: "usr_prov_nexo",
+            email: "admin@admin",
+            password: "admin",
+            role: "provider",
+            name: "NEXO",
+            orgName: "NEXO",
+            status: "active",
+          },
+          {
+            id: "usr_stud_adrian",
+            email: "adrian@batstate-u.edu.ph",
+            password: "password123",
+            role: "student",
+            name: "Adrian Del Mundo",
+            status: "active",
+          },
+        ];
+        localStorage.setItem("nexo_users", JSON.stringify(userList));
+      }
+
       const matchedUser = userList.find(
         (u) => (u.email || "").toLowerCase() === emailValue,
       );
 
-      // Check if user is banned
-      if (matchedUser && matchedUser.status === "banned") {
+      // 1. Account existence validation
+      if (!matchedUser) {
+        if (emailGroup) emailGroup.classList.add("input-error", "has-error");
+        if (emailError) {
+          emailError.textContent =
+            "Access Denied: Account not found. Only registered and admin-created accounts can log in.";
+          emailError.style.display = "block";
+        }
+        return;
+      }
+
+      // 2. Check if user is banned
+      if (matchedUser.status === "banned") {
         if (emailGroup) emailGroup.classList.add("input-error", "has-error");
         if (emailError) {
           emailError.textContent =
@@ -145,89 +186,74 @@ function initLoginToggleAndSubmit() {
         return;
       }
 
-      // If registered or admin-created account exists and is active
-      if (matchedUser) {
-        if (matchedUser.role === "provider") {
-          sessionStorage.setItem("nexo-logged-in", "provider");
-          sessionStorage.setItem(
-            "nexo-provider-name",
-            matchedUser.name || matchedUser.orgName || "Provider",
-          );
-          sessionStorage.setItem("nexo-provider-email", matchedUser.email);
-          localStorage.setItem("nexo-logged-in", "provider");
-          localStorage.setItem(
-            "nexo-provider-name",
-            matchedUser.name || matchedUser.orgName || "Provider",
-          );
-          localStorage.setItem("nexo-provider-email", matchedUser.email);
-          window.location.href = "provider-dashboard.html";
-          return;
-        } else {
-          sessionStorage.setItem("nexo-logged-in", "student");
-          sessionStorage.setItem(
-            "nexo-student-name",
-            matchedUser.name || "Student User",
-          );
-          sessionStorage.setItem("nexo-student-email", matchedUser.email);
-          sessionStorage.setItem("nexo-student-intro-played", "true");
-          localStorage.setItem("nexo-logged-in", "student");
-          localStorage.setItem(
-            "nexo-student-name",
-            matchedUser.name || "Student User",
-          );
-          localStorage.setItem("nexo-student-email", matchedUser.email);
-          window.location.href = "student-dashboard.html";
-          return;
-        }
-      }
-
-      // 1. PROVIDER ADMIN BYPASS
-      if (emailValue === "admin@admin" && passwordValue === "admin") {
-        sessionStorage.setItem("nexo-logged-in", "provider");
-        localStorage.setItem("nexo-logged-in", "provider");
-        window.location.href = "provider-dashboard.html";
-        return;
-      }
-
-      // 2. STUDENT ADMIN BYPASS (NEW)
-      if (emailValue === "admin@admin.edu.ph" && passwordValue === "admin") {
-        sessionStorage.setItem("nexo-logged-in", "student");
-        sessionStorage.setItem("nexo-student-name", "Juan Dela Cruz");
-        sessionStorage.setItem("nexo-student-email", "admin@admin.edu.ph");
-        sessionStorage.setItem("nexo-student-intro-played", "true");
-        localStorage.setItem("nexo-logged-in", "student");
-        localStorage.setItem("nexo-student-name", "Juan Dela Cruz");
-        localStorage.setItem("nexo-student-email", "admin@admin.edu.ph");
-        window.location.href = "student-dashboard.html";
-        return;
-      }
-
-      // Standard Login Validation
-      if (isStudent) {
-        if (!emailValue.endsWith(".edu.ph")) {
-          if (emailGroup) emailGroup.classList.add("input-error", "has-error");
-          if (emailError) {
-            emailError.textContent =
-              "Access Denied: Only valid university emails (.edu.ph) are permitted for student login.";
-            emailError.style.display = "block";
-          }
-        } else {
-          if (emailGroup)
-            emailGroup.classList.remove("input-error", "has-error");
-          if (emailError) emailError.style.display = "none";
-          sessionStorage.setItem("nexo-logged-in", "student");
-          sessionStorage.setItem("nexo-student-email", emailValue);
-          localStorage.setItem("nexo-logged-in", "student");
-          localStorage.setItem("nexo-student-email", emailValue);
-          window.location.href = "student-dashboard.html";
-        }
-      } else {
+      // 3. Check role selection match
+      if (isStudent && matchedUser.role !== "student") {
         if (emailGroup) emailGroup.classList.add("input-error", "has-error");
         if (emailError) {
           emailError.textContent =
-            "Invalid credentials. Enter a registered provider email or test with 'admin@admin'.";
+            "Account Mismatch: This account is a Provider. Please select the Provider tab to log in.";
           emailError.style.display = "block";
         }
+        return;
+      }
+
+      if (!isStudent && matchedUser.role !== "provider") {
+        if (emailGroup) emailGroup.classList.add("input-error", "has-error");
+        if (emailError) {
+          emailError.textContent =
+            "Account Mismatch: This account is a Student. Please select the Student tab to log in.";
+          emailError.style.display = "block";
+        }
+        return;
+      }
+
+      // 4. Password validation
+      const expectedPassword =
+        matchedUser.password ||
+        (matchedUser.role === "provider" ? "admin" : "password123");
+
+      if (passwordValue !== expectedPassword) {
+        if (passwordGroup) passwordGroup.classList.add("input-error", "has-error");
+        if (emailError) {
+          emailError.textContent =
+            "Incorrect password. Please verify your credentials or check the Admin Panel.";
+          emailError.style.display = "block";
+        }
+        return;
+      }
+
+      // 5. Successful Login Execution
+      if (matchedUser.role === "provider") {
+        sessionStorage.setItem("nexo-logged-in", "provider");
+        sessionStorage.setItem(
+          "nexo-provider-name",
+          matchedUser.name || matchedUser.orgName || "NEXO",
+        );
+        sessionStorage.setItem("nexo-provider-email", matchedUser.email);
+        localStorage.setItem("nexo-logged-in", "provider");
+        localStorage.setItem(
+          "nexo-provider-name",
+          matchedUser.name || matchedUser.orgName || "NEXO",
+        );
+        localStorage.setItem("nexo-provider-email", matchedUser.email);
+        window.location.href = "provider-dashboard.html";
+        return;
+      } else {
+        sessionStorage.setItem("nexo-logged-in", "student");
+        sessionStorage.setItem(
+          "nexo-student-name",
+          matchedUser.name || "",
+        );
+        sessionStorage.setItem("nexo-student-email", matchedUser.email);
+        sessionStorage.setItem("nexo-student-intro-played", "true");
+        localStorage.setItem("nexo-logged-in", "student");
+        localStorage.setItem(
+          "nexo-student-name",
+          matchedUser.name || "",
+        );
+        localStorage.setItem("nexo-student-email", matchedUser.email);
+        window.location.href = "student-dashboard.html";
+        return;
       }
     });
   }
@@ -282,7 +308,7 @@ function initRegisterPage() {
       registerSubtitle.textContent =
         "Join NEXO and get access to scholarships and more opportunities.";
       if (regNameLabel) regNameLabel.textContent = "Full Name";
-      if (regNameInput) regNameInput.placeholder = "Juan Dela Cruz";
+      if (regNameInput) regNameInput.placeholder = "Adrian Del Mundo";
       if (regEmailInput) regEmailInput.placeholder = "you@university.edu.ph";
       if (regNameIcon) {
         regNameIcon.src = "assets/human-icon.png";

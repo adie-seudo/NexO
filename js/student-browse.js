@@ -132,8 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "";
     const orgBanner =
       (providerSettings && providerSettings.bannerImage) ||
-      localStorage.getItem("nexo-provider-banner") ||
-      window.DEFAULT_PROVIDER_BANNER ||
       "";
 
     // Format for display
@@ -460,11 +458,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let applyBtnHtml = "";
       if (isAlreadyApplied) {
-        const appStatus = existingApp.status || "Submitted";
-        let badgeBg = "#10b981";
-        if (appStatus.toLowerCase().includes("review")) badgeBg = "#8b5cf6";
-        if (appStatus.toLowerCase().includes("rejected")) badgeBg = "#ef4444";
-        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn" data-id="${item.id}" style="background-color: ${badgeBg}; border-color: ${badgeBg}; color: #ffffff;" title="Click to view details">✓ Applied (${appStatus})</button>`;
+        applyBtnHtml = `<button type="button" class="directory-apply-btn already-applied-btn view-submission-btn" data-id="${item.id}" data-app-id="${existingApp.id}" style="background-color: #8b5cf6; border-color: #8b5cf6; color: #ffffff;" title="One-tap navigation to view your application submission">View My Submission</button>`;
       } else if (isClosed) {
         applyBtnHtml = `<button type="button" class="directory-apply-btn disabled" data-id="${item.id}" disabled>${statusText}</button>`;
       } else {
@@ -505,34 +499,38 @@ document.addEventListener("DOMContentLoaded", () => {
           <span class="directory-status-pill ${statusClass}">${statusText}</span>
         </div>
 
-        <div class="directory-meta-row" style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-          <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 5px; color: #8b5cf6; font-weight: 700;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-            </svg>
-            ${escapeHtml(applicantCountDisplay)}
-          </span>
+        <div class="directory-meta-row" style="display: flex; flex-direction: column; gap: 7px; margin: 8px 0 10px 0;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 6px; color: #8b5cf6; font-weight: 700; font-size: 13px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              ${escapeHtml(applicantCountDisplay)}
+            </span>
+          </div>
 
-          <span class="directory-posted-tag" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12.5px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            Posted: ${escapeHtml(postedDate)}
-          </span>
-
-          <span class="directory-deadline-tag" style="display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 12.5px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            Expires: ${escapeHtml(item.formattedDate || "No Deadline")}
-          </span>
+          <div class="directory-dates-pill" style="display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.04); padding: 5px 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); width: fit-content; max-width: 100%;">
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <strong>Posted:</strong> ${escapeHtml(postedDate)}
+            </span>
+            <span style="opacity: 0.4;">•</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <strong>Expires:</strong> ${escapeHtml(item.formattedDate || "No Deadline")}
+            </span>
+          </div>
         </div>
 
         <p class="directory-card-desc">${item.desc}</p>
@@ -551,15 +549,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // Wire Apply Now Button or Already Applied button
+      // Wire Apply Now Button or View My Submission button
       const btnApply = card.querySelector(".directory-apply-btn");
-      if (btnApply && !isClosed) {
+      if (btnApply) {
         btnApply.addEventListener("click", () => {
-          if (btnApply.classList.contains("already-applied-btn")) {
-            openDetailsModal(item);
+          if (btnApply.classList.contains("already-applied-btn") || btnApply.classList.contains("view-submission-btn")) {
+            const appId = btnApply.dataset.appId || (existingApp ? existingApp.id : "");
+            window.location.href = `student-submissions.html?id=${appId}`;
             return;
           }
-          openDropboxModal(item);
+          if (!isClosed) {
+            if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+              showToast("Profile Incomplete: Please complete your profile details in Settings before applying for scholarships.", true);
+              setTimeout(() => {
+                window.location.href = "student-settings.html";
+              }, 1200);
+              return;
+            }
+            openDropboxModal(item);
+          }
         });
       }
 
@@ -597,12 +605,15 @@ document.addEventListener("DOMContentLoaded", () => {
       schol.providerBanner ||
       schol.bannerImage ||
       schol.banner ||
-      localStorage.getItem("nexo-provider-banner") ||
-      (providerSettings && providerSettings.bannerImage) ||
-      window.DEFAULT_PROVIDER_BANNER;
+      "";
 
     if (coverImg) {
-      if (bannerSrc) {
+      if (
+        bannerSrc &&
+        typeof bannerSrc === "string" &&
+        bannerSrc.trim() &&
+        !bannerSrc.startsWith("data:image/png;base64,iVBORw0KGgo")
+      ) {
         coverImg.src = bannerSrc;
         coverImg.style.display = "block";
       } else {
@@ -610,15 +621,8 @@ document.addEventListener("DOMContentLoaded", () => {
         coverImg.src = "";
       }
       coverImg.onerror = function () {
-        if (
-          window.DEFAULT_PROVIDER_BANNER &&
-          this.src !== window.DEFAULT_PROVIDER_BANNER
-        ) {
-          this.src = window.DEFAULT_PROVIDER_BANNER;
-          this.style.display = "block";
-        } else {
-          this.style.display = "none";
-        }
+        this.style.display = "none";
+        this.src = "";
       };
     }
 
@@ -774,19 +778,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         bannerEl.style.display = "block";
         bannerEl.innerHTML = `
-          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;">
-            <div style="width: 24px; height: 24px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <div style="flex: 1;">
-              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">Application Already Submitted</div>
-              <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45;">
-                You have already applied for this scholarship grant on <strong>${escapeHtml(dateFormatted)}</strong>.<br/>
-                Current Status: <span style="font-weight: 700; color: ${statusColor};">${escapeHtml(appStatus)}</span>
+          <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: flex-start; gap: 12px; min-width: 0; flex: 1;">
+              <div style="width: 24px; height: 24px; border-radius: 50%; background: #8b5cf6; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div style="flex: 1;">
+                <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">Application Submitted</div>
+                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45;">
+                  Applied on <strong>${escapeHtml(dateFormatted)}</strong> &bull; Status: <span style="font-weight: 700; color: ${statusColor};">${escapeHtml(appStatus)}</span>
+                </div>
               </div>
             </div>
+            <a href="student-submissions.html?id=${existingApp.id}" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+              View My Submission &rarr;
+            </a>
           </div>
         `;
       } else {
@@ -799,19 +807,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnOpenDropbox) {
       if (isAlreadyApplied) {
         const appStatus = existingApp.status || "Submitted";
-        btnOpenDropbox.disabled = true;
+        btnOpenDropbox.disabled = false;
         btnOpenDropbox.classList.remove("disabled");
-        btnOpenDropbox.style.background = "#10b981";
-        btnOpenDropbox.style.borderColor = "#10b981";
+        btnOpenDropbox.style.background = "#8b5cf6";
+        btnOpenDropbox.style.borderColor = "#8b5cf6";
         btnOpenDropbox.style.color = "#ffffff";
-        btnOpenDropbox.style.cursor = "not-allowed";
-        btnOpenDropbox.style.opacity = "0.95";
+        btnOpenDropbox.style.cursor = "pointer";
+        btnOpenDropbox.style.opacity = "1";
         btnOpenDropbox.innerHTML = `
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="20 6 9 17 4 12"></polyline>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
           </svg>
-          Already Applied (${escapeHtml(appStatus)})
+          View My Submission
         `;
+        btnOpenDropbox.onclick = () => {
+          window.location.href = `student-submissions.html?id=${existingApp.id}`;
+        };
       } else if (isQuotaFull) {
         btnOpenDropbox.disabled = true;
         btnOpenDropbox.classList.add("disabled");
@@ -896,6 +908,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnSubmitDropbox = document.getElementById("btn-submit-dropbox");
 
   function openDropboxModal(schol) {
+    if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+      showToast("Profile Incomplete: Please complete your profile details in Settings before applying for scholarships.", true);
+      setTimeout(() => {
+        window.location.href = "student-settings.html";
+      }, 1200);
+      return;
+    }
+
     activeScholarship = schol;
     if (!modalOverlay || !modalViewDropbox) return;
 
@@ -990,7 +1010,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     reqList.forEach((req, idx) => {
-      const slotKey = "req_slot_" + idx;
+      const slotKey = "req_" + idx;
       const reqTitle =
         typeof req === "object" && req !== null
           ? req.title || req.name || `Requirement ${idx + 1}`
@@ -1046,6 +1066,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (current && current.status === "uploaded" && current.file) {
           // 1. FILE ATTACHED STATE
           slotCard.className = "dropbox-slot-card has-file";
+          slotCard.classList.remove("slot-error");
+          const inlineErr = slotCard.querySelector(".slot-inline-error");
+          if (inlineErr) inlineErr.remove();
           const file = current.file;
           const isPdf = file.name.toLowerCase().endsWith(".pdf");
           const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
@@ -1093,6 +1116,10 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (current && current.status === "to_follow_up") {
           // 2. TO FOLLOW UP LATER STATE
           slotCard.className = "dropbox-slot-card is-follow-up";
+          slotCard.classList.remove("slot-error");
+          const inlineErr = slotCard.querySelector(".slot-inline-error");
+          if (inlineErr) inlineErr.remove();
+
           if (badgeEl) {
             badgeEl.style.background = "rgba(245, 158, 11, 0.15)";
             badgeEl.style.color = "#D97706";
@@ -1109,16 +1136,19 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           if (metaEl) {
-            metaEl.innerHTML = `<span style="color: #D97706; font-weight: 600;">Submission deferred &bull; No file attached</span>`;
+            metaEl.innerHTML = `<span style="color: #D97706; font-weight: 600; font-size: 12px;">Submission deferred &bull; No file attached</span>`;
           }
 
           if (actionsEl) {
             actionsEl.innerHTML = `
-              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px;">
-                <span style="font-size: 12.5px; color: #D97706; font-weight: 600;">Deferred to My Submissions</span>
-                <button type="button" class="btn-slot-upload" id="btn-upload-instead-${slotKey}" style="flex: none; min-height: 40px; padding: 0 16px;">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                  <span>Upload File Instead</span>
+              <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 6px;">
+                <div style="display: flex; align-items: center; gap: 10px; background: rgba(245, 158, 11, 0.08); border: 1.5px dashed rgba(245, 158, 11, 0.4); border-radius: 10px; padding: 12px 14px;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span style="font-size: 12.5px; color: #D97706; font-weight: 600; line-height: 1.45;">Submission deferred to <strong>My Submissions</strong>. You can upload this requirement later.</span>
+                </div>
+                <button type="button" class="btn-slot-upload" id="btn-upload-instead-${slotKey}" style="width: 100%; min-height: 44px; border-radius: 10px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload File Now Instead</span>
                 </button>
               </div>
             `;
@@ -1157,14 +1187,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
           if (actionsEl) {
             actionsEl.innerHTML = `
-              <button type="button" class="btn-slot-upload" id="btn-upload-${slotKey}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>Upload File</span>
-              </button>
-              <button type="button" class="btn-followup-toggle" id="btn-toggle-${slotKey}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <span>Follow Up Later</span>
-              </button>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+                <button type="button" class="btn-slot-upload" id="btn-upload-${slotKey}" style="min-height: 44px; border-radius: 10px; font-size: 13px; font-weight: 700; padding: 0 10px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload File</span>
+                </button>
+                <button type="button" class="btn-followup-toggle" id="btn-toggle-${slotKey}" style="min-height: 44px; border-radius: 10px; font-size: 13px; font-weight: 700; padding: 0 10px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Follow Up Later</span>
+                </button>
+              </div>
             `;
 
             const btnUpload = actionsEl.querySelector(`#btn-upload-${slotKey}`);
@@ -1276,6 +1308,15 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnSubmitDropbox) {
     btnSubmitDropbox.addEventListener("click", () => {
       if (!activeScholarship) return;
+
+      if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+        showToast("Profile Incomplete: Please complete your profile details in Settings before applying for scholarships.", true);
+        setTimeout(() => {
+          window.location.href = "student-settings.html";
+        }, 1200);
+        return;
+      }
+
       const alreadyApplied = studentApplications.some(
         (a) => String(a.scholarshipId) === String(activeScholarship.id),
       );
@@ -1285,23 +1326,46 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Mandatory validation: Student CANNOT submit if NOT AT LEAST ONE file is attached!
-      const attachedKeys = Object.keys(uploadedFiles).filter((k) => {
-        const item = uploadedFiles[k];
-        return item && item.status === "uploaded" && item.file instanceof File;
+      // Validate each required document slot directly from rendered cards
+      const slotCards = document.querySelectorAll("#dropbox-slots-container .dropbox-slot-card");
+      let unhandledSlots = [];
+
+      slotCards.forEach((slotCard) => {
+        const slotKey = slotCard.dataset.slot || slotCard.id.replace("slot-", "");
+        const item = uploadedFiles[slotKey];
+        const isHandled =
+          item &&
+          (item.status === "uploaded" || item.status === "to_follow_up");
+
+        if (!isHandled) {
+          unhandledSlots.push(slotKey);
+          slotCard.classList.add("slot-error");
+          let inlineErr = slotCard.querySelector(".slot-inline-error");
+          if (!inlineErr) {
+            inlineErr = document.createElement("div");
+            inlineErr.className = "slot-inline-error";
+            inlineErr.style.cssText =
+              "background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 8px 12px; margin-top: 10px; font-size: 12px; font-weight: 700; color: #ef4444; display: flex; align-items: center; gap: 6px;";
+            inlineErr.innerHTML = `
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              <span>Action required: Upload a file or choose 'Follow Up Later'</span>
+            `;
+            slotCard.appendChild(inlineErr);
+          }
+        } else {
+          slotCard.classList.remove("slot-error");
+          const inlineErr = slotCard.querySelector(".slot-inline-error");
+          if (inlineErr) inlineErr.remove();
+        }
       });
 
-      if (attachedKeys.length === 0) {
-        if (errorBox) {
-          errorBox.style.display = "flex";
-          if (errorText) {
-            errorText.textContent =
-              "Cannot submit application: Please upload at least one required document. Applications cannot be submitted with zero attached files.";
-          }
-          errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (unhandledSlots.length > 0) {
+        const firstCard = document.getElementById(`slot-${unhandledSlots[0]}`);
+        if (firstCard) {
+          firstCard.scrollIntoView({ behavior: "smooth", block: "center" });
         }
         showToast(
-          "Please attach at least one required document before submitting. You cannot submit an application with zero uploaded files.",
+          "Please upload a file or choose 'Follow Up Later' for each required document before submitting.",
           true,
         );
         return;
@@ -1309,48 +1373,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (errorBox) errorBox.style.display = "none";
 
+      const attachedKeys = Object.keys(uploadedFiles).filter((k) => {
+        const item = uploadedFiles[k];
+        return item && item.status === "uploaded" && item.file instanceof File;
+      });
+
       // Populate & Open Confirmation Modal
       if (confirmScholTitle) {
-        confirmScholTitle.textContent = activeScholarship.title || "Scholarship Program";
+        confirmScholTitle.textContent =
+          activeScholarship.title || "Scholarship Program";
       }
 
       if (confirmDocsSummary) {
         let summaryHtml = "";
-        attachedKeys.forEach((k) => {
-          const item = uploadedFiles[k];
-          const isPdf = item.file.name.toLowerCase().endsWith(".pdf");
-          summaryHtml += `
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
-              <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                ${escapeHtml(item.reqTitle)}
-              </span>
-              <span style="font-size: 11.5px; font-weight: 700; color: #10b981; flex-shrink: 0; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 6px;">
-                ${isPdf ? "PDF" : "IMG"} Attached
-              </span>
-            </div>
-          `;
-        });
+        if (attachedKeys.length > 0) {
+          attachedKeys.forEach((k) => {
+            const item = uploadedFiles[k];
+            const isPdf =
+              item.file && item.file.name
+                ? item.file.name.toLowerCase().endsWith(".pdf")
+                : false;
+            summaryHtml += `
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  ${escapeHtml(item.reqTitle)}
+                </span>
+                <span style="font-size: 11.5px; font-weight: 700; color: #10b981; flex-shrink: 0; background: rgba(16, 185, 129, 0.12); padding: 2px 7px; border-radius: 6px;">
+                  ${isPdf ? "PDF" : "IMG"} Attached
+                </span>
+              </div>
+            `;
+          });
+        }
 
         const followUpKeys = Object.keys(uploadedFiles).filter((k) => {
           const item = uploadedFiles[k];
           return item && item.status === "to_follow_up";
         });
 
-        followUpKeys.forEach((k) => {
-          const item = uploadedFiles[k];
+        if (followUpKeys.length > 0) {
+          followUpKeys.forEach((k) => {
+            const item = uploadedFiles[k];
+            summaryHtml += `
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #D97706; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  ${escapeHtml(item.reqTitle)}
+                </span>
+                <span style="font-size: 11.5px; font-weight: 700; color: #D97706; flex-shrink: 0; background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 6px;">
+                  To Follow Up Later
+                </span>
+              </div>
+            `;
+          });
+        }
+
+        if (attachedKeys.length === 0 && followUpKeys.length > 0) {
           summaryHtml += `
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px;">
-              <span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text-secondary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                ${escapeHtml(item.reqTitle)}
-              </span>
-              <span style="font-size: 11.5px; font-weight: 700; color: #D97706; flex-shrink: 0; background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 6px;">
-                To Follow Up Later
-              </span>
+            <div style="background: rgba(245, 158, 11, 0.08); border: 1px dashed rgba(245, 158, 11, 0.4); border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 12px; color: #D97706; line-height: 1.45;">
+              Notice: All required documents are marked to follow up later. You can submit files anytime under 'My Scholarship Submissions' before provider verification.
             </div>
           `;
-        });
+        }
 
         confirmDocsSummary.innerHTML = summaryHtml;
       }
@@ -1364,12 +1449,20 @@ document.addEventListener("DOMContentLoaded", () => {
     btnFinalConfirmSubmit.addEventListener("click", async () => {
       closeConfirmModal();
 
+      const allSlots = Object.keys(uploadedFiles);
+      const isAnyHandled = allSlots.some(
+        (k) =>
+          uploadedFiles[k] &&
+          (uploadedFiles[k].status === "uploaded" ||
+            uploadedFiles[k].status === "to_follow_up"),
+      );
+
+      if (!isAnyHandled) return;
+
       const attachedKeys = Object.keys(uploadedFiles).filter((k) => {
         const item = uploadedFiles[k];
         return item && item.status === "uploaded" && item.file instanceof File;
       });
-
-      if (attachedKeys.length === 0) return;
 
       if (btnSubmitDropbox) {
         btnSubmitDropbox.disabled = true;
@@ -1444,27 +1537,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const processedDocs = [...processedAttachedDocs, ...followUpDocs];
 
-      // Student details from settings or session
+      // Student details from settings or session (dynamically populated)
       const sName =
         sessionStorage.getItem("nexo-student-name") ||
         (studentSettings && studentSettings.fullName) ||
-        "Juan Dela Cruz";
+        "Student Applicant";
       const sEmail =
         sessionStorage.getItem("nexo-student-email") ||
         (studentSettings && studentSettings.email) ||
-        "admin@admin.edu.ph";
-      const sId = (studentSettings && studentSettings.studentId) || "21-04589";
+        "student@batstate-u.edu.ph";
+      const sId = (studentSettings && studentSettings.studentId) || "";
       const sSchool =
         (studentSettings && studentSettings.university) ||
-        "Batangas State University";
+        "";
       const sCourse =
         (studentSettings && studentSettings.course) ||
-        "BS Information Technology";
+        "";
       const sYear =
-        (studentSettings && studentSettings.yearLevel) || "3rd Year";
+        (studentSettings && studentSettings.yearLevel) || "1st Year";
       const sPhone =
         (studentSettings && studentSettings.contactNumber) ||
-        "+63 912 345 6789";
+        "";
       const sAvatar =
         sessionStorage.getItem("nexo-student-avatar") ||
         (studentSettings && studentSettings.profilePicture) ||
@@ -1597,7 +1690,7 @@ document.addEventListener("DOMContentLoaded", () => {
           id: "notif_" + Date.now(),
           recipient: "provider",
           title: "New Application Received",
-          message: `${sName || "Juan Dela Cruz"} applied for "${scholName}" with ${docNotice}.`,
+          message: `${sName || "Adrian Del Mundo"} applied for "${scholName}" with ${docNotice}.`,
           timestamp: new Date().toISOString(),
           formattedTime: "Just now",
           read: false,

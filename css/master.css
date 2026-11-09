@@ -4530,9 +4530,9 @@ body.dark-theme .details-verified-pill {
 .dropbox-step-card {
   background: #F9F5FF;
   border: 1px solid #E9D7FE;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 20px;
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 22px;
 }
 body.dark-theme .dropbox-step-card {
   background: #1F1633;
@@ -4556,14 +4556,23 @@ body.dark-theme .dropbox-schol-pill {
 .dropbox-slot-card {
   background: var(--bg-surface, #ffffff);
   border: 1.5px solid var(--border-color, #EAECF0);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 18px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 16px;
   transition: all 0.2s ease;
   position: relative;
+}
+.dropbox-slot-card.slot-error {
+  border-color: #EF4444 !important;
+  background-color: rgba(239, 68, 68, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+body.dark-theme .dropbox-slot-card.slot-error {
+  border-color: #EF4444 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
 }
 .dropbox-slot-card:hover {
   border-color: #7F56D9;
@@ -5278,3 +5287,81 @@ body.dark-theme .filter-tab.active {
   border-color: #8b5cf6 !important;
   transform: scale(1.02);
 }
+
+/* ==========================================
+   UNIFIED BACK BUTTON DESIGN & SIDE MENU RED DOT
+   ========================================== */
+.btn-back-nav,
+.settings-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple-600, #7f56d9);
+  text-decoration: none;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background-color: rgba(127, 86, 217, 0.1);
+  border: 1px solid rgba(127, 86, 217, 0.22);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btn-back-nav:hover,
+.settings-back-link:hover {
+  background-color: rgba(127, 86, 217, 0.2);
+  border-color: rgba(127, 86, 217, 0.4);
+  color: #9333ea;
+  transform: translateX(-2px);
+}
+
+body.dark-theme .btn-back-nav,
+body.dark-theme .settings-back-link {
+  color: #c4b5fd;
+  background-color: rgba(139, 92, 246, 0.14);
+  border-color: rgba(139, 92, 246, 0.28);
+}
+
+body.dark-theme .btn-back-nav:hover,
+body.dark-theme .settings-back-link:hover {
+  background-color: rgba(139, 92, 246, 0.25);
+  border-color: #8b5cf6;
+  color: #ffffff;
+}
+
+/* Red alert dot on side menu Settings */
+.nav-alert-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: auto;
+  box-shadow: 0 0 0 2px var(--bg-surface, #ffffff);
+  animation: pulse-dot 2s infinite;
+}
+
+body.dark-theme .nav-alert-dot {
+  box-shadow: 0 0 0 2px #181d27;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+/* Scholarship Description Word Wrap & Break */
+.modal-schol-desc,
+#modal-schol-desc,
+.directory-card-desc,
+#dropbox-schol-desc {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  white-space: pre-line;
+}
+

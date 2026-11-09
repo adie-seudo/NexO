@@ -78,17 +78,6 @@ function escapeStudentNotifHtml(text) {
 
 const DEFAULT_STUDENT_NOTIFICATIONS = [
   {
-    id: "notif_1001",
-    recipient: "provider",
-    title: "New Application Received",
-    message:
-      'Juan Dela Cruz submitted an application for "Final Test" with 3 documents.',
-    timestamp: new Date().toISOString(),
-    formattedTime: "10 mins ago",
-    read: false,
-    link: "provider-applications.html",
-  },
-  {
     id: "notif_1002",
     recipient: "provider",
     title: "Grant Capacity Active",
@@ -130,12 +119,22 @@ function getStudentNotificationsFromStorage() {
 
   if (!Array.isArray(all)) all = [];
 
+  let dismissed = [];
+  try {
+    dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+  } catch (_) {}
+  if (!Array.isArray(dismissed)) dismissed = [];
+
+  // Filter out any dismissed notification IDs
+  all = all.filter((n) => !dismissed.includes(String(n.id)));
+
   // 1. Sync status updates from actual student applications
   try {
     const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
     if (Array.isArray(apps)) {
       apps.forEach((app) => {
         const notifId = "notif_student_app_" + (app.id || "temp");
+        if (dismissed.includes(notifId) || dismissed.includes(String(app.id))) return;
         if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
           const status = app.status || "Under Review";
           all.unshift({
@@ -162,6 +161,7 @@ function getStudentNotificationsFromStorage() {
     if (Array.isArray(schols)) {
       schols.forEach((s) => {
         const notifId = "notif_student_schol_" + s.id;
+        if (dismissed.includes(notifId) || dismissed.includes(String(s.id))) return;
         if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
           all.push({
             id: notifId,
@@ -179,12 +179,13 @@ function getStudentNotificationsFromStorage() {
     }
   } catch (_) {}
 
-  // 3. Ensure baseline student notifications exist if none found
+  // 3. Ensure baseline student notifications exist if none found (seed once)
+  const initialized = localStorage.getItem("nexo_student_notifs_initialized");
   const studentItems = all.filter(
-    (n) => !n.recipient || n.recipient === "student" || n.recipient === "all",
+    (n) => (!n.recipient || n.recipient === "student" || n.recipient === "all") && !dismissed.includes(String(n.id)),
   );
 
-  if (studentItems.length === 0) {
+  if (!initialized && studentItems.length === 0 && dismissed.length === 0) {
     DEFAULT_STUDENT_NOTIFICATIONS.forEach((dn) => {
       if (
         !dn.recipient ||
@@ -196,6 +197,7 @@ function getStudentNotificationsFromStorage() {
         }
       }
     });
+    localStorage.setItem("nexo_student_notifs_initialized", "true");
   }
 
   try {
@@ -306,26 +308,34 @@ function initNotificationBell() {
     } catch (_) {}
   }
 
-  function markStudentNotificationRead(id) {
+  function deleteStudentNotification(id) {
     try {
-      const cached = JSON.parse(
+      let cached = JSON.parse(
         localStorage.getItem("nexo_notifications") || "[]",
       );
-      const item = cached.find((n) => String(n.id) === String(id));
-      if (item) {
-        item.read = true;
-        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      cached = cached.filter((n) => String(n.id) !== String(id));
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+
+      let dismissed = JSON.parse(
+        localStorage.getItem("nexo_dismissed_notifs") || "[]",
+      );
+      if (!Array.isArray(dismissed)) dismissed = [];
+      if (!dismissed.includes(String(id))) {
+        dismissed.push(String(id));
+        localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
       }
     } catch (_) {}
 
-    // Send read request to server if online
-    fetch(`${NOTIF_API}/api/notifications/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+    // Send delete request to server if online
+    fetch(`${NOTIF_API}/api/notifications/${id}`, {
+      method: "DELETE",
     }).catch(() => {});
 
     loadStudentNotifications();
+  }
+
+  function markStudentNotificationRead(id) {
+    deleteStudentNotification(id);
   }
 
   function markAllStudentNotificationsRead() {
@@ -364,11 +374,11 @@ function initNotificationBell() {
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
-    const unreadCount = list.filter((n) => !n.read).length;
+    const unreadCount = list.length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
     if (currentDot) {
-      if (unreadCount > 0) {
+      if (list.length > 0) {
         currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {
@@ -415,11 +425,14 @@ function initNotificationBell() {
       })
       .join("");
 
-    // Attach click listeners to individual items
+    // Attach click listeners to individual items: clicking permanently deletes the notification so it won't flood
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
       item.addEventListener("click", () => {
         const notifId = item.dataset.id;
-        if (notifId) markStudentNotificationRead(notifId);
+        if (notifId) {
+          deleteStudentNotification(notifId);
+          item.remove();
+        }
       });
     });
   }
@@ -509,41 +522,29 @@ function initStudentGreeting() {
     }
   });
 
-  // Resolve student name (defaults to Juan Dela Cruz for admin testing)
+  // Resolve student name dynamically from settings or session
+  let studentSettings = null;
+  try {
+    const raw = localStorage.getItem("nexo_student_settings");
+    if (raw) studentSettings = JSON.parse(raw);
+  } catch (_) {}
+
   const savedName =
+    (studentSettings && studentSettings.fullName) ||
     sessionStorage.getItem("nexo-student-name") ||
-    sessionStorage.getItem("nexo-pending-name") ||
-    "Juan Dela Cruz";
+    localStorage.getItem("nexo-student-name") ||
+    "";
 
   if (nameTitle) {
-    nameTitle.textContent = savedName;
+    nameTitle.textContent = savedName || "Welcome, Student Scholar";
   }
 
-  // Set header initials or avatar photo
+  // Set header initials or avatar photo dynamically
+  if (typeof window.syncGlobalStudentIdentity === "function") {
+    window.syncGlobalStudentIdentity();
+  }
+
   if (headerAvatar) {
-    let customAvatar = sessionStorage.getItem("nexo-student-avatar");
-    if (!customAvatar) {
-      try {
-        const cached = JSON.parse(
-          localStorage.getItem("nexo_student_settings") || "{}",
-        );
-        if (cached && cached.profilePicture)
-          customAvatar = cached.profilePicture;
-      } catch (_) {}
-    }
-
-    if (customAvatar) {
-      headerAvatar.innerHTML = `<img src="${customAvatar}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    } else {
-      const initials = savedName
-        .split(" ")
-        .filter((n) => n.length > 0)
-        .slice(0, 2)
-        .map((n) => n[0].toUpperCase())
-        .join("");
-      headerAvatar.textContent = initials || "JD";
-    }
-
     headerAvatar.style.cursor = "pointer";
     headerAvatar.title = "Student Settings";
     headerAvatar.onclick = () => {
@@ -656,6 +657,22 @@ async function loadStudentData() {
 
   // Render application feed
   renderFilteredSubmissions();
+
+  // Handle direct one-tap navigation to submission from Scholarship Directory
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetId = urlParams.get("id") || urlParams.get("applicationId");
+    if (targetId) {
+      const match = applications.find(
+        (a) =>
+          String(a.id) === String(targetId) ||
+          String(a.scholarshipId) === String(targetId),
+      );
+      if (match) {
+        setTimeout(() => openSubmissionDetailsModal(match), 200);
+      }
+    }
+  } catch (_) {}
 }
 
 function renderFilteredSubmissions() {
@@ -912,7 +929,7 @@ function openSubmissionDetailsModal(app) {
         </div>
         <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px dashed var(--border-color); margin-bottom: 24px;">
           <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
-          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Juan Dela Cruz</p>
+          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Adrian Del Mundo</p>
           <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">BS Information Technology &bull; Batangas State University &bull; admin@admin.edu.ph</p>
         </div>
         <button type="button" id="btn-close-sub-modal" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px;">
@@ -1246,11 +1263,11 @@ function openSubmissionDetailsModal(app) {
   // Populate Student Identity
   const nameEl = document.getElementById("modal-sub-student-name");
   const infoEl = document.getElementById("modal-sub-student-info");
-  if (nameEl) nameEl.textContent = app.studentName || "Juan Dela Cruz";
+  if (nameEl) nameEl.textContent = app.studentName || "Adrian Del Mundo";
   if (infoEl) {
     const course = app.course || "BS Information Technology";
     const uni = app.university || "Batangas State University";
-    const email = app.studentEmail || "admin@admin.edu.ph";
+    const email = app.studentEmail || "adrian@batstate-u.edu.ph";
     infoEl.textContent = `${course} • ${uni} • ${email}`;
   }
 

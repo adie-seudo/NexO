@@ -49,8 +49,8 @@ DEFAULT_DATA = {
         }
     },
     "studentSettings": {
-        "fullName": "Juan Dela Cruz",
-        "email": "admin@admin.edu.ph",
+        "fullName": "Adrian Del Mundo",
+        "email": "adrian@batstate-u.edu.ph",
         "university": "Batangas State University",
         "course": "BS Information Technology",
         "yearLevel": "3rd Year",
@@ -66,7 +66,35 @@ DEFAULT_DATA = {
         "preferences": {
             "theme": "light"
         }
-    }
+    },
+    "users": [
+        {
+            "id": "usr_prov_nexo",
+            "email": "admin@admin",
+            "password": "admin",
+            "role": "provider",
+            "name": "NEXO",
+            "orgName": "NEXO",
+            "createdAt": "2026-11-01T08:00:00.000Z",
+            "formattedDate": "Nov 1, 2026",
+            "status": "active",
+            "notes": "Primary Scholarship Provider Account"
+        },
+        {
+            "id": "usr_stud_adrian",
+            "email": "adrian@batstate-u.edu.ph",
+            "password": "password123",
+            "role": "student",
+            "name": "Adrian Del Mundo",
+            "university": "Batangas State University",
+            "course": "BS Information Technology",
+            "yearLevel": "3rd Year",
+            "createdAt": "2026-11-01T08:00:00.000Z",
+            "formattedDate": "Nov 1, 2026",
+            "status": "active",
+            "notes": "Verified Student Account"
+        }
+    ]
 }
 
 def read_data():
@@ -597,7 +625,7 @@ class NexoHandler(BaseHTTPRequestHandler):
         if path == "/api/users":
             email = (body.get("email") or "").strip().lower()
             role = (body.get("role") or "student").strip().lower()
-            name = (body.get("name") or "").strip() or ("Scholarship Provider" if role == "provider" else "Verified Student")
+            name = (body.get("name") or "").strip() or ("Scholarship Provider" if role == "provider" else "")
             status = "banned" if body.get("status") == "banned" else "active"
             if not email:
                 return self._send_json(400, {"success": False, "error": "Email is required"})
@@ -606,9 +634,11 @@ class NexoHandler(BaseHTTPRequestHandler):
             if any(u.get("email", "").lower() == email for u in users):
                 return self._send_json(400, {"success": False, "error": f"An account with email {email} already exists."})
             
+            password = (body.get("password") or "").strip() or "password123"
             new_user = {
                 "id": f"usr_{'prov_' if role == 'provider' else 'stud_'}{int(time.time()*1000)}",
                 "email": email,
+                "password": password,
                 "role": role,
                 "name": name,
                 "orgName": name if role == "provider" else None,
@@ -680,6 +710,12 @@ class NexoHandler(BaseHTTPRequestHandler):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
         data = read_data()
+
+        if path.startswith("/api/notifications/"):
+            nid = path.replace("/api/notifications/", "").split("/")[0]
+            data["notifications"] = [n for n in data.get("notifications", []) if str(n.get("id")) != str(nid)]
+            write_data(data)
+            return self._send_json(200, {"success": True, "message": "Notification deleted permanently"})
 
         if path.startswith("/api/users/"):
             uid = path.replace("/api/users/", "").split("/")[0]

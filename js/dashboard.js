@@ -929,7 +929,6 @@ function initPublishAndDraft() {
         const providerLogo = localStorage.getItem("nexo-provider-logo") || "";
         const providerBanner =
           localStorage.getItem("nexo-provider-banner") ||
-          window.DEFAULT_PROVIDER_BANNER ||
           "";
         const applicantLimit =
           DOM.limitInput && DOM.limitInput.value

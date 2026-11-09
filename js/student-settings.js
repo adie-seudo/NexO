@@ -65,14 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Instant Header Avatar Updater
   function updateHeaderAvatar(src) {
-    const headerAvatar = document.getElementById("student-header-avatar");
-    if (!headerAvatar) return;
-    if (src) {
-      headerAvatar.innerHTML = `<img src="${src}" alt="Student" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-      sessionStorage.setItem("nexo-student-avatar", src);
-    } else {
-      headerAvatar.innerHTML = "JD";
-      sessionStorage.removeItem("nexo-student-avatar");
+    if (typeof window.syncGlobalStudentIdentity === "function") {
+      window.syncGlobalStudentIdentity();
     }
   }
 
@@ -175,6 +169,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setAvatarPreview(src) {
+    const nameInput = document.getElementById("input-student-fullname");
+    const nameVal =
+      (nameInput && nameInput.value.trim()) ||
+      sessionStorage.getItem("nexo-student-name") ||
+      "";
+    const initials =
+      typeof window.getDynamicInitials === "function"
+        ? window.getDynamicInitials(nameVal)
+        : "";
+
     if (src) {
       if (avatarImg) {
         avatarImg.src = src;
@@ -186,7 +190,14 @@ document.addEventListener("DOMContentLoaded", () => {
         avatarImg.src = "";
         avatarImg.classList.remove("has-img");
       }
-      if (avatarInitials) avatarInitials.style.display = "block";
+      if (avatarInitials) {
+        avatarInitials.style.display = "flex";
+        if (initials) {
+          avatarInitials.textContent = initials;
+        } else {
+          avatarInitials.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+        }
+      }
     }
   }
 
@@ -212,16 +223,25 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     }
 
+    const currentEmail =
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      "";
+    const currentName =
+      sessionStorage.getItem("nexo-student-name") ||
+      localStorage.getItem("nexo-student-name") ||
+      "";
+
     if (!settings) {
       settings = {
-        fullName: "Juan Dela Cruz",
-        email: "admin@admin.edu.ph",
-        university: "Batangas State University",
-        course: "BS Information Technology",
-        yearLevel: "3rd Year",
-        studentId: "21-04589",
-        contactNumber: "+63 912 345 6789",
-        bio: "Passionate IT student striving for academic excellence and innovation in web technologies.",
+        fullName: currentName,
+        email: currentEmail,
+        university: "",
+        course: "",
+        yearLevel: "",
+        studentId: "",
+        contactNumber: "",
+        bio: "",
         profilePicture: "",
         notifications: {
           scholarshipMatches: true,
@@ -249,11 +269,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const notifStatus = document.getElementById("pref-notif-status");
     const notifDeadlines = document.getElementById("pref-notif-deadlines");
 
-    if (nameInput) nameInput.value = settings.fullName || "Juan Dela Cruz";
-    if (emailInput) emailInput.value = settings.email || "admin@admin.edu.ph";
+    if (nameInput) {
+      nameInput.value = settings.fullName || currentName || "";
+      nameInput.addEventListener("input", () => {
+        setAvatarPreview(currentAvatarBase64);
+      });
+    }
+    if (emailInput) emailInput.value = settings.email || currentEmail || "";
     if (uniInput) uniInput.value = settings.university || "";
     if (courseInput) courseInput.value = settings.course || "";
-    if (yearSelect && settings.yearLevel) yearSelect.value = settings.yearLevel;
+    if (yearSelect) yearSelect.value = settings.yearLevel || "";
     if (idInput) idInput.value = settings.studentId || "";
     if (phoneInput) phoneInput.value = settings.contactNumber || "";
     if (bioInput) bioInput.value = settings.bio || "";
@@ -316,12 +341,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const notifStatus = document.getElementById("pref-notif-status");
       const notifDeadlines = document.getElementById("pref-notif-deadlines");
 
+      const nameInput = document.getElementById("input-student-fullname");
+      const emailInput = document.getElementById("input-student-email");
+      const savedEmail =
+        sessionStorage.getItem("nexo-student-email") ||
+        localStorage.getItem("nexo-student-email") ||
+        "";
+
       const payload = {
-        fullName: "Juan Dela Cruz", // Permanent registered institutional identity
-        email: "admin@admin.edu.ph", // Permanent registered university email
+        fullName: nameInput ? nameInput.value.trim() : "",
+        email: emailInput ? (emailInput.value.trim() || savedEmail) : savedEmail,
         university: uniInput ? uniInput.value.trim() : "",
         course: courseInput ? courseInput.value.trim() : "",
-        yearLevel: yearSelect ? yearSelect.value : "3rd Year",
+        yearLevel: yearSelect ? yearSelect.value : "",
         studentId: idInput ? idInput.value.trim() : "",
         contactNumber: phoneInput ? phoneInput.value.trim() : "",
         bio: bioInput ? bioInput.value.trim() : "",
@@ -352,12 +384,26 @@ document.addEventListener("DOMContentLoaded", () => {
       // Keep local caches updated
       try {
         localStorage.setItem("nexo_student_settings", JSON.stringify(payload));
+        if (payload.fullName) {
+          sessionStorage.setItem("nexo-student-name", payload.fullName);
+          localStorage.setItem("nexo-student-name", payload.fullName);
+        }
+        if (payload.email) {
+          sessionStorage.setItem("nexo-student-email", payload.email);
+          localStorage.setItem("nexo-student-email", payload.email);
+        }
         if (currentAvatarBase64) {
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
         } else {
           sessionStorage.removeItem("nexo-student-avatar");
         }
       } catch (_) {}
+
+      // Refresh global identity & initials
+      if (typeof window.syncGlobalStudentIdentity === "function") {
+        window.syncGlobalStudentIdentity();
+      }
+      setAvatarPreview(currentAvatarBase64);
 
       // Synchronize theme with body
       if (prefDark) {

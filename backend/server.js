@@ -80,8 +80,8 @@ const DEFAULT_DATA = {
     },
   },
   studentSettings: {
-    fullName: "Juan Dela Cruz",
-    email: "admin@admin.edu.ph",
+    fullName: "Adrian Del Mundo",
+    email: "adrian@batstate-u.edu.ph",
     university: "Batangas State University",
     course: "BS Information Technology",
     yearLevel: "3rd Year",
@@ -100,28 +100,30 @@ const DEFAULT_DATA = {
   },
   users: [
     {
-      id: "usr_prov_admin",
+      id: "usr_prov_nexo",
       email: "admin@admin",
+      password: "admin",
       role: "provider",
-      name: "NEXO Foundation",
-      orgName: "NEXO Foundation",
+      name: "NEXO",
+      orgName: "NEXO",
       createdAt: "2026-11-01T08:00:00.000Z",
       formattedDate: "Nov 1, 2026",
       status: "active",
-      notes: "Default Administrator & System Provider Account",
+      notes: "Primary Scholarship Provider Account",
     },
     {
-      id: "usr_stud_admin",
-      email: "admin@admin.edu.ph",
+      id: "usr_stud_adrian",
+      email: "adrian@batstate-u.edu.ph",
+      password: "password123",
       role: "student",
-      name: "Juan Dela Cruz",
+      name: "Adrian Del Mundo",
       university: "Batangas State University",
       course: "BS Information Technology",
       yearLevel: "3rd Year",
       createdAt: "2026-11-01T08:00:00.000Z",
       formattedDate: "Nov 1, 2026",
       status: "active",
-      notes: "Default Verified Student Account",
+      notes: "Verified Student Account",
     },
   ],
 };
@@ -1124,6 +1126,20 @@ async function handleRequest(req, res) {
     });
   }
 
+  // DELETE /api/notifications/:id (Permanently delete notification on click)
+  if (pathname.startsWith("/api/notifications/") && method === "DELETE") {
+    const targetId = pathname.replace("/api/notifications/", "").split("/")[0];
+    const data = readData();
+    data.notifications = (data.notifications || []).filter(
+      (n) => String(n.id) !== String(targetId)
+    );
+    writeData(data);
+    return sendJson(res, 200, {
+      success: true,
+      message: "Notification deleted permanently",
+    });
+  }
+
   // ==========================================================================
   // 7. DEVELOPER ADMINISTRATOR & USER ACCOUNTS ENGINE
   // ==========================================================================
@@ -1145,10 +1161,9 @@ async function handleRequest(req, res) {
     const role = (body.role || "student").trim().toLowerCase(); // "student" or "provider"
     const name =
       (body.name || "").trim() ||
-      (role === "provider" ? "Scholarship Provider" : "Verified Student");
-    const university =
-      (body.university || "Batangas State University").trim();
-    const course = (body.course || "BS Information Technology").trim();
+      (role === "provider" ? "Scholarship Provider" : "");
+    const university = (body.university || "").trim();
+    const course = (body.course || "").trim();
     const status = body.status === "banned" ? "banned" : "active";
 
     if (!email) {
@@ -1164,9 +1179,12 @@ async function handleRequest(req, res) {
       });
     }
 
+    const password = (body.password || "").trim() || "password123";
+
     const newUser = {
       id: "usr_" + (role === "provider" ? "prov_" : "stud_") + Date.now(),
       email: email,
+      password: password,
       role: role,
       name: name,
       orgName: role === "provider" ? name : undefined,

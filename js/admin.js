@@ -60,6 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const roleBtnProvider = document.getElementById("role-btn-provider");
   const inputUserEmail = document.getElementById("input-user-email");
   const inputUserName = document.getElementById("input-user-name");
+  const inputUserPassword = document.getElementById("input-user-password");
   const labelUserName = document.getElementById("label-user-name");
   const emailHint = document.getElementById("email-hint");
   const selectUserStatus = document.getElementById("select-user-status");
@@ -222,33 +223,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function ensureDefaultAccounts() {
     let updated = false;
+    // Remove legacy placeholder account if present
+    const legacyIdx = users.findIndex((u) => u.email === "admin@admin.edu.ph" || u.name === "Juan Dela Cruz");
+    if (legacyIdx !== -1) {
+      users.splice(legacyIdx, 1);
+      updated = true;
+    }
+
     if (!users.some((u) => u.email === "admin@admin")) {
       users.push({
-        id: "usr_prov_admin",
+        id: "usr_prov_nexo",
         email: "admin@admin",
+        password: "admin",
         role: "provider",
-        name: "NEXO Foundation",
-        orgName: "NEXO Foundation",
+        name: "NEXO",
+        orgName: "NEXO",
         createdAt: "2026-11-01T08:00:00.000Z",
         formattedDate: "Nov 1, 2026",
         status: "active",
-        notes: "Default Administrator & System Provider Account",
+        notes: "Primary Scholarship Provider Account",
       });
       updated = true;
     }
-    if (!users.some((u) => u.email === "admin@admin.edu.ph")) {
+    if (!users.some((u) => u.email === "adrian@batstate-u.edu.ph")) {
       users.push({
-        id: "usr_stud_admin",
-        email: "admin@admin.edu.ph",
+        id: "usr_stud_adrian",
+        email: "adrian@batstate-u.edu.ph",
+        password: "password123",
         role: "student",
-        name: "Juan Dela Cruz",
+        name: "Adrian Del Mundo",
         university: "Batangas State University",
         course: "BS Information Technology",
         yearLevel: "3rd Year",
         createdAt: "2026-11-01T08:00:00.000Z",
         formattedDate: "Nov 1, 2026",
         status: "active",
-        notes: "Default Verified Student Account",
+        notes: "Verified Student Account",
       });
       updated = true;
     }
@@ -367,8 +377,9 @@ document.addEventListener("DOMContentLoaded", () => {
                   ${isBanned ? "● Banned" : "● Active"}
                 </span>
               </div>
-              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #8b5cf6;">
-                ${escapeHtml(user.email)}
+              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #8b5cf6; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span>${escapeHtml(user.email)}</span>
+                <span style="font-size: 11px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "password123")}</span>
               </p>
               <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
                 ${escapeHtml(user.course || "BS Information Technology")} &bull; ${escapeHtml(user.university || "Batangas State University")}
@@ -508,8 +519,9 @@ document.addEventListener("DOMContentLoaded", () => {
                   ${isBanned ? "● Banned" : "● Active"}
                 </span>
               </div>
-              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #10b981;">
-                ${escapeHtml(user.email)}
+              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #10b981; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span>${escapeHtml(user.email)}</span>
+                <span style="font-size: 11px; background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "admin")}</span>
               </p>
               <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
                 Scholarship Organization &bull; Verified Provider
@@ -657,7 +669,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (inputUserEmail)
         inputUserEmail.placeholder = "e.g., student@batstate-u.edu.ph";
       if (labelUserName) labelUserName.textContent = "Full Name (Optional)";
-      if (inputUserName) inputUserName.placeholder = "e.g., Juan Dela Cruz";
+      if (inputUserName) inputUserName.placeholder = "e.g., Adrian Del Mundo";
       if (emailHint)
         emailHint.textContent =
           "Recommended: Use .edu.ph for student accounts.";
@@ -665,6 +677,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (inputUserEmail) inputUserEmail.value = "";
     if (inputUserName) inputUserName.value = "";
+    if (inputUserPassword) inputUserPassword.value = "";
     if (selectUserStatus) selectUserStatus.value = "active";
 
     if (createModal) createModal.classList.add("active");
@@ -698,10 +711,16 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const email = inputUserEmail ? inputUserEmail.value.trim().toLowerCase() : "";
       const name = inputUserName ? inputUserName.value.trim() : "";
+      const password = inputUserPassword ? inputUserPassword.value.trim() : "";
       const status = selectUserStatus ? selectUserStatus.value : "active";
 
       if (!email) {
         showToast("Please enter an account email", true);
+        return;
+      }
+
+      if (!password) {
+        showToast("Please enter an account password", true);
         return;
       }
 
@@ -713,14 +732,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const newAccountPayload = {
         email: email,
+        password: password,
         role: activeRoleSelection,
         name:
           name ||
           (activeRoleSelection === "provider"
             ? "Scholarship Provider"
-            : "Verified Student"),
-        university: "Batangas State University",
-        course: "BS Information Technology",
+            : ""),
+        university: "",
+        course: "",
+        studentId: "",
+        contactNumber: "",
         status: status,
         createdByAdmin: true,
       };
