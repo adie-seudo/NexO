@@ -317,48 +317,49 @@ document.addEventListener("DOMContentLoaded", () => {
       card.dataset.id = user.id;
 
       card.innerHTML = `
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+        <div class="admin-card-header">
+          <div class="admin-card-identity">
             <div class="admin-account-avatar">${escapeHtml(initials || "ST")}</div>
-            <div style="min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-primary);">${escapeHtml(name)}</h3>
+            <div class="admin-card-title-group">
+              <div class="admin-card-name-row">
+                <h3 class="admin-card-name">${escapeHtml(name)}</h3>
                 <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
                   ${isBanned ? "● Banned" : "● Active"}
                 </span>
               </div>
-              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #8b5cf6; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span>${escapeHtml(user.email)}</span>
-                <span style="font-size: 11px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "password123")}</span>
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span>${escapeHtml(user.course || "Course: Not Set Yet")}</span>
-                <span>&bull;</span>
-                <span>${escapeHtml(user.yearLevel || "Year: Not Set Yet")}</span>
-                <span>&bull;</span>
-                <span>${user.isProfileConfirmed ? '<strong style="color: #10b981;">✓ Profile Confirmed</strong>' : '<span style="color: #f59e0b;">⏳ Setup Pending</span>'}</span>
-              </p>
+              <div class="admin-card-email-row">
+                <span class="admin-card-email">${escapeHtml(user.email)}</span>
+                <span class="admin-card-pwd-chip">🔑 ${escapeHtml(user.password || "password123")}</span>
+              </div>
             </div>
-          </div>
-
-          <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
-            <div>Registered: <strong style="color: var(--text-primary);">${escapeHtml(user.formattedDate || "Recently")}</strong></div>
-            <div style="margin-top: 3px;">Activity: <strong style="color: #8b5cf6;">${userApps.length} Application(s)</strong></div>
           </div>
         </div>
 
-        ${user.notes ? `<div style="font-size: 11.5px; color: var(--text-secondary); background: var(--bg-canvas); padding: 6px 10px; border-radius: 6px;">Note: ${escapeHtml(user.notes)}</div>` : ""}
+        <div class="admin-card-meta-details">
+          <span>${escapeHtml(user.course || "Course: Not Set Yet")}</span>
+          <span class="meta-dot">&bull;</span>
+          <span>${escapeHtml(user.yearLevel || "Year: Not Set Yet")}</span>
+          <span class="meta-dot">&bull;</span>
+          <span>${user.isProfileConfirmed ? '<strong style="color: #10b981;">✓ Profile Confirmed</strong>' : '<span style="color: #f59e0b;">⏳ Setup Pending</span>'}</span>
+        </div>
+
+        <div class="admin-card-footer-strip">
+          <span>Registered: <strong>${escapeHtml(user.formattedDate || "Recently")}</strong></span>
+          <span>Activity: <strong style="color: #8b5cf6;">${userApps.length} Application(s)</strong></span>
+        </div>
+
+        ${user.notes ? `<div class="admin-card-note">Note: ${escapeHtml(user.notes)}</div>` : ""}
 
         <div class="admin-card-actions">
           <button type="button" class="btn-admin-action ${isBanned ? "btn-admin-unban" : "btn-admin-ban"}" data-action="toggle-ban" data-id="${user.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               ${isBanned ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>'}
             </svg>
             ${isBanned ? "Unban Account" : "Ban Account"}
           </button>
 
           <button type="button" class="btn-admin-action btn-admin-delete" data-action="delete" data-id="${user.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -465,44 +466,45 @@ document.addEventListener("DOMContentLoaded", () => {
       card.dataset.id = user.id;
 
       card.innerHTML = `
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+        <div class="admin-card-header">
+          <div class="admin-card-identity">
             <div class="admin-account-avatar">${escapeHtml(initials || "PV")}</div>
-            <div style="min-width: 0;">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: var(--text-primary);">${escapeHtml(orgName)}</h3>
+            <div class="admin-card-title-group">
+              <div class="admin-card-name-row">
+                <h3 class="admin-card-name">${escapeHtml(orgName)}</h3>
                 <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
                   ${isBanned ? "● Banned" : "● Active"}
                 </span>
               </div>
-              <p style="margin: 3px 0 0 0; font-size: 13px; font-weight: 600; color: #10b981; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span>${escapeHtml(user.email)}</span>
-                <span style="font-size: 11px; background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "admin")}</span>
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
-                ${user.role === "admin" ? "NEXO System Administrator &bull; Developer Access" : "Scholarship Organization &bull; Verified Provider"}
-              </p>
+              <div class="admin-card-email-row">
+                <span class="admin-card-email" style="color: #10b981;">${escapeHtml(user.email)}</span>
+                <span class="admin-card-pwd-chip" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">🔑 ${escapeHtml(user.password || "admin")}</span>
+              </div>
             </div>
-          </div>
-
-          <div style="text-align: right; font-size: 12px; color: var(--text-secondary);">
-            <div>Registered: <strong style="color: var(--text-primary);">${escapeHtml(user.formattedDate || "Recently")}</strong></div>
-            <div style="margin-top: 3px;">Active Posts: <strong style="color: #10b981;">${userSchols.length} Scholarship(s)</strong></div>
           </div>
         </div>
 
-        ${user.notes ? `<div style="font-size: 11.5px; color: var(--text-secondary); background: var(--bg-canvas); padding: 6px 10px; border-radius: 6px;">Note: ${escapeHtml(user.notes)}</div>` : ""}
+        <div class="admin-card-meta-details">
+          <span>${user.role === "admin" ? "NEXO System Administrator &bull; Developer Access" : "Scholarship Organization &bull; Verified Provider"}</span>
+        </div>
+
+        <div class="admin-card-footer-strip">
+          <span>Registered: <strong>${escapeHtml(user.formattedDate || "Recently")}</strong></span>
+          <span>Active Posts: <strong style="color: #10b981;">${userSchols.length} Scholarship(s)</strong></span>
+        </div>
+
+        ${user.notes ? `<div class="admin-card-note">Note: ${escapeHtml(user.notes)}</div>` : ""}
 
         <div class="admin-card-actions">
           <button type="button" class="btn-admin-action ${isBanned ? "btn-admin-unban" : "btn-admin-ban"}" data-action="toggle-ban" data-id="${user.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               ${isBanned ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>'}
             </svg>
             ${isBanned ? "Unban Account" : "Ban Account"}
           </button>
 
           <button type="button" class="btn-admin-action btn-admin-delete" data-action="delete" data-id="${user.id}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -561,21 +563,24 @@ document.addEventListener("DOMContentLoaded", () => {
       ).length;
 
       item.innerHTML = `
-        <div style="min-width: 0; flex: 1;">
-          <h4 style="margin: 0; font-size: 14px; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <div style="min-width: 0; width: 100%;">
+          <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-primary); line-height: 1.35; overflow-wrap: anywhere;">
             ${escapeHtml(s.title || "Untitled")}
           </h4>
-          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-secondary);">
-            Provider: ${escapeHtml(s.providerName || "NEXO")} &bull; Deadline: ${escapeHtml(s.formattedDate || "No Deadline")} &bull; <strong style="color: #8b5cf6;">${appCount} Applications</strong>
+          <p style="margin: 4px 0 0 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.4;">
+            Provider: ${escapeHtml(s.providerName || "NEXO")} &bull; Deadline: ${escapeHtml(s.formattedDate || "No Deadline")}
           </p>
+          <div style="margin-top: 4px; font-size: 12px; color: #8b5cf6; font-weight: 700;">
+            ${appCount} Applications Submitted
+          </div>
         </div>
 
-        <button type="button" class="btn-admin-action" data-delete-schol="${s.id}" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.35); flex-shrink: 0;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button type="button" class="btn-admin-action" data-delete-schol="${s.id}" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.35); width: 100%; min-height: 42px; justify-content: center; margin-top: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
-          Delete Post
+          Delete Scholarship Post
         </button>
       `;
 
