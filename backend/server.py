@@ -268,6 +268,7 @@ class NexoHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+        query = urllib.parse.parse_qs(parsed.query)
 
         if path == "/api/data":
             data = read_data()
@@ -290,26 +291,10 @@ class NexoHandler(BaseHTTPRequestHandler):
         if path == "/api/notifications":
             data = read_data()
             notifs = data.get("notifications", [])
-            query = urllib.parse.parse_qs(parsed.query)
             recip = query.get("recipient", [None])[0]
             if recip:
                 notifs = [n for n in notifs if not n.get("recipient") or n.get("recipient") == recip or n.get("recipient") == "all"]
             return self._send_json(200, notifs)
-
-        if path == "/api/notifications/read":
-            target_recipient = body.get("recipient")
-            target_id = body.get("id")
-            for n in data.get("notifications", []):
-                if target_id:
-                    if str(n.get("id")) == str(target_id):
-                        n["read"] = True
-                elif target_recipient:
-                    if not n.get("recipient") or n.get("recipient") == target_recipient or n.get("recipient") == "all":
-                        n["read"] = True
-                else:
-                    n["read"] = True
-            write_data(data)
-            return self._send_json(200, {"success": True})
 
         if path == "/api/settings":
             data = read_data()
@@ -358,8 +343,6 @@ class NexoHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json_bytes)
             return
-            data = read_data()
-            return self._send_json(200, data.get("studentSettings", DEFAULT_DATA["studentSettings"]))
 
         # Static files
         if path == "/" or path == "":
@@ -398,6 +381,7 @@ class NexoHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+        query = urllib.parse.parse_qs(parsed.query)
         body = self._read_json()
         data = read_data()
 

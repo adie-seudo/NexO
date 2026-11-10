@@ -329,6 +329,7 @@ function initNotificationBell() {
     // Send delete request to server if online
     fetch(`${NOTIF_API}/api/notifications/${id}`, {
       method: "DELETE",
+      keepalive: true,
     }).catch(() => {});
 
     loadStudentNotifications();
@@ -374,11 +375,11 @@ function initNotificationBell() {
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
-    const unreadCount = list.length;
+    const unreadCount = list.filter((n) => !n.read).length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
     if (currentDot) {
-      if (list.length > 0) {
+      if (unreadCount > 0) {
         currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {
@@ -583,6 +584,12 @@ async function loadStudentData() {
   const statReview = document.getElementById("stat-review");
   const statRejected = document.getElementById("stat-rejected");
 
+  const activeStudentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
   let applications = [];
 
   try {
@@ -597,8 +604,8 @@ async function loadStudentData() {
     if (
       data.studentSettings &&
       data.studentSettings.email &&
-      currentStudentEmail &&
-      data.studentSettings.email.toLowerCase() === currentStudentEmail
+      activeStudentEmail &&
+      data.studentSettings.email.toLowerCase() === activeStudentEmail
     ) {
       try {
         localStorage.setItem(
@@ -629,16 +636,23 @@ async function loadStudentData() {
     } catch (_) {}
   }
 
-  allStudentApplications = applications;
+  // Filter applications specifically belonging to currently logged-in student
+  const myApplications = activeStudentEmail
+    ? applications.filter(
+        (a) => (a.studentEmail || "").toLowerCase() === activeStudentEmail,
+      )
+    : applications;
+
+  allStudentApplications = myApplications;
 
   // Calculate metrics
-  let totalCount = applications.length;
+  let totalCount = myApplications.length;
   let submittedCount = 0;
   let reviewCount = 0;
   let approvedCount = 0;
   let rejectedCount = 0;
 
-  applications.forEach((app) => {
+  myApplications.forEach((app) => {
     const status = (app.status || "").toLowerCase();
     if (status.includes("approved")) {
       approvedCount++;
@@ -1011,8 +1025,7 @@ function openSubmissionDetailsModal(app) {
       statusCard.style.background = "rgba(239, 68, 68, 0.08)";
       statusCard.style.borderColor = "rgba(239, 68, 68, 0.25)";
     }
-  } else {
-    // Under Review / Submitted
+  } else if (rawStatus.includes("review")) {
     if (statusText) {
       statusText.textContent = "Under Review";
       statusText.style.color = "#8b5cf6";
@@ -1024,6 +1037,20 @@ function openSubmissionDetailsModal(app) {
     if (statusCard) {
       statusCard.style.background = "rgba(139, 92, 246, 0.08)";
       statusCard.style.borderColor = "rgba(139, 92, 246, 0.25)";
+    }
+  } else {
+    // Submitted
+    if (statusText) {
+      statusText.textContent = "Submitted";
+      statusText.style.color = "#60A5FA";
+    }
+    if (statusBadge) {
+      statusBadge.className = "student-app-status-badge badge-status-submitted";
+      statusBadge.textContent = "Submitted";
+    }
+    if (statusCard) {
+      statusCard.style.background = "rgba(96, 165, 250, 0.08)";
+      statusCard.style.borderColor = "rgba(96, 165, 250, 0.25)";
     }
   }
 
@@ -1208,7 +1235,7 @@ function openSubmissionDetailsModal(app) {
                 };
 
                 try {
-                  const res = await fetch(`http://localhost:3000/api/applications/${app.id}`, {
+                  const res = await fetch(`${API_BASE}/api/applications/${app.id}`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(followUpPayload),
@@ -1295,6 +1322,7 @@ function openSubmissionDetailsModal(app) {
   function closeSubModal() {
     modalOverlay.classList.remove("active");
     document.body.style.overflow = "";
+    document.removeEventListener("keydown", handleEsc);
   }
 
   const closeBtn = document.getElementById("close-student-sub-modal");

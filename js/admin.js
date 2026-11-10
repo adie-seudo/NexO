@@ -223,14 +223,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function ensureDefaultAccounts() {
     let updated = false;
-    // Remove legacy placeholder account if present
-    const legacyIdx = users.findIndex((u) => u.email === "admin@admin.edu.ph" || u.name === "Juan Dela Cruz");
-    if (legacyIdx !== -1) {
-      users.splice(legacyIdx, 1);
-      updated = true;
-    }
+    // Always purge any legacy "Juan Dela Cruz" or "admin@admin.edu.ph" residuals
+    const initialLen = users.length;
+    users = users.filter((u) => u && u.email !== "admin@admin.edu.ph" && u.name !== "Juan Dela Cruz");
+    if (users.length !== initialLen) updated = true;
 
-    if (!users.some((u) => u.email === "admin@admin")) {
+    // Only seed initial default baseline accounts if the user list is completely empty
+    if (users.length === 0) {
       users.push({
         id: "usr_prov_nexo",
         email: "admin@admin",
@@ -243,9 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
         status: "active",
         notes: "Primary Scholarship Provider Account",
       });
-      updated = true;
-    }
-    if (!users.some((u) => u.email === "adrian@batstate-u.edu.ph")) {
       users.push({
         id: "usr_stud_adrian",
         email: "adrian@batstate-u.edu.ph",
@@ -260,18 +256,15 @@ document.addEventListener("DOMContentLoaded", () => {
         status: "active",
         notes: "Verified Student Account",
       });
-      updated = true;
-    }
-    if (!users.some((u) => u.email === "24-02924@g.batstate-u.edu.ph")) {
       users.push({
         id: "usr_stud_2402924",
         email: "24-02924@g.batstate-u.edu.ph",
         password: "password123",
         role: "student",
-        name: "",
+        name: "Student 24-02924",
         university: "Batangas State University",
-        course: "",
-        yearLevel: "",
+        course: "BS Information Technology",
+        yearLevel: "1st Year",
         studentId: "24-02924",
         createdAt: "2026-11-09T08:00:00.000Z",
         formattedDate: "Nov 9, 2026",
@@ -944,7 +937,12 @@ document.addEventListener("DOMContentLoaded", () => {
             scholarships = scholarships.filter(
               (s) => !removedIds.includes(String(s.id)),
             );
-            drafts = drafts.filter((d) => !removedIds.includes(String(d.id)));
+            const provEmail = (pendingDeleteTarget.email || "").toLowerCase();
+            drafts = drafts.filter(
+              (d) =>
+                (d.providerEmail || "").toLowerCase() !== provEmail &&
+                !removedIds.includes(String(d.id)),
+            );
             applications = applications.filter(
               (a) => !removedIds.includes(String(a.scholarshipId)),
             );
@@ -956,6 +954,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "nexo_scholarships",
               JSON.stringify(scholarships),
             );
+            localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
             localStorage.setItem(
               "nexo_applications",
               JSON.stringify(applications),

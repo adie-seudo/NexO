@@ -1,7 +1,38 @@
 // ==========================================
-// 0. GLOBAL ASSETS & FALLBACKS (Clean, no default test banners)
+// 0. STRICT ROLE ROUTE GUARD
+// ==========================================
+(function enforceRoleGuard() {
+  const path = (window.location.pathname.split("/").pop() || "index.html").toLowerCase();
+  const role = sessionStorage.getItem("nexo-logged-in") || localStorage.getItem("nexo-logged-in");
+  const email = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") || ""
+  ).toLowerCase();
+
+  if (path.startsWith("student-")) {
+    if (role !== "student") {
+      window.location.replace(role === "provider" ? "provider-dashboard.html" : "index.html");
+    }
+  } else if (path.startsWith("provider-") && path !== "provider-setup.html") {
+    if (role !== "provider") {
+      window.location.replace(role === "student" ? "student-dashboard.html" : "index.html");
+    }
+  } else if (path === "admin.html") {
+    if (role !== "admin" && !(role === "provider" && email === "admin@admin")) {
+      window.location.replace("index.html");
+    }
+  }
+})();
+
+// ==========================================
+// 0.1 GLOBAL ASSETS & FALLBACKS (Clean, no default test banners)
 // ==========================================
 window.DEFAULT_PROVIDER_BANNER = "";
+window.API_BASE =
+  window.API_BASE ||
+  (window.location.protocol.startsWith("http") ? "" : "http://localhost:3000");
 
 // ==========================================
 // 1. INSTANT DARK MODE CHECK (Prevents white flash)
@@ -56,7 +87,7 @@ window.DEFAULT_PROVIDER_BANNER = "";
       localStorage.setItem("nexo_scholarships", JSON.stringify(schols));
     }
 
-    // Purge old leftover Signal Twice test banner from localStorage
+    // Purge old leftover provider test banner from localStorage
     localStorage.removeItem("nexo-provider-banner");
     localStorage.removeItem("provider-banner-preview");
     try {
@@ -68,18 +99,10 @@ window.DEFAULT_PROVIDER_BANNER = "";
       }
     } catch (_) {}
 
-    // Clean any cached scholarships stuck with leftover test banner
+    // Standardize applicant count calculation across cached scholarships
     if (Array.isArray(schols) && schols.length > 0) {
       let modified = false;
       schols.forEach((s) => {
-        if (s.providerBanner && s.providerBanner.startsWith("data:image")) {
-          s.providerBanner = "";
-          modified = true;
-        }
-        if (s.bannerImage && s.bannerImage.startsWith("data:image")) {
-          s.bannerImage = "";
-          modified = true;
-        }
         const limitNum =
           parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
         s.applicantLimit = limitNum;
@@ -423,6 +446,12 @@ function hydrateRoleAwareHeader() {
       <a href="provider-applications.html" class="nav-link">
         <img src="assets/draft-icon.png" alt="Applications" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Applications</span>
+      </a>
+
+      <a href="provider-dashboard.html?view=drafts" class="nav-link" id="nav-drafts">
+        <img src="assets/draft-icon.png" alt="Drafts" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Drafts</span>
+        <span id="draft-badge" style="display:none;background-color:#8b5cf6;color:white;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:auto;">0</span>
       </a>
 
       <a href="provider-settings.html" class="nav-link">
@@ -847,134 +876,6 @@ document.addEventListener("click", (e) => {
 });
 
 // ==========================================
-// STUDENT REGISTRATION VALIDATION (BULLETPROOF)
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-  const registerForm = document.getElementById("register-form");
-  const submitBtn = document.getElementById("reg-submit-btn");
-
-  if (registerForm && submitBtn) {
-    // 1. Completely kill the default HTML form submission
-    registerForm.onsubmit = (e) => e.preventDefault();
-
-    // 2. Grab all inputs and error elements
-    const nameInput = document.getElementById("reg-name");
-    const emailInput = document.getElementById("reg-email");
-    const passInput = document.getElementById("reg-pass");
-    const confirmInput = document.getElementById("reg-confirm");
-
-    const groupName = document.getElementById("group-name");
-    const groupEmail = document.getElementById("group-email");
-    const groupPass = document.getElementById("group-pass");
-    const groupConfirm = document.getElementById("group-confirm");
-
-    const errorName = document.getElementById("error-name");
-    const errorEmail = document.getElementById("error-email");
-    const errorPass = document.getElementById("error-pass");
-    const errorConfirm = document.getElementById("error-confirm");
-
-    // Helper function to show errors
-    const showError = (group, errorEl, message) => {
-      group.classList.add("has-error");
-      errorEl.textContent = message;
-      errorEl.style.display = "block";
-    };
-
-    // Helper function to clear errors
-    const clearError = (group, errorEl) => {
-      group.classList.remove("has-error");
-      errorEl.textContent = "";
-      errorEl.style.display = "none";
-    };
-
-    // 3. Real-time UX: Clear error immediately when user starts typing
-    [nameInput, emailInput, passInput, confirmInput].forEach((input) => {
-      if (input) {
-        input.addEventListener("input", function () {
-          const group = this.closest(".input-group");
-          const errorEl = group.nextElementSibling;
-          if (group && errorEl) clearError(group, errorEl);
-        });
-      }
-    });
-
-    // 4. Hijack the button click directly
-    submitBtn.onclick = function (e) {
-      e.preventDefault();
-      let isValid = true;
-
-      // Validate Full Name
-      if (!nameInput.value.trim()) {
-        showError(groupName, errorName, "Please enter your full name.");
-        isValid = false;
-      }
-
-      // Validate Email
-      const emailVal = emailInput.value.trim().toLowerCase();
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      if (!emailVal) {
-        showError(groupEmail, errorEmail, "Please enter your school email.");
-        isValid = false;
-      } else if (!emailRegex.test(emailVal)) {
-        showError(
-          groupEmail,
-          errorEmail,
-          "Please enter a valid email address.",
-        );
-        isValid = false;
-      } else if (!emailVal.endsWith(".edu.ph")) {
-        // THIS RESTORES THE STRICT EDU.PH CHECK!
-        showError(
-          groupEmail,
-          errorEmail,
-          "Access Denied: Only valid university emails (.edu.ph) are permitted.",
-        );
-        isValid = false;
-      }
-
-      // Validate Password
-      if (!passInput.value) {
-        showError(groupPass, errorPass, "Please create a password.");
-        isValid = false;
-      } else if (passInput.value.length < 8) {
-        showError(
-          groupPass,
-          errorPass,
-          "Password must be at least 8 characters.",
-        );
-        isValid = false;
-      }
-
-      // Validate Confirm Password
-      if (!confirmInput.value) {
-        showError(groupConfirm, errorConfirm, "Please confirm your password.");
-        isValid = false;
-      } else if (confirmInput.value !== passInput.value) {
-        showError(groupConfirm, errorConfirm, "Passwords do not match.");
-        isValid = false;
-      }
-
-      // HARD STOP: If anything failed, stop the function dead in its tracks
-      if (!isValid) return;
-
-      // If everything is perfect, proceed!
-      this.textContent = "Creating Account...";
-      this.style.opacity = "0.7";
-      this.style.pointerEvents = "none";
-
-      // Save the email to memory so verify.js can read it!
-      sessionStorage.setItem("nexo-pending-email", emailInput.value.trim());
-
-      setTimeout(() => {
-        // Send them to the OTP verification page, NOT the dashboard
-        window.location.href = "verify.html";
-      }, 1500);
-    };
-  }
-});
-
-// ==========================================
 // 6. GLOBAL DELEGATED LOGOUT HANDLER
 // ==========================================
 document.addEventListener("click", (e) => {
@@ -984,18 +885,31 @@ document.addEventListener("click", (e) => {
   if (logoutBtn) {
     e.preventDefault();
     try {
+      // Clear Student Credentials
       sessionStorage.removeItem("nexo-logged-in");
       sessionStorage.removeItem("nexo-student-name");
       sessionStorage.removeItem("nexo-student-email");
       sessionStorage.removeItem("nexo-student-intro-played");
       sessionStorage.removeItem("nexo-student-avatar");
-      sessionStorage.removeItem("nexo-pending-email");
-      sessionStorage.removeItem("nexo-pending-name");
       localStorage.removeItem("nexo-logged-in");
       localStorage.removeItem("nexo-student-name");
       localStorage.removeItem("nexo-student-email");
       localStorage.removeItem("nexo-student-avatar");
       localStorage.removeItem("nexo_student_settings");
+
+      // Clear Provider Credentials
+      sessionStorage.removeItem("nexo-provider-name");
+      sessionStorage.removeItem("nexo-provider-email");
+      localStorage.removeItem("nexo-provider-name");
+      localStorage.removeItem("nexo-provider-email");
+      localStorage.removeItem("nexo-provider-banner");
+      localStorage.removeItem("provider-banner-preview");
+      localStorage.removeItem("nexo-provider-logo");
+
+      // Clear Pending Registration & Auth State
+      sessionStorage.removeItem("nexo-pending-email");
+      sessionStorage.removeItem("nexo-pending-name");
+      sessionStorage.removeItem("nexo-pending-password");
     } catch (_) {}
     window.location.href = "index.html";
   }

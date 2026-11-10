@@ -597,10 +597,18 @@ function initSecurityActions() {
       btnUpdatePass.textContent = "Updating...";
 
       try {
+        const providerEmail = (
+          sessionStorage.getItem("nexo-provider-email") ||
+          localStorage.getItem("nexo-provider-email") ||
+          ""
+        ).toLowerCase();
+
         const res = await fetch(`${API_BASE}/api/settings/password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            email: providerEmail,
+            role: "provider",
             currentPassword: curr,
             newPassword: newPass,
             confirmPassword: confPass,
@@ -613,6 +621,18 @@ function initSecurityActions() {
           document.getElementById("current-password").value = "";
           document.getElementById("new-password").value = "";
           document.getElementById("confirm-password").value = "";
+          try {
+            const uList = JSON.parse(
+              localStorage.getItem("nexo_users") || "[]",
+            );
+            const u = uList.find(
+              (x) => (x.email || "").toLowerCase() === providerEmail,
+            );
+            if (u) {
+              u.password = newPass;
+              localStorage.setItem("nexo_users", JSON.stringify(uList));
+            }
+          } catch (_) {}
         } else {
           showToast(data.message || "Failed to update password.", true);
         }

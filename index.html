@@ -1,17 +1,19 @@
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXO | Dashboard</title>
-  <link rel="stylesheet" href="css/master.css" />
-  <script>
-    (function() {
-      var t = localStorage.getItem("nexo-theme");
-      if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
-        document.documentElement.classList.add("dark-theme");
-      }
-    })();
-  </script>
-</head>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NEXO | Dashboard</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function() {
+        var t = localStorage.getItem("nexo-theme");
+        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
 <body>
   <div id="header-placeholder"></div>
 
@@ -202,20 +204,20 @@
         Register Now
       </button>
     </section>
-
-    <!-- 3. GLOBAL FOOTER -->
-    <footer class="global-footer">
-      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
-      <div class="footer-links">
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="terms.html">Terms of Service</a>
-        <a href="credits.html">Credits</a>
-      </div>
-    </footer>
-
-    <!-- 3. JAVASCRIPT -->
-
-    <script src="js/main.js"></script>
-    <script src="js/auth.js"></script>
   </main>
+
+  <!-- 3. GLOBAL FOOTER -->
+  <footer class="global-footer">
+    <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Service</a>
+      <a href="credits.html">Credits</a>
+    </div>
+  </footer>
+
+  <!-- 3. JAVASCRIPT -->
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
 </body>
+</html>

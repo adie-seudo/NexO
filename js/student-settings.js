@@ -286,9 +286,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (nameInput) {
       nameInput.value = settings.fullName || currentName || "";
-      nameInput.addEventListener("input", () => {
-        setAvatarPreview(currentAvatarBase64);
-      });
+      if (!nameInput.dataset.boundInput) {
+        nameInput.dataset.boundInput = "true";
+        nameInput.addEventListener("input", () => {
+          setAvatarPreview(currentAvatarBase64);
+        });
+      }
     }
     if (emailInput) emailInput.value = settings.email || currentEmail || "";
     if (uniInput) uniInput.value = settings.university || "";
@@ -490,11 +493,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      const currentStudentEmail = (
+        sessionStorage.getItem("nexo-student-email") ||
+        localStorage.getItem("nexo-student-email") ||
+        ""
+      ).toLowerCase();
+
       try {
         const res = await fetch(`${API_BASE}/api/settings/password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            email: currentStudentEmail,
+            role: "student",
             currentPassword: curr,
             newPassword: newP,
             confirmPassword: conf,
@@ -503,8 +514,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (res.ok) {
           showToast("Password updated successfully!");
           passForm.reset();
+          try {
+            const uList = JSON.parse(
+              localStorage.getItem("nexo_users") || "[]",
+            );
+            const u = uList.find(
+              (x) => (x.email || "").toLowerCase() === currentStudentEmail,
+            );
+            if (u) {
+              u.password = newP;
+              localStorage.setItem("nexo_users", JSON.stringify(uList));
+            }
+          } catch (_) {}
         } else {
-          showToast("Failed to update password.", true);
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.message || "Failed to update password.", true);
         }
       } catch (err) {
         showToast("Password updated successfully!");

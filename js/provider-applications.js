@@ -231,6 +231,23 @@
       });
     });
 
+    // Close other dropdowns on click & close on outside click
+    document.querySelectorAll(".nexo-dropdown").forEach((dropdown) => {
+      dropdown.addEventListener("click", (e) => {
+        document.querySelectorAll(".nexo-dropdown").forEach((other) => {
+          if (other !== dropdown) other.classList.remove("active");
+        });
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".nexo-dropdown")) {
+        document.querySelectorAll(".nexo-dropdown.active").forEach((d) => {
+          d.classList.remove("active");
+        });
+      }
+    });
+
     // Apply Filters button
     const applyBtn = document.getElementById("apply-filters-btn");
     if (applyBtn) {
@@ -700,13 +717,20 @@
         .join("")
         .toUpperCase() || "ST";
 
+    let studentSettingsPic = "";
+    if (
+      studentSettings &&
+      studentSettings.email &&
+      app.studentEmail &&
+      studentSettings.email.toLowerCase() === app.studentEmail.toLowerCase()
+    ) {
+      studentSettingsPic = studentSettings.profilePicture || "";
+    }
+
     const avatar =
       app.studentProfilePic ||
       app.profilePicture ||
-      (studentSettings && studentSettings.profilePicture) ||
-      (typeof localStorage !== "undefined" &&
-        JSON.parse(localStorage.getItem("nexo_student_settings") || "{}")
-          .profilePicture) ||
+      studentSettingsPic ||
       "";
 
     const modalAvatarEl = document.getElementById("modal-student-avatar");
@@ -719,19 +743,20 @@
     }
 
     // Populate Fields
-    document.getElementById("modal-student-name").textContent = studentName;
-    document.getElementById("modal-student-email").textContent =
-      app.studentEmail || "student@university.edu.ph";
-    document.getElementById("modal-student-id").textContent =
-      app.studentId || "21-04589";
-    document.getElementById("modal-student-school").textContent =
-      app.university || "Batangas State University";
-    document.getElementById("modal-student-course").textContent =
-      app.course || "BS Information Technology";
-    document.getElementById("modal-student-year").textContent =
-      app.yearLevel || "3rd Year";
-    document.getElementById("modal-student-contact").textContent =
-      app.contactNumber || "+63 912 345 6789";
+    const nameEl = document.getElementById("modal-student-name");
+    if (nameEl) nameEl.textContent = studentName;
+    const emailEl = document.getElementById("modal-student-email");
+    if (emailEl) emailEl.textContent = app.studentEmail || "student@university.edu.ph";
+    const idEl = document.getElementById("modal-student-id");
+    if (idEl) idEl.textContent = app.studentId || "N/A";
+    const schoolEl = document.getElementById("modal-student-school");
+    if (schoolEl) schoolEl.textContent = app.university || "Batangas State University";
+    const courseEl = document.getElementById("modal-student-course");
+    if (courseEl) courseEl.textContent = app.course || "BS Information Technology";
+    const yearEl = document.getElementById("modal-student-year");
+    if (yearEl) yearEl.textContent = app.yearLevel || "N/A";
+    const contactEl = document.getElementById("modal-student-contact");
+    if (contactEl) contactEl.textContent = app.contactNumber || "N/A";
 
     document.getElementById("modal-program-title").textContent =
       app.scholarshipTitle || "Scholarship Program";

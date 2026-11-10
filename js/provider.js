@@ -214,12 +214,19 @@ function getProviderNotificationsFromStorage() {
 
   if (!Array.isArray(all)) all = [];
 
+  let dismissed = [];
+  try {
+    dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+  } catch (_) {}
+  if (!Array.isArray(dismissed)) dismissed = [];
+
   // 1. Sync live from local applications so any applied student generates a provider notification
   try {
     const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
     if (Array.isArray(apps)) {
       apps.forEach((app) => {
         const notifId = "notif_app_" + (app.id || "temp");
+        if (dismissed.includes(notifId) || dismissed.includes(String(app.id))) return;
         if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
           const rawDocs = Array.isArray(app.documents)
             ? app.documents
@@ -262,6 +269,7 @@ function getProviderNotificationsFromStorage() {
     if (Array.isArray(schols)) {
       schols.forEach((s) => {
         const notifId = "notif_schol_cap_" + s.id;
+        if (dismissed.includes(notifId) || dismissed.includes(String(s.id))) return;
         if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
           const limit =
             parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
@@ -414,11 +422,21 @@ function initNotificationBell() {
       );
       cached = cached.filter((n) => String(n.id) !== String(id));
       localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+
+      let dismissed = JSON.parse(
+        localStorage.getItem("nexo_dismissed_notifs") || "[]",
+      );
+      if (!Array.isArray(dismissed)) dismissed = [];
+      if (!dismissed.includes(String(id))) {
+        dismissed.push(String(id));
+        localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+      }
     } catch (_) {}
 
     // Send delete request to server if online
     fetch(`${API_BASE}/api/notifications/${id}`, {
       method: "DELETE",
+      keepalive: true,
     }).catch(() => {});
 
     loadNotifications();
@@ -464,11 +482,11 @@ function initNotificationBell() {
     if (!bodyEl) return;
 
     const list = Array.isArray(notifs) ? notifs : [];
-    const unreadCount = list.length;
+    const unreadCount = list.filter((n) => !n.read).length;
 
     if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
     if (currentDot) {
-      if (list.length > 0) {
+      if (unreadCount > 0) {
         currentDot.classList.add("active");
         notifBtn.classList.add("has-unread");
       } else {

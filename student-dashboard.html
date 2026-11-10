@@ -197,22 +197,12 @@
     <main class="student-dash-main">
       <!-- A. STUDENT GREETING SECTION -->
       <section class="student-greeting-section">
-        <p class="student-greeting-sub" id="student-greeting-sub"><script>
-          (function() {
-            var h = new Date().getHours();
-            document.write(h >= 5 && h < 12 ? 'Good morning,' : (h >= 12 && h < 18 ? 'Good afternoon,' : 'Good evening,'));
-          })();
-        </script></p>
+        <p class="student-greeting-sub" id="student-greeting-sub">Welcome back,</p>
         <div class="student-name-row">
-          <h1 class="student-name-title" id="student-name-title"><script>
-            (function() {
-              var n = sessionStorage.getItem("nexo-student-name") || localStorage.getItem("nexo-student-name");
-              document.write(n && n.trim() ? n : "Student Scholar");
-            })();
-          </script><noscript>Student Scholar</noscript></h1>
+          <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
         </div>
         <p class="student-motto">
-          Keep going! Your education journey opens more oppurtunities.
+          Keep going! Your education journey opens more opportunities.
         </p>
       </section>
 

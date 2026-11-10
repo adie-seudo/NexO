@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initLoginToggleAndSubmit();
   initPasswordVisibility();
   initRegisterPage();
-  initLogoTypingEffect(); // <-- ADD THIS LINE
+  initLogoTypingEffect();
   initGetStartedButton();
 });
 
@@ -235,6 +235,8 @@ function initLoginToggleAndSubmit() {
 
       // 5. Successful Login Execution
       if (matchedUser.role === "provider") {
+        localStorage.removeItem("nexo-provider-banner");
+        localStorage.removeItem("provider-banner-preview");
         sessionStorage.setItem("nexo-logged-in", "provider");
         sessionStorage.setItem(
           "nexo-provider-name",
@@ -282,7 +284,7 @@ function initLoginToggleAndSubmit() {
 // =========================================
 function initPasswordVisibility() {
   const togglePasswordBtn = document.getElementById("toggle-password");
-  const loginPasswordInput = document.getElementById("password"); // Scoped locally
+  const loginPasswordInput = document.getElementById("password");
 
   if (togglePasswordBtn && loginPasswordInput) {
     togglePasswordBtn.addEventListener("click", () => {
@@ -294,128 +296,150 @@ function initPasswordVisibility() {
 }
 
 // =========================================
-// 4. REGISTER PAGE LOGIC
+// 4. REGISTER PAGE LOGIC (Synchronized with register.html)
 // =========================================
 function initRegisterPage() {
+  const registerForm = document.getElementById("register-form");
+  const submitBtn = document.getElementById("reg-submit-btn");
+  if (!registerForm && !submitBtn) return;
+
   const registerRoleBadge = document.getElementById("register-role-badge");
   const registerSubtitle = document.getElementById("register-subtitle");
-  const regNameLabel = document.getElementById("reg-name-label");
-  const regNameInput = document.getElementById("reg-name");
-  const regNameIcon = document.getElementById("reg-name-icon");
-  const regEmailInput = document.getElementById("reg-email");
+
+  const nameInput = document.getElementById("reg-name");
+  const emailInput = document.getElementById("reg-email");
+  const passInput = document.getElementById("reg-pass");
+  const confirmInput = document.getElementById("reg-confirm");
+
+  const groupName = document.getElementById("group-name");
+  const groupEmail = document.getElementById("group-email");
+  const groupPass = document.getElementById("group-pass");
+  const groupConfirm = document.getElementById("group-confirm");
+
+  const errorName = document.getElementById("error-name");
+  const errorEmail = document.getElementById("error-email");
+  const errorPass = document.getElementById("error-pass");
+  const errorConfirm = document.getElementById("error-confirm");
+
+  const showError = (group, errorEl, message) => {
+    if (group) group.classList.add("has-error", "input-error");
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.style.display = "block";
+    }
+  };
+
+  const clearError = (group, errorEl) => {
+    if (group) group.classList.remove("has-error", "input-error");
+    if (errorEl) {
+      errorEl.textContent = "";
+      errorEl.style.display = "none";
+    }
+  };
+
+  // Real-time input listener: auto-clear error states
+  [nameInput, emailInput, passInput, confirmInput].forEach((input) => {
+    if (input) {
+      input.addEventListener("input", function () {
+        const group = this.closest(".input-group");
+        const errorEl = group ? group.nextElementSibling : null;
+        if (group && errorEl && errorEl.classList.contains("error-text")) {
+          clearError(group, errorEl);
+        }
+      });
+    }
+  });
 
   if (registerRoleBadge) {
     const urlParams = new URLSearchParams(window.location.search);
     const roleParam = urlParams.get("role") || "student";
-
     if (roleParam === "provider") {
       registerRoleBadge.textContent = "Provider";
-      registerSubtitle.textContent =
-        "Join NEXO to post scholarships and connect with top students.";
-      if (regNameLabel)
-        regNameLabel.textContent = "Organization / Provider Name";
-      if (regNameInput)
-        regNameInput.placeholder = "e.g., CHED / Megaworld Foundation";
-      if (regEmailInput) regEmailInput.placeholder = "contact@organization.org";
-      if (regNameIcon) {
-        regNameIcon.src = "assets/organization-icon.png";
-        regNameIcon.alt = "Organization Name";
+      if (registerSubtitle) {
+        registerSubtitle.textContent =
+          "Join NEXO to post scholarships and connect with top students.";
       }
+      if (emailInput) emailInput.placeholder = "contact@organization.org";
     } else {
       registerRoleBadge.textContent = "Student";
-      registerSubtitle.textContent =
-        "Join NEXO and get access to scholarships and more opportunities.";
-      if (regNameLabel) regNameLabel.textContent = "Full Name";
-      if (regNameInput) regNameInput.placeholder = "Adrian Del Mundo";
-      if (regEmailInput) regEmailInput.placeholder = "you@university.edu.ph";
-      if (regNameIcon) {
-        regNameIcon.src = "assets/human-icon.png";
-        regNameIcon.alt = "Full Name";
+      if (registerSubtitle) {
+        registerSubtitle.textContent =
+          "Join NEXO and get access to scholarships and more opportunities.";
       }
+      if (emailInput) emailInput.placeholder = "student@university.edu.ph";
     }
   }
 
-  // Register Password Toggles
-  function setupRegisterPasswordToggle(toggleId, inputId) {
-    const toggleBtn = document.getElementById(toggleId);
-    const inputField = document.getElementById(inputId);
-    if (toggleBtn && inputField) {
-      toggleBtn.addEventListener("click", () => {
-        const isHidden = inputField.getAttribute("type") === "password";
-        inputField.setAttribute("type", isHidden ? "text" : "password");
-        toggleBtn.classList.toggle("show-active");
-      });
+  // Handle Form Submission
+  const handleRegisterSubmit = (e) => {
+    if (e) e.preventDefault();
+    let isValid = true;
+
+    // 1. Validate Full Name
+    if (!nameInput || !nameInput.value.trim()) {
+      showError(groupName, errorName, "Please enter your full name.");
+      isValid = false;
     }
-  }
 
-  setupRegisterPasswordToggle("toggle-reg-password", "reg-password");
-  setupRegisterPasswordToggle("toggle-reg-confirm", "reg-confirm-password");
+    // 2. Validate Email
+    const emailVal = emailInput ? emailInput.value.trim().toLowerCase() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Register Form Validation
-  const registerForm = document.getElementById("register-form");
-  const regEmailGroup = document.getElementById("reg-email-group");
-  const regEmailError = document.getElementById("reg-email-error");
-  const regPasswordInput = document.getElementById("reg-password");
-  const regConfirmInput = document.getElementById("reg-confirm-password");
-  const regConfirmGroup = document.getElementById("reg-confirm-group");
-  const regMatchError = document.getElementById("reg-match-error");
+    if (!emailVal) {
+      showError(groupEmail, errorEmail, "Please enter your school email.");
+      isValid = false;
+    } else if (!emailRegex.test(emailVal)) {
+      showError(groupEmail, errorEmail, "Please enter a valid email address.");
+      isValid = false;
+    } else if (!emailVal.endsWith(".edu.ph")) {
+      showError(
+        groupEmail,
+        errorEmail,
+        "Access Denied: Only valid university emails (.edu.ph) are permitted.",
+      );
+      isValid = false;
+    }
 
-  if (registerForm) {
-    registerForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      let isValid = true;
-      const isStudent =
-        registerRoleBadge && registerRoleBadge.textContent.trim() === "Student";
-      const emailValue = regEmailInput
-        ? regEmailInput.value.trim().toLowerCase()
-        : "";
+    // 3. Validate Password
+    const passVal = passInput ? passInput.value : "";
+    if (!passVal) {
+      showError(groupPass, errorPass, "Please create a password.");
+      isValid = false;
+    } else if (passVal.length < 8) {
+      showError(groupPass, errorPass, "Password must be at least 8 characters.");
+      isValid = false;
+    }
 
-      if (isStudent && !emailValue.endsWith(".edu.ph")) {
-        if (regEmailGroup) regEmailGroup.classList.add("input-error");
-        if (regEmailError) regEmailError.style.display = "block";
-        isValid = false;
-      } else {
-        if (regEmailGroup) regEmailGroup.classList.remove("input-error");
-        if (regEmailError) regEmailError.style.display = "none";
-      }
+    // 4. Validate Confirm Password
+    const confirmVal = confirmInput ? confirmInput.value : "";
+    if (!confirmVal) {
+      showError(groupConfirm, errorConfirm, "Please confirm your password.");
+      isValid = false;
+    } else if (confirmVal !== passVal) {
+      showError(groupConfirm, errorConfirm, "Passwords do not match.");
+      isValid = false;
+    }
 
-      if (
-        regPasswordInput &&
-        regConfirmInput &&
-        regPasswordInput.value !== regConfirmInput.value
-      ) {
-        if (regConfirmGroup) regConfirmGroup.classList.add("input-error");
-        if (regMatchError) regMatchError.style.display = "block";
-        isValid = false;
-      } else {
-        if (regConfirmGroup) regConfirmGroup.classList.remove("input-error");
-        if (regMatchError) regMatchError.style.display = "none";
-      }
+    if (!isValid) return;
 
-      if (isValid) {
-        // Save to session storage for the next steps
-        if (regEmailInput && regEmailInput.value) {
-          sessionStorage.setItem(
-            "nexo-pending-email",
-            regEmailInput.value.trim(),
-          );
-        }
-        const nameInput =
-          document.getElementById("reg-name") ||
-          document.querySelector('#register-form input[type="text"]');
-        if (nameInput && nameInput.value) {
-          sessionStorage.setItem("nexo-pending-name", nameInput.value.trim());
-        }
+    if (submitBtn) {
+      submitBtn.textContent = "Creating Account...";
+      submitBtn.style.opacity = "0.7";
+      submitBtn.style.pointerEvents = "none";
+    }
 
-        // Navigate based on role
-        if (isStudent) {
-          window.location.href = "verify.html";
-        } else {
-          window.location.href = "provider-setup.html";
-        }
-      }
-    });
-  }
+    // Persist pending credentials into sessionStorage so verify.js can register user
+    sessionStorage.setItem("nexo-pending-name", nameInput.value.trim());
+    sessionStorage.setItem("nexo-pending-email", emailVal);
+    sessionStorage.setItem("nexo-pending-password", passVal);
+
+    setTimeout(() => {
+      window.location.href = "verify.html";
+    }, 900);
+  };
+
+  if (registerForm) registerForm.onsubmit = handleRegisterSubmit;
+  if (submitBtn) submitBtn.onclick = handleRegisterSubmit;
 }
 
 // =========================================

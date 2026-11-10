@@ -103,13 +103,36 @@ function initDashboardModals() {
         if (draftBtn) draftBtn.textContent = "Save as Draft";
 
         // Reset the form so it opens fresh
-
         const step1Form = document.getElementById("step-1-form");
         if (step1Form) step1Form.reset();
         if (DOM.typeSelected) {
           DOM.typeSelected.querySelector("span").textContent = "Select type";
           DOM.typeSelected.classList.remove("has-value");
           if (DOM.typeInput) DOM.typeInput.value = "";
+        }
+        if (DOM.reqList) {
+          DOM.reqList.innerHTML = `
+            <div class="req-card">
+              <div class="req-icon">
+                <img src="assets/human-icon.png" alt="ID">
+              </div>
+              <div class="req-text">
+                <h4>Valid School ID</h4>
+                <p>Upload a clear photo of your student ID. (Max 5MB)</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
+            </div>
+            <div class="req-card">
+              <div class="req-icon">
+                <img src="assets/upload-icon.png" alt="Grades">
+              </div>
+              <div class="req-text">
+                <h4>Latest Grades/Transcript</h4>
+                <p>Upload your latest grades or official transcript.</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
+            </div>
+          `;
         }
 
         DOM.creationModal.classList.add("active");
@@ -808,10 +831,24 @@ async function loadPersistedData() {
     } catch (_) {}
   }
 
+  const currentProviderEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase();
+
+  const myDrafts = currentProviderEmail
+    ? drafts.filter(
+        (d) =>
+          !d.providerEmail ||
+          d.providerEmail.toLowerCase() === currentProviderEmail,
+      )
+    : drafts;
+
   updateStatsUI(
     scholarships.length,
     scholarships.length,
-    drafts.length,
+    myDrafts.length,
     applications.length,
   );
 
@@ -873,10 +910,10 @@ async function loadPersistedData() {
 
   if (draftsFeed) {
     draftsFeed.innerHTML = "";
-    if (drafts.length > 0) {
+    if (myDrafts.length > 0) {
       if (emptyDraftsCard)
         emptyDraftsCard.setAttribute("style", "display: none !important;");
-      drafts.forEach((draft) => {
+      myDrafts.forEach((draft) => {
         draftsFeed.appendChild(createDraftCard(draft));
       });
     } else {
@@ -1018,12 +1055,6 @@ function initPublishAndDraft() {
             JSON.stringify(cachedNotifs),
           );
 
-          fetch(`${API_BASE}/api/notifications`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cachedNotifs[0]),
-          }).catch(() => {});
-
           window.dispatchEvent(new CustomEvent("nexo:notification"));
         } catch (_) {}
 
@@ -1120,12 +1151,19 @@ function initPublishAndDraft() {
         const dateVal = DOM.dateInput ? DOM.dateInput.value : "";
         const collectedRequirements = getCollectedRequirements();
 
+        const providerEmail = (
+          sessionStorage.getItem("nexo-provider-email") ||
+          localStorage.getItem("nexo-provider-email") ||
+          ""
+        ).toLowerCase();
+
         const draftPayload = {
           id: currentEditingDraftId || "draft_" + Date.now(),
           title: draftTitle,
           desc: draftDesc,
           type: typeVal,
           date: dateVal,
+          providerEmail,
           applicantLimit: DOM.limitInput
             ? parseInt(DOM.limitInput.value, 10) || 200
             : 200,
