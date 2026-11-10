@@ -418,11 +418,31 @@ function initNotificationBell() {
 
     // Attach click listeners to individual items: clicking permanently deletes the notification so it won't flood
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
+        const targetAppId = item.dataset.appId;
         if (notifId) {
           deleteStudentNotification(notifId);
           item.remove();
+        }
+
+        // If already on submissions page, open modal directly without page reload or persistent query param loop
+        if (
+          window.location.pathname.includes("student-submissions.html") &&
+          targetAppId &&
+          Array.isArray(allStudentApplications)
+        ) {
+          const match = allStudentApplications.find(
+            (a) =>
+              String(a.id) === String(targetAppId) ||
+              String(a.scholarshipId) === String(targetAppId),
+          );
+          if (match) {
+            e.preventDefault();
+            const notifDropdown = document.getElementById("student-notif-dropdown");
+            if (notifDropdown) notifDropdown.classList.remove("active");
+            openSubmissionDetailsModal(match);
+          }
         }
       });
     });
@@ -694,21 +714,36 @@ async function loadStudentData() {
   // Render application feed
   renderFilteredSubmissions();
 
-  // Handle direct one-tap navigation to submission from Scholarship Directory
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetId = urlParams.get("id") || urlParams.get("applicationId");
-    if (targetId) {
-      const match = applications.find(
-        (a) =>
-          String(a.id) === String(targetId) ||
-          String(a.scholarshipId) === String(targetId),
-      );
-      if (match) {
-        setTimeout(() => openSubmissionDetailsModal(match), 200);
+  // Handle direct one-tap navigation to submission from Scholarship Directory or Notification
+  if (!window._hasHandledSubDetailDeepLink) {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId =
+        urlParams.get("id") ||
+        urlParams.get("applicationId") ||
+        urlParams.get("appId");
+      if (targetId) {
+        window._hasHandledSubDetailDeepLink = true;
+        const match = applications.find(
+          (a) =>
+            String(a.id) === String(targetId) ||
+            String(a.scholarshipId) === String(targetId),
+        );
+        if (match) {
+          if (window._subModalOpenTimeout) clearTimeout(window._subModalOpenTimeout);
+          window._subModalOpenTimeout = setTimeout(() => {
+            if (!window._subModalUserDismissed) {
+              openSubmissionDetailsModal(match);
+            }
+          }, 200);
+        }
+        // Immediately clean URL search query parameters so background sync intervals never loop
+        try {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (_) {}
       }
-    }
-  } catch (_) {}
+    } catch (_) {}
+  }
 }
 
 function renderFilteredSubmissions() {
@@ -780,21 +815,27 @@ function renderFilteredSubmissions() {
   appsFeed.style.display = "flex";
   renderApplicationCards(listToRender, appsFeed);
 
-  // Deep-linking: scroll to and highlight target submission from notification click
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const targetId = urlParams.get("id") || urlParams.get("appId");
-    if (targetId) {
-      setTimeout(() => {
-        const targetCard = document.querySelector(`[data-app-id="${targetId}"]`);
-        if (targetCard) {
-          targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
-          targetCard.style.outline = "2.5px solid #8b5cf6";
-          targetCard.style.boxShadow = "0 0 20px rgba(139, 92, 246, 0.4)";
-        }
-      }, 250);
-    }
-  } catch (_) {}
+  // Deep-linking: scroll to and highlight target submission from notification click (only once)
+  if (!window._hasHandledSubScrollDeepLink) {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetId =
+        urlParams.get("id") ||
+        urlParams.get("appId") ||
+        urlParams.get("applicationId");
+      if (targetId) {
+        window._hasHandledSubScrollDeepLink = true;
+        setTimeout(() => {
+          const targetCard = document.querySelector(`[data-app-id="${targetId}"]`);
+          if (targetCard) {
+            targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+            targetCard.style.outline = "2.5px solid #8b5cf6";
+            targetCard.style.boxShadow = "0 0 20px rgba(139, 92, 246, 0.4)";
+          }
+        }, 250);
+      }
+    } catch (_) {}
+  }
 }
 
 // Render student application cards
@@ -922,6 +963,13 @@ function renderApplicationCards(applications, container) {
 
 // Open the Full Submission Details Modal
 function openSubmissionDetailsModal(app) {
+  window._subModalUserDismissed = false;
+  window._isSubDetailsModalOpen = true;
+  if (window._subModalOpenTimeout) {
+    clearTimeout(window._subModalOpenTimeout);
+    window._subModalOpenTimeout = null;
+  }
+
   let modalOverlay = document.getElementById("student-sub-modal-overlay");
 
   // Dynamically create modal if not present on page (e.g. from Dashboard)
@@ -1348,6 +1396,19 @@ function openSubmissionDetailsModal(app) {
 
   // Modal Close Handlers
   function closeSubModal() {
+    window._subModalUserDismissed = true;
+    window._isSubDetailsModalOpen = false;
+    if (window._subModalOpenTimeout) {
+      clearTimeout(window._subModalOpenTimeout);
+      window._subModalOpenTimeout = null;
+    }
+    // Clean any lingering query parameter from the URL address bar
+    try {
+      if (window.location.search) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch (_) {}
+
     modalOverlay.classList.remove("active");
     document.body.style.overflow = "";
     document.removeEventListener("keydown", handleEsc);
