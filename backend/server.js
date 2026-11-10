@@ -618,10 +618,12 @@ async function handleRequest(req, res) {
         });
       }
       if (requestedRole && matchedUser.role !== requestedRole) {
-        return sendJson(res, 403, {
-          success: false,
-          error: `This email is registered as a ${matchedUser.role} account. Please switch tabs.`,
-        });
+        if (!(matchedUser.role === "admin")) {
+          return sendJson(res, 403, {
+            success: false,
+            error: `This email is registered as a ${matchedUser.role} account. Please switch tabs.`,
+          });
+        }
       }
       if (String(matchedUser.password || "") !== password) {
         return sendJson(res, 401, {

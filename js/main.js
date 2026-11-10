@@ -11,17 +11,18 @@
     localStorage.getItem("nexo-provider-email") || ""
   ).toLowerCase();
 
+  // Developer & System Administration console is directly accessible to manage accounts
+  if (path === "admin.html") {
+    return;
+  }
+
   if (path.startsWith("student-")) {
-    if (role !== "student") {
+    if (role !== "student" && role !== "admin") {
       window.location.replace(role === "provider" ? "provider-dashboard.html" : "index.html");
     }
   } else if (path.startsWith("provider-") && path !== "provider-setup.html") {
-    if (role !== "provider") {
+    if (role !== "provider" && role !== "admin") {
       window.location.replace(role === "student" ? "student-dashboard.html" : "index.html");
-    }
-  } else if (path === "admin.html") {
-    if (role !== "admin" && !(role === "provider" && email === "admin@admin")) {
-      window.location.replace("index.html");
     }
   }
 })();

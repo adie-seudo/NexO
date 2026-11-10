@@ -198,17 +198,17 @@ function initLoginToggleAndSubmit() {
       }
 
       // 3. Check role selection match
-      if (isStudent && matchedUser.role !== "student") {
+      if (isStudent && matchedUser.role !== "student" && matchedUser.role !== "admin") {
         if (emailGroup) emailGroup.classList.add("input-error", "has-error");
         if (emailError) {
           emailError.textContent =
-            "Account Mismatch: This account is a Provider. Please select the Provider tab to log in.";
+            "Account Mismatch: This account is a Provider/Admin. Please select the Provider tab to log in.";
           emailError.style.display = "block";
         }
         return;
       }
 
-      if (!isStudent && matchedUser.role !== "provider") {
+      if (!isStudent && matchedUser.role !== "provider" && matchedUser.role !== "admin") {
         if (emailGroup) emailGroup.classList.add("input-error", "has-error");
         if (emailError) {
           emailError.textContent =
@@ -221,7 +221,7 @@ function initLoginToggleAndSubmit() {
       // 4. Password validation
       const expectedPassword =
         matchedUser.password ||
-        (matchedUser.role === "provider" ? "admin" : "password123");
+        (matchedUser.role === "student" ? "password123" : "admin");
 
       if (passwordValue !== expectedPassword) {
         if (passwordGroup) passwordGroup.classList.add("input-error", "has-error");
@@ -234,6 +234,23 @@ function initLoginToggleAndSubmit() {
       }
 
       // 5. Successful Login Execution
+      if (matchedUser.role === "admin") {
+        sessionStorage.setItem("nexo-logged-in", "admin");
+        sessionStorage.setItem(
+          "nexo-provider-name",
+          matchedUser.name || "NEXO Admin",
+        );
+        sessionStorage.setItem("nexo-provider-email", matchedUser.email);
+        localStorage.setItem("nexo-logged-in", "admin");
+        localStorage.setItem(
+          "nexo-provider-name",
+          matchedUser.name || "NEXO Admin",
+        );
+        localStorage.setItem("nexo-provider-email", matchedUser.email);
+        window.location.href = "admin.html";
+        return;
+      }
+
       if (matchedUser.role === "provider") {
         localStorage.removeItem("nexo-provider-banner");
         localStorage.removeItem("provider-banner-preview");

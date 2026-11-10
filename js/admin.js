@@ -293,7 +293,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderStats() {
     const studentUsers = users.filter((u) => u.role === "student");
-    const providerUsers = users.filter((u) => u.role === "provider");
+    const providerUsers = users.filter(
+      (u) => u.role === "provider" || u.role === "admin",
+    );
 
     if (statStudentCount) statStudentCount.textContent = studentUsers.length;
     if (statProviderCount) statProviderCount.textContent = providerUsers.length;
@@ -462,7 +464,9 @@ document.addEventListener("DOMContentLoaded", () => {
       ? filterProviderStatus.value
       : "all";
 
-    let providerUsers = users.filter((u) => u.role === "provider");
+    let providerUsers = users.filter(
+      (u) => u.role === "provider" || u.role === "admin",
+    );
 
     if (filterStatus === "active") {
       providerUsers = providerUsers.filter((u) => u.status !== "banned");
@@ -535,7 +539,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span style="font-size: 11px; background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "admin")}</span>
               </p>
               <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
-                Scholarship Organization &bull; Verified Provider
+                ${user.role === "admin" ? "NEXO System Administrator &bull; Developer Access" : "Scholarship Organization &bull; Verified Provider"}
               </p>
             </div>
           </div>
