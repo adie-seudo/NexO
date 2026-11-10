@@ -48,7 +48,7 @@
         line-height: 1.5;
       }
 
-      /* Filter & Search Bar */
+      /* Filter & Search Bar for Posts */
       .posts-controls-bar {
         display: flex;
         flex-direction: column;
@@ -362,20 +362,486 @@
         border-color: #374151;
       }
 
-      /* Empty State */
-      .posts-empty-card {
+      /* ========================================= */
+      /* APPLICANTS MANAGEMENT VIEW (SUB-VIEW)     */
+      /* ========================================= */
+      .active-post-detail-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(168, 85, 247, 0.05));
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin-bottom: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .dark-theme .active-post-detail-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(30, 27, 75, 0.4));
+        border-color: rgba(139, 92, 246, 0.5);
+      }
+      .active-post-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .active-post-tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        background: #8b5cf6;
+        color: #ffffff;
+        padding: 3px 9px;
+        border-radius: 6px;
+      }
+      .active-post-fcfs-tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        background: rgba(139, 92, 246, 0.15);
+        color: #8b5cf6;
+        padding: 3px 9px;
+        border-radius: 6px;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+      }
+      .dark-theme .active-post-fcfs-tag {
+        background: rgba(139, 92, 246, 0.25);
+        color: #c4b5fd;
+      }
+      .active-post-title {
+        font-size: 20px;
+        font-weight: 800;
+        margin: 0;
+        color: var(--text-primary);
+        line-height: 1.3;
+      }
+      .active-post-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 13px;
+        color: var(--text-secondary, #6b7280);
+      }
+      .active-post-desc {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text-primary);
+        margin: 0;
+        word-break: break-word;
+      }
+
+      /* Filter Tabs for Applicants */
+      .filter-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .filter-tab {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-secondary, #6b7280);
+        font-size: 14px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .filter-tab:hover {
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+        background-color: #f5f3ff;
+      }
+      .filter-tab.active {
+        border-color: #8b5cf6;
+        background-color: #8b5cf6;
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .dark-theme .filter-tab {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .dark-theme .filter-tab:hover {
+        background-color: #374151;
+      }
+      .dark-theme .filter-tab.active {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+        color: #ffffff;
+      }
+
+      /* Search Bar */
+      .search-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .search-input-wrapper {
+        flex: 1;
+        position: relative;
+      }
+      .search-input {
+        width: 100%;
+        padding: 10px 10px 10px 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary);
+        box-sizing: border-box;
+      }
+      .dark-theme .search-input {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+      }
+
+      /* Application Cards (Identical to provider-applications.html) */
+      .provider-app-card {
         background: var(--card-bg, #ffffff);
         border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+      .provider-app-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .dark-theme .provider-app-card {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .provider-app-main-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+      .provider-app-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #6941c6);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(105, 65, 198, 0.25);
+      }
+      .provider-app-details {
+        flex: 1;
+        min-width: 0;
+      }
+      .provider-app-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .provider-app-student-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .provider-app-badge {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+      }
+      .badge-status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .badge-status-review {
+        background-color: #ede9fe;
+        color: #6d28d9;
+      }
+      .badge-status-approved {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .dark-theme .badge-status-pending {
+        background-color: #78350f;
+        color: #fde68a;
+      }
+      .dark-theme .badge-status-review {
+        background-color: #4c1d95;
+        color: #ddd6fe;
+      }
+      .dark-theme .badge-status-approved {
+        background-color: #14532d;
+        color: #bbf7d0;
+      }
+      .dark-theme .badge-status-rejected {
+        background-color: #7f1d1d;
+        color: #fecaca;
+      }
+      .provider-app-program {
+        margin: 2px 0 4px;
+        font-size: 13.5px;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .provider-app-school {
+        font-size: 12.5px;
+        color: var(--text-secondary, #6b7280);
+        margin: 0 0 8px;
+      }
+      .provider-app-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--text-secondary, #6b7280);
+      }
+      .provider-app-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .provider-app-actions-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+      }
+      .dark-theme .provider-app-actions-row {
+        border-color: #374151;
+      }
+      .btn-review-app {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 14px;
+        font-size: 13px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      /* Modal System (Review, Preview, Confirmation) */
+      .nexo-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+      }
+      .nexo-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+      .nexo-modal-container {
+        background: var(--card-bg, #ffffff);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 580px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        padding: 24px;
+        transform: translateY(20px) scale(0.98);
+        transition: transform 0.25s ease;
+        position: relative;
+      }
+      .nexo-modal-overlay.active .nexo-modal-container {
+        transform: translateY(0) scale(1);
+      }
+      .dark-theme .nexo-modal-container {
+        background: #1f2937;
+        border: 1px solid #374151;
+      }
+      .modal-close-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+      }
+      .modal-close-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+      .modal-info-card {
+        background: rgba(0, 0, 0, 0.02);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 14px 0;
+      }
+      .dark-theme .modal-info-card {
+        background: #111827;
+        border-color: #374151;
+      }
+      .modal-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 14px;
+        font-size: 13px;
+        margin-top: 8px;
+      }
+      .modal-info-label {
+        color: var(--text-secondary, #6b7280);
+        font-size: 11.5px;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .modal-info-value {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .modal-doc-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        background: var(--card-bg, #ffffff);
+      }
+      .dark-theme .modal-doc-item {
+        background: #111827;
+        border-color: #374151;
+      }
+      .btn-doc-view {
+        padding: 6px 12px;
+        font-size: 12.5px;
+        border-radius: 6px;
+        border: 1px solid #8b5cf6;
+        background: #f5f3ff;
+        color: #8b5cf6;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+      }
+      .btn-doc-view:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+      .dark-theme .btn-doc-view {
+        background: #3730a3;
+        color: #e0e7ff;
+      }
+      .decision-btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .decision-btn {
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
+      .decision-approve {
+        background: #16a34a;
+        color: #fff;
+      }
+      .decision-approve:hover {
+        background: #15803d;
+      }
+      .decision-review {
+        background: #8b5cf6;
+        color: #fff;
+      }
+      .decision-review:hover {
+        background: #7c3aed;
+      }
+      .decision-reject {
+        background: #ef4444;
+        color: #fff;
+      }
+      .decision-reject:hover {
+        background: #dc2626;
+      }
+      .decision-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed !important;
+        filter: grayscale(40%);
+        pointer-events: none;
+      }
+      .review-notes-textarea {
+        width: 100%;
+        min-height: 80px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary);
+        font-size: 13.5px;
+        resize: vertical;
+        box-sizing: border-box;
+      }
+      .dark-theme .review-notes-textarea {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      /* Empty State */
+      .empty-state, .posts-empty-card {
+        background: var(--card-bg, #ffffff);
+        border: 1px dashed var(--border-color, #e5e7eb);
         border-radius: 16px;
         padding: 48px 24px;
         text-align: center;
       }
-
-      .dark-theme .posts-empty-card {
+      .dark-theme .empty-state, .dark-theme .posts-empty-card {
         background: #181d27;
         border-color: #272f3d;
       }
-
       .posts-empty-icon {
         width: 64px;
         height: 64px;
@@ -583,89 +1049,178 @@
     </header>
 
     <!-- ========================================= -->
-    <!-- 2. MAIN POSTED SCHOLARSHIPS CONTENT       -->
+    <!-- 2. MAIN CONTAINER                         -->
     <!-- ========================================= -->
     <main class="posts-container">
-      <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-        <a
-          href="provider-dashboard.html"
-          class="btn btn-secondary"
-          style="display: inline-block; padding: 6px 12px; font-size: 14px; text-decoration: none;"
-          >&larr; Back to Dashboard</a
-        >
-        <a
-          href="provider-dashboard.html#open-create"
-          class="btn btn-primary"
-          id="btn-create-new-schol"
-          style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13.5px; border-radius: 8px; text-decoration: none;"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Post New Scholarship
-        </a>
-      </div>
-
-      <div class="posts-header-row">
-        <h1 class="posts-title">Posted Scholarships</h1>
-      </div>
-      <p class="posts-subtitle">
-        Manage your published scholarship opportunities and view applicant submissions for each specific post.
-      </p>
-
-      <!-- Search and Filter Toolbar -->
-      <div class="posts-controls-bar">
-        <div class="posts-search-wrapper">
-          <svg class="posts-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input
-            type="text"
-            class="posts-search-input"
-            id="posts-search-input"
-            placeholder="Search by scholarship title, type, or keyword..."
-            aria-label="Search scholarships"
-          />
+      <!-- 2A. POSTED SCHOLARSHIPS LIST VIEW -->
+      <div id="posts-list-view">
+        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <a
+            href="provider-dashboard.html"
+            class="btn btn-secondary"
+            style="display: inline-block; padding: 6px 12px; font-size: 14px; text-decoration: none;"
+            >&larr; Back to Dashboard</a
+          >
+          <a
+            href="provider-dashboard.html#open-create"
+            class="btn btn-primary"
+            id="btn-create-new-schol"
+            style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13.5px; border-radius: 8px; text-decoration: none;"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Post New Scholarship
+          </a>
         </div>
 
-        <div class="posts-tabs">
-          <button type="button" class="posts-tab active" data-filter="all" id="tab-posts-all">All (0)</button>
-          <button type="button" class="posts-tab" data-filter="open" id="tab-posts-open">Active / Open (0)</button>
-          <button type="button" class="posts-tab" data-filter="closed" id="tab-posts-closed">Closed (0)</button>
-          <span id="posts-count-label" style="margin-left: auto; font-size: 13px; color: var(--text-secondary, #6b7280);">
-            Showing 0 posts
+        <div class="posts-header-row">
+          <h1 class="posts-title">Posted Scholarships</h1>
+        </div>
+        <p class="posts-subtitle">
+          Manage your published scholarship opportunities, monitor submissions, and review applicants.
+        </p>
+
+        <!-- Search and Filter Toolbar -->
+        <div class="posts-controls-bar">
+          <div class="posts-search-wrapper">
+            <svg class="posts-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              class="posts-search-input"
+              id="posts-search-input"
+              placeholder="Search by scholarship title, type, or keyword..."
+              aria-label="Search scholarships"
+            />
+          </div>
+
+          <div class="posts-tabs">
+            <button type="button" class="posts-tab active" data-filter="all" id="tab-posts-all">All (0)</button>
+            <button type="button" class="posts-tab" data-filter="open" id="tab-posts-open">Active / Open (0)</button>
+            <button type="button" class="posts-tab" data-filter="closed" id="tab-posts-closed">Closed (0)</button>
+            <span id="posts-count-label" style="margin-left: auto; font-size: 13px; color: var(--text-secondary, #6b7280);">
+              Showing 0 posts
+            </span>
+          </div>
+        </div>
+
+        <!-- Feed Container -->
+        <div class="posts-grid" id="posts-feed">
+          <!-- Dynamically rendered scholarship post cards -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="posts-empty-card" id="posts-empty-state" style="display: none;">
+          <div class="posts-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+          </div>
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No Posted Scholarships Yet</h3>
+          <p style="font-size: 14px; color: var(--text-secondary, #6b7280); max-width: 420px; margin: 0 auto 20px;">
+            You haven't posted any scholarship opportunities yet. Create a new scholarship to start receiving student applications.
+          </p>
+          <a
+            href="provider-dashboard.html#open-create"
+            class="btn btn-primary"
+            style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; text-decoration: none;"
+          >
+            + Create New Scholarship
+          </a>
+        </div>
+      </div>
+
+      <!-- 2B. POST APPLICANTS MANAGEMENT VIEW (IN-PAGE VIEW FOR THAT SPECIFIC POST) -->
+      <div id="post-applicants-view" style="display: none;">
+        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="btn-back-to-posts"
+            style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13.5px; border-radius: 8px; cursor: pointer;"
+          >
+            &larr; Back to Posted Scholarships
+          </button>
+          <span style="font-size: 12px; font-weight: 600; color: #8b5cf6; background: rgba(139,92,246,0.1); padding: 4px 10px; border-radius: 99px;">
+            First-Come, First-Served Listing
           </span>
         </div>
-      </div>
 
-      <!-- Feed Container -->
-      <div class="posts-grid" id="posts-feed">
-        <!-- Dynamically rendered scholarship post cards -->
-      </div>
-
-      <!-- Empty State -->
-      <div class="posts-empty-card" id="posts-empty-state" style="display: none;">
-        <div class="posts-empty-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
+        <!-- Detailed Information Card on Top of List -->
+        <div class="active-post-detail-card" id="active-post-detail-card">
+          <div class="active-post-badge-row">
+            <span class="active-post-tag">MANAGING APPLICANTS</span>
+            <span class="active-post-fcfs-tag">FCFS QUEUE</span>
+            <span class="post-status-badge open" id="post-view-status-pill">Open</span>
+          </div>
+          <h2 class="active-post-title" id="post-view-title">Scholarship Title</h2>
+          <div class="active-post-meta-row" id="post-view-meta-row">
+            <span><strong>Type:</strong> <span id="post-view-type">General</span></span>
+            <span>•</span>
+            <span><strong>Deadline:</strong> <span id="post-view-deadline">No Deadline</span></span>
+            <span>•</span>
+            <span><strong>Applicants:</strong> <span id="post-view-applicants">0 / 200</span></span>
+          </div>
+          <p class="active-post-desc" id="post-view-desc">
+            Scholarship description snippet...
+          </p>
+          <div style="display: flex; gap: 10px; margin-top: 4px;">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="btn-view-post-criteria"
+              style="font-size: 12.5px; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              View Full Criteria &amp; Requirements
+            </button>
+          </div>
         </div>
-        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No Posted Scholarships Yet</h3>
-        <p style="font-size: 14px; color: var(--text-secondary, #6b7280); max-width: 420px; margin: 0 auto 20px;">
-          You haven't posted any scholarship opportunities yet. Create a new scholarship to start receiving student applications.
-        </p>
-        <a
-          href="provider-dashboard.html#open-create"
-          class="btn btn-primary"
-          style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; text-decoration: none;"
-        >
-          + Create New Scholarship
-        </a>
+
+        <!-- Applicants Filter Tabs -->
+        <div class="filter-tabs" id="applicant-filter-tabs">
+          <button type="button" class="filter-tab active" data-applicant-filter="all" id="app-tab-all">All (0)</button>
+          <button type="button" class="filter-tab" data-applicant-filter="under_review" id="app-tab-review">Under Review (0)</button>
+          <button type="button" class="filter-tab" data-applicant-filter="approved" id="app-tab-approved">Approved (0)</button>
+          <button type="button" class="filter-tab" data-applicant-filter="rejected" id="app-tab-rejected">Rejected (0)</button>
+          <button type="button" class="filter-tab" data-applicant-filter="pending" id="app-tab-pending">Pending (0)</button>
+        </div>
+
+        <!-- Applicants Search Bar -->
+        <div class="search-bar-container" style="margin-bottom: 20px;">
+          <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              class="search-input"
+              id="applicant-search-input"
+              placeholder="Search applicants by student name, email, ID, or course..."
+            />
+          </div>
+        </div>
+
+        <!-- Applicants Feed -->
+        <div id="post-applicants-feed" style="display: flex; flex-direction: column; gap: 14px;">
+          <!-- Dynamically inserted applicant cards in FCFS order -->
+        </div>
+
+        <!-- Empty State for Post Applicants -->
+        <div class="empty-state" id="post-applicants-empty-state" style="display: none; padding: 40px 20px;">
+          <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 6px;" id="post-apps-empty-title">No Applicants Found</h3>
+          <p style="font-size: 13.5px; color: var(--text-secondary); max-width: 420px; margin: 0 auto;" id="post-apps-empty-desc">
+            No students have applied to this scholarship opportunity yet.
+          </p>
+        </div>
       </div>
     </main>
 
     <!-- ========================================= -->
-    <!-- 3. VIEW FULL DETAILS MODAL                -->
+    <!-- 3. VIEW FULL SCHOLARSHIP DETAILS MODAL    -->
     <!-- ========================================= -->
     <div id="view-details-modal" class="creation-modal" aria-hidden="true">
       <div
@@ -759,19 +1314,19 @@
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 20px">
-            <a
-              id="view-modal-manage-btn"
-              href="provider-applications.html"
+            <button
+              type="button"
               class="btn btn-primary"
-              style="flex: 1; text-align: center; text-decoration: none; padding: 10px 16px; border-radius: 10px; font-weight: 600;"
+              id="view-modal-manage-btn"
+              style="flex: 1; text-align: center; padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; border: none;"
             >
-              View Applications For This Post
-            </a>
+              Manage Applicants for This Post
+            </button>
             <button
               type="button"
               class="btn btn-secondary"
               id="view-modal-close-action-btn"
-              style="padding: 10px 16px; border-radius: 10px; font-weight: 600;"
+              style="padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;"
             >
               Close
             </button>
@@ -779,6 +1334,257 @@
         </div>
       </div>
     </div>
+
+    <!-- ========================================= -->
+    <!-- 4. REVIEW & DECISION MODAL FOR APPLICANTS -->
+    <!-- ========================================= -->
+    <div class="nexo-modal-overlay" id="review-application-modal" role="dialog" aria-modal="true">
+      <div class="nexo-modal-container">
+        <button type="button" class="modal-close-btn" id="close-review-modal" aria-label="Close modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 28px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="modal-student-avatar" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 700; font-size: 16px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div>
+              <h2 style="font-size: 19px; font-weight: 700; margin: 0 0 2px;" id="modal-student-name">Student Name</h2>
+              <span style="font-size: 13px; color: var(--text-secondary);" id="modal-student-email">student@university.edu.ph</span>
+            </div>
+          </div>
+          <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
+        </div>
+
+        <!-- Student Profile Details -->
+        <div class="modal-info-card">
+          <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px; color: #8b5cf6;">Student Profile Information</div>
+          <div class="modal-info-grid">
+            <div>
+              <div class="modal-info-label">University</div>
+              <div class="modal-info-value" id="modal-student-school">Batangas State University</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Course / Degree</div>
+              <div class="modal-info-value" id="modal-student-course">BS Information Technology</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Year Level</div>
+              <div class="modal-info-value" id="modal-student-year">3rd Year</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Student ID</div>
+              <div class="modal-info-value" id="modal-student-id">21-04589</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Contact Number</div>
+              <div class="modal-info-value" id="modal-student-contact">+63 912 345 6789</div>
+            </div>
+            <div>
+              <div class="modal-info-label">Date Submitted</div>
+              <div class="modal-info-value" id="modal-app-date">Nov 8, 2026</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applied Scholarship Info -->
+        <div style="padding: 10px 14px; background: rgba(139, 92, 246, 0.08); border-radius: 10px; margin-bottom: 16px;">
+          <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #8b5cf6;">Applied Scholarship Program</div>
+          <div style="font-size: 14.5px; font-weight: 700; margin-top: 2px;" id="modal-program-title">Tech for Tomorrow Scholarship</div>
+        </div>
+
+        <!-- Submitted Documents Section -->
+        <div style="margin-bottom: 18px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span>Attached Verification Documents</span>
+            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Digital Drop-Box</span>
+          </h4>
+          <div id="modal-documents-list">
+            <!-- Dynamic documents inserted here -->
+          </div>
+        </div>
+
+        <!-- Review Decision Actions -->
+        <div style="border-top: 1px solid var(--border-color, #e5e7eb); padding-top: 16px;">
+          <!-- Live Feedback Success Notifier -->
+          <div id="modal-feedback-success-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <strong style="color: #10B981; font-size: 13px;">Decision &amp; Remarks Dispatched</strong>
+            </div>
+            <p id="modal-feedback-success-msg" style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
+              Your decision and remarks were saved and sent directly to the student's portal.
+            </p>
+          </div>
+
+          <!-- Finalized Permanent Notice in Review Modal -->
+          <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <strong style="color: #10B981; font-size: 13px;">Decision Finalized &amp; Permanent</strong>
+            </div>
+            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
+              This application has been permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong>. Approved and Rejected decisions are permanent and cannot be modified. Further communication and onboarding take place outside of NexO.
+            </p>
+          </div>
+
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">Provider Decision &amp; Feedback</h4>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 10px 0;">
+            Select a status to communicate your decision to the student. Approved and Rejected decisions are permanent.
+          </p>
+          
+          <div class="decision-btn-group" id="modal-decision-btn-group">
+            <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Approve
+            </button>
+            <button type="button" class="decision-btn decision-review" id="modal-btn-review">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              Under Review
+            </button>
+            <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Reject
+            </button>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">
+              Feedback / Remarks for Student:
+            </label>
+            <textarea
+              id="modal-review-notes"
+              class="review-notes-textarea"
+              placeholder="e.g. Congratulations! Please submit your registration receipt to the financial aid desk..."
+            ></textarea>
+            <div id="modal-save-notes-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">
+              Feedback cannot be empty. Please enter notes or feedback before saving.
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+              <button type="button" class="btn btn-secondary" id="modal-btn-save-notes" style="font-size: 13px; padding: 6px 14px;">
+                Save Notes &amp; Feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- 5. ON-SCREEN CONFIRMATION MODAL           -->
+    <!-- ========================================= -->
+    <div class="nexo-modal-overlay" id="decision-confirm-modal" role="dialog" aria-modal="true" style="z-index: 10500;">
+      <div class="nexo-modal-container" style="max-width: 520px; border-radius: 16px; padding: 24px;">
+        <button type="button" class="modal-close-btn" id="close-decision-confirm" aria-label="Close confirmation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+          <div id="confirm-status-icon" style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+            <!-- Dynamic icon -->
+          </div>
+          <div>
+            <h3 id="confirm-modal-heading" style="font-size: 17px; font-weight: 800; margin: 0; color: var(--text-primary);">Confirm Decision</h3>
+            <span id="confirm-modal-subheading" style="font-size: 12px; color: var(--text-secondary);">Application for Student Scholar</span>
+          </div>
+        </div>
+
+        <!-- Permanence Warning Notice (for Approved and Rejected) -->
+        <div id="confirm-permanence-alert" style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: none;">
+          <strong style="color: #ef4444; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Permanent Decision Notice
+          </strong>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
+            Once confirmed, <strong id="confirm-action-name">this decision</strong> is <strong>PERMANENT and FINAL</strong>. You cannot revert or modify this decision on NexO. Your remarks below will be your official and final communication with the student on this platform. Further steps (such as interviews, onboarding, or disbursement) take place outside of NexO.
+          </p>
+        </div>
+
+        <!-- Under Review Info Notice -->
+        <div id="confirm-review-alert" style="background: rgba(139, 92, 246, 0.08); border: 1.5px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: none;">
+          <strong style="color: #8b5cf6; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Under Review Status (In Progress)
+          </strong>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
+            Marking this application as Under Review is not permanent. The student will be notified and can view your remarks or upload any deferred requirements. You can finalize your decision later.
+          </p>
+        </div>
+
+        <!-- Remarks Input Field -->
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <label for="confirm-remarks-textarea" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">
+              Remarks / Message for Student POV: <span style="color: #ef4444;">*</span>
+            </label>
+            <button type="button" id="btn-reset-default-remarks" style="background: none; border: none; color: #8b5cf6; font-size: 11.5px; font-weight: 600; cursor: pointer; text-decoration: underline;">
+              Reset to Default Remark
+            </button>
+          </div>
+          <textarea
+            id="confirm-remarks-textarea"
+            class="review-notes-textarea"
+            style="min-height: 90px; font-size: 13px;"
+            placeholder="Enter feedback or follow-up instructions for the student..."
+          ></textarea>
+          <div id="confirm-remarks-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">
+            Remarks cannot be empty. Please provide feedback or instructions for the student.
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-decision-confirm" style="padding: 10px 16px; font-size: 13px; font-weight: 600;">
+            Back to Review
+          </button>
+          <button type="button" class="btn btn-primary" id="btn-submit-decision-confirm" style="padding: 10px 20px; font-size: 13px; font-weight: 700;">
+            Confirm &amp; Send Decision
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- 6. DOCUMENT PREVIEW MODAL                 -->
+    <!-- ========================================= -->
+    <div class="nexo-modal-overlay" id="doc-preview-modal" role="dialog" aria-modal="true">
+      <div class="nexo-modal-container" style="max-width: 680px;">
+        <button type="button" class="modal-close-btn" id="close-doc-preview" aria-label="Close document preview">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 32px; margin-bottom: 14px;">
+          <h3 id="doc-preview-title" style="font-size: 16px; margin: 0; font-weight: 700;">Document Preview</h3>
+          <a id="doc-preview-download" href="#" download class="btn btn-primary" style="padding: 6px 12px; font-size: 12.5px; text-decoration: none;">
+            Download
+          </a>
+        </div>
+
+        <div id="doc-preview-body" style="min-height: 250px;">
+          <!-- Embed or Image inserted dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="js/main.js"></script>

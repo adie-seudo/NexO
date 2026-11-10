@@ -1,7 +1,9 @@
 // ==========================================================================
-// NEXO PROVIDER POSTED SCHOLARSHIPS MANAGER (js/provider-posts.js)
-// Lists all scholarship posts published by the provider, tracks live
-// applicant totals & status breakdowns, and opens scoped applications view.
+// NEXO PROVIDER POSTED SCHOLARSHIPS & APPLICANTS MANAGER (js/provider-posts.js)
+// 1. Manages posted scholarships list and metrics.
+// 2. In-page transition to View Applications: lists only applicants for that
+//    specific post in First-Come, First-Served (FCFS) order.
+// 3. Complete review, document preview, permanent decisions & remarks sync.
 // ==========================================================================
 
 (function () {
@@ -9,97 +11,139 @@
     ? ""
     : "http://localhost:3000";
 
+  const DEFAULT_AUTOMATED_REMARKS = {
+    Approved:
+      "Congratulations! Your scholarship application has been officially APPROVED. Please monitor your institutional email for next steps and disbursement scheduling.",
+    "Under Review":
+      "Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.",
+    Rejected:
+      "Thank you for your application. After careful evaluation, we regret to inform you that your application was NOT SELECTED for this scholarship cycle.",
+  };
+
+  // State
   let allScholarships = [];
   let allApplications = [];
-  let activeFilterTab = "all";
-  let activeSearchQuery = "";
-  let lastRenderSig = null;
+  let studentSettings = null;
+  let currentActivePost = null;
+  let currentActiveApp = null;
+  let pendingDecision = null;
+  let isModalOpen = false;
+
+  // View 1 Filters (Posts List)
+  let postFilterTab = "all";
+  let postSearchQuery = "";
+  let lastPostsSig = null;
+
+  // View 2 Filters (Applicants for Selected Post)
+  let appFilterTab = "all";
+  let appSearchQuery = "";
 
   // DOM Elements
+  let postsListViewEl = null;
+  let postApplicantsViewEl = null;
   let postsFeedEl = null;
-  let emptyStateEl = null;
-  let searchInputEl = null;
-  let tabAllEl = null;
-  let tabOpenEl = null;
-  let tabClosedEl = null;
-  let countLabelEl = null;
+  let postsEmptyStateEl = null;
+  let postSearchInputEl = null;
+  let postsCountLabelEl = null;
 
-  // Modal Elements
-  let modalEl = null;
-  let closeBtnEl = null;
-  let closeActionBtnEl = null;
+  let postApplicantsFeedEl = null;
+  let postApplicantsEmptyEl = null;
+  let appSearchInputEl = null;
+
+  // Modals
+  let scholModalEl = null;
+  let reviewModalEl = null;
+  let confirmModalEl = null;
+  let docPreviewModalEl = null;
 
   document.addEventListener("DOMContentLoaded", () => {
     cacheDOM();
-    initFilters();
-    initModal();
+    initPostsFilters();
+    initApplicantFilters();
+    initModals();
     loadData();
+
+    // Check URL parameters for direct deep-linking to a post
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetId = urlParams.get("scholarshipId") || urlParams.get("scholId");
+    if (targetId) {
+      setTimeout(() => {
+        openPostApplicantsView(targetId);
+      }, 150);
+    }
 
     // Live sync polling every 3.5 seconds
     setInterval(() => {
-      if (!modalEl || !modalEl.classList.contains("active")) {
+      if (!isModalOpen) {
         loadData(true);
       }
     }, 3500);
 
     // Refresh when window regains focus
     window.addEventListener("focus", () => {
-      if (!modalEl || !modalEl.classList.contains("active")) {
-        loadData(true);
-      }
+      if (!isModalOpen) loadData(true);
     });
   });
 
   function cacheDOM() {
+    postsListViewEl = document.getElementById("posts-list-view");
+    postApplicantsViewEl = document.getElementById("post-applicants-view");
+
     postsFeedEl = document.getElementById("posts-feed");
-    emptyStateEl = document.getElementById("posts-empty-state");
-    searchInputEl = document.getElementById("posts-search-input");
-    tabAllEl = document.getElementById("tab-posts-all");
-    tabOpenEl = document.getElementById("tab-posts-open");
-    tabClosedEl = document.getElementById("tab-posts-closed");
-    countLabelEl = document.getElementById("posts-count-label");
+    postsEmptyStateEl = document.getElementById("posts-empty-state");
+    postSearchInputEl = document.getElementById("posts-search-input");
+    postsCountLabelEl = document.getElementById("posts-count-label");
 
-    modalEl = document.getElementById("view-details-modal");
-    closeBtnEl = document.getElementById("close-details-btn");
-    closeActionBtnEl = document.getElementById("view-modal-close-action-btn");
-  }
+    postApplicantsFeedEl = document.getElementById("post-applicants-feed");
+    postApplicantsEmptyEl = document.getElementById("post-applicants-empty-state");
+    appSearchInputEl = document.getElementById("applicant-search-input");
 
-  function initFilters() {
-    if (searchInputEl) {
-      searchInputEl.addEventListener("input", (e) => {
-        activeSearchQuery = e.target.value.trim().toLowerCase();
-        renderPostsFeed();
-      });
+    scholModalEl = document.getElementById("view-details-modal");
+    reviewModalEl = document.getElementById("review-application-modal");
+    confirmModalEl = document.getElementById("decision-confirm-modal");
+    docPreviewModalEl = document.getElementById("doc-preview-modal");
+
+    // Back button from applicants view to posts list
+    const btnBackToPosts = document.getElementById("btn-back-to-posts");
+    if (btnBackToPosts) {
+      btnBackToPosts.addEventListener("click", backToPostsList);
     }
 
-    const tabs = document.querySelectorAll(".posts-tab");
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", function () {
-        tabs.forEach((t) => t.classList.remove("active"));
-        this.classList.add("active");
-        activeFilterTab = this.dataset.filter || "all";
-        renderPostsFeed();
-      });
-    });
-  }
-
-  function initModal() {
-    const closeModal = () => {
-      if (modalEl) {
-        modalEl.classList.remove("active");
-        modalEl.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "auto";
-      }
-    };
-
-    if (closeBtnEl) closeBtnEl.addEventListener("click", closeModal);
-    if (closeActionBtnEl) closeActionBtnEl.addEventListener("click", closeModal);
-
-    if (modalEl) {
-      modalEl.addEventListener("click", (e) => {
-        if (e.target === modalEl) closeModal();
+    // Criteria button inside active post detail card
+    const btnViewCriteria = document.getElementById("btn-view-post-criteria");
+    if (btnViewCriteria) {
+      btnViewCriteria.addEventListener("click", () => {
+        if (currentActivePost) {
+          const apps = getPostApplications(currentActivePost);
+          const limit = parseInt(currentActivePost.applicantLimit || 200, 10) || 200;
+          openScholarshipModal(currentActivePost, apps.length, limit);
+        }
       });
     }
+  }
+
+  // -------------------------------------------------------------
+  // TOAST NOTIFICATIONS
+  // -------------------------------------------------------------
+  function showToast(message, isError = false) {
+    let toast = document.getElementById("provider-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "provider-toast";
+      toast.className = "settings-toast";
+      document.body.appendChild(toast);
+    }
+
+    toast.innerHTML = isError
+      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><span>${message}</span>`
+      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>${message}</span>`;
+    toast.classList.toggle("error", isError);
+    toast.classList.add("show");
+
+    if (window.providerToastTimeout) clearTimeout(window.providerToastTimeout);
+    window.providerToastTimeout = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 2800);
   }
 
   function escapeHtml(text) {
@@ -125,6 +169,7 @@
         const data = await res.json();
         scholarships = Array.isArray(data.scholarships) ? data.scholarships : [];
         applications = Array.isArray(data.applications) ? data.applications : [];
+        if (data.studentSettings) studentSettings = data.studentSettings;
 
         try {
           localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
@@ -149,8 +194,8 @@
       ""
     ).toLowerCase();
 
-    // Filter scholarships posted by this provider (or show all if unassigned)
-    const myScholarships = currentProviderEmail
+    // Filter scholarships posted by this provider
+    allScholarships = currentProviderEmail
       ? scholarships.filter(
           (s) =>
             !s.providerEmail ||
@@ -158,17 +203,49 @@
         )
       : scholarships;
 
-    allScholarships = myScholarships;
     allApplications = applications;
 
-    updateCounters();
-    renderPostsFeed();
+    // Refresh active post object if currently viewing applicants
+    if (currentActivePost) {
+      const updatedPost = allScholarships.find(
+        (s) => String(s.id) === String(currentActivePost.id),
+      );
+      if (updatedPost) currentActivePost = updatedPost;
+    }
+
+    updatePostTabCounters();
+
+    if (currentActivePost && postApplicantsViewEl && postApplicantsViewEl.style.display !== "none") {
+      renderActivePostHeader(currentActivePost);
+      renderPostApplicantsFeed();
+    } else {
+      renderPostsFeed();
+    }
   }
 
-  // -------------------------------------------------------------
-  // TAB COUNTERS
-  // -------------------------------------------------------------
-  function updateCounters() {
+  // =============================================================
+  // VIEW 1: POSTED SCHOLARSHIPS LIST LOGIC
+  // =============================================================
+  function initPostsFilters() {
+    if (postSearchInputEl) {
+      postSearchInputEl.addEventListener("input", (e) => {
+        postSearchQuery = e.target.value.trim().toLowerCase();
+        renderPostsFeed();
+      });
+    }
+
+    const tabs = document.querySelectorAll(".posts-tab");
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", function () {
+        tabs.forEach((t) => t.classList.remove("active"));
+        this.classList.add("active");
+        postFilterTab = this.dataset.filter || "all";
+        renderPostsFeed();
+      });
+    });
+  }
+
+  function updatePostTabCounters() {
     let total = allScholarships.length;
     let openCount = 0;
     let closedCount = 0;
@@ -179,27 +256,28 @@
       else openCount++;
     });
 
-    if (tabAllEl) tabAllEl.textContent = `All (${total})`;
-    if (tabOpenEl) tabOpenEl.textContent = `Active / Open (${openCount})`;
-    if (tabClosedEl) tabClosedEl.textContent = `Closed (${closedCount})`;
+    const tabAll = document.getElementById("tab-posts-all");
+    const tabOpen = document.getElementById("tab-posts-open");
+    const tabClosed = document.getElementById("tab-posts-closed");
+
+    if (tabAll) tabAll.textContent = `All (${total})`;
+    if (tabOpen) tabOpen.textContent = `Active / Open (${openCount})`;
+    if (tabClosed) tabClosed.textContent = `Closed (${closedCount})`;
   }
 
-  // -------------------------------------------------------------
-  // RENDER POSTS FEED
-  // -------------------------------------------------------------
   function renderPostsFeed() {
-    if (!postsFeedEl || !emptyStateEl) return;
+    if (!postsFeedEl || !postsEmptyStateEl) return;
 
-    // Filter by tab
+    // Filter by status tab
     let filtered = allScholarships.filter((s) => {
       const status = (s.status || "Open").toLowerCase();
-      if (activeFilterTab === "open") return status !== "closed";
-      if (activeFilterTab === "closed") return status === "closed";
+      if (postFilterTab === "open") return status !== "closed";
+      if (postFilterTab === "closed") return status === "closed";
       return true;
     });
 
     // Filter by search query
-    if (activeSearchQuery) {
+    if (postSearchQuery) {
       filtered = filtered.filter((s) => {
         const title = String(s.title || "").toLowerCase();
         const type = String(s.type || s.typeText || "").toLowerCase();
@@ -207,22 +285,22 @@
         const provider = String(s.providerName || "").toLowerCase();
 
         return (
-          title.includes(activeSearchQuery) ||
-          type.includes(activeSearchQuery) ||
-          desc.includes(activeSearchQuery) ||
-          provider.includes(activeSearchQuery)
+          title.includes(postSearchQuery) ||
+          type.includes(postSearchQuery) ||
+          desc.includes(postSearchQuery) ||
+          provider.includes(postSearchQuery)
         );
       });
     }
 
-    if (countLabelEl) {
-      countLabelEl.textContent = `Showing ${filtered.length} scholarship${filtered.length === 1 ? "" : "s"}`;
+    if (postsCountLabelEl) {
+      postsCountLabelEl.textContent = `Showing ${filtered.length} scholarship${filtered.length === 1 ? "" : "s"}`;
     }
 
-    // Anti-flicker diff check
+    // Anti-flicker diff signature
     const currentSig = JSON.stringify(
       filtered.map((s) => {
-        const apps = getScholarshipApplications(s);
+        const apps = getPostApplications(s);
         return {
           id: s.id,
           title: s.title,
@@ -233,18 +311,15 @@
       }),
     );
 
-    if (lastRenderSig === currentSig) {
-      return;
-    }
-    lastRenderSig = currentSig;
+    if (lastPostsSig === currentSig) return;
+    lastPostsSig = currentSig;
 
-    // Handle empty state
     if (allScholarships.length === 0) {
       postsFeedEl.style.display = "none";
       postsFeedEl.innerHTML = "";
-      emptyStateEl.style.display = "block";
-      const title = emptyStateEl.querySelector("h3");
-      const desc = emptyStateEl.querySelector("p");
+      postsEmptyStateEl.style.display = "block";
+      const title = postsEmptyStateEl.querySelector("h3");
+      const desc = postsEmptyStateEl.querySelector("p");
       if (title) title.textContent = "No Posted Scholarships Yet";
       if (desc)
         desc.textContent =
@@ -255,9 +330,9 @@
     if (filtered.length === 0) {
       postsFeedEl.style.display = "none";
       postsFeedEl.innerHTML = "";
-      emptyStateEl.style.display = "block";
-      const title = emptyStateEl.querySelector("h3");
-      const desc = emptyStateEl.querySelector("p");
+      postsEmptyStateEl.style.display = "block";
+      const title = postsEmptyStateEl.querySelector("h3");
+      const desc = postsEmptyStateEl.querySelector("p");
       if (title) title.textContent = "No Matching Scholarships";
       if (desc)
         desc.textContent =
@@ -265,7 +340,7 @@
       return;
     }
 
-    emptyStateEl.style.display = "none";
+    postsEmptyStateEl.style.display = "none";
     postsFeedEl.style.display = "flex";
     postsFeedEl.innerHTML = "";
 
@@ -274,11 +349,9 @@
     });
   }
 
-  // -------------------------------------------------------------
-  // POST CARD COMPONENT
-  // -------------------------------------------------------------
-  function getScholarshipApplications(schol) {
-    return allApplications.filter((app) => {
+  function getPostApplications(schol) {
+    if (!schol) return [];
+    const related = allApplications.filter((app) => {
       if (app.scholarshipId && schol.id && String(app.scholarshipId) === String(schol.id)) {
         return true;
       }
@@ -293,6 +366,16 @@
       }
       return false;
     });
+
+    // Sort First-Come First-Served: oldest submission first (chronological order)
+    related.sort((a, b) => {
+      const timeA = new Date(a.submittedAt || a.appliedAt || a.createdAt || 0).getTime();
+      const timeB = new Date(b.submittedAt || b.appliedAt || b.createdAt || 0).getTime();
+      if (timeA && timeB && timeA !== timeB) return timeA - timeB;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+
+    return related;
   }
 
   function createPostCard(schol) {
@@ -300,7 +383,7 @@
     card.className = "post-card";
     card.dataset.id = schol.id || "";
 
-    const relatedApps = getScholarshipApplications(schol);
+    const relatedApps = getPostApplications(schol);
     const totalApps = relatedApps.length;
     const limit =
       parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
@@ -377,23 +460,32 @@
       </div>
 
       <div class="post-actions-row">
-        <a
-          href="provider-applications.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}"
-          class="btn-view-apps"
-          title="View applicants only for this scholarship"
+        <button
+          type="button"
+          class="btn-view-apps btn-trigger-view-apps"
+          data-id="${escapeHtml(schol.id || schol.title)}"
+          title="View and manage applicants specifically for this post"
         >
           <span>View Applications (${totalApps})</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
-        </a>
+        </button>
         <button type="button" class="btn-view-details-sub" aria-label="View Details">
           View Details
         </button>
       </div>
     `;
 
-    // Modal Details listener
+    // View Applications listener (switches to View 2 in-page!)
+    const viewAppsBtn = card.querySelector(".btn-trigger-view-apps");
+    if (viewAppsBtn) {
+      viewAppsBtn.addEventListener("click", () => {
+        openPostApplicantsView(schol.id || schol.title);
+      });
+    }
+
+    // View Details modal listener
     const viewDetailsBtn = card.querySelector(".btn-view-details-sub");
     if (viewDetailsBtn) {
       viewDetailsBtn.addEventListener("click", () => {
@@ -404,11 +496,459 @@
     return card;
   }
 
-  // -------------------------------------------------------------
-  // OPEN SCHOLARSHIP DETAILS MODAL
-  // -------------------------------------------------------------
+  // =============================================================
+  // VIEW 2: POST APPLICANTS MANAGEMENT LOGIC
+  // =============================================================
+  function initApplicantFilters() {
+    if (appSearchInputEl) {
+      appSearchInputEl.addEventListener("input", (e) => {
+        appSearchQuery = e.target.value.trim().toLowerCase();
+        renderPostApplicantsFeed();
+      });
+    }
+
+    const tabsContainer = document.getElementById("applicant-filter-tabs");
+    if (tabsContainer) {
+      tabsContainer.querySelectorAll(".filter-tab").forEach((tab) => {
+        tab.addEventListener("click", function () {
+          tabsContainer.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
+          this.classList.add("active");
+          appFilterTab = this.dataset.applicantFilter || "all";
+          renderPostApplicantsFeed();
+        });
+      });
+    }
+  }
+
+  function openPostApplicantsView(scholId) {
+    const target = allScholarships.find(
+      (s) =>
+        String(s.id) === String(scholId) ||
+        String(s.title || "").toLowerCase() === String(scholId).toLowerCase(),
+    );
+    if (!target) return;
+
+    currentActivePost = target;
+    appFilterTab = "all";
+    appSearchQuery = "";
+    if (appSearchInputEl) appSearchInputEl.value = "";
+
+    // Reset tabs active class
+    const tabsContainer = document.getElementById("applicant-filter-tabs");
+    if (tabsContainer) {
+      tabsContainer.querySelectorAll(".filter-tab").forEach((t) => {
+        t.classList.toggle("active", t.dataset.applicantFilter === "all");
+      });
+    }
+
+    if (postsListViewEl) postsListViewEl.style.display = "none";
+    if (postApplicantsViewEl) postApplicantsViewEl.style.display = "block";
+
+    renderActivePostHeader(target);
+    renderPostApplicantsFeed();
+
+    try {
+      window.history.replaceState(
+        {},
+        "",
+        `provider-posts.html?scholarshipId=${encodeURIComponent(target.id || target.title)}`,
+      );
+    } catch (_) {}
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function backToPostsList() {
+    currentActivePost = null;
+    if (postApplicantsViewEl) postApplicantsViewEl.style.display = "none";
+    if (postsListViewEl) postsListViewEl.style.display = "block";
+
+    try {
+      window.history.replaceState({}, "", "provider-posts.html");
+    } catch (_) {}
+
+    lastPostsSig = null; // force re-render
+    renderPostsFeed();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderActivePostHeader(schol) {
+    const titleEl = document.getElementById("post-view-title");
+    const statusPill = document.getElementById("post-view-status-pill");
+    const typeEl = document.getElementById("post-view-type");
+    const deadlineEl = document.getElementById("post-view-deadline");
+    const appsCountEl = document.getElementById("post-view-applicants");
+    const descEl = document.getElementById("post-view-desc");
+
+    const relatedApps = getPostApplications(schol);
+    const limit = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+    const isOpen = (schol.status || "Open").toLowerCase() !== "closed";
+
+    if (titleEl) titleEl.textContent = schol.title || "Untitled Scholarship";
+    if (statusPill) {
+      statusPill.className = `post-status-badge ${isOpen ? "open" : "closed"}`;
+      statusPill.textContent = isOpen ? "Open" : "Closed";
+    }
+    if (typeEl) typeEl.textContent = schol.type || schol.typeText || "General";
+    if (deadlineEl) deadlineEl.textContent = schol.formattedDate || schol.deadline || "No Deadline";
+    if (appsCountEl) appsCountEl.textContent = `${relatedApps.length} / ${limit}`;
+    if (descEl) descEl.textContent = schol.desc || "No description provided.";
+  }
+
+  function renderPostApplicantsFeed() {
+    if (!postApplicantsFeedEl || !postApplicantsEmptyEl || !currentActivePost) return;
+
+    const baseApps = getPostApplications(currentActivePost);
+
+    // Update Applicant Tab Counters for this post
+    let countAll = baseApps.length;
+    let countReviewed = 0;
+    let countApproved = 0;
+    let countRejected = 0;
+    let countPending = 0;
+
+    baseApps.forEach((app) => {
+      const st = (app.status || "Submitted").toLowerCase();
+      if (st.includes("approved")) countApproved++;
+      else if (st.includes("review")) countReviewed++;
+      else if (st.includes("rejected")) countRejected++;
+      else countPending++;
+    });
+
+    const tabAll = document.getElementById("app-tab-all");
+    const tabReview = document.getElementById("app-tab-review");
+    const tabApproved = document.getElementById("app-tab-approved");
+    const tabRejected = document.getElementById("app-tab-rejected");
+    const tabPending = document.getElementById("app-tab-pending");
+
+    if (tabAll) tabAll.textContent = `All (${countAll})`;
+    if (tabReview) tabReview.textContent = `Under Review (${countReviewed})`;
+    if (tabApproved) tabApproved.textContent = `Approved (${countApproved})`;
+    if (tabRejected) tabRejected.textContent = `Rejected (${countRejected})`;
+    if (tabPending) tabPending.textContent = `Pending (${countPending})`;
+
+    // Filter by tab
+    let filtered = baseApps.filter((app) => {
+      const st = (app.status || "Submitted").toLowerCase();
+      if (appFilterTab === "all") return true;
+      if (appFilterTab === "under_review") return st.includes("review");
+      if (appFilterTab === "approved") return st.includes("approved");
+      if (appFilterTab === "rejected") return st.includes("rejected");
+      if (appFilterTab === "pending") {
+        return (
+          !st.includes("approved") &&
+          !st.includes("review") &&
+          !st.includes("rejected")
+        );
+      }
+      return true;
+    });
+
+    // Filter by search query
+    if (appSearchQuery) {
+      filtered = filtered.filter((app) => {
+        const studentName = String(app.studentName || "").toLowerCase();
+        const studentEmail = String(app.studentEmail || "").toLowerCase();
+        const studentId = String(app.studentId || "").toLowerCase();
+        const course = String(app.course || "").toLowerCase();
+
+        return (
+          studentName.includes(appSearchQuery) ||
+          studentEmail.includes(appSearchQuery) ||
+          studentId.includes(appSearchQuery) ||
+          course.includes(appSearchQuery)
+        );
+      });
+    }
+
+    // Empty state handling
+    if (baseApps.length === 0) {
+      postApplicantsFeedEl.style.display = "none";
+      postApplicantsFeedEl.innerHTML = "";
+      postApplicantsEmptyEl.style.display = "block";
+      const title = document.getElementById("post-apps-empty-title");
+      const desc = document.getElementById("post-apps-empty-desc");
+      if (title) title.textContent = "No Applicants Yet";
+      if (desc)
+        desc.textContent = `No student applications have been submitted for "${currentActivePost.title}" yet. As soon as students apply, their submissions will be listed here in first-come, first-served order.`;
+      return;
+    }
+
+    if (filtered.length === 0) {
+      postApplicantsFeedEl.style.display = "none";
+      postApplicantsFeedEl.innerHTML = "";
+      postApplicantsEmptyEl.style.display = "block";
+      const title = document.getElementById("post-apps-empty-title");
+      const desc = document.getElementById("post-apps-empty-desc");
+      if (title) title.textContent = "No Matching Applicants";
+      if (desc)
+        desc.textContent =
+          "Try clearing your search query or switching tabs to view other applicants for this post.";
+      return;
+    }
+
+    postApplicantsEmptyEl.style.display = "none";
+    postApplicantsFeedEl.style.display = "flex";
+    postApplicantsFeedEl.innerHTML = "";
+
+    filtered.forEach((app, idx) => {
+      // Find original queue index among all baseApps for FCFS display
+      const queueIndex = baseApps.indexOf(app) + 1;
+      postApplicantsFeedEl.appendChild(createApplicantCard(app, queueIndex));
+    });
+  }
+
+  function createApplicantCard(app, queueNumber) {
+    const card = document.createElement("div");
+    card.className = "provider-app-card";
+    card.dataset.id = app.id || "";
+
+    const rawStatus = (app.status || "Submitted").toLowerCase();
+    let badgeClass = "badge-status-pending";
+    let badgeText = app.status || "Submitted";
+
+    if (rawStatus.includes("approved")) {
+      badgeClass = "badge-status-approved";
+      badgeText = "Approved";
+    } else if (rawStatus.includes("review")) {
+      badgeClass = "badge-status-review";
+      badgeText = "Under Review";
+    } else if (rawStatus.includes("rejected")) {
+      badgeClass = "badge-status-rejected";
+      badgeText = "Rejected";
+    }
+
+    const studentName = app.studentName || "Applicant";
+    const initials =
+      studentName
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase() || "ST";
+
+    let studentSettingsPic = "";
+    if (
+      studentSettings &&
+      studentSettings.email &&
+      app.studentEmail &&
+      studentSettings.email.toLowerCase() === app.studentEmail.toLowerCase()
+    ) {
+      studentSettingsPic = studentSettings.profilePicture || "";
+    }
+
+    const avatar =
+      app.studentProfilePic ||
+      app.profilePicture ||
+      studentSettingsPic ||
+      "";
+
+    const formattedAppliedDate =
+      app.formattedDate ||
+      (app.submittedAt
+        ? new Date(app.submittedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "Recently Applied");
+
+    card.innerHTML = `
+      <div class="provider-app-main-row">
+        <div class="provider-app-avatar">
+          ${
+            avatar
+              ? `<img src="${avatar}" alt="${escapeHtml(studentName)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+              : escapeHtml(initials)
+          }
+        </div>
+
+        <div class="provider-app-details">
+          <div class="provider-app-header-line">
+            <h3 class="provider-app-student-name">${escapeHtml(studentName)}</h3>
+            <span class="provider-app-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+          </div>
+
+          <div class="provider-app-program">
+            ${escapeHtml(app.course || "Degree Candidate")}
+            ${app.yearLevel ? `&bull; ${escapeHtml(app.yearLevel)}` : ""}
+          </div>
+          <div class="provider-app-school">${escapeHtml(app.university || "Batangas State University")}</div>
+
+          <div class="provider-app-meta-row">
+            <div class="provider-app-meta-item">
+              <span style="font-size: 11px; font-weight: 700; color: #8b5cf6; background: rgba(139,92,246,0.12); padding: 2px 7px; border-radius: 5px; border: 1px solid rgba(139,92,246,0.3);">
+                #${queueNumber} in FCFS Queue
+              </span>
+            </div>
+            <div class="provider-app-meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+              </svg>
+              <span>GPA: <strong>${escapeHtml(app.gpa || "N/A")}</strong></span>
+            </div>
+            <div class="provider-app-meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Submitted: ${escapeHtml(formattedAppliedDate)}</span>
+            </div>
+            <div class="provider-app-meta-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <span>${escapeHtml(app.studentEmail || "No Email")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="provider-app-actions-row">
+        <span style="font-size: 12px; color: var(--text-secondary);">
+          ${(app.documents || app.uploadedDocuments || []).length} attached documents
+        </span>
+        <button type="button" class="btn btn-primary btn-review-app">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Review Application
+        </button>
+      </div>
+    `;
+
+    card.querySelector(".btn-review-app").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openReviewModal(app);
+    });
+
+    card.addEventListener("click", () => {
+      openReviewModal(app);
+    });
+
+    return card;
+  }
+
+  // =============================================================
+  // MODALS INITIALIZATION & HANDLING
+  // =============================================================
+  function initModals() {
+    // 1. Scholarship Criteria Modal
+    const closeScholBtn = document.getElementById("close-details-btn");
+    const closeScholActionBtn = document.getElementById("view-modal-close-action-btn");
+    const manageScholBtn = document.getElementById("view-modal-manage-btn");
+
+    const closeScholModal = () => {
+      if (scholModalEl) {
+        scholModalEl.classList.remove("active");
+        scholModalEl.setAttribute("aria-hidden", "true");
+        if (!isModalOpen) document.body.style.overflow = "auto";
+      }
+    };
+
+    if (closeScholBtn) closeScholBtn.addEventListener("click", closeScholModal);
+    if (closeScholActionBtn) closeScholActionBtn.addEventListener("click", closeScholModal);
+    if (scholModalEl) {
+      scholModalEl.addEventListener("click", (e) => {
+        if (e.target === scholModalEl) closeScholModal();
+      });
+    }
+
+    if (manageScholBtn) {
+      manageScholBtn.addEventListener("click", () => {
+        closeScholModal();
+        if (currentActivePost) {
+          openPostApplicantsView(currentActivePost.id || currentActivePost.title);
+        }
+      });
+    }
+
+    // 2. Review Application Modal
+    const closeReviewBtn = document.getElementById("close-review-modal");
+    if (closeReviewBtn) closeReviewBtn.addEventListener("click", closeReviewModal);
+    if (reviewModalEl) {
+      reviewModalEl.addEventListener("click", (e) => {
+        if (e.target === reviewModalEl) closeReviewModal();
+      });
+    }
+
+    // Decision status buttons inside review modal
+    const btnApprove = document.getElementById("modal-btn-approve");
+    const btnUnderReview = document.getElementById("modal-btn-review");
+    const btnReject = document.getElementById("modal-btn-reject");
+
+    if (btnApprove) btnApprove.addEventListener("click", () => openDecisionConfirmModal("Approved"));
+    if (btnUnderReview) btnUnderReview.addEventListener("click", () => openDecisionConfirmModal("Under Review"));
+    if (btnReject) btnReject.addEventListener("click", () => openDecisionConfirmModal("Rejected"));
+
+    // Save notes button
+    const btnSaveNotes = document.getElementById("modal-btn-save-notes");
+    if (btnSaveNotes) {
+      btnSaveNotes.addEventListener("click", async () => {
+        if (!currentActiveApp) return;
+
+        if (currentActiveApp.status === "Approved" || currentActiveApp.status === "Rejected") {
+          showToast("This decision has already been finalized and cannot be modified.", true);
+          return;
+        }
+
+        const notesInput = document.getElementById("modal-review-notes");
+        const errEl = document.getElementById("modal-save-notes-error");
+        const notes = notesInput ? notesInput.value.trim() : "";
+
+        if (!notes) {
+          if (errEl) {
+            errEl.textContent = "Feedback cannot be empty. Please enter notes or feedback before saving.";
+            errEl.style.display = "block";
+          }
+          if (notesInput) notesInput.focus();
+          return;
+        }
+
+        if (errEl) errEl.style.display = "none";
+
+        btnSaveNotes.disabled = true;
+        await updateApplicationStatus(
+          currentActiveApp.id,
+          currentActiveApp.status || "Under Review",
+          notes,
+        );
+        btnSaveNotes.disabled = false;
+
+        currentActiveApp.notes = notes;
+        currentActiveApp.feedback = notes;
+        currentActiveApp.remarks = notes;
+
+        const successBanner = document.getElementById("modal-feedback-success-banner");
+        const successMsg = document.getElementById("modal-feedback-success-msg");
+        if (successBanner && successMsg) {
+          successMsg.textContent = "Notes and feedback were successfully updated and dispatched to the student's portal!";
+          successBanner.style.display = "block";
+          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          if (container) container.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      });
+    }
+
+    // 3. Confirmation Modal
+    initDecisionConfirmModal();
+
+    // 4. Document Preview Modal
+    const closeDocBtn = document.getElementById("close-doc-preview");
+    if (closeDocBtn) closeDocBtn.addEventListener("click", closeDocPreview);
+    if (docPreviewModalEl) {
+      docPreviewModalEl.addEventListener("click", (e) => {
+        if (e.target === docPreviewModalEl) closeDocPreview();
+      });
+    }
+  }
+
   function openScholarshipModal(schol, totalApps, limit) {
-    if (!modalEl) return;
+    if (!scholModalEl) return;
 
     const titleEl = document.getElementById("view-modal-title");
     const typeEl = document.getElementById("view-modal-type");
@@ -417,7 +957,6 @@
     const applicantsEl = document.getElementById("view-modal-applicants");
     const descEl = document.getElementById("view-modal-desc");
     const reqsListEl = document.getElementById("view-modal-reqs-list");
-    const manageBtn = document.getElementById("view-modal-manage-btn");
 
     if (titleEl) titleEl.textContent = schol.title || "Untitled";
     if (typeEl) typeEl.textContent = schol.type || schol.typeText || "General";
@@ -450,12 +989,519 @@
       }
     }
 
-    if (manageBtn) {
-      manageBtn.href = `provider-applications.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}`;
+    scholModalEl.classList.add("active");
+    scholModalEl.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function initDecisionConfirmModal() {
+    if (!confirmModalEl) return;
+
+    const closeBtn = document.getElementById("close-decision-confirm");
+    const cancelBtn = document.getElementById("btn-cancel-decision-confirm");
+    const submitBtn = document.getElementById("btn-submit-decision-confirm");
+    const resetDefaultBtn = document.getElementById("btn-reset-default-remarks");
+    const textarea = document.getElementById("confirm-remarks-textarea");
+
+    if (closeBtn) closeBtn.addEventListener("click", closeDecisionConfirmModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeDecisionConfirmModal);
+    confirmModalEl.addEventListener("click", (e) => {
+      if (e.target === confirmModalEl) closeDecisionConfirmModal();
+    });
+
+    if (resetDefaultBtn) {
+      resetDefaultBtn.addEventListener("click", () => {
+        if (!pendingDecision) return;
+        const defaultText = DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "";
+        if (textarea) {
+          textarea.value = defaultText;
+          textarea.focus();
+        }
+        const errEl = document.getElementById("confirm-remarks-error");
+        if (errEl) errEl.style.display = "none";
+      });
     }
 
-    modalEl.classList.add("active");
-    modalEl.setAttribute("aria-hidden", "false");
+    if (submitBtn) {
+      submitBtn.addEventListener("click", async () => {
+        if (!currentActiveApp || !pendingDecision) return;
+
+        const remarks = textarea ? textarea.value.trim() : "";
+        const errEl = document.getElementById("confirm-remarks-error");
+
+        if (!remarks) {
+          if (errEl) {
+            errEl.textContent = "Remarks cannot be empty. Please provide feedback or instructions for the student.";
+            errEl.style.display = "block";
+          }
+          if (textarea) textarea.focus();
+          return;
+        }
+
+        if (errEl) errEl.style.display = "none";
+
+        submitBtn.disabled = true;
+        const targetStatus = pendingDecision.status;
+        const targetAppId = currentActiveApp.id;
+
+        await updateApplicationStatus(targetAppId, targetStatus, remarks);
+
+        submitBtn.disabled = false;
+        closeDecisionConfirmModal();
+
+        // Update active application object in-place
+        currentActiveApp.status = targetStatus;
+        currentActiveApp.statusText = targetStatus;
+        currentActiveApp.notes = remarks;
+        currentActiveApp.feedback = remarks;
+        currentActiveApp.remarks = remarks;
+
+        const notesInput = document.getElementById("modal-review-notes");
+        if (notesInput) notesInput.value = remarks;
+
+        // Update status badge in Review Modal
+        const statusBadge = document.getElementById("modal-status-badge");
+        if (statusBadge) {
+          statusBadge.className = "provider-app-badge";
+          if (targetStatus === "Approved") {
+            statusBadge.classList.add("badge-status-approved");
+            statusBadge.textContent = "Approved";
+          } else if (targetStatus === "Rejected") {
+            statusBadge.classList.add("badge-status-rejected");
+            statusBadge.textContent = "Rejected";
+          } else {
+            statusBadge.classList.add("badge-status-review");
+            statusBadge.textContent = "Under Review";
+          }
+        }
+
+        // Show prominent on-screen feedback success notifier
+        const successBanner = document.getElementById("modal-feedback-success-banner");
+        const successMsg = document.getElementById("modal-feedback-success-msg");
+        if (successBanner && successMsg) {
+          successMsg.textContent = `Application decision marked as "${targetStatus}" and remarks have been successfully saved and dispatched to the student's portal!`;
+          successBanner.style.display = "block";
+          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          if (container) container.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // If Approved or Rejected, lock the decision controls permanently
+        if (targetStatus === "Approved" || targetStatus === "Rejected") {
+          const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
+          const finalizedLabel = document.getElementById("modal-finalized-status-label");
+          if (finalizedNotice) {
+            finalizedNotice.style.display = "block";
+            if (finalizedLabel) finalizedLabel.textContent = targetStatus;
+          }
+          const btnApprove = document.getElementById("modal-btn-approve");
+          const btnUnderReview = document.getElementById("modal-btn-review");
+          const btnReject = document.getElementById("modal-btn-reject");
+          const btnSaveNotes = document.getElementById("modal-btn-save-notes");
+          if (btnApprove) btnApprove.disabled = true;
+          if (btnUnderReview) btnUnderReview.disabled = true;
+          if (btnReject) btnReject.disabled = true;
+          if (btnSaveNotes) btnSaveNotes.disabled = true;
+          if (notesInput) notesInput.readOnly = true;
+        }
+
+        renderPostApplicantsFeed();
+      });
+    }
+  }
+
+  function openDecisionConfirmModal(status) {
+    if (!currentActiveApp) return;
+
+    if (currentActiveApp.status === "Approved" || currentActiveApp.status === "Rejected") {
+      showToast("This application decision has already been finalized and cannot be modified.", true);
+      return;
+    }
+
+    pendingDecision = { appId: currentActiveApp.id, status };
+
+    const heading = document.getElementById("confirm-modal-heading");
+    const subheading = document.getElementById("confirm-modal-subheading");
+    const permAlert = document.getElementById("confirm-permanence-alert");
+    const reviewAlert = document.getElementById("confirm-review-alert");
+    const actionName = document.getElementById("confirm-action-name");
+    const statusIcon = document.getElementById("confirm-status-icon");
+    const textarea = document.getElementById("confirm-remarks-textarea");
+    const errEl = document.getElementById("confirm-remarks-error");
+    const submitBtn = document.getElementById("btn-submit-decision-confirm");
+
+    if (errEl) errEl.style.display = "none";
+
+    const currentNotes = document.getElementById("modal-review-notes")?.value?.trim() || "";
+    const defaultRemark = DEFAULT_AUTOMATED_REMARKS[status] || "";
+
+    if (textarea) {
+      textarea.value = currentNotes || defaultRemark;
+    }
+
+    if (heading) heading.textContent = `Confirm Decision: ${status}`;
+    if (subheading) {
+      subheading.textContent = `Application of ${currentActiveApp.studentName || "Student Scholar"}`;
+    }
+
+    if (status === "Approved") {
+      if (permAlert) permAlert.style.display = "block";
+      if (reviewAlert) reviewAlert.style.display = "none";
+      if (actionName) actionName.textContent = "Approval";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(16, 185, 129, 0.15)";
+        statusIcon.style.color = "#10B981";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Approve";
+        submitBtn.style.background = "#16a34a";
+        submitBtn.style.borderColor = "#16a34a";
+      }
+    } else if (status === "Rejected") {
+      if (permAlert) permAlert.style.display = "block";
+      if (reviewAlert) reviewAlert.style.display = "none";
+      if (actionName) actionName.textContent = "Rejection";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(239, 68, 68, 0.15)";
+        statusIcon.style.color = "#ef4444";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Reject";
+        submitBtn.style.background = "#ef4444";
+        submitBtn.style.borderColor = "#ef4444";
+      }
+    } else {
+      if (permAlert) permAlert.style.display = "none";
+      if (reviewAlert) reviewAlert.style.display = "block";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(139, 92, 246, 0.15)";
+        statusIcon.style.color = "#8b5cf6";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Mark Under Review";
+        submitBtn.style.background = "#8b5cf6";
+        submitBtn.style.borderColor = "#8b5cf6";
+      }
+    }
+
+    if (confirmModalEl) confirmModalEl.classList.add("active");
+  }
+
+  function closeDecisionConfirmModal() {
+    if (confirmModalEl) confirmModalEl.classList.remove("active");
+    pendingDecision = null;
+  }
+
+  function openReviewModal(app) {
+    currentActiveApp = app;
+    isModalOpen = true;
+
+    const successBanner = document.getElementById("modal-feedback-success-banner");
+    const saveNotesErr = document.getElementById("modal-save-notes-error");
+    if (successBanner) successBanner.style.display = "none";
+    if (saveNotesErr) saveNotesErr.style.display = "none";
+
+    const studentName = app.studentName || "Student Applicant";
+    const initials =
+      studentName
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase() || "ST";
+
+    let studentSettingsPic = "";
+    if (
+      studentSettings &&
+      studentSettings.email &&
+      app.studentEmail &&
+      studentSettings.email.toLowerCase() === app.studentEmail.toLowerCase()
+    ) {
+      studentSettingsPic = studentSettings.profilePicture || "";
+    }
+
+    const avatar =
+      app.studentProfilePic ||
+      app.profilePicture ||
+      studentSettingsPic ||
+      "";
+
+    const modalAvatarEl = document.getElementById("modal-student-avatar");
+    if (modalAvatarEl) {
+      if (avatar) {
+        modalAvatarEl.innerHTML = `<img src="${avatar}" alt="${escapeHtml(studentName)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`;
+      } else {
+        modalAvatarEl.innerHTML = escapeHtml(initials);
+      }
+    }
+
+    const nameEl = document.getElementById("modal-student-name");
+    if (nameEl) nameEl.textContent = studentName;
+    const emailEl = document.getElementById("modal-student-email");
+    if (emailEl) emailEl.textContent = app.studentEmail || "student@university.edu.ph";
+    const idEl = document.getElementById("modal-student-id");
+    if (idEl) idEl.textContent = app.studentId || "N/A";
+    const schoolEl = document.getElementById("modal-student-school");
+    if (schoolEl) schoolEl.textContent = app.university || "Batangas State University";
+    const courseEl = document.getElementById("modal-student-course");
+    if (courseEl) courseEl.textContent = app.course || "BS Information Technology";
+    const yearEl = document.getElementById("modal-student-year");
+    if (yearEl) yearEl.textContent = app.yearLevel || "N/A";
+    const contactEl = document.getElementById("modal-student-contact");
+    if (contactEl) contactEl.textContent = app.contactNumber || "N/A";
+
+    document.getElementById("modal-program-title").textContent =
+      app.scholarshipTitle || "Scholarship Program";
+    document.getElementById("modal-app-date").textContent =
+      app.formattedDate ||
+      (app.submittedAt
+        ? new Date(app.submittedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Recently Applied");
+
+    // Status Pill
+    const statusPill = document.getElementById("modal-status-badge");
+    if (statusPill) {
+      const s = (app.status || "Submitted").toLowerCase();
+      statusPill.className = "provider-app-badge";
+      if (s.includes("approved")) {
+        statusPill.classList.add("badge-status-approved");
+        statusPill.textContent = "Approved";
+      } else if (s.includes("review")) {
+        statusPill.classList.add("badge-status-review");
+        statusPill.textContent = "Under Review";
+      } else if (s.includes("rejected")) {
+        statusPill.classList.add("badge-status-rejected");
+        statusPill.textContent = "Rejected";
+      } else {
+        statusPill.classList.add("badge-status-pending");
+        statusPill.textContent = app.status || "Submitted";
+      }
+    }
+
+    // Feedback Notes textarea & Finalized Decision Locks
+    const notesInput = document.getElementById("modal-review-notes");
+    if (notesInput) {
+      notesInput.value = app.remarks || app.feedback || app.notes || "";
+    }
+
+    const isFinalized = (app.status === "Approved" || app.status === "Rejected");
+    const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
+    const finalizedLabel = document.getElementById("modal-finalized-status-label");
+    const btnApprove = document.getElementById("modal-btn-approve");
+    const btnUnderReview = document.getElementById("modal-btn-review");
+    const btnReject = document.getElementById("modal-btn-reject");
+    const btnSaveNotes = document.getElementById("modal-btn-save-notes");
+
+    if (isFinalized) {
+      if (finalizedNotice) {
+        finalizedNotice.style.display = "block";
+        if (finalizedLabel) finalizedLabel.textContent = app.status;
+      }
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnUnderReview) btnUnderReview.disabled = true;
+      if (btnReject) btnReject.disabled = true;
+      if (btnSaveNotes) btnSaveNotes.disabled = true;
+      if (notesInput) notesInput.readOnly = true;
+    } else {
+      if (finalizedNotice) finalizedNotice.style.display = "none";
+      if (btnApprove) btnApprove.disabled = false;
+      if (btnUnderReview) btnUnderReview.disabled = false;
+      if (btnReject) btnReject.disabled = false;
+      if (btnSaveNotes) btnSaveNotes.disabled = false;
+      if (notesInput) notesInput.readOnly = false;
+    }
+
+    renderModalDocuments(app);
+
+    reviewModalEl.classList.add("active");
     document.body.style.overflow = "hidden";
+  }
+
+  function closeReviewModal() {
+    if (!reviewModalEl) return;
+    reviewModalEl.classList.remove("active");
+    document.body.style.overflow = "";
+    isModalOpen = false;
+    currentActiveApp = null;
+  }
+
+  function renderModalDocuments(app) {
+    const docsContainer = document.getElementById("modal-documents-list");
+    if (!docsContainer) return;
+
+    const rawDocs = app.documents || app.uploadedDocuments || [];
+    if (rawDocs.length === 0) {
+      docsContainer.innerHTML =
+        '<div style="text-align: center; padding: 16px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">No verification documents attached to this submission.</div>';
+      return;
+    }
+
+    let html = "";
+    rawDocs.forEach((doc, idx) => {
+      let docName = "Document #" + (idx + 1);
+      let docUrl = "#";
+      let docSize = "";
+      let isFollowUp = false;
+
+      if (typeof doc === "string") {
+        docName = doc;
+        docUrl = doc;
+        isFollowUp = doc.includes("(To Follow Up)");
+      } else if (doc && typeof doc === "object") {
+        docName = doc.name || doc.title || doc.filename || docName;
+        docUrl = doc.url || doc.fileUrl || doc.dataUrl || "#";
+        docSize = doc.size ? formatFileSize(doc.size) : "";
+        isFollowUp = doc.isFollowUp || doc.status === "to_follow_up";
+      }
+
+      if (isFollowUp) {
+        html += `
+          <div class="modal-doc-item" style="border-style: dashed; border-color: #f59e0b; background: rgba(245, 158, 11, 0.05);">
+            <div class="modal-doc-info">
+              <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div>
+                <p class="modal-doc-name" style="color: #b45309;">${escapeHtml(docName)}</p>
+                <span class="modal-doc-size" style="color: #d97706; font-weight: 600;">Deferred / To Follow Up</span>
+              </div>
+            </div>
+            <span style="font-size: 11.5px; font-weight: 700; color: #b45309; background: rgba(245, 158, 11, 0.15); padding: 3px 8px; border-radius: 6px;">
+              Pending Submission
+            </span>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="modal-doc-item">
+            <div class="modal-doc-info">
+              <div class="modal-doc-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              </div>
+              <div>
+                <p class="modal-doc-name">${escapeHtml(docName)}</p>
+                ${docSize ? `<span class="modal-doc-size">${escapeHtml(docSize)}</span>` : ""}
+              </div>
+            </div>
+            <button type="button" class="btn-doc-view" data-doc-url="${escapeHtml(docUrl)}" data-doc-name="${escapeHtml(docName)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              View Document
+            </button>
+          </div>
+        `;
+      }
+    });
+
+    docsContainer.innerHTML = html;
+
+    docsContainer.querySelectorAll(".btn-doc-view").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        openDocPreview(btn.dataset.docUrl, btn.dataset.docName);
+      });
+    });
+  }
+
+  function formatFileSize(bytes) {
+    if (!bytes || isNaN(bytes)) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  }
+
+  function openDocPreview(fileUrl, fileName) {
+    if (!docPreviewModalEl) return;
+
+    const titleEl = document.getElementById("doc-preview-title");
+    const downloadEl = document.getElementById("doc-preview-download");
+    const bodyEl = document.getElementById("doc-preview-body");
+
+    if (titleEl) titleEl.textContent = fileName || "Document Preview";
+    if (downloadEl) {
+      downloadEl.href = fileUrl;
+      downloadEl.download = fileName || "nexo_document";
+    }
+
+    if (bodyEl) {
+      const isImg = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileUrl) || fileUrl.startsWith("data:image/");
+      const isPdf = /\.pdf$/i.test(fileUrl) || fileUrl.startsWith("data:application/pdf");
+
+      if (isImg) {
+        bodyEl.innerHTML = `
+          <div style="text-align: center; padding: 10px;">
+            <img src="${fileUrl}" alt="${escapeHtml(fileName)}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain;" />
+          </div>
+        `;
+      } else if (isPdf) {
+        bodyEl.innerHTML = `
+          <iframe src="${fileUrl}" style="width: 100%; height: 70vh; border: none; border-radius: 8px;"></iframe>
+        `;
+      } else {
+        bodyEl.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" style="margin-bottom: 12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <h4>${escapeHtml(fileName)}</h4>
+            <p style="font-size: 13.5px; opacity: 0.8; margin-top: 6px;">Document file verified by NEXO Student Drop-Box.</p>
+          </div>
+        `;
+      }
+    }
+
+    docPreviewModalEl.classList.add("active");
+  }
+
+  function closeDocPreview() {
+    if (!docPreviewModalEl) return;
+    docPreviewModalEl.classList.remove("active");
+  }
+
+  // -------------------------------------------------------------
+  // UPDATE APPLICATION STATUS (LIVE BACKEND SYNC)
+  // -------------------------------------------------------------
+  async function updateApplicationStatus(appId, newStatus, notes = "") {
+    // 1. Optimistic UI update
+    const idx = allApplications.findIndex((a) => String(a.id) === String(appId));
+    if (idx >= 0) {
+      allApplications[idx].status = newStatus;
+      allApplications[idx].statusText = newStatus;
+      allApplications[idx].notes = notes;
+      allApplications[idx].feedback = notes;
+      allApplications[idx].remarks = notes;
+      allApplications[idx].reviewedAt = new Date().toISOString();
+    }
+
+    try {
+      localStorage.setItem("nexo_applications", JSON.stringify(allApplications));
+    } catch (_) {}
+
+    try {
+      const res = await fetch(`${API_BASE}/api/applications/${appId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: newStatus,
+          notes,
+          feedback: notes,
+          remarks: notes,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+
+      showToast(`Decision "${newStatus}" saved & sent to student portal!`);
+    } catch (err) {
+      console.warn("Could not sync application status directly with backend:", err);
+      showToast(`Application marked as ${newStatus} (Saved locally)`);
+    }
   }
 })();

@@ -742,7 +742,7 @@ function createCompactCard(schol, allApplications = null) {
     if (descEl) descEl.textContent = schol.desc || "";
     if (manageBtn) {
       manageBtn.onclick = () => {
-        window.location.href = `provider-applications.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}`;
+        window.location.href = `provider-posts.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}`;
       };
     }
     if (modalEl) modalEl.classList.add("active");
