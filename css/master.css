@@ -3526,101 +3526,167 @@ body.dark-theme .view-details-btn:hover {
   flex-direction: column;
 }
 
-/* Greeting Section */
-.student-greeting-section {
-  margin-bottom: 22px;
-}
-.student-greeting-sub {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-secondary, #6b7280);
-  margin: 0 0 4px 0;
-}
-.student-name-row {
+/* Modern Student Welcome Rectangular Hero Card */
+.student-welcome-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  border-radius: 18px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.student-name-title {
+body.dark-theme .student-welcome-card {
+  background: var(--bg-surface);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Squircle Avatar Box (Square shape with smooth radius & subtle border) */
+.student-avatar-box {
+  width: 62px;
+  height: 62px;
+  border-radius: 16px;
+  border: 1.5px solid rgba(139, 92, 246, 0.25);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(99, 102, 241, 0.16));
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-heading);
-  font-size: 24px;
-  font-weight: 750;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.3px;
+  font-size: 22px;
+  font-weight: 800;
+  flex-shrink: 0;
+  overflow: hidden;
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
-.badge-edu-verified {
+.student-avatar-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+body.dark-theme .student-avatar-box {
+  border-color: rgba(167, 139, 250, 0.3);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.25));
+  color: #c084fc;
+}
+
+.student-welcome-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.student-greeting-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+.student-greeting-time {
+  font-size: 12px;
+  font-weight: 650;
+  color: #8b5cf6;
+  letter-spacing: 0.2px;
+}
+body.dark-theme .student-greeting-time {
+  color: #a78bfa;
+}
+.student-verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  font-size: 11.5px;
-  font-weight: 650;
-  background-color: #ecfdf5;
+  gap: 3.5px;
+  padding: 1.5px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.1);
   color: #059669;
-  border: 1.5px solid #a7f3d0;
-  user-select: none;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  line-height: 1.2;
 }
-body.dark-theme .badge-edu-verified {
-  background-color: rgba(16, 185, 129, 0.14);
+body.dark-theme .student-verified-badge {
+  background: rgba(16, 185, 129, 0.15);
   color: #34d399;
   border-color: rgba(16, 185, 129, 0.35);
 }
-.student-motto {
-  font-size: 13.5px;
-  color: var(--text-secondary, #6b7280);
-  line-height: 1.45;
+.student-name-title {
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.student-motto {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  margin: 3px 0 0 0;
 }
 
-/* 2x2 Metric Cards Grid */
+/* 2x2 Metric Cards Grid (Consistent design system) */
 .student-stats-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 .student-stat-card {
-  background: #f8f5ff;
-  border: 1.5px solid #d8b4fe;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
   border-radius: 16px;
-  padding: 14px 16px;
+  padding: 13px 15px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 78px;
+  min-height: 74px;
   box-sizing: border-box;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .student-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+  transform: translateY(-1.5px);
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
 }
 body.dark-theme .student-stat-card {
-  background: rgba(139, 92, 246, 0.1);
-  border-color: rgba(167, 139, 250, 0.25);
+  background: var(--bg-surface);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 .student-stat-label {
-  font-size: 13px;
-  font-weight: 550;
-  color: #4b5563;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
   margin: 0;
 }
 body.dark-theme .student-stat-label {
-  color: #9ca3af;
+  color: var(--text-secondary);
 }
 .student-stat-value {
+  font-family: var(--font-heading);
   font-size: 22px;
-  font-weight: 750;
-  color: #111827;
-  margin: 6px 0 0 0;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 4px 0 0 0;
   line-height: 1;
 }
 body.dark-theme .student-stat-value {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* My Scholarship Applications Section */
@@ -3636,12 +3702,39 @@ body.dark-theme .student-stat-value {
   align-items: center;
   margin-bottom: 16px;
 }
+.student-section-header.student-section-header-centered {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 18px;
+  gap: 8px;
+}
+.student-section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
+body.dark-theme .student-section-badge {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(167, 139, 250, 0.25);
+  color: #c084fc;
+}
 .student-section-title {
-  font-size: 18px;
-  font-weight: 750;
+  font-size: 19px;
+  font-weight: 800;
   color: var(--text-primary);
   margin: 0;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
 }
 .student-view-all-link,
 .student-view-all-btn {
@@ -3894,34 +3987,49 @@ body.dark-theme .pill-remarks {
   color: #c084fc;
 }
 
-/* Action Row */
+/* Action Row (Clean, no horizontal divider line, no tap hint text) */
 .student-app-action-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-color);
+  justify-content: flex-end;
+  padding-top: 4px;
   width: 100%;
-  gap: 8px;
-}
-.student-app-tap-hint {
-  font-size: 11px;
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  user-select: none;
 }
 .view-sub-details-btn {
-  padding: 6px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 650;
+  border-radius: 9px;
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  color: #7c3aed;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
+.view-sub-details-btn:hover {
+  background: rgba(139, 92, 246, 0.16);
+  border-color: #8b5cf6;
+  color: #6d28d9;
+}
+body.dark-theme .view-sub-details-btn {
+  background: rgba(139, 92, 246, 0.14);
+  border-color: rgba(167, 139, 250, 0.28);
+  color: #c084fc;
+}
+body.dark-theme .view-sub-details-btn:hover {
+  background: rgba(139, 92, 246, 0.24);
+  color: #d8b4fe;
+}
+@media (max-width: 480px) {
+  .view-sub-details-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 16px;
+  }
 }
 .dark-theme .student-app-feedback {
   background: rgba(139, 92, 246, 0.15);

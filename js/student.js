@@ -582,6 +582,15 @@ function initStudentGreeting() {
     window.syncGlobalStudentIdentity();
   }
 
+  const cardAvatar = document.getElementById("student-card-avatar");
+  if (cardAvatar) {
+    cardAvatar.style.cursor = "pointer";
+    cardAvatar.title = "View Account Settings";
+    cardAvatar.onclick = () => {
+      window.location.href = "student-settings.html";
+    };
+  }
+
   if (headerAvatar) {
     headerAvatar.style.cursor = "pointer";
     headerAvatar.title = "Student Settings";
@@ -1005,10 +1014,6 @@ function renderApplicationCards(applications, container) {
       </div>
 
       <div class="student-app-action-row">
-        <span class="student-app-tap-hint">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-          Tap card to view full details
-        </span>
         <button type="button" class="btn btn-secondary view-sub-details-btn" data-app-id="${app.id}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           View Full Details

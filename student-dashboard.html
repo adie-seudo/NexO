@@ -22,10 +22,11 @@
     <!-- 1. GLOBAL UNIVERSAL HEADER                -->
     <!-- ========================================= -->
     <header class="global-header">
-      <!-- Profile Area: Student Avatar (Clickable to Settings) -->
+      <!-- NEXO Brand Logo & Name (Student Avatar relocated to Welcome Hero Card) -->
       <div class="logo-container">
-        <a href="student-settings.html" style="text-decoration: none;">
-          <div class="avatar-btn" id="student-header-avatar" style="cursor: pointer" title="Student Settings"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+        <a href="student-dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+          <img src="assets/logo.png" alt="NEXO" style="width: 28px; height: 28px; object-fit: contain;" />
+          <span style="font-family: var(--font-heading); font-size: 19px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px;">NEXO</span>
         </a>
       </div>
 
@@ -195,15 +196,32 @@
     <!-- 2. MAIN STUDENT DASHBOARD CONTENT         -->
     <!-- ========================================= -->
     <main class="student-dash-main">
-      <!-- A. STUDENT GREETING SECTION -->
-      <section class="student-greeting-section">
-        <p class="student-greeting-sub" id="student-greeting-sub">Welcome back,</p>
-        <div class="student-name-row">
-          <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
+      <!-- A. STUDENT WELCOME RECTANGULAR HERO CARD -->
+      <section class="student-welcome-card" id="student-welcome-card">
+        <!-- Squircle Avatar Container -->
+        <div class="student-avatar-box" id="student-card-avatar" title="View Account Settings">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
         </div>
-        <p class="student-motto">
-          Keep going! Your education journey opens more opportunities.
-        </p>
+
+        <!-- Student Dynamic Greetings, Name, and Tagline -->
+        <div class="student-welcome-content">
+          <div class="student-greeting-pill-row">
+            <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
+            <span class="student-verified-badge" title="Verified University Student">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              Student Scholar
+            </span>
+          </div>
+          <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
+          <p class="student-motto" id="student-motto">
+            Keep going! Your education journey opens more opportunities.
+          </p>
+        </div>
       </section>
 
       <!-- B. 2x2 METRIC CARDS GRID -->
@@ -235,7 +253,16 @@
 
       <!-- C. MY SCHOLARSHIP APPLICATIONS -->
       <section class="student-apps-section">
-        <div class="student-section-header">
+        <div class="student-section-header student-section-header-centered">
+          <div class="student-section-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            Activity &amp; Submissions
+          </div>
           <h3 class="student-section-title">My Scholarship Applications</h3>
           <button
             type="button"

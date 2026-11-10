@@ -258,6 +258,20 @@ function syncGlobalStudentIdentity() {
     }
   }
 
+  const cardAvatarEl = document.getElementById("student-card-avatar");
+  if (cardAvatarEl) {
+    if (avatarPic) {
+      cardAvatarEl.innerHTML = `<img src="${avatarPic}" alt="${effectiveName || 'Student'}" style="width: 100%; height: 100%; border-radius: 14px; object-fit: cover;">`;
+    } else {
+      const initials = getDynamicInitials(effectiveName);
+      if (initials) {
+        cardAvatarEl.textContent = initials;
+      } else {
+        cardAvatarEl.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+      }
+    }
+  }
+
   // Profile Completeness Indicator on Side Menu Settings Link
   const isComplete = isStudentProfileComplete();
   const settingsNavLinks = document.querySelectorAll("a[href=\"student-settings.html\"].nav-link");
