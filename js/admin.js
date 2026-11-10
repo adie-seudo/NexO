@@ -758,6 +758,8 @@ document.addEventListener("DOMContentLoaded", () => {
         users.unshift(createdUser);
         try {
           localStorage.setItem("nexo_users", JSON.stringify(users));
+          localStorage.removeItem(`nexo_student_settings_${email}`);
+          localStorage.removeItem("nexo_student_settings");
         } catch (_) {}
 
         showToast(
@@ -902,6 +904,10 @@ document.addEventListener("DOMContentLoaded", () => {
             applications = applications.filter(
               (a) => (a.studentEmail || "").toLowerCase() !== uEmail,
             );
+            try {
+              localStorage.removeItem(`nexo_student_settings_${uEmail}`);
+              localStorage.removeItem("nexo_student_settings");
+            } catch (_) {}
           } else if (pendingDeleteTarget.role === "provider") {
             const provName =
               pendingDeleteTarget.name || pendingDeleteTarget.email;

@@ -187,39 +187,7 @@ function escapeNotifHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
-const DEFAULT_NEXO_NOTIFICATIONS = [
-  {
-    id: "notif_1002",
-    recipient: "provider",
-    title: "Grant Capacity Active",
-    message: "Applicant quota configured: 0 / 200 active slots remaining.",
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    formattedTime: "1 hour ago",
-    read: false,
-    link: "provider-dashboard.html",
-  },
-  {
-    id: "notif_1003",
-    recipient: "student",
-    title: "New Scholarship Posted",
-    message: '"Final Test" is now open for applications. Check requirements.',
-    timestamp: new Date(Date.now() - 1200000).toISOString(),
-    formattedTime: "20 mins ago",
-    read: false,
-    link: "student-browse.html",
-  },
-  {
-    id: "notif_1004",
-    recipient: "student",
-    title: "Document Verification",
-    message:
-      "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    formattedTime: "2 hours ago",
-    read: true,
-    link: "student-dashboard.html",
-  },
-];
+const DEFAULT_NEXO_NOTIFICATIONS = [];
 
 function getProviderNotificationsFromStorage() {
   let all = [];
@@ -236,102 +204,8 @@ function getProviderNotificationsFromStorage() {
   } catch (_) {}
   if (!Array.isArray(dismissed)) dismissed = [];
 
-  // 1. Sync live from local applications so any applied student generates a provider notification
-  try {
-    const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
-    if (Array.isArray(apps)) {
-      apps.forEach((app) => {
-        const notifId = "notif_app_" + (app.id || "temp");
-        if (dismissed.includes(notifId) || dismissed.includes(String(app.id))) return;
-        if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
-          const rawDocs = Array.isArray(app.documents)
-            ? app.documents
-            : Array.isArray(app.uploadedDocuments)
-              ? app.uploadedDocuments
-              : [];
-          const attachedDocs = rawDocs.filter((d) => {
-            if (typeof d === "string") return !d.includes("(To Follow Up)");
-            return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
-          });
-          const followUpDocs = rawDocs.filter((d) => {
-            if (typeof d === "string") return d.includes("(To Follow Up)");
-            return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
-          });
-          const docNotice =
-            followUpDocs.length > 0
-              ? `${attachedDocs.length} document(s) (${followUpDocs.length} to follow up)`
-              : `${attachedDocs.length} document(s)`;
-          all.unshift({
-            id: notifId,
-            recipient: "provider",
-            title: "New Application Received",
-            message: `${app.studentName || "Student Scholar"} applied for "${app.scholarshipTitle || "Scholarship"}" with ${docNotice}.`,
-            timestamp: app.submittedAt || new Date().toISOString(),
-            formattedTime: app.formattedDate || "Just now",
-            read: false,
-            link: "provider-applications.html",
-            appId: app.id,
-          });
-        }
-      });
-    }
-  } catch (_) {}
-
-  // 2. Sync capacity notifications from live scholarships
-  try {
-    const schols = JSON.parse(
-      localStorage.getItem("nexo_scholarships") || "[]",
-    );
-    if (Array.isArray(schols)) {
-      schols.forEach((s) => {
-        const notifId = "notif_schol_cap_" + s.id;
-        if (dismissed.includes(notifId) || dismissed.includes(String(s.id))) return;
-        if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
-          const limit =
-            parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
-          all.push({
-            id: notifId,
-            recipient: "provider",
-            title: "Grant Capacity Active",
-            message: `"${s.title}": Capacity configured for ${limit} applicants.`,
-            timestamp: s.postedAt || new Date().toISOString(),
-            formattedTime: "Active",
-            read: true,
-            link: "provider-dashboard.html",
-            scholId: s.id,
-          });
-        }
-      });
-    }
-  } catch (_) {}
-
-  // 3. Seed default provider items only on first initialization
-  const initialized = localStorage.getItem("nexo_provider_notifs_initialized");
-  const providerItems = all.filter(
-    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",
-  );
-
-  if (!initialized && providerItems.length === 0) {
-    DEFAULT_NEXO_NOTIFICATIONS.forEach((dn) => {
-      if (
-        !dn.recipient ||
-        dn.recipient === "provider" ||
-        dn.recipient === "all"
-      ) {
-        if (!all.some((n) => n.id === dn.id)) {
-          all.push(dn);
-        }
-      }
-    });
-    localStorage.setItem("nexo_provider_notifs_initialized", "true");
-  }
-
-  try {
-    localStorage.setItem("nexo_notifications", JSON.stringify(all));
-  } catch (_) {}
-
   return all.filter(
-    (n) => !n.recipient || n.recipient === "provider" || n.recipient === "all",
+    (n) => (!n.recipient || n.recipient === "provider" || n.recipient === "all") && !dismissed.includes(String(n.id)),
   );
 }
 
@@ -364,7 +238,17 @@ function initNotificationBell() {
           <h4 class="notif-popover-title">Notifications</h4>
           <span class="notif-badge-count" id="provider-notif-badge">0 New</span>
         </div>
-        <button type="button" class="notif-mark-read-btn" id="provider-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="notif-mark-read-btn" id="provider-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+          <button type="button" class="notif-trash-btn" id="provider-clear-all-btn" title="Delete All Notifications" aria-label="Delete all notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="notif-popover-body" id="provider-notif-body">
         <div class="notif-empty-box">
@@ -489,6 +373,74 @@ function initNotificationBell() {
     loadNotifications();
   }
 
+  function confirmClearAllProviderNotifications() {
+    let modal = document.getElementById("clear-provider-notifs-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "clear-provider-notifs-modal";
+      modal.className = "nexo-modal-overlay";
+      modal.style.zIndex = "10600";
+      modal.innerHTML = `
+        <div class="nexo-modal-container" style="max-width: 420px; border-radius: 16px; padding: 24px; text-align: center;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </div>
+          <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 8px 0; color: var(--text-primary);">Delete All Notifications?</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 20px 0; line-height: 1.45;">
+            Are you sure you want to permanently clear all notifications? This action cannot be undone.
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-clear-provider-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px;">Cancel</button>
+            <button type="button" class="btn btn-danger" id="btn-confirm-clear-provider-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px; background: #ef4444; border-color: #ef4444; color: #fff; font-weight: 700;">Delete All</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector("#btn-cancel-clear-provider-notifs").addEventListener("click", () => {
+        modal.classList.remove("open");
+      });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("open");
+      });
+      modal.querySelector("#btn-confirm-clear-provider-notifs").addEventListener("click", async () => {
+        modal.classList.remove("open");
+        await clearAllProviderNotifications();
+      });
+    }
+    modal.classList.add("open");
+  }
+
+  async function clearAllProviderNotifications() {
+    try {
+      let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+      cached = cached.filter((n) => n.recipient && n.recipient !== "provider" && n.recipient !== "all");
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+    } catch (_) {}
+
+    try {
+      await fetch(`${API_BASE}/api/notifications?recipient=provider`, {
+        method: "DELETE",
+      });
+    } catch (_) {}
+
+    loadNotifications();
+    if (typeof showToast === "function") {
+      showToast("All notifications deleted.");
+    }
+  }
+
+  function clampPopoverPosition() {
+    if (!popover) return;
+    popover.style.right = "0";
+    popover.style.left = "auto";
+    const rect = popover.getBoundingClientRect();
+    if (rect.left < 14) {
+      const shift = 14 - rect.left;
+      popover.style.right = `-${shift}px`;
+    }
+  }
+
   function renderNotifications(notifs) {
     const bodyEl = document.getElementById("provider-notif-body");
     const badgeEl = document.getElementById("provider-notif-badge");
@@ -531,8 +483,11 @@ function initNotificationBell() {
       .map((n) => {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
+        const linkUrl = n.appId
+          ? `provider-applications.html?appId=${encodeURIComponent(n.appId)}`
+          : (n.link || "provider-applications.html");
         return `
-          <a href="${n.link || "provider-applications.html"}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
+          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}" data-app-id="${n.appId || ""}">
             <div class="notif-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -550,11 +505,20 @@ function initNotificationBell() {
       })
       .join("");
 
-    // Attach click listeners to individual items: clicking permanently deletes notification so it won't flood
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
-      item.addEventListener("click", () => {
+      item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
+        const appId = item.dataset.appId;
         if (notifId) deleteProviderNotification(notifId);
+
+        // If already on provider-applications.html, open review modal directly
+        if (window.location.pathname.includes("provider-applications.html") && appId) {
+          e.preventDefault();
+          closeNotifications();
+          if (typeof window.openReviewModalByAppId === "function") {
+            window.openReviewModalByAppId(appId);
+          }
+        }
       });
     });
   }
@@ -562,6 +526,16 @@ function initNotificationBell() {
   // Initial load & periodic polling
   loadNotifications();
   setInterval(loadNotifications, 3500);
+
+  // Wire "Delete all notifications" button
+  const clearAllBtn = document.getElementById("provider-clear-all-btn");
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      confirmClearAllProviderNotifications();
+    });
+  }
 
   // Wire "Mark all read" button
   const markReadBtn = document.getElementById("provider-mark-read");
@@ -586,13 +560,18 @@ function initNotificationBell() {
   // Toggle dropdown on bell click
   notifBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    // Close the side menu if open
     closeSideMenu();
     const willOpen = !popover.classList.contains("open");
     popover.classList.toggle("open", willOpen);
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
     if (willOpen) {
+      clampPopoverPosition();
       loadNotifications();
+      // Instantly mark notifications as read and remove red dot
+      markAllNotificationsRead();
+      const currentDot = notifBtn.querySelector(".notification-dot") || document.getElementById("notif-dot");
+      if (currentDot) currentDot.classList.remove("active");
+      notifBtn.classList.remove("has-unread");
     }
   });
 

@@ -12,6 +12,101 @@
   let allApplications = [];
   let allScholarships = [];
   let studentSettings = null;
+  let studentProfiles = {};
+  let users = [];
+
+  function resolveStudentInfo(app) {
+    const email = (app.studentEmail || "").toLowerCase().trim();
+    
+    // 1. In-memory studentProfiles
+    let profile = (studentProfiles && studentProfiles[email]) || {};
+
+    // 2. LocalStorage per-student settings cache
+    if (!profile.course || !profile.university || !profile.studentId) {
+      try {
+        const rawUser = localStorage.getItem(`nexo_student_settings_${email}`);
+        if (rawUser) profile = { ...JSON.parse(rawUser), ...profile };
+      } catch (_) {}
+    }
+
+    // 3. General localStorage student_settings if email matches
+    if (!profile.course || !profile.university || !profile.studentId) {
+      try {
+        const rawGen = localStorage.getItem("nexo_student_settings");
+        if (rawGen) {
+          const parsedGen = JSON.parse(rawGen);
+          if ((parsedGen.email || "").toLowerCase().trim() === email) {
+            profile = { ...parsedGen, ...profile };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 4. Global student_profiles cache in localStorage
+    if (!profile.course || !profile.university || !profile.studentId) {
+      try {
+        const rawAll = localStorage.getItem("nexo_student_profiles");
+        if (rawAll) {
+          const parsedAll = JSON.parse(rawAll);
+          if (parsedAll[email]) {
+            profile = { ...parsedAll[email], ...profile };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 5. Matched user in users list
+    const matchedUser =
+      (users &&
+        users.find((u) => (u.email || "").toLowerCase().trim() === email)) ||
+      {};
+
+    return {
+      fullName:
+        profile.fullName ||
+        matchedUser.name ||
+        app.studentName ||
+        "Student Applicant",
+      email: profile.email || app.studentEmail || matchedUser.email || "",
+      university:
+        profile.university ||
+        matchedUser.university ||
+        app.university ||
+        "",
+      course:
+        profile.course ||
+        matchedUser.course ||
+        app.course ||
+        "",
+      yearLevel:
+        profile.yearLevel ||
+        matchedUser.yearLevel ||
+        app.yearLevel ||
+        "",
+      studentId:
+        profile.studentId ||
+        matchedUser.studentId ||
+        app.studentId ||
+        "",
+      contactNumber:
+        profile.contactNumber ||
+        matchedUser.contactNumber ||
+        app.contactNumber ||
+        "",
+      bio:
+        profile.bio !== undefined && profile.bio !== ""
+          ? profile.bio
+          : matchedUser.bio !== undefined && matchedUser.bio !== ""
+          ? matchedUser.bio
+          : app.bio || "",
+      profilePicture:
+        profile.profilePicture ||
+        matchedUser.profilePicture ||
+        app.studentProfilePic ||
+        app.profilePicture ||
+        "",
+    };
+  }
   let activeFilterTab = "all";
   let activeSearchQuery = "";
   let activeSortOption = "newest";
@@ -99,6 +194,13 @@
         serverSchols = Array.isArray(data.scholarships)
           ? data.scholarships
           : [];
+        if (data.studentProfiles) {
+          studentProfiles = data.studentProfiles;
+          try { localStorage.setItem("nexo_student_profiles", JSON.stringify(studentProfiles)); } catch(_) {}
+        }
+        if (Array.isArray(data.users)) {
+          users = data.users;
+        }
         if (data.studentSettings) {
           studentSettings = data.studentSettings;
         }
@@ -566,8 +668,8 @@
       badgeText = "Rejected";
     }
 
-    // Initials
-    const name = app.studentName || "Student";
+    const info = resolveStudentInfo(app);
+    const name = info.fullName;
     const initials =
       name
         .split(/\s+/)
@@ -596,11 +698,7 @@
           })
         : "Recently");
 
-    const avatar =
-      app.studentProfilePic ||
-      app.profilePicture ||
-      (studentSettings && studentSettings.profilePicture) ||
-      "";
+    const avatar = info.profilePicture;
 
     let avatarHtml = `<div class="provider-app-avatar">${escapeHtml(initials)}</div>`;
     if (avatar) {
@@ -622,7 +720,8 @@
           </p>
 
           <p class="provider-app-school">
-            ${escapeHtml(app.course || "BS IT")} &bull; ${escapeHtml(app.university || "Batangas State University")}
+            ${escapeHtml([info.course, info.yearLevel].filter(Boolean).join(" • ") || "Degree Candidate")}
+            ${info.university ? `&bull; ${escapeHtml(info.university)}` : ""}
           </p>
 
           <div class="provider-app-meta-row">
@@ -1016,14 +1115,21 @@
     currentActiveApp = app;
     isModalOpen = true;
 
+  window.openReviewModalByAppId = function (id) {
+    const target = allApplications.find((a) => String(a.id) === String(id));
+    if (target) {
+      openReviewModal(target);
+    }
+  };
+
     // Reset feedback success banner and error messages
     const successBanner = document.getElementById("modal-feedback-success-banner");
     const saveNotesErr = document.getElementById("modal-save-notes-error");
     if (successBanner) successBanner.style.display = "none";
     if (saveNotesErr) saveNotesErr.style.display = "none";
 
-    // Student Avatar in Modal Header
-    const studentName = app.studentName || "Student Applicant";
+    const info = resolveStudentInfo(app);
+    const studentName = info.fullName;
     const initials =
       studentName
         .split(/\s+/)
@@ -1032,21 +1138,7 @@
         .join("")
         .toUpperCase() || "ST";
 
-    let studentSettingsPic = "";
-    if (
-      studentSettings &&
-      studentSettings.email &&
-      app.studentEmail &&
-      studentSettings.email.toLowerCase() === app.studentEmail.toLowerCase()
-    ) {
-      studentSettingsPic = studentSettings.profilePicture || "";
-    }
-
-    const avatar =
-      app.studentProfilePic ||
-      app.profilePicture ||
-      studentSettingsPic ||
-      "";
+    const avatar = info.profilePicture;
 
     const modalAvatarEl = document.getElementById("modal-student-avatar");
     if (modalAvatarEl) {
@@ -1061,17 +1153,29 @@
     const nameEl = document.getElementById("modal-student-name");
     if (nameEl) nameEl.textContent = studentName;
     const emailEl = document.getElementById("modal-student-email");
-    if (emailEl) emailEl.textContent = app.studentEmail || "student@university.edu.ph";
+    if (emailEl) emailEl.textContent = info.email || app.studentEmail || "Not Specified";
     const idEl = document.getElementById("modal-student-id");
-    if (idEl) idEl.textContent = app.studentId || "N/A";
+    if (idEl) idEl.textContent = info.studentId || "Not Specified";
     const schoolEl = document.getElementById("modal-student-school");
-    if (schoolEl) schoolEl.textContent = app.university || "Batangas State University";
+    if (schoolEl) schoolEl.textContent = info.university || "Not Specified";
     const courseEl = document.getElementById("modal-student-course");
-    if (courseEl) courseEl.textContent = app.course || "BS Information Technology";
+    if (courseEl) courseEl.textContent = info.course || "Not Specified";
     const yearEl = document.getElementById("modal-student-year");
-    if (yearEl) yearEl.textContent = app.yearLevel || "N/A";
+    if (yearEl) yearEl.textContent = info.yearLevel || "Not Specified";
     const contactEl = document.getElementById("modal-student-contact");
-    if (contactEl) contactEl.textContent = app.contactNumber || "N/A";
+    if (contactEl) contactEl.textContent = info.contactNumber || "Not Specified";
+    const bioEl = document.getElementById("modal-student-bio");
+    if (bioEl) {
+      if (info.bio && info.bio.trim()) {
+        bioEl.textContent = info.bio.trim();
+        bioEl.style.fontStyle = "normal";
+        bioEl.style.color = "var(--text-primary)";
+      } else {
+        bioEl.textContent = "No applicant bio provided.";
+        bioEl.style.fontStyle = "italic";
+        bioEl.style.color = "var(--text-secondary)";
+      }
+    }
 
     document.getElementById("modal-program-title").textContent =
       app.scholarshipTitle || "Scholarship Program";

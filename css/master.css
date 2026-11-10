@@ -2161,6 +2161,35 @@ section:has(> #login-form),
   pointer-events: auto;
 }
 
+@media (max-width: 520px) {
+  .notification-popover {
+    position: fixed !important;
+    top: 64px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    transform-origin: top center !important;
+  }
+}
+
+.notif-trash-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.18s, background-color 0.18s;
+}
+.notif-trash-btn:hover {
+  color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
 body.dark-theme .notification-popover {
   background-color: #181d27;
   border-color: rgba(255, 255, 255, 0.08);

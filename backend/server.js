@@ -893,27 +893,35 @@ async function handleRequest(req, res) {
           studentName: resolvedStudentName,
           studentEmail,
           studentId:
-            body.studentId ||
             studentProfile.studentId ||
             matchedStudentUser.studentId ||
+            body.studentId ||
             "",
           university:
-            body.university ||
             studentProfile.university ||
             matchedStudentUser.university ||
+            body.university ||
             "",
           course:
-            body.course ||
             studentProfile.course ||
             matchedStudentUser.course ||
+            body.course ||
             "",
           yearLevel:
-            body.yearLevel ||
             studentProfile.yearLevel ||
             matchedStudentUser.yearLevel ||
+            body.yearLevel ||
             "",
           contactNumber:
-            body.contactNumber || studentProfile.contactNumber || "",
+            studentProfile.contactNumber ||
+            matchedStudentUser.contactNumber ||
+            body.contactNumber ||
+            "",
+          bio:
+            studentProfile.bio ||
+            matchedStudentUser.bio ||
+            body.bio ||
+            "",
           studentProfilePic: sAvatar,
           profilePicture: sAvatar,
           status: body.status || "Submitted",
@@ -1332,19 +1340,14 @@ async function handleRequest(req, res) {
           const profile = {
             fullName: (matched && matched.name) || "",
             email: queryEmail,
-            university:
-              (matched && matched.university) ||
-              (queryEmail.includes("batstate-u")
-                ? "Batangas State University"
-                : ""),
+            university: (matched && matched.university) || "",
             course: (matched && matched.course) || "",
             yearLevel: (matched && matched.yearLevel) || "",
-            studentId:
-              (matched && matched.studentId) ||
-              (/^\d{2}-\d{4,6}$/.test(localPrefix) ? localPrefix : ""),
-            contactNumber: "",
-            bio: "",
-            profilePicture: "",
+            studentId: (matched && matched.studentId) || "",
+            contactNumber: (matched && matched.contactNumber) || "",
+            bio: (matched && matched.bio) || "",
+            profilePicture: (matched && matched.profilePicture) || "",
+            isProfileConfirmed: Boolean(matched && matched.isProfileConfirmed),
             notifications: {
               scholarshipMatches: true,
               applicationUpdates: true,
@@ -1412,40 +1415,40 @@ async function handleRequest(req, res) {
         const lockedName =
           (matchedUser && matchedUser.name) || current.fullName || "";
 
-        // If profile was already confirmed, do not allow changing course, yearLevel, or bio
+        // Academic course & year are locked once confirmed, but bio is ALWAYS editable and optional
         const course = isCurrentlyConfirmed
-          ? current.course
-          : (body.course !== undefined ? String(body.course).trim() : current.course);
+          ? (current.course || (body.course !== undefined ? String(body.course).trim() : ""))
+          : (body.course !== undefined ? String(body.course).trim() : (current.course || ""));
         const yearLevel = isCurrentlyConfirmed
-          ? current.yearLevel
-          : (body.yearLevel !== undefined ? String(body.yearLevel).trim() : current.yearLevel);
-        const bio = isCurrentlyConfirmed
-          ? current.bio
-          : (body.bio !== undefined ? String(body.bio).trim() : current.bio);
+          ? (current.yearLevel || (body.yearLevel !== undefined ? String(body.yearLevel).trim() : ""))
+          : (body.yearLevel !== undefined ? String(body.yearLevel).trim() : (current.yearLevel || ""));
+        const university = isCurrentlyConfirmed
+          ? (current.university || (body.university !== undefined ? String(body.university).trim() : ""))
+          : (body.university !== undefined ? String(body.university).trim() : (current.university || ""));
+        const studentId = isCurrentlyConfirmed
+          ? (current.studentId || (body.studentId !== undefined ? String(body.studentId).trim() : ""))
+          : (body.studentId !== undefined ? String(body.studentId).trim() : (current.studentId || ""));
+        const contactNumber = body.contactNumber !== undefined
+          ? String(body.contactNumber).trim()
+          : (current.contactNumber || "");
 
-        // Profile can be confirmed if requested or previously confirmed
+        // Bio is always editable and optional
+        const bio = body.bio !== undefined ? String(body.bio).trim() : (current.bio || "");
+
+        // Profile can be confirmed if requested (requiring course and yearLevel) or previously confirmed
         const isProfileConfirmed =
           isCurrentlyConfirmed ||
-          Boolean(body.isProfileConfirmed && course && yearLevel && bio);
+          Boolean(body.isProfileConfirmed && course && yearLevel);
 
         const updated = {
           ...current,
           fullName: lockedName,
           email: email || current.email,
-          university:
-            current.university ||
-            (matchedUser && matchedUser.university) ||
-            (email.includes("batstate-u") ? "Batangas State University" : ""),
+          university: university || "",
           course: course || "",
           yearLevel: yearLevel || "",
-          studentId:
-            current.studentId ||
-            (matchedUser && matchedUser.studentId) ||
-            (/^\d{2}-\d{4,6}$/.test(localPrefix) ? localPrefix : ""),
-          contactNumber:
-            body.contactNumber !== undefined
-              ? String(body.contactNumber).trim()
-              : current.contactNumber,
+          studentId: studentId || "",
+          contactNumber: contactNumber || "",
           bio: bio || "",
           profilePicture:
             body.profilePicture !== undefined
@@ -1473,23 +1476,31 @@ async function handleRequest(req, res) {
         }
 
         if (matchedUser) {
-          matchedUser.course = updated.course;
-          matchedUser.yearLevel = updated.yearLevel;
-          matchedUser.bio = updated.bio;
+          if (updated.university) matchedUser.university = updated.university;
+          if (updated.course) matchedUser.course = updated.course;
+          if (updated.yearLevel) matchedUser.yearLevel = updated.yearLevel;
+          if (updated.studentId) matchedUser.studentId = updated.studentId;
+          if (updated.contactNumber) matchedUser.contactNumber = updated.contactNumber;
+          matchedUser.bio = updated.bio || "";
           matchedUser.isProfileConfirmed = updated.isProfileConfirmed;
           if (updated.profilePicture) {
             matchedUser.profilePicture = updated.profilePicture;
           }
         }
 
-        if (
-          body.profilePicture !== undefined &&
-          Array.isArray(data.applications)
-        ) {
+        if (Array.isArray(data.applications)) {
           data.applications.forEach((app) => {
             if (String(app.studentEmail || "").toLowerCase() === email) {
-              app.studentProfilePic = updated.profilePicture;
-              app.profilePicture = updated.profilePicture;
+              if (updated.university) app.university = updated.university;
+              if (updated.course) app.course = updated.course;
+              if (updated.yearLevel) app.yearLevel = updated.yearLevel;
+              if (updated.studentId) app.studentId = updated.studentId;
+              if (updated.contactNumber) app.contactNumber = updated.contactNumber;
+              app.bio = updated.bio || "";
+              if (updated.profilePicture) {
+                app.studentProfilePic = updated.profilePicture;
+                app.profilePicture = updated.profilePicture;
+              }
             }
           });
         }
@@ -1556,6 +1567,32 @@ async function handleRequest(req, res) {
           });
         }
         return sendJson(res, 201, newNotif);
+      }
+
+      if (method === "DELETE") {
+        const recipient = reqUrl.searchParams.get("recipient");
+        const queryEmail = String(reqUrl.searchParams.get("email") || "")
+          .toLowerCase()
+          .trim();
+        if (recipient) {
+          data.notifications = (data.notifications || []).filter((n) => {
+            const roleMatch = !n.recipient || n.recipient === recipient || n.recipient === "all";
+            if (!roleMatch) return true;
+            if (queryEmail && n.recipientEmail) {
+              return String(n.recipientEmail).toLowerCase() !== queryEmail;
+            }
+            return false;
+          });
+        } else {
+          data.notifications = [];
+        }
+        if (!writeData(data)) {
+          return sendJson(res, 500, {
+            success: false,
+            error: "Failed to delete notifications.",
+          });
+        }
+        return sendJson(res, 200, { success: true, message: "Notifications deleted" });
       }
 
       return sendJson(res, 405, { success: false, error: "Method not allowed" });

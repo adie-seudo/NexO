@@ -76,39 +76,7 @@ function escapeStudentNotifHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
-const DEFAULT_STUDENT_NOTIFICATIONS = [
-  {
-    id: "notif_1002",
-    recipient: "provider",
-    title: "Grant Capacity Active",
-    message: "Applicant quota configured: 0 / 200 active slots remaining.",
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    formattedTime: "1 hour ago",
-    read: false,
-    link: "provider-dashboard.html",
-  },
-  {
-    id: "notif_1003",
-    recipient: "student",
-    title: "New Scholarship Posted",
-    message: '"Final Test" is now open for applications. Check requirements.',
-    timestamp: new Date(Date.now() - 1200000).toISOString(),
-    formattedTime: "20 mins ago",
-    read: false,
-    link: "student-browse.html",
-  },
-  {
-    id: "notif_1004",
-    recipient: "student",
-    title: "Document Verification",
-    message:
-      "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    formattedTime: "2 hours ago",
-    read: false,
-    link: "student-dashboard.html",
-  },
-];
+const DEFAULT_STUDENT_NOTIFICATIONS = [];
 
 function getStudentNotificationsFromStorage() {
   let all = [];
@@ -125,88 +93,17 @@ function getStudentNotificationsFromStorage() {
   } catch (_) {}
   if (!Array.isArray(dismissed)) dismissed = [];
 
-  // Filter out any dismissed notification IDs
-  all = all.filter((n) => !dismissed.includes(String(n.id)));
+  const currentEmail = (localStorage.getItem("nexo_student_email") || "").toLowerCase().trim();
 
-  // 1. Sync status updates from actual student applications
-  try {
-    const apps = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
-    if (Array.isArray(apps)) {
-      apps.forEach((app) => {
-        const notifId = "notif_student_app_" + (app.id || "temp");
-        if (dismissed.includes(notifId) || dismissed.includes(String(app.id))) return;
-        if (!all.some((n) => n.id === notifId || n.appId === app.id)) {
-          const status = app.status || "Under Review";
-          all.unshift({
-            id: notifId,
-            recipient: "student",
-            title: `Application ${status}`,
-            message: `Your application for "${app.scholarshipTitle || "Scholarship"}" is now ${status}.`,
-            timestamp: app.submittedAt || new Date().toISOString(),
-            formattedTime: app.formattedDate || "Recently",
-            read: false,
-            link: "student-submissions.html",
-            appId: app.id,
-          });
-        }
-      });
+  return all.filter((n) => {
+    if (dismissed.includes(String(n.id))) return false;
+    const isStudent = !n.recipient || n.recipient === "student" || n.recipient === "all";
+    if (!isStudent) return false;
+    if (n.recipientEmail && currentEmail) {
+      return String(n.recipientEmail).toLowerCase().trim() === currentEmail;
     }
-  } catch (_) {}
-
-  // 2. Sync announcement notifications from active scholarships
-  try {
-    const schols = JSON.parse(
-      localStorage.getItem("nexo_scholarships") || "[]",
-    );
-    if (Array.isArray(schols)) {
-      schols.forEach((s) => {
-        const notifId = "notif_student_schol_" + s.id;
-        if (dismissed.includes(notifId) || dismissed.includes(String(s.id))) return;
-        if (!all.some((n) => n.id === notifId || n.scholId === s.id)) {
-          all.push({
-            id: notifId,
-            recipient: "student",
-            title: "New Scholarship Posted",
-            message: `"${s.title}" is now open for applications. Check eligibility.`,
-            timestamp: s.postedAt || new Date().toISOString(),
-            formattedTime: "Open",
-            read: false,
-            link: "student-browse.html",
-            scholId: s.id,
-          });
-        }
-      });
-    }
-  } catch (_) {}
-
-  // 3. Ensure baseline student notifications exist if none found (seed once)
-  const initialized = localStorage.getItem("nexo_student_notifs_initialized");
-  const studentItems = all.filter(
-    (n) => (!n.recipient || n.recipient === "student" || n.recipient === "all") && !dismissed.includes(String(n.id)),
-  );
-
-  if (!initialized && studentItems.length === 0 && dismissed.length === 0) {
-    DEFAULT_STUDENT_NOTIFICATIONS.forEach((dn) => {
-      if (
-        !dn.recipient ||
-        dn.recipient === "student" ||
-        dn.recipient === "all"
-      ) {
-        if (!all.some((n) => n.id === dn.id)) {
-          all.push(dn);
-        }
-      }
-    });
-    localStorage.setItem("nexo_student_notifs_initialized", "true");
-  }
-
-  try {
-    localStorage.setItem("nexo_notifications", JSON.stringify(all));
-  } catch (_) {}
-
-  return all.filter(
-    (n) => !n.recipient || n.recipient === "student" || n.recipient === "all",
-  );
+    return true;
+  });
 }
 
 function initNotificationBell() {
@@ -237,7 +134,17 @@ function initNotificationBell() {
           <h4 class="notif-popover-title">Notifications</h4>
           <span class="notif-badge-count" id="student-notif-badge">0 New</span>
         </div>
-        <button type="button" class="notif-mark-read-btn" id="student-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="notif-mark-read-btn" id="student-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+          <button type="button" class="notif-trash-btn" id="student-clear-all-btn" title="Delete All Notifications" aria-label="Delete all notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="notif-popover-body" id="student-notif-body">
         <div class="notif-empty-box">
@@ -366,6 +273,83 @@ function initNotificationBell() {
     loadStudentNotifications();
   }
 
+  function confirmClearAllStudentNotifications() {
+    let modal = document.getElementById("clear-student-notifs-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "clear-student-notifs-modal";
+      modal.className = "nexo-modal-overlay";
+      modal.style.zIndex = "10600";
+      modal.innerHTML = `
+        <div class="nexo-modal-container" style="max-width: 420px; border-radius: 16px; padding: 24px; text-align: center;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </div>
+          <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 8px 0; color: var(--text-primary);">Delete All Notifications?</h3>
+          <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 20px 0; line-height: 1.45;">
+            Are you sure you want to permanently clear all notifications? This action cannot be undone.
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-clear-student-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px;">Cancel</button>
+            <button type="button" class="btn btn-danger" id="btn-confirm-clear-student-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px; background: #ef4444; border-color: #ef4444; color: #fff; font-weight: 700;">Delete All</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      modal.querySelector("#btn-cancel-clear-student-notifs").addEventListener("click", () => {
+        modal.classList.remove("open");
+      });
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.remove("open");
+      });
+      modal.querySelector("#btn-confirm-clear-student-notifs").addEventListener("click", async () => {
+        modal.classList.remove("open");
+        await clearAllStudentNotifications();
+      });
+    }
+    modal.classList.add("open");
+  }
+
+  async function clearAllStudentNotifications() {
+    const currentEmail = (localStorage.getItem("nexo_student_email") || "").toLowerCase().trim();
+    try {
+      let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+      cached = cached.filter((n) => {
+        if (!n.recipient || n.recipient === "student" || n.recipient === "all") {
+          if (n.recipientEmail && currentEmail && String(n.recipientEmail).toLowerCase().trim() !== currentEmail) {
+            return true;
+          }
+          return false;
+        }
+        return true;
+      });
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+    } catch (_) {}
+
+    try {
+      await fetch(`${NOTIF_API}/api/notifications?recipient=student${currentEmail ? `&email=${encodeURIComponent(currentEmail)}` : ""}`, {
+        method: "DELETE",
+      });
+    } catch (_) {}
+
+    loadStudentNotifications();
+    if (typeof showToast === "function") {
+      showToast("All notifications deleted.");
+    }
+  }
+
+  function clampPopoverPosition() {
+    if (!popover) return;
+    popover.style.right = "0";
+    popover.style.left = "auto";
+    const rect = popover.getBoundingClientRect();
+    if (rect.left < 14) {
+      const shift = 14 - rect.left;
+      popover.style.right = `-${shift}px`;
+    }
+  }
+
   function renderStudentNotifications(notifs) {
     const bodyEl = document.getElementById("student-notif-body");
     const badgeEl = document.getElementById("student-notif-badge");
@@ -408,8 +392,14 @@ function initNotificationBell() {
       .map((n) => {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
+        let linkUrl = n.link || "student-submissions.html";
+        if (n.appId) {
+          linkUrl = `student-submissions.html?id=${encodeURIComponent(n.appId)}`;
+        } else if (n.scholId) {
+          linkUrl = `student-browse.html?id=${encodeURIComponent(n.scholId)}`;
+        }
         return `
-          <a href="${n.link || "student-submissions.html"}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
+          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}" data-app-id="${n.appId || ""}">
             <div class="notif-item-icon">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
@@ -442,6 +432,16 @@ function initNotificationBell() {
   loadStudentNotifications();
   setInterval(loadStudentNotifications, 3500);
 
+  // Wire "Delete all notifications" button
+  const clearAllBtn = document.getElementById("student-clear-all-btn");
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      confirmClearAllStudentNotifications();
+    });
+  }
+
   // Wire "Mark all read" button
   const markReadBtn = document.getElementById("student-mark-read");
   if (markReadBtn) {
@@ -470,7 +470,13 @@ function initNotificationBell() {
     popover.classList.toggle("open", willOpen);
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
     if (willOpen) {
+      clampPopoverPosition();
       loadStudentNotifications();
+      // Instantly mark notifications as read and remove red dot
+      markAllStudentNotificationsRead();
+      const currentDot = notifBtn.querySelector(".notification-dot") || document.getElementById("student-notif-dot");
+      if (currentDot) currentDot.classList.remove("active");
+      notifBtn.classList.remove("has-unread");
     }
   });
 
@@ -773,6 +779,22 @@ function renderFilteredSubmissions() {
   if (filterEmptyCard) filterEmptyCard.style.display = "none";
   appsFeed.style.display = "flex";
   renderApplicationCards(listToRender, appsFeed);
+
+  // Deep-linking: scroll to and highlight target submission from notification click
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetId = urlParams.get("id") || urlParams.get("appId");
+    if (targetId) {
+      setTimeout(() => {
+        const targetCard = document.querySelector(`[data-app-id="${targetId}"]`);
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
+          targetCard.style.outline = "2.5px solid #8b5cf6";
+          targetCard.style.boxShadow = "0 0 20px rgba(139, 92, 246, 0.4)";
+        }
+      }, 250);
+    }
+  } catch (_) {}
 }
 
 // Render student application cards

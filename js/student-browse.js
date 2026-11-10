@@ -1600,7 +1600,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const processedDocs = [...processedAttachedDocs, ...followUpDocs];
 
-      // Student details from settings or session (dynamically populated)
+      // Ensure we have freshest student settings right before constructing application
+      try {
+        const curEmail = (
+          sessionStorage.getItem("nexo-student-email") ||
+          localStorage.getItem("nexo-student-email") ||
+          (studentSettings && studentSettings.email) ||
+          ""
+        ).toLowerCase().trim();
+        if (curEmail) {
+          const raw = localStorage.getItem(`nexo_student_settings_${curEmail}`);
+          if (raw) studentSettings = JSON.parse(raw);
+        }
+      } catch (_) {}
+
       const sEmail =
         sessionStorage.getItem("nexo-student-email") ||
         (studentSettings && studentSettings.email) ||
@@ -1618,9 +1631,12 @@ document.addEventListener("DOMContentLoaded", () => {
         (studentSettings && studentSettings.course) ||
         "";
       const sYear =
-        (studentSettings && studentSettings.yearLevel) || "1st Year";
+        (studentSettings && studentSettings.yearLevel) || "";
       const sPhone =
         (studentSettings && studentSettings.contactNumber) ||
+        "";
+      const sBio =
+        (studentSettings && studentSettings.bio) ||
         "";
       const sAvatar =
         sessionStorage.getItem("nexo-student-avatar") ||
@@ -1646,6 +1662,7 @@ document.addEventListener("DOMContentLoaded", () => {
         course: sCourse,
         yearLevel: sYear,
         contactNumber: sPhone,
+        bio: sBio,
         studentProfilePic: sAvatar,
         profilePicture: sAvatar,
         status: "Submitted",

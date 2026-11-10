@@ -703,33 +703,50 @@
         background: rgba(0, 0, 0, 0.05);
       }
       .modal-info-card {
-        background: rgba(0, 0, 0, 0.02);
+        background: rgba(139, 92, 246, 0.03);
         border: 1px solid var(--border-color, #e5e7eb);
-        border-radius: 12px;
-        padding: 14px 16px;
-        margin: 14px 0;
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin: 16px 0;
       }
       .dark-theme .modal-info-card {
-        background: #111827;
-        border-color: #374151;
+        background: #151b28;
+        border-color: #2e384d;
       }
+
       .modal-info-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px 14px;
-        font-size: 13px;
-        margin-top: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px 16px;
+        font-size: 13.5px;
+        margin-top: 10px;
+      }
+      .modal-info-cell {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        border-radius: 10px;
+        padding: 10px 14px;
+      }
+      .dark-theme .modal-info-cell {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.06);
+      }
+      .modal-info-cell.full-width {
+        grid-column: 1 / -1;
       }
       .modal-info-label {
         color: var(--text-secondary, #6b7280);
-        font-size: 11.5px;
+        font-size: 11px;
         text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 2px;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-bottom: 3px;
       }
       .modal-info-value {
         color: var(--text-primary);
+        font-size: 13.5px;
         font-weight: 600;
+        word-break: break-word;
       }
       .modal-doc-item {
         display: flex;
@@ -1143,16 +1160,14 @@
           >
             &larr; Back to Posted Scholarships
           </button>
-          <span style="font-size: 12px; font-weight: 600; color: #8b5cf6; background: rgba(139,92,246,0.1); padding: 4px 10px; border-radius: 99px;">
-            First-Come, First-Served Listing
-          </span>
+
         </div>
 
         <!-- Detailed Information Card on Top of List -->
         <div class="active-post-detail-card" id="active-post-detail-card">
           <div class="active-post-badge-row">
             <span class="active-post-tag">MANAGING APPLICANTS</span>
-            <span class="active-post-fcfs-tag">FCFS QUEUE</span>
+            
             <span class="post-status-badge open" id="post-view-status-pill">Open</span>
           </div>
           <h2 class="active-post-title" id="post-view-title">Scholarship Title</h2>
@@ -1362,31 +1377,38 @@
 
         <!-- Student Profile Details -->
         <div class="modal-info-card">
-          <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px; color: #8b5cf6;">Student Profile Information</div>
+          <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 8px; color: #8b5cf6; display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Student Profile Information &amp; Academic Credentials
+          </div>
           <div class="modal-info-grid">
-            <div>
-              <div class="modal-info-label">University</div>
-              <div class="modal-info-value" id="modal-student-school">Batangas State University</div>
+            <div class="modal-info-cell">
+              <div class="modal-info-label">University / Institution</div>
+              <div class="modal-info-value" id="modal-student-school">Not Specified</div>
             </div>
-            <div>
-              <div class="modal-info-label">Course / Degree</div>
-              <div class="modal-info-value" id="modal-student-course">BS Information Technology</div>
+            <div class="modal-info-cell">
+              <div class="modal-info-label">Course / Degree Program</div>
+              <div class="modal-info-value" id="modal-student-course">Not Specified</div>
             </div>
-            <div>
-              <div class="modal-info-label">Year Level</div>
-              <div class="modal-info-value" id="modal-student-year">3rd Year</div>
+            <div class="modal-info-cell">
+              <div class="modal-info-label">Academic Year Level</div>
+              <div class="modal-info-value" id="modal-student-year">Not Specified</div>
             </div>
-            <div>
-              <div class="modal-info-label">Student ID</div>
-              <div class="modal-info-value" id="modal-student-id">21-04589</div>
+            <div class="modal-info-cell">
+              <div class="modal-info-label">Student ID Number</div>
+              <div class="modal-info-value" id="modal-student-id">Not Specified</div>
             </div>
-            <div>
+            <div class="modal-info-cell">
               <div class="modal-info-label">Contact Number</div>
-              <div class="modal-info-value" id="modal-student-contact">+63 912 345 6789</div>
+              <div class="modal-info-value" id="modal-student-contact">Not Specified</div>
             </div>
-            <div>
+            <div class="modal-info-cell">
               <div class="modal-info-label">Date Submitted</div>
-              <div class="modal-info-value" id="modal-app-date">Nov 8, 2026</div>
+              <div class="modal-info-value" id="modal-app-date">Recently</div>
+            </div>
+            <div class="modal-info-cell full-width">
+              <div class="modal-info-label">Bio / Applicant Summary</div>
+              <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary);">No applicant bio provided.</div>
             </div>
           </div>
         </div>
@@ -1432,41 +1454,38 @@
             </p>
           </div>
 
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">Provider Decision &amp; Feedback</h4>
-          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 10px 0;">
-            Select a status to communicate your decision to the student. Approved and Rejected decisions are permanent.
+          <h4 style="font-size: 14.5px; font-weight: 700; margin-bottom: 6px;">Provider Decision &amp; Student Feedback</h4>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 12px 0;">
+            Provide optional custom feedback or follow-up instructions, then select a decision action below to notify the student scholar.
           </p>
-          
-          <div class="decision-btn-group" id="modal-decision-btn-group">
-            <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              Approve
-            </button>
-            <button type="button" class="decision-btn decision-review" id="modal-btn-review">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              Under Review
-            </button>
-            <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              Reject
-            </button>
-          </div>
 
-          <div style="margin-top: 12px;">
+          <div>
             <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">
               Feedback / Remarks for Student:
             </label>
             <textarea
               id="modal-review-notes"
               class="review-notes-textarea"
-              placeholder="e.g. Congratulations! Please submit your registration receipt to the financial aid desk..."
+              placeholder="e.g. Congratulations! Please submit your registration receipt to the financial aid desk... (Leave blank to use the official automated status remark)"
             ></textarea>
-            <div id="modal-save-notes-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">
-              Feedback cannot be empty. Please enter notes or feedback before saving.
-            </div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-              <button type="button" class="btn btn-secondary" id="modal-btn-save-notes" style="font-size: 13px; padding: 6px 14px;">
-                Save Notes &amp; Feedback
+          </div>
+
+          <div style="margin-top: 14px;">
+            <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
+              Submit Decision:
+            </label>
+            <div class="decision-btn-group" id="modal-decision-btn-group">
+              <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Approve
+              </button>
+              <button type="button" class="decision-btn decision-review" id="modal-btn-review">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
+                Under Review
+              </button>
+              <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Reject
               </button>
             </div>
           </div>
