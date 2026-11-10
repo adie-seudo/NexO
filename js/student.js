@@ -669,6 +669,21 @@ async function loadStudentData() {
       )
     : applications;
 
+  // Sort applications by latest first (using timestamp, appliedDate, or id)
+  myApplications.sort((a, b) => {
+    const parseDate = (d) => {
+      if (!d) return 0;
+      const t = new Date(d).getTime();
+      return isNaN(t) ? 0 : t;
+    };
+    const timeA = parseDate(a.submittedAt || a.appliedDate || a.date);
+    const timeB = parseDate(b.submittedAt || b.appliedDate || b.date);
+    if (timeA && timeB && timeA !== timeB) return timeB - timeA;
+    return String(b.id || "").localeCompare(String(a.id || ""), undefined, {
+      numeric: true,
+    });
+  });
+
   allStudentApplications = myApplications;
 
   // Calculate metrics
@@ -753,12 +768,14 @@ function renderFilteredSubmissions() {
   const hasFilterTools = Boolean(
     document.getElementById("submissions-status-filters"),
   );
+  const viewAllBtn = document.getElementById("student-view-all-link");
 
   if (!appsFeed) return;
 
   if (allStudentApplications.length === 0) {
     if (emptyAppsCard) emptyAppsCard.style.display = "block";
     if (filterEmptyCard) filterEmptyCard.style.display = "none";
+    if (viewAllBtn) viewAllBtn.style.display = "none";
     appsFeed.style.display = "none";
     appsFeed.innerHTML = "";
     return;
@@ -809,6 +826,41 @@ function renderFilteredSubmissions() {
       appsFeed.innerHTML = "";
       return;
     }
+  } else {
+    // On Dashboard / Home Page:
+    // Only top three latest applications by default.
+    // If more than 3 applications, show View All button which expands in-place on home page.
+    // If 3 or fewer applications, View All button will not occur.
+    const totalApps = allStudentApplications.length;
+    if (viewAllBtn) {
+      if (totalApps > 3) {
+        viewAllBtn.style.display = "inline-flex";
+        const textEl =
+          document.getElementById("student-view-all-text") || viewAllBtn;
+        const iconEl = document.getElementById("student-view-all-icon");
+        if (window._dashboardShowAllApps) {
+          textEl.textContent = "Show Less";
+          if (iconEl) iconEl.style.transform = "rotate(180deg)";
+          listToRender = allStudentApplications;
+        } else {
+          textEl.textContent = `View All (${totalApps})`;
+          if (iconEl) iconEl.style.transform = "rotate(0deg)";
+          listToRender = allStudentApplications.slice(0, 3);
+        }
+
+        if (!viewAllBtn._hasViewAllListener) {
+          viewAllBtn._hasViewAllListener = true;
+          viewAllBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            window._dashboardShowAllApps = !window._dashboardShowAllApps;
+            renderFilteredSubmissions();
+          });
+        }
+      } else {
+        viewAllBtn.style.display = "none";
+        listToRender = allStudentApplications;
+      }
+    }
   }
 
   if (filterEmptyCard) filterEmptyCard.style.display = "none";
@@ -845,8 +897,6 @@ function renderApplicationCards(applications, container) {
   applications.forEach((app) => {
     const card = document.createElement("div");
     card.className = "student-app-card";
-    card.style.flexDirection = "column";
-    card.style.alignItems = "stretch";
     card.dataset.appId = app.id || "";
 
     // Resolve Status badge class and text
@@ -885,10 +935,7 @@ function renderApplicationCards(applications, container) {
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
     const date =
       app.formattedDate || app.appliedDate || app.date || "Recently Applied";
-    let applicants = app.applicantCount || "1 / 200 Applicants";
-    if (applicants.includes("/ 10 Applicants")) {
-      applicants = applicants.replace("/ 10 Applicants", "/ 200 Applicants");
-    }
+
     const rawDocs = app.documents || app.uploadedDocuments || [];
     const attachedDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return !d.includes("(To Follow Up)");
@@ -900,44 +947,69 @@ function renderApplicationCards(applications, container) {
     });
     const hasFeedback = Boolean(app.feedback || app.notes);
 
-    // Follow-up message is hidden from card body per user requirement.
-    // Instead, card has an intuitive prompt and a dedicated "View Full Details" button.
+    // 1. Attached Files Pill (Clearly identified pill, not mere text)
+    let docsPillHtml = "";
+    if (attachedDocs.length > 0) {
+      docsPillHtml = `
+        <span class="student-meta-pill pill-docs-attached">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+          ${attachedDocs.length} ${attachedDocs.length === 1 ? "File" : "Files"} Attached
+        </span>
+      `;
+    } else {
+      docsPillHtml = `
+        <span class="student-meta-pill pill-docs-zero">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          0 Files Attached
+        </span>
+      `;
+    }
+
+    // 2. To Follow Up Pill
+    const followUpPillHtml =
+      followUpDocs.length > 0
+        ? `
+        <span class="student-meta-pill pill-follow-up">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          ${followUpDocs.length} To Follow Up
+        </span>
+      `
+        : "";
+
+    // 3. Remarks Available Pill
+    const remarksPillHtml = hasFeedback
+      ? `
+        <span class="student-meta-pill pill-remarks">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Remarks Available
+        </span>
+      `
+      : "";
+
     card.innerHTML = `
-      <div style="display: flex; align-items: flex-start; gap: 14px; width: 100%;">
+      <div class="student-app-header-row">
         ${logoHtml}
-        <div class="student-app-info" style="flex: 1; min-width: 0;">
+        <div class="student-app-info">
           <h4 class="student-app-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
           <p class="student-app-org">${escapeHtml(orgName)} &bull; ${escapeHtml(date)}</p>
-          <div style="display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap;">
-            <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-              ${attachedDocs.length} ${attachedDocs.length === 1 ? "File" : "Files"} Attached
-            </span>
-            ${
-              followUpDocs.length > 0
-                ? `<span style="font-size: 11px; color: #D97706; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${followUpDocs.length} To Follow Up</span>`
-                : ""
-            }
-            ${
-              hasFeedback
-                ? `<span style="font-size: 11px; color: #8b5cf6; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Remarks Available</span>`
-                : ""
-            }
-          </div>
         </div>
         <div class="student-app-status-col">
           <span class="student-app-status-badge ${badgeClass}">${escapeHtml(statusLabel)}</span>
-          <span class="student-app-applicants">${escapeHtml(applicants)}</span>
         </div>
       </div>
 
-      <!-- Action Row: Prominent CTA & Visual Tap Affordance -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-color); width: 100%; gap: 8px;">
-        <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+      <div class="student-app-pills-row">
+        ${docsPillHtml}
+        ${followUpPillHtml}
+        ${remarksPillHtml}
+      </div>
+
+      <div class="student-app-action-row">
+        <span class="student-app-tap-hint">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           Tap card to view full details
         </span>
-        <button type="button" class="btn btn-secondary view-sub-details-btn" data-app-id="${app.id}" style="padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 8px; margin: 0; display: inline-flex; align-items: center; gap: 5px;">
+        <button type="button" class="btn btn-secondary view-sub-details-btn" data-app-id="${app.id}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
           View Full Details
         </button>

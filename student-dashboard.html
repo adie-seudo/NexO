@@ -237,12 +237,15 @@
       <section class="student-apps-section">
         <div class="student-section-header">
           <h3 class="student-section-title">My Scholarship Applications</h3>
-          <a
-            href="student-submissions.html"
-            class="student-view-all-link"
+          <button
+            type="button"
+            class="student-view-all-btn"
             id="student-view-all-link"
-            >View All</a
+            style="display: none;"
           >
+            <span id="student-view-all-text">View All</span>
+            <svg id="student-view-all-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
         </div>
 
         <!-- Empty State (Shown initially when no applications exist) -->
