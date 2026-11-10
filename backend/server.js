@@ -1183,27 +1183,35 @@ async function handleRequest(req, res) {
           });
         }
 
+        const updatedRemarks =
+          body.remarks !== undefined
+            ? body.remarks
+            : body.feedback !== undefined
+            ? body.feedback
+            : body.notes !== undefined
+            ? body.notes
+            : currentApp.remarks || currentApp.feedback || currentApp.notes || "";
+
         data.applications[appIndex] = {
           ...currentApp,
           status: updatedStatus,
           statusText: updatedStatus,
-          notes: updatedNotes,
-          feedback:
-            body.feedback !== undefined
-              ? body.feedback
-              : currentApp.feedback || updatedNotes,
+          notes: updatedRemarks,
+          feedback: updatedRemarks,
+          remarks: updatedRemarks,
           reviewedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
         if (body.status !== undefined && body.status !== previousStatus) {
+          const remarksSnippet = updatedRemarks ? ` Provider Remarks: "${updatedRemarks}"` : "";
           data.notifications = data.notifications || [];
           data.notifications.unshift({
             id: makeId("notif"),
             recipient: "student",
             recipientEmail: currentApp.studentEmail || "",
             title: `Application Status: ${updatedStatus}`,
-            message: `Your application for "${currentApp.scholarshipTitle}" is now ${updatedStatus}.`,
+            message: `Your application for "${currentApp.scholarshipTitle}" is now ${updatedStatus}.${remarksSnippet}`,
             timestamp: new Date().toISOString(),
             formattedTime: "Just now",
             read: false,

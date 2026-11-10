@@ -2887,16 +2887,21 @@ body.dark-theme .custom-dropdown.active .dropdown-selected {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 .req-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px 16px;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  transition: border-color 0.2s;
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 .req-icon {
   display: flex;
@@ -2904,34 +2909,64 @@ body.dark-theme .custom-dropdown.active .dropdown-selected {
   justify-content: center;
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   background-color: var(--bg-canvas);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.req-icon img,
+.req-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
 }
 .req-text {
   flex: 1;
+  min-width: 0;
 }
 .req-text h4 {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14.5px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .req-text p {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--text-secondary);
   margin: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .remove-req-btn {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 22px;
+  line-height: 1;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0 8px;
-  transition: color 0.2s;
+  padding: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border-radius: 6px;
+  transition: color 0.2s, background-color 0.2s;
 }
 .remove-req-btn:hover {
   color: var(--status-error);
+  background-color: rgba(239, 68, 68, 0.1);
 }
 .req-card.custom-edit-mode {
   flex-direction: column;

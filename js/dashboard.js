@@ -114,7 +114,7 @@ function initDashboardModals() {
           DOM.reqList.innerHTML = `
             <div class="req-card">
               <div class="req-icon">
-                <img src="assets/human-icon.png" alt="ID">
+                <img src="assets/human-icon.png" alt="ID" width="20" height="20" style="width: 20px; height: 20px; object-fit: contain;">
               </div>
               <div class="req-text">
                 <h4>Valid School ID</h4>
@@ -124,7 +124,7 @@ function initDashboardModals() {
             </div>
             <div class="req-card">
               <div class="req-icon">
-                <img src="assets/upload-icon.png" alt="Grades">
+                <img src="assets/upload-icon.png" alt="Grades" width="20" height="20" style="width: 20px; height: 20px; object-fit: contain;">
               </div>
               <div class="req-text">
                 <h4>Latest Grades/Transcript</h4>
@@ -568,25 +568,36 @@ function initViewSwitching() {
     if (dashDraftsSection) dashDraftsSection.style.display = "none";
     if (dashAllScholSection) dashAllScholSection.style.display = "none";
 
-    if (navHome) navHome.classList.add("active");
-    if (navDrafts) navDrafts.classList.remove("active");
+    const curNavHome = document.querySelector('a[href="provider-dashboard.html"]');
+    const curNavDrafts = document.getElementById("nav-drafts");
+    if (curNavHome) curNavHome.classList.add("active");
+    if (curNavDrafts) curNavDrafts.classList.remove("active");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function showDrafts() {
+    if (dashCoverBanner) dashCoverBanner.style.display = "none";
+    if (dashWelcome) dashWelcome.style.display = "none";
+    if (dashStats) dashStats.style.display = "none";
+    if (dashRecent) dashRecent.style.display = "none";
+    if (dashActions) dashActions.style.display = "none";
+    if (dashDraftsSection) dashDraftsSection.style.display = "block";
+    if (dashAllScholSection) dashAllScholSection.style.display = "none";
+
+    const curNavHome = document.querySelector('a[href="provider-dashboard.html"]');
+    const curNavDrafts = document.getElementById("nav-drafts");
+    if (curNavDrafts) curNavDrafts.classList.add("active");
+    if (curNavHome) curNavHome.classList.remove("active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  window.showHomeView = showHome;
+  window.showDraftsView = showDrafts;
 
   if (navDrafts) {
     navDrafts.addEventListener("click", (e) => {
       e.preventDefault();
-      if (dashCoverBanner) dashCoverBanner.style.display = "none";
-      if (dashWelcome) dashWelcome.style.display = "none";
-      if (dashStats) dashStats.style.display = "none";
-      if (dashRecent) dashRecent.style.display = "none";
-      if (dashActions) dashActions.style.display = "none";
-      if (dashDraftsSection) dashDraftsSection.style.display = "block";
-      if (dashAllScholSection) dashAllScholSection.style.display = "none";
-
-      navDrafts.classList.add("active");
-      if (navHome) navHome.classList.remove("active");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      showDrafts();
     });
   }
 
@@ -597,18 +608,11 @@ function initViewSwitching() {
     });
   }
 
-  // When "View All" is clicked
+  // When "View All" is clicked, navigate directly to Posted Scholarships manager
   if (viewAllBtn) {
     viewAllBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      if (dashCoverBanner) dashCoverBanner.style.display = "none";
-      if (dashWelcome) dashWelcome.style.display = "none";
-      if (dashStats) dashStats.style.display = "none";
-      if (dashRecent) dashRecent.style.display = "none";
-      if (dashActions) dashActions.style.display = "none";
-      if (dashDraftsSection) dashDraftsSection.style.display = "none";
-      if (dashAllScholSection) dashAllScholSection.style.display = "block";
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.location.href = "provider-posts.html";
     });
   }
 
@@ -729,12 +733,18 @@ function createCompactCard(schol, allApplications = null) {
     const applicantsEl = document.getElementById("view-modal-applicants");
     const descEl = document.getElementById("view-modal-desc");
     const modalEl = document.getElementById("view-details-modal");
+    const manageBtn = document.getElementById("view-modal-manage-btn");
 
     if (titleEl) titleEl.textContent = schol.title;
     if (typeEl) typeEl.textContent = schol.typeText || schol.type || "";
     if (dateEl) dateEl.textContent = schol.formattedDate || "No Deadline";
     if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
     if (descEl) descEl.textContent = schol.desc || "";
+    if (manageBtn) {
+      manageBtn.onclick = () => {
+        window.location.href = `provider-applications.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}`;
+      };
+    }
     if (modalEl) modalEl.classList.add("active");
   });
 
@@ -881,43 +891,68 @@ async function loadPersistedData() {
   const viewAllBtn = document.getElementById("view-all-btn");
 
   if (feed) {
-    feed.innerHTML = "";
-    if (allFeed) allFeed.innerHTML = "";
+    const scholSig = JSON.stringify(
+      scholarships.map((s) => ({
+        id: s.id,
+        title: s.title,
+        applicants: s.applicantCount,
+        status: s.status,
+      }))
+    );
 
-    if (scholarships.length > 0) {
-      if (emptyState) emptyState.style.display = "none";
-      scholarships.forEach((schol, idx) => {
-        if (idx < 3) {
-          feed.appendChild(createCompactCard(schol, applications));
+    if (window._lastScholSig !== scholSig) {
+      window._lastScholSig = scholSig;
+      feed.innerHTML = "";
+      if (allFeed) allFeed.innerHTML = "";
+
+      if (scholarships.length > 0) {
+        if (emptyState) emptyState.style.display = "none";
+        scholarships.forEach((schol, idx) => {
+          if (idx < 3) {
+            feed.appendChild(createCompactCard(schol, applications));
+          }
+          if (allFeed) {
+            allFeed.appendChild(createCompactCard(schol, applications));
+          }
+        });
+        if (viewAllBtn) {
+          viewAllBtn.style.display =
+            scholarships.length > 3 ? "inline-block" : "none";
         }
-        if (allFeed) {
-          allFeed.appendChild(createCompactCard(schol, applications));
-        }
-      });
-      if (viewAllBtn) {
-        viewAllBtn.style.display =
-          scholarships.length > 3 ? "inline-block" : "none";
+      } else {
+        if (emptyState) emptyState.style.display = "block";
+        if (viewAllBtn) viewAllBtn.style.display = "none";
       }
-    } else {
-      if (emptyState) emptyState.style.display = "block";
-      if (viewAllBtn) viewAllBtn.style.display = "none";
     }
   }
 
-  // Populate Drafts Feed
+  // Populate Drafts Feed (anti-flicker diffing)
   const draftsFeed = document.getElementById("drafts-feed");
   const emptyDraftsCard = document.getElementById("empty-drafts-card");
 
   if (draftsFeed) {
-    draftsFeed.innerHTML = "";
-    if (myDrafts.length > 0) {
-      if (emptyDraftsCard)
-        emptyDraftsCard.setAttribute("style", "display: none !important;");
-      myDrafts.forEach((draft) => {
-        draftsFeed.appendChild(createDraftCard(draft));
-      });
-    } else {
-      if (emptyDraftsCard) emptyDraftsCard.removeAttribute("style");
+    const draftsSig = JSON.stringify(
+      myDrafts.map((d) => ({
+        id: d.id,
+        title: d.title,
+        desc: d.desc,
+        date: d.date,
+        type: d.type,
+      }))
+    );
+
+    if (window._lastDraftsSig !== draftsSig) {
+      window._lastDraftsSig = draftsSig;
+      draftsFeed.innerHTML = "";
+      if (myDrafts.length > 0) {
+        if (emptyDraftsCard)
+          emptyDraftsCard.setAttribute("style", "display: none !important;");
+        myDrafts.forEach((draft) => {
+          draftsFeed.appendChild(createDraftCard(draft));
+        });
+      } else {
+        if (emptyDraftsCard) emptyDraftsCard.removeAttribute("style");
+      }
     }
   }
 }
@@ -1217,6 +1252,7 @@ function initPublishAndDraft() {
 
         const draftsFeed = document.getElementById("drafts-feed");
         if (draftsFeed) {
+          window._lastDraftsSig = null;
           draftsFeed.prepend(createDraftCard(savedDraft));
         }
 
@@ -1557,6 +1593,7 @@ function initDraftEditing() {
         setTimeout(() => {
           card.remove();
           draftCount = Math.max(0, draftCount - 1);
+          window._lastDraftsSig = null;
 
           const draftBadge = document.getElementById("draft-badge");
           if (draftBadge) {
@@ -1586,10 +1623,13 @@ function initDashboardStartup() {
   // ----------------------------------------
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("view") === "drafts") {
-    const draftsNavBtn = document.getElementById("nav-drafts");
-    if (draftsNavBtn) {
+    if (typeof window.showDraftsView === "function") {
+      window.showDraftsView();
+    } else {
       setTimeout(() => {
-        draftsNavBtn.click();
+        if (typeof window.showDraftsView === "function") {
+          window.showDraftsView();
+        }
       }, 50);
     }
   }

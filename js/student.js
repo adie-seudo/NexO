@@ -1056,7 +1056,7 @@ function openSubmissionDetailsModal(app) {
 
   // Populate Provider Feedback / Follow-Up Message
   const feedbackBox = document.getElementById("modal-sub-feedback-box");
-  const feedbackMsg = app.feedback || app.notes;
+  const feedbackMsg = app.remarks || app.feedback || app.notes;
 
   if (feedbackBox) {
     if (feedbackMsg && feedbackMsg.trim()) {
@@ -1071,13 +1071,19 @@ function openSubmissionDetailsModal(app) {
         "Your academic verification files are currently on record with the scholarship evaluation committee. Official follow-up notes from the provider will appear here once processed.";
       if (rawStatus.includes("approved")) {
         defaultMsg =
-          "Congratulations! Your scholarship application has been officially approved. Please monitor your institutional university email for disbursement instructions.";
+          "Congratulations! Your scholarship application has been officially approved. Please monitor your institutional university email and contact phone for disbursement and onboarding instructions outside of NexO.";
       } else if (rawStatus.includes("rejected")) {
         defaultMsg =
-          "Thank you for applying. Your application was reviewed but could not be accepted for this cycle. You are encouraged to explore other grants.";
+          "Thank you for applying. After careful evaluation of all applicants, your application was not accepted for this cycle. You are encouraged to explore other grants.";
+      } else if (rawStatus.includes("review")) {
+        defaultMsg =
+          "Your application and verification documents are currently under evaluation by the scholarship committee. Official follow-up notes from the provider will appear here.";
       }
       feedbackBox.innerHTML = `
-        <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${escapeHtml(defaultMsg)}</p>
+        <div style="background: rgba(139, 92, 246, 0.05); border-left: 4px solid #a855f7; border-radius: 8px; padding: 12px 14px;">
+          <strong style="color: #a855f7; font-size: 12px; display: block; margin-bottom: 4px;">Evaluation Status Remark:</strong>
+          <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${escapeHtml(defaultMsg)}</p>
+        </div>
       `;
     }
   }

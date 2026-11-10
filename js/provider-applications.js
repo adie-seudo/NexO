@@ -144,16 +144,117 @@
   }
 
   // -------------------------------------------------------------
+  // SCOPED SCHOLARSHIP HELPERS
+  // -------------------------------------------------------------
+  const urlParams = new URLSearchParams(window.location.search);
+  const scopedScholId = urlParams.get("scholarshipId") || urlParams.get("scholId");
+
+  function getTargetScholarship() {
+    if (!scopedScholId) return null;
+    return allScholarships.find(
+      (s) =>
+        String(s.id) === String(scopedScholId) ||
+        String(s.title || "").toLowerCase() === String(scopedScholId).toLowerCase(),
+    );
+  }
+
+  function getBaseApplications() {
+    if (!scopedScholId) return allApplications;
+    const target = getTargetScholarship();
+    return allApplications.filter((app) => {
+      if (app.scholarshipId && String(app.scholarshipId) === String(scopedScholId)) {
+        return true;
+      }
+      if (
+        target &&
+        target.title &&
+        (String(app.scholarshipTitle || "").toLowerCase() ===
+          String(target.title).toLowerCase() ||
+          String(app.title || "").toLowerCase() ===
+            String(target.title).toLowerCase())
+      ) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function renderScopedBanner() {
+    const bannerEl = document.getElementById("scoped-scholarship-banner");
+    const backLink = document.getElementById("back-link");
+    const pageTitle = document.getElementById("apps-page-title");
+    if (!bannerEl) return;
+
+    if (!scopedScholId) {
+      bannerEl.style.display = "none";
+      if (pageTitle) pageTitle.textContent = "Applications";
+      if (backLink) {
+        backLink.href = "provider-dashboard.html";
+        backLink.innerHTML = "&larr; Back";
+      }
+      return;
+    }
+
+    const target = getTargetScholarship();
+    const title = target ? target.title : scopedScholId;
+    const type = target ? target.type || "Scholarship" : "Scholarship";
+    const status = target ? target.status || "Open" : "Open";
+    const deadline = target
+      ? target.formattedDate || target.deadline || "Open"
+      : "Open";
+    const limit = target ? target.applicantLimit || 200 : 200;
+    const baseApps = getBaseApplications();
+
+    if (backLink) {
+      backLink.href = "provider-posts.html";
+      backLink.innerHTML = "&larr; Back to Posted Scholarships";
+    }
+    if (pageTitle) {
+      pageTitle.textContent = `Applications: ${title}`;
+    }
+
+    bannerEl.style.display = "block";
+    bannerEl.innerHTML = `
+      <div class="scoped-scholarship-card">
+        <div class="scoped-card-left">
+          <div class="scoped-badge-row">
+            <span class="scoped-tag">FILTERED POST</span>
+            <span class="scoped-status-pill ${status === "Closed" ? "closed" : "open"}">${escapeHtml(status)}</span>
+          </div>
+          <h2 class="scoped-title">${escapeHtml(title)}</h2>
+          <div class="scoped-meta-row">
+            <span><strong>Type:</strong> ${escapeHtml(type)}</span>
+            <span>•</span>
+            <span><strong>Deadline:</strong> ${escapeHtml(deadline)}</span>
+            <span>•</span>
+            <span><strong>Applicants:</strong> ${baseApps.length} / ${limit}</span>
+          </div>
+        </div>
+        <div class="scoped-card-actions">
+          <a href="provider-posts.html" class="scoped-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            All Posted Scholarships
+          </a>
+          <a href="provider-applications.html" class="scoped-btn">
+            View All Applications
+          </a>
+        </div>
+      </div>
+    `;
+  }
+
+  // -------------------------------------------------------------
   // 2. TAB COUNTERS & FILTER TABS
   // -------------------------------------------------------------
   function updateTabCounters() {
-    let countAll = allApplications.length;
+    const baseApps = getBaseApplications();
+    let countAll = baseApps.length;
     let countPending = 0;
     let countReviewed = 0;
     let countApproved = 0;
     let countRejected = 0;
 
-    allApplications.forEach((app) => {
+    baseApps.forEach((app) => {
       const status = (app.status || "Submitted").toLowerCase();
       if (status.includes("approved")) {
         countApproved++;
@@ -305,8 +406,11 @@
   function renderApplicationsList() {
     if (!appsFeedEl || !emptyStateEl) return;
 
+    renderScopedBanner();
+    const baseApps = getBaseApplications();
+
     // Filter by tab
-    let filtered = allApplications.filter((app) => {
+    let filtered = baseApps.filter((app) => {
       const status = (app.status || "Submitted").toLowerCase();
       if (activeFilterTab === "all") return true;
       if (activeFilterTab === "pending") {
@@ -410,7 +514,12 @@
 
       const emptyTitle = emptyStateEl.querySelector("h3");
       const emptyDesc = emptyStateEl.querySelector("p");
-      if (allApplications.length === 0) {
+      if (scopedScholId && baseApps.length === 0) {
+        if (emptyTitle) emptyTitle.textContent = "No Applications For This Scholarship";
+        if (emptyDesc)
+          emptyDesc.textContent =
+            "No student applications have been submitted for this specific scholarship opportunity yet.";
+      } else if (allApplications.length === 0) {
         if (emptyTitle) emptyTitle.textContent = "No Applications Yet";
         if (emptyDesc)
           emptyDesc.textContent =
@@ -551,30 +660,10 @@
           </svg>
           Review Application
         </button>
-
-        <div class="provider-app-quick-btns">
-          <button type="button" class="btn-quick-action btn-quick-approve" title="Quick Approve">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-          </button>
-          <button type="button" class="btn-quick-action btn-quick-review" title="Mark Under Review">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-          </button>
-          <button type="button" class="btn-quick-action btn-quick-reject" title="Reject Application">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
       </div>
     `;
 
-    // Click on Review button or Card
+    // Click on Review button or anywhere on Card to view full details
     card.querySelector(".btn-review-app").addEventListener("click", (e) => {
       e.stopPropagation();
       openReviewModal(app);
@@ -585,52 +674,23 @@
       openReviewModal(app);
     });
 
-    // Quick Actions
-    card
-      .querySelector(".btn-quick-approve")
-      .addEventListener("click", async (e) => {
-        e.stopPropagation();
-        await updateApplicationStatus(
-          app.id,
-          "Approved",
-          "Approved via Quick Action.",
-        );
-      });
-
-    card
-      .querySelector(".btn-quick-review")
-      .addEventListener("click", async (e) => {
-        e.stopPropagation();
-        await updateApplicationStatus(
-          app.id,
-          "Under Review",
-          "Application marked Under Review.",
-        );
-      });
-
-    card
-      .querySelector(".btn-quick-reject")
-      .addEventListener("click", async (e) => {
-        e.stopPropagation();
-        if (
-          confirm(
-            `Are you sure you want to decline the application of ${app.studentName}?`,
-          )
-        ) {
-          await updateApplicationStatus(
-            app.id,
-            "Rejected",
-            "Application did not meet criteria.",
-          );
-        }
-      });
-
     return card;
   }
 
   // -------------------------------------------------------------
   // 6. APPLICATION REVIEW & DECISION MODAL
   // -------------------------------------------------------------
+  const DEFAULT_AUTOMATED_REMARKS = {
+    "Approved":
+      "Congratulations! Your scholarship application has been officially approved. Please check your registered email or phone for onboarding and disbursement instructions outside of NexO.",
+    "Rejected":
+      "Thank you for your application and interest. After careful evaluation of all candidates, we regret to inform you that your application was not selected for this scholarship cycle. We encourage you to apply for future opportunities.",
+    "Under Review":
+      "Your application and verification documents are currently under evaluation. Please keep your contact information active and check back for updates.",
+  };
+
+  let pendingDecision = null; // { appId, status }
+
   function initReviewModal() {
     if (!reviewModalEl) return;
 
@@ -646,66 +706,321 @@
       }
     });
 
-    // Decision action buttons inside modal
+    // Decision action buttons inside review modal
     const btnApprove = document.getElementById("modal-btn-approve");
     const btnUnderReview = document.getElementById("modal-btn-review");
     const btnReject = document.getElementById("modal-btn-reject");
     const btnSaveNotes = document.getElementById("modal-btn-save-notes");
 
     if (btnApprove) {
-      btnApprove.addEventListener("click", async () => {
-        if (!currentActiveApp) return;
-        const notes =
-          document.getElementById("modal-review-notes")?.value || "";
-        await updateApplicationStatus(currentActiveApp.id, "Approved", notes);
-        closeReviewModal();
+      btnApprove.addEventListener("click", () => {
+        openDecisionConfirmModal("Approved");
       });
     }
 
     if (btnUnderReview) {
-      btnUnderReview.addEventListener("click", async () => {
-        if (!currentActiveApp) return;
-        const notes =
-          document.getElementById("modal-review-notes")?.value || "";
-        await updateApplicationStatus(
-          currentActiveApp.id,
-          "Under Review",
-          notes,
-        );
-        closeReviewModal();
+      btnUnderReview.addEventListener("click", () => {
+        openDecisionConfirmModal("Under Review");
       });
     }
 
     if (btnReject) {
-      btnReject.addEventListener("click", async () => {
-        if (!currentActiveApp) return;
-        if (confirm("Are you sure you want to decline this applicant?")) {
-          const notes =
-            document.getElementById("modal-review-notes")?.value || "";
-          await updateApplicationStatus(currentActiveApp.id, "Rejected", notes);
-          closeReviewModal();
-        }
+      btnReject.addEventListener("click", () => {
+        openDecisionConfirmModal("Rejected");
       });
     }
 
     if (btnSaveNotes) {
       btnSaveNotes.addEventListener("click", async () => {
         if (!currentActiveApp) return;
-        const notes =
-          document.getElementById("modal-review-notes")?.value || "";
+        if (
+          currentActiveApp.status === "Approved" ||
+          currentActiveApp.status === "Rejected"
+        ) {
+          showToast(
+            "This decision has already been finalized and cannot be modified.",
+            true,
+          );
+          return;
+        }
+
+        const notesInput = document.getElementById("modal-review-notes");
+        const errEl = document.getElementById("modal-save-notes-error");
+        const notes = notesInput ? notesInput.value.trim() : "";
+
+        if (!notes) {
+          if (errEl) {
+            errEl.textContent =
+              "Feedback cannot be empty. Please enter notes or feedback before saving.";
+            errEl.style.display = "block";
+          }
+          if (notesInput) notesInput.focus();
+          return;
+        }
+
+        if (errEl) errEl.style.display = "none";
+
+        btnSaveNotes.disabled = true;
         await updateApplicationStatus(
           currentActiveApp.id,
           currentActiveApp.status || "Under Review",
           notes,
         );
-        showToast("Review notes and feedback updated!");
+        btnSaveNotes.disabled = false;
+
+        currentActiveApp.notes = notes;
+        currentActiveApp.feedback = notes;
+        currentActiveApp.remarks = notes;
+
+        const successBanner = document.getElementById(
+          "modal-feedback-success-banner",
+        );
+        const successMsg = document.getElementById("modal-feedback-success-msg");
+        if (successBanner && successMsg) {
+          successMsg.textContent =
+            "Notes and feedback were successfully updated and dispatched to the student's portal!";
+          successBanner.style.display = "block";
+          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          if (container) container.scrollTo({ top: 0, behavior: "smooth" });
+        }
       });
     }
+
+    // Confirmation Modal Elements & Listeners
+    initDecisionConfirmModal();
+  }
+
+  function initDecisionConfirmModal() {
+    const confirmModal = document.getElementById("decision-confirm-modal");
+    if (!confirmModal) return;
+
+    const closeBtn = document.getElementById("close-decision-confirm");
+    const cancelBtn = document.getElementById("btn-cancel-decision-confirm");
+    const submitBtn = document.getElementById("btn-submit-decision-confirm");
+    const resetDefaultBtn = document.getElementById("btn-reset-default-remarks");
+    const textarea = document.getElementById("confirm-remarks-textarea");
+
+    if (closeBtn) closeBtn.addEventListener("click", closeDecisionConfirmModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", closeDecisionConfirmModal);
+
+    confirmModal.addEventListener("click", (e) => {
+      if (e.target === confirmModal) {
+        closeDecisionConfirmModal();
+      }
+    });
+
+    if (resetDefaultBtn) {
+      resetDefaultBtn.addEventListener("click", () => {
+        if (!pendingDecision) return;
+        const defaultText =
+          DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "";
+        if (textarea) {
+          textarea.value = defaultText;
+          textarea.focus();
+        }
+        const errEl = document.getElementById("confirm-remarks-error");
+        if (errEl) errEl.style.display = "none";
+      });
+    }
+
+    if (submitBtn) {
+      submitBtn.addEventListener("click", async () => {
+        if (!currentActiveApp || !pendingDecision) return;
+
+        const remarks = textarea ? textarea.value.trim() : "";
+        const errEl = document.getElementById("confirm-remarks-error");
+
+        if (!remarks) {
+          if (errEl) {
+            errEl.textContent =
+              "Remarks cannot be empty. Please provide feedback or follow-up instructions for the student.";
+            errEl.style.display = "block";
+          }
+          if (textarea) textarea.focus();
+          return;
+        }
+
+        if (errEl) errEl.style.display = "none";
+
+        submitBtn.disabled = true;
+        const targetStatus = pendingDecision.status;
+        const targetAppId = currentActiveApp.id;
+
+        await updateApplicationStatus(targetAppId, targetStatus, remarks);
+
+        submitBtn.disabled = false;
+        closeDecisionConfirmModal();
+
+        // Keep Review Modal open and update its view in-place
+        currentActiveApp.status = targetStatus;
+        currentActiveApp.statusText = targetStatus;
+        currentActiveApp.notes = remarks;
+        currentActiveApp.feedback = remarks;
+        currentActiveApp.remarks = remarks;
+
+        const notesInput = document.getElementById("modal-review-notes");
+        if (notesInput) notesInput.value = remarks;
+
+        // Update status badge in Review Modal header
+        const statusBadge = document.getElementById("modal-status-badge");
+        if (statusBadge) {
+          statusBadge.className = "provider-app-badge";
+          if (targetStatus === "Approved") {
+            statusBadge.classList.add("badge-status-approved");
+            statusBadge.textContent = "Approved";
+          } else if (targetStatus === "Rejected") {
+            statusBadge.classList.add("badge-status-rejected");
+            statusBadge.textContent = "Rejected";
+          } else {
+            statusBadge.classList.add("badge-status-review");
+            statusBadge.textContent = "Under Review";
+          }
+        }
+
+        // Show prominent on-screen feedback success notifier
+        const successBanner = document.getElementById(
+          "modal-feedback-success-banner",
+        );
+        const successMsg = document.getElementById("modal-feedback-success-msg");
+        if (successBanner && successMsg) {
+          successMsg.textContent = `Application decision marked as "${targetStatus}" and remarks have been successfully saved and dispatched to the student's portal!`;
+          successBanner.style.display = "block";
+          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          if (container) container.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        // If Approved or Rejected, lock the decision controls permanently
+        if (targetStatus === "Approved" || targetStatus === "Rejected") {
+          const finalizedNotice = document.getElementById(
+            "modal-decision-finalized-notice",
+          );
+          const finalizedLabel = document.getElementById(
+            "modal-finalized-status-label",
+          );
+          if (finalizedNotice) {
+            finalizedNotice.style.display = "block";
+            if (finalizedLabel) finalizedLabel.textContent = targetStatus;
+          }
+          const btnApprove = document.getElementById("modal-btn-approve");
+          const btnUnderReview = document.getElementById("modal-btn-review");
+          const btnReject = document.getElementById("modal-btn-reject");
+          const btnSaveNotes = document.getElementById("modal-btn-save-notes");
+          if (btnApprove) btnApprove.disabled = true;
+          if (btnUnderReview) btnUnderReview.disabled = true;
+          if (btnReject) btnReject.disabled = true;
+          if (btnSaveNotes) btnSaveNotes.disabled = true;
+          if (notesInput) notesInput.readOnly = true;
+        }
+      });
+    }
+  }
+
+  function openDecisionConfirmModal(status) {
+    if (!currentActiveApp) return;
+
+    if (
+      currentActiveApp.status === "Approved" ||
+      currentActiveApp.status === "Rejected"
+    ) {
+      showToast(
+        "This application decision has already been finalized and cannot be modified.",
+        true,
+      );
+      return;
+    }
+
+    pendingDecision = { appId: currentActiveApp.id, status };
+
+    const confirmModal = document.getElementById("decision-confirm-modal");
+    const heading = document.getElementById("confirm-modal-heading");
+    const subheading = document.getElementById("confirm-modal-subheading");
+    const permAlert = document.getElementById("confirm-permanence-alert");
+    const reviewAlert = document.getElementById("confirm-review-alert");
+    const actionName = document.getElementById("confirm-action-name");
+    const statusIcon = document.getElementById("confirm-status-icon");
+    const textarea = document.getElementById("confirm-remarks-textarea");
+    const errEl = document.getElementById("confirm-remarks-error");
+    const submitBtn = document.getElementById("btn-submit-decision-confirm");
+
+    if (errEl) errEl.style.display = "none";
+
+    const currentNotes =
+      document.getElementById("modal-review-notes")?.value?.trim() || "";
+    const defaultRemark = DEFAULT_AUTOMATED_REMARKS[status] || "";
+
+    if (textarea) {
+      textarea.value = currentNotes || defaultRemark;
+    }
+
+    if (heading) heading.textContent = `Confirm Decision: ${status}`;
+    if (subheading) {
+      subheading.textContent = `Application of ${currentActiveApp.studentName || "Student Scholar"}`;
+    }
+
+    if (status === "Approved") {
+      if (permAlert) permAlert.style.display = "block";
+      if (reviewAlert) reviewAlert.style.display = "none";
+      if (actionName) actionName.textContent = "Approval";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(16, 185, 129, 0.15)";
+        statusIcon.style.color = "#10B981";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Approve";
+        submitBtn.style.background = "#16a34a";
+        submitBtn.style.borderColor = "#16a34a";
+      }
+    } else if (status === "Rejected") {
+      if (permAlert) permAlert.style.display = "block";
+      if (reviewAlert) reviewAlert.style.display = "none";
+      if (actionName) actionName.textContent = "Rejection";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(239, 68, 68, 0.15)";
+        statusIcon.style.color = "#ef4444";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Reject";
+        submitBtn.style.background = "#ef4444";
+        submitBtn.style.borderColor = "#ef4444";
+      }
+    } else {
+      if (permAlert) permAlert.style.display = "none";
+      if (reviewAlert) reviewAlert.style.display = "block";
+      if (statusIcon) {
+        statusIcon.style.background = "rgba(139, 92, 246, 0.15)";
+        statusIcon.style.color = "#8b5cf6";
+        statusIcon.innerHTML =
+          '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>';
+      }
+      if (submitBtn) {
+        submitBtn.textContent = "Confirm & Mark Under Review";
+        submitBtn.style.background = "#8b5cf6";
+        submitBtn.style.borderColor = "#8b5cf6";
+      }
+    }
+
+    if (confirmModal) confirmModal.classList.add("active");
+  }
+
+  function closeDecisionConfirmModal() {
+    const confirmModal = document.getElementById("decision-confirm-modal");
+    if (confirmModal) confirmModal.classList.remove("active");
+    pendingDecision = null;
   }
 
   function openReviewModal(app) {
     currentActiveApp = app;
     isModalOpen = true;
+
+    // Reset feedback success banner and error messages
+    const successBanner = document.getElementById("modal-feedback-success-banner");
+    const saveNotesErr = document.getElementById("modal-save-notes-error");
+    if (successBanner) successBanner.style.display = "none";
+    if (saveNotesErr) saveNotesErr.style.display = "none";
 
     // Student Avatar in Modal Header
     const studentName = app.studentName || "Student Applicant";
@@ -790,10 +1105,37 @@
       }
     }
 
-    // Feedback Notes textarea
+    // Feedback Notes textarea & Finalized Decision Locks
     const notesInput = document.getElementById("modal-review-notes");
     if (notesInput) {
-      notesInput.value = app.notes || app.feedback || "";
+      notesInput.value = app.remarks || app.feedback || app.notes || "";
+    }
+
+    const isFinalized = (app.status === "Approved" || app.status === "Rejected");
+    const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
+    const finalizedLabel = document.getElementById("modal-finalized-status-label");
+    const btnApprove = document.getElementById("modal-btn-approve");
+    const btnUnderReview = document.getElementById("modal-btn-review");
+    const btnReject = document.getElementById("modal-btn-reject");
+    const btnSaveNotes = document.getElementById("modal-btn-save-notes");
+
+    if (isFinalized) {
+      if (finalizedNotice) {
+        finalizedNotice.style.display = "block";
+        if (finalizedLabel) finalizedLabel.textContent = app.status;
+      }
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnUnderReview) btnUnderReview.disabled = true;
+      if (btnReject) btnReject.disabled = true;
+      if (btnSaveNotes) btnSaveNotes.disabled = true;
+      if (notesInput) notesInput.readOnly = true;
+    } else {
+      if (finalizedNotice) finalizedNotice.style.display = "none";
+      if (btnApprove) btnApprove.disabled = false;
+      if (btnUnderReview) btnUnderReview.disabled = false;
+      if (btnReject) btnReject.disabled = false;
+      if (btnSaveNotes) btnSaveNotes.disabled = false;
+      if (notesInput) notesInput.readOnly = false;
     }
 
     // Render Submitted Documents
@@ -1049,6 +1391,7 @@
       allApplications[idx].statusText = newStatus;
       allApplications[idx].notes = notes;
       allApplications[idx].feedback = notes;
+      allApplications[idx].remarks = notes;
       allApplications[idx].reviewedAt = new Date().toISOString();
     }
 
@@ -1107,6 +1450,7 @@
           status: newStatus,
           notes: notes,
           feedback: notes,
+          remarks: notes,
         }),
       });
 

@@ -74,25 +74,41 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!link) return;
 
     const href = link.getAttribute("href");
+    const currentPage = (window.location.pathname.split("/").pop() || "provider-dashboard.html").toLowerCase();
 
-    // #! or empty = same-page action link (like Drafts on dashboard),
-    // close the menu and let dashboard.js handle the view-switch normally.
+    // Same-page action links
     if (!href || href === "#!" || href === "#") {
       closeSideMenu();
-      // Don't preventDefault — let the existing dashboard.js "click" listener run
       return;
     }
 
     // If clicking Home while already on provider-dashboard.html, switch view smoothly without reload
-    const currentPage = window.location.pathname.split("/").pop();
     if (
       currentPage === "provider-dashboard.html" &&
-      href === "provider-dashboard.html"
+      (href === "provider-dashboard.html" || href.endsWith("/provider-dashboard.html"))
     ) {
+      e.preventDefault();
       closeSideMenu();
       if (window.location.search) {
         window.history.replaceState({}, "", "provider-dashboard.html");
       }
+      if (typeof window.showHomeView === "function") {
+        window.showHomeView();
+      }
+      return;
+    }
+
+    // If clicking Drafts while already on provider-dashboard.html, switch view smoothly without reload
+    if (
+      currentPage === "provider-dashboard.html" &&
+      (link.id === "nav-drafts" || href.includes("view=drafts"))
+    ) {
+      e.preventDefault();
+      closeSideMenu();
+      if (typeof window.showDraftsView === "function") {
+        window.showDraftsView();
+      }
+      window.history.replaceState({}, "", "provider-dashboard.html?view=drafts");
       return;
     }
 

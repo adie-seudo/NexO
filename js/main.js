@@ -439,13 +439,18 @@ function hydrateRoleAwareHeader() {
     navMenu.innerHTML = `
       <span class="nav-label">MENU</span>
 
-      <a href="provider-dashboard.html" class="nav-link">
+      <a href="provider-dashboard.html" class="nav-link" id="nav-home">
         <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Home</span>
       </a>
 
-      <a href="provider-applications.html" class="nav-link">
-        <img src="assets/draft-icon.png" alt="Applications" class="nav-icon" onerror="this.style.display='none'" />
+      <a href="provider-posts.html" class="nav-link" id="nav-posts">
+        <img src="assets/application-icon.png" alt="Posted Scholarships" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Posted Scholarships</span>
+      </a>
+
+      <a href="provider-applications.html" class="nav-link" id="nav-applications">
+        <img src="assets/human-icon.png" alt="Applications" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Applications</span>
       </a>
 
@@ -455,7 +460,7 @@ function hydrateRoleAwareHeader() {
         <span id="draft-badge" style="display:none;background-color:#8b5cf6;color:white;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:auto;">0</span>
       </a>
 
-      <a href="provider-settings.html" class="nav-link">
+      <a href="provider-settings.html" class="nav-link" id="nav-settings">
         <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Settings</span>
       </a>

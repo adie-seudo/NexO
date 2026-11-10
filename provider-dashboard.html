@@ -92,10 +92,21 @@
               <span class="nav-text">Home</span>
             </a>
 
+            <!-- Posted Scholarships -->
+            <a href="provider-posts.html" class="nav-link" id="nav-posts">
+              <img
+                src="assets/application-icon.png"
+                alt="Posted Scholarships"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Posted Scholarships</span>
+            </a>
+
             <!-- Applications -->
             <a href="provider-applications.html" class="nav-link">
               <img
-                src="assets/draft-icon.png"
+                src="assets/human-icon.png"
                 alt="Applications"
                 class="nav-icon"
                 onerror="this.style.display = 'none'"
@@ -271,7 +282,7 @@
       <section class="dash-recent">
         <div class="section-header">
           <h3>Recent Scholarship</h3>
-          <a href="#!" class="view-all" id="view-all-btn" style="display: none"
+          <a href="provider-posts.html" class="view-all" id="view-all-btn" style="display: none"
             >View All</a
           >
         </div>
@@ -623,7 +634,9 @@
                 <img
                   src="assets/human-icon.png"
                   alt="ID"
-                  style="width: 20px; filter: grayscale(100%); opacity: 0.7"
+                  width="20"
+                  height="20"
+                  style="width: 20px; height: 20px; object-fit: contain; filter: grayscale(100%); opacity: 0.7"
                 />
               </div>
               <div class="req-text">
@@ -639,7 +652,9 @@
                 <img
                   src="assets/i-icon.png"
                   alt="Doc"
-                  style="width: 20px; filter: grayscale(100%); opacity: 0.7"
+                  width="20"
+                  height="20"
+                  style="width: 20px; height: 20px; object-fit: contain; filter: grayscale(100%); opacity: 0.7"
                 />
               </div>
               <div class="req-text">
@@ -655,7 +670,9 @@
                 <img
                   src="assets/i-icon.png"
                   alt="Doc"
-                  style="width: 20px; filter: grayscale(100%); opacity: 0.7"
+                  width="20"
+                  height="20"
+                  style="width: 20px; height: 20px; object-fit: contain; filter: grayscale(100%); opacity: 0.7"
                 />
               </div>
               <div class="req-text">
@@ -671,7 +688,9 @@
                 <img
                   src="assets/i-icon.png"
                   alt="Doc"
-                  style="width: 20px; filter: grayscale(100%); opacity: 0.7"
+                  width="20"
+                  height="20"
+                  style="width: 20px; height: 20px; object-fit: contain; filter: grayscale(100%); opacity: 0.7"
                 />
               </div>
               <div class="req-text">
@@ -1024,6 +1043,7 @@
           <button
             type="button"
             class="btn btn-primary"
+            id="view-modal-manage-btn"
             onclick="window.location.href = 'provider-applications.html'"
             style="
               display: flex;
