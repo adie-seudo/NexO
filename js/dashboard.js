@@ -114,7 +114,13 @@ function initDashboardModals() {
           DOM.reqList.innerHTML = `
             <div class="req-card">
               <div class="req-icon">
-                <img src="assets/human-icon.png" alt="ID" width="20" height="20" style="width: 20px; height: 20px; object-fit: contain;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <circle cx="9" cy="10" r="2"></circle>
+                  <line x1="15" y1="8" x2="17" y2="8"></line>
+                  <line x1="15" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="17" y2="16"></line>
+                </svg>
               </div>
               <div class="req-text">
                 <h4>Valid School ID</h4>
@@ -124,7 +130,12 @@ function initDashboardModals() {
             </div>
             <div class="req-card">
               <div class="req-icon">
-                <img src="assets/upload-icon.png" alt="Grades" width="20" height="20" style="width: 20px; height: 20px; object-fit: contain;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
               </div>
               <div class="req-text">
                 <h4>Latest Grades/Transcript</h4>
@@ -510,7 +521,12 @@ function initCustomRequirements() {
           newCard.className = "req-card";
           newCard.innerHTML = `
             <div class="req-icon">
-              <img src="assets/i-icon.png" alt="Custom" style="width: 20px; filter: grayscale(100%); opacity: 0.7;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
             </div>
             <div class="req-text">
               <h4>${titleVal}</h4>
@@ -1540,7 +1556,12 @@ function initDraftEditing() {
               card.className = "req-card";
               card.innerHTML = `
                 <div class="req-icon">
-                  <img src="assets/i-icon.png" alt="Custom" style="width: 20px; filter: grayscale(100%); opacity: 0.7;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
                 </div>
                 <div class="req-text">
                   <h4>${escapeHtml(r.title)}</h4>

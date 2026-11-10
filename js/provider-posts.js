@@ -881,7 +881,18 @@
 
       <div class="provider-app-actions-row">
         <span style="font-size: 12px; color: var(--text-secondary);">
-          ${(app.documents || app.uploadedDocuments || []).length} attached documents
+          ${(() => {
+            const rawDocs = app.documents || app.uploadedDocuments || [];
+            const actuallyAttached = rawDocs.filter((d) => {
+              if (typeof d === "string") return !d.includes("(To Follow Up)");
+              return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+            });
+            const count = actuallyAttached.length;
+            if (count === 0) {
+              return '<span style="color: #d97706; font-weight: 500;">To follow up later</span>';
+            }
+            return `${count} attached ${count === 1 ? "document" : "documents"}`;
+          })()}
         </span>
         <button type="button" class="btn btn-primary btn-review-app">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -942,6 +953,8 @@
     // 2. Review Application Modal
     const closeReviewBtn = document.getElementById("close-review-modal");
     if (closeReviewBtn) closeReviewBtn.addEventListener("click", closeReviewModal);
+    const closeReviewBottomBtn = document.getElementById("modal-btn-close-bottom");
+    if (closeReviewBottomBtn) closeReviewBottomBtn.addEventListener("click", closeReviewModal);
     if (reviewModalEl) {
       reviewModalEl.addEventListener("click", (e) => {
         if (e.target === reviewModalEl) closeReviewModal();
@@ -1015,6 +1028,26 @@
     if (docPreviewModalEl) {
       docPreviewModalEl.addEventListener("click", (e) => {
         if (e.target === docPreviewModalEl) closeDocPreview();
+      });
+    }
+
+    const btnFullscreen = document.getElementById("doc-preview-fullscreen");
+    const previewContainer = document.getElementById("doc-preview-container");
+    const fullscreenText = document.getElementById("fullscreen-btn-text");
+    if (btnFullscreen && previewContainer) {
+      btnFullscreen.addEventListener("click", () => {
+        const isFull = previewContainer.classList.toggle("is-fullscreen");
+        if (fullscreenText) {
+          fullscreenText.textContent = isFull ? "Exit Full Screen" : "Full Screen";
+        }
+      });
+    }
+
+    const btnDownload = document.getElementById("doc-preview-download");
+    if (btnDownload) {
+      btnDownload.addEventListener("click", (e) => {
+        e.preventDefault();
+        // Download button with no function yet as requested
       });
     }
   }
@@ -1409,75 +1442,96 @@
     const docsContainer = document.getElementById("modal-documents-list");
     if (!docsContainer) return;
 
+    docsContainer.innerHTML = "";
     const rawDocs = app.documents || app.uploadedDocuments || [];
     if (rawDocs.length === 0) {
       docsContainer.innerHTML =
-        '<div style="text-align: center; padding: 16px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">No verification documents attached to this submission.</div>';
+        '<div style="text-align: center; padding: 18px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">No verification documents attached to this submission.</div>';
       return;
     }
 
-    let html = "";
     rawDocs.forEach((doc, idx) => {
       let docName = "Document #" + (idx + 1);
-      let docUrl = "#";
+      let docUrl = "";
       let docSize = "";
       let isFollowUp = false;
 
       if (typeof doc === "string") {
         docName = doc;
-        docUrl = doc;
         isFollowUp = doc.includes("(To Follow Up)");
+        if (!isFollowUp && (doc.startsWith("data:") || doc.startsWith("http") || doc.startsWith("/"))) {
+          docUrl = doc;
+        }
       } else if (doc && typeof doc === "object") {
         docName = doc.name || doc.title || doc.filename || docName;
-        docUrl = doc.url || doc.fileUrl || doc.dataUrl || "#";
+        docUrl = doc.data || doc.url || doc.fileUrl || doc.dataUrl || "";
         docSize = doc.size ? formatFileSize(doc.size) : "";
-        isFollowUp = doc.isFollowUp || doc.status === "to_follow_up";
+        isFollowUp = Boolean(
+          doc.isFollowUp ||
+          doc.status === "to_follow_up" ||
+          doc.type === "to_follow_up" ||
+          (doc.name && doc.name.includes("(To Follow Up)"))
+        );
       }
+
+      const cleanDocName = docName.replace(/\s*\(To Follow Up\)/gi, "").trim();
+      const docItem = document.createElement("div");
+      docItem.className = "modal-doc-item";
 
       if (isFollowUp) {
-        html += `
-          <div class="modal-doc-item" style="border-style: dashed; border-color: #f59e0b; background: rgba(245, 158, 11, 0.05);">
-            <div class="modal-doc-info">
-              <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              </div>
-              <div>
-                <p class="modal-doc-name" style="color: #b45309;">${escapeHtml(docName)}</p>
-                <span class="modal-doc-size" style="color: #d97706; font-weight: 600;">Deferred / To Follow Up</span>
-              </div>
+        docItem.style.border = "1px dashed rgba(245, 158, 11, 0.45)";
+        docItem.style.background = "rgba(245, 158, 11, 0.05)";
+        docItem.innerHTML = `
+          <div class="modal-doc-info">
+            <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
             </div>
-            <span style="font-size: 11.5px; font-weight: 700; color: #b45309; background: rgba(245, 158, 11, 0.15); padding: 3px 8px; border-radius: 6px;">
-              Pending Submission
-            </span>
+            <div>
+              <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">${escapeHtml(cleanDocName)}</h5>
+              <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">To follow up later &bull; Pending student submission</span>
+            </div>
           </div>
+          <span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
+            To Follow Up
+          </span>
         `;
       } else {
-        html += `
-          <div class="modal-doc-item">
-            <div class="modal-doc-info">
-              <div class="modal-doc-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              </div>
-              <div>
-                <p class="modal-doc-name">${escapeHtml(docName)}</p>
-                ${docSize ? `<span class="modal-doc-size">${escapeHtml(docSize)}</span>` : ""}
-              </div>
+        const isPdf =
+          cleanDocName.toLowerCase().endsWith(".pdf") ||
+          (typeof docUrl === "string" && docUrl.startsWith("data:application/pdf"));
+        docItem.innerHTML = `
+          <div class="modal-doc-info">
+            <div class="modal-doc-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+              ${
+                isPdf
+                  ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><text x="7" y="18" fill="currentColor" font-size="5" font-weight="bold">PDF</text></svg>'
+                  : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>'
+              }
             </div>
-            <button type="button" class="btn-doc-view" data-doc-url="${escapeHtml(docUrl)}" data-doc-name="${escapeHtml(docName)}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              View Document
-            </button>
+            <div>
+              <h5 class="modal-doc-name">${escapeHtml(cleanDocName)}</h5>
+              <span class="modal-doc-size">${docSize ? escapeHtml(docSize) + " &bull; " : ""}Ready for verification</span>
+            </div>
           </div>
+          <button type="button" class="btn-doc-view">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            View File
+          </button>
         `;
+        const viewBtn = docItem.querySelector(".btn-doc-view");
+        if (viewBtn) {
+          viewBtn.addEventListener("click", () => {
+            openDocPreview(docUrl, cleanDocName);
+          });
+        }
       }
-    });
-
-    docsContainer.innerHTML = html;
-
-    docsContainer.querySelectorAll(".btn-doc-view").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        openDocPreview(btn.dataset.docUrl, btn.dataset.docName);
-      });
+      docsContainer.appendChild(docItem);
     });
   }
 
@@ -1492,46 +1546,66 @@
     if (!docPreviewModalEl) return;
 
     const titleEl = document.getElementById("doc-preview-title");
-    const downloadEl = document.getElementById("doc-preview-download");
     const bodyEl = document.getElementById("doc-preview-body");
 
     if (titleEl) titleEl.textContent = fileName || "Document Preview";
-    if (downloadEl) {
-      downloadEl.href = fileUrl;
-      downloadEl.download = fileName || "nexo_document";
-    }
 
     if (bodyEl) {
-      const isImg = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileUrl) || fileUrl.startsWith("data:image/");
-      const isPdf = /\.pdf$/i.test(fileUrl) || fileUrl.startsWith("data:application/pdf");
+      const isImg =
+        fileUrl &&
+        (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(fileUrl) ||
+          fileUrl.startsWith("data:image/"));
+      const isPdf =
+        fileUrl &&
+        (/\.pdf$/i.test(fileUrl) ||
+          fileUrl.startsWith("data:application/pdf"));
 
       if (isImg) {
         bodyEl.innerHTML = `
-          <div style="text-align: center; padding: 10px;">
-            <img src="${fileUrl}" alt="${escapeHtml(fileName)}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain;" />
+          <div style="display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.03); border-radius: 8px; padding: 14px; min-height: 320px;">
+            <img src="${fileUrl}" alt="${escapeHtml(fileName)}" style="max-width: 100%; max-height: 70vh; border-radius: 6px; object-fit: contain; box-shadow: 0 4px 16px rgba(0,0,0,0.12);" />
           </div>
         `;
       } else if (isPdf) {
         bodyEl.innerHTML = `
-          <iframe src="${fileUrl}" style="width: 100%; height: 70vh; border: none; border-radius: 8px;"></iframe>
+          <iframe src="${fileUrl}" style="width: 100%; height: 72vh; border: none; border-radius: 8px;"></iframe>
+        `;
+      } else if (fileUrl && fileUrl !== "#" && (fileUrl.startsWith("data:") || fileUrl.startsWith("http"))) {
+        bodyEl.innerHTML = `
+          <div style="display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.03); border-radius: 8px; padding: 14px; min-height: 320px;">
+            <img src="${fileUrl}" alt="${escapeHtml(fileName)}" style="max-width: 100%; max-height: 70vh; border-radius: 6px; object-fit: contain;" />
+          </div>
         `;
       } else {
         bodyEl.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px; background: rgba(0,0,0,0.02); border-radius: 8px;">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" style="margin-bottom: 12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            <h4>${escapeHtml(fileName)}</h4>
-            <p style="font-size: 13.5px; opacity: 0.8; margin-top: 6px;">Document file verified by NEXO Student Drop-Box.</p>
+          <div style="text-align: center; padding: 48px 20px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="1.8" style="margin-bottom: 12px;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <h4 style="font-size: 15px; margin: 0 0 6px 0; color: var(--text-primary);">${escapeHtml(fileName)}</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Verification document submitted via NEXO Student Portal.</p>
           </div>
         `;
       }
     }
 
     docPreviewModalEl.classList.add("active");
+    document.body.style.overflow = "hidden";
   }
 
   function closeDocPreview() {
     if (!docPreviewModalEl) return;
     docPreviewModalEl.classList.remove("active");
+    if (!isModalOpen) {
+      document.body.style.overflow = "";
+    }
+    const container = document.getElementById("doc-preview-container");
+    if (container) container.classList.remove("is-fullscreen");
+    const fullscreenText = document.getElementById("fullscreen-btn-text");
+    if (fullscreenText) fullscreenText.textContent = "Full Screen";
   }
 
   // -------------------------------------------------------------

@@ -955,11 +955,14 @@
       <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
         <a
           href="provider-dashboard.html"
-          class="btn btn-secondary"
+          class="btn-back-nav"
           id="back-link"
-          style="display: inline-block; padding: 6px 12px; font-size: 14px; text-decoration: none;"
-          >&larr; Back</a
         >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back to Dashboard
+        </a>
       </div>
 
       <div id="scoped-scholarship-banner" style="display: none;"></div>
@@ -1259,9 +1262,8 @@
 
         <!-- Submitted Documents Section -->
         <div style="margin-bottom: 18px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <span>Attached Verification Documents</span>
-            <span style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Digital Drop-Box</span>
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">
+            Attached Verification Documents
           </h4>
           <div id="modal-documents-list">
             <!-- Dynamic documents inserted here -->
@@ -1282,29 +1284,29 @@
           </div>
 
           <!-- Finalized Permanent Notice in Review Modal -->
-          <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+          <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-              <strong style="color: #10B981; font-size: 13px;">Decision Finalized &amp; Permanent</strong>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <strong style="color: #10B981; font-size: 12.5px;">Decision Finalized</strong>
             </div>
-            <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
-              This application has been permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong>. Approved and Rejected decisions are permanent and cannot be modified. Further communication and onboarding take place outside of NexO.
+            <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
+              This application is permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong> and can no longer be modified.
             </p>
           </div>
 
-          <h4 style="font-size: 14.5px; font-weight: 700; margin-bottom: 6px;">Provider Decision &amp; Student Feedback</h4>
-          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 12px 0;">
-            Provide optional custom feedback or follow-up instructions, then select a decision action below to notify the student scholar.
+          <h4 style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Provider Decision</h4>
+          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 10px 0;">
+            Add remarks and choose a decision to notify the student.
           </p>
 
           <div>
-            <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-secondary);">
-              Feedback / Remarks for Student:
+            <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">
+              Remarks
             </label>
             <textarea
               id="modal-review-notes"
               class="review-notes-textarea"
-              placeholder="e.g. Congratulations! Please submit your registration receipt to the financial aid desk... (Leave blank to use the official automated status remark)"
+              placeholder="e.g. Congratulations! Please submit your registration receipt... (Leave blank to use official automated remark)"
             ></textarea>
           </div>
 
@@ -1326,6 +1328,17 @@
                 Reject
               </button>
             </div>
+          </div>
+
+          <!-- Bottom Close Button for Convenient Exit -->
+          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: center;">
+            <button type="button" class="modal-bottom-close-btn" id="modal-btn-close-bottom">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Close Application Review</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1352,24 +1365,24 @@
         </div>
 
         <!-- Permanence Warning Notice (Conditional: for Approved and Rejected) -->
-        <div id="confirm-permanence-alert" style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: none;">
+        <div id="confirm-permanence-alert" style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: none;">
           <strong style="color: #ef4444; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            Permanent Decision Notice
+            Permanent Decision
           </strong>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
-            Once confirmed, <strong id="confirm-action-name">this decision</strong> is <strong>PERMANENT and FINAL</strong>. You cannot revert or modify this decision on NexO. Your remarks below will be your official and final communication with the student on this platform. Further steps (such as interviews, onboarding, or disbursement) take place outside of NexO.
+          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
+            Once submitted, <strong id="confirm-action-name">this decision</strong> is final and cannot be undone. Your remarks will be sent directly to the student.
           </p>
         </div>
 
         <!-- Under Review Info Notice -->
-        <div id="confirm-review-alert" style="background: rgba(139, 92, 246, 0.08); border: 1.5px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; display: none;">
+        <div id="confirm-review-alert" style="background: rgba(139, 92, 246, 0.08); border: 1.5px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: none;">
           <strong style="color: #8b5cf6; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            Under Review Status (In Progress)
+            Under Review Status
           </strong>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
-            Marking this application as Under Review is not permanent. The student will be notified and can view your remarks or upload any deferred requirements. You can finalize your decision later.
+          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
+            This decision is not permanent. The student will be notified of your remarks and you can update their status later.
           </p>
         </div>
 
@@ -1377,16 +1390,20 @@
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <label for="confirm-remarks-textarea" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">
-              Remarks / Message for Student POV: <span style="color: #ef4444;">*</span>
+              Remarks <span style="color: #ef4444;">*</span>
             </label>
-            <button type="button" id="btn-reset-default-remarks" style="background: none; border: none; color: #8b5cf6; font-size: 11.5px; font-weight: 600; cursor: pointer; text-decoration: underline;">
-              Reset to Default Remark
+            <button type="button" class="btn-reset-remarks" id="btn-reset-default-remarks">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>Reset to Default</span>
             </button>
           </div>
           <textarea
             id="confirm-remarks-textarea"
             class="review-notes-textarea"
-            style="min-height: 90px; font-size: 13px;"
+            style="min-height: 85px; font-size: 13px;"
             placeholder="Enter feedback or follow-up instructions for the student..."
           ></textarea>
           <div id="confirm-remarks-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">
@@ -1408,7 +1425,7 @@
 
     <!-- Document Preview Modal -->
     <div class="nexo-modal-overlay" id="doc-preview-modal" role="dialog" aria-modal="true">
-      <div class="nexo-modal-container" style="max-width: 680px;">
+      <div class="nexo-modal-container" id="doc-preview-container" style="max-width: 720px; transition: max-width 0.25s ease, width 0.25s ease;">
         <button type="button" class="modal-close-btn" id="close-doc-preview" aria-label="Close document preview">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1416,11 +1433,17 @@
           </svg>
         </button>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 32px; margin-bottom: 14px;">
-          <h3 id="doc-preview-title" style="font-size: 16px; margin: 0; font-weight: 700;">Document Preview</h3>
-          <a id="doc-preview-download" href="#" download class="btn btn-primary" style="padding: 6px 12px; font-size: 12.5px; text-decoration: none;">
-            Download
-          </a>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 32px; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
+          <h3 id="doc-preview-title" style="font-size: 16px; margin: 0; font-weight: 700; flex: 1; min-width: 140px;">Document Preview</h3>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" class="btn btn-secondary" id="doc-preview-fullscreen" title="Toggle Fullscreen" style="padding: 6px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; cursor: pointer;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+              <span id="fullscreen-btn-text">Full Screen</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="doc-preview-download" style="padding: 6px 14px; font-size: 12.5px; border-radius: 8px; cursor: pointer; opacity: 0.95;">
+              Download
+            </button>
+          </div>
         </div>
 
         <div id="doc-preview-body" style="min-height: 250px;">

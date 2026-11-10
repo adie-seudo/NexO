@@ -1304,14 +1304,17 @@
         const docName =
           typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
         const docUrl =
-          typeof doc === "object" && doc.fileUrl ? doc.fileUrl : "";
+          typeof doc === "object"
+            ? (doc.data || doc.url || doc.fileUrl || doc.dataUrl || "")
+            : (typeof doc === "string" ? doc : "");
         const docSize =
           typeof doc === "object" && doc.size
             ? typeof doc.size === "number"
               ? (doc.size / 1024).toFixed(0) + " KB"
               : doc.size
             : "1.2 MB";
-        const isPdf = docName.toLowerCase().endsWith(".pdf");
+        const cleanDocName = docName.replace(/\s*\(To Follow Up\)/gi, "").trim();
+        const isPdf = cleanDocName.toLowerCase().endsWith(".pdf") || (typeof docUrl === "string" && docUrl.startsWith("data:application/pdf"));
         const reqTag =
           typeof doc === "object" && (doc.requirement || doc.title)
             ? `<span style="font-size: 11px; font-weight: 600; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 2px 7px; border-radius: 4px; margin-left: 6px; display: inline-block;">${escapeHtml(doc.requirement || doc.title)}</span>`
@@ -1327,7 +1330,7 @@
               }
             </div>
             <div>
-              <h5 class="modal-doc-name" title="${escapeHtml(docName)}">${escapeHtml(docName)}${reqTag}</h5>
+              <h5 class="modal-doc-name" title="${escapeHtml(cleanDocName)}">${escapeHtml(cleanDocName)}${reqTag}</h5>
               <span class="modal-doc-size">${escapeHtml(docSize)} &bull; Ready for verification</span>
             </div>
           </div>
@@ -1345,7 +1348,7 @@
 
         docItem.querySelector(".btn-doc-view").addEventListener("click", () => {
           openDocPreview(
-            docName,
+            cleanDocName,
             docUrl,
             typeof doc === "object" ? doc.data : null,
           );
@@ -1373,12 +1376,12 @@
         const itemEl = document.createElement("div");
         itemEl.className = "modal-doc-item";
         itemEl.style.cssText =
-          "background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.25);";
+          "background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.35);";
 
         const reqTitle =
           typeof doc === "object"
-            ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
-            : String(doc).replace(" (To Follow Up)", "");
+            ? doc.requirement || doc.title || (doc.name || "").replace(/\s*\(To Follow Up\)/gi, "")
+            : String(doc).replace(/\s*\(To Follow Up\)/gi, "");
 
         itemEl.innerHTML = `
           <div class="modal-doc-info" style="min-width: 0;">
@@ -1391,18 +1394,16 @@
             <div style="min-width: 0;">
               <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">
                 ${escapeHtml(reqTitle)}
-                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: rgba(245, 158, 11, 0.15); padding: 2px 7px; border-radius: 4px; margin-left: 6px; display: inline-block;">To Follow Up</span>
               </h5>
-              <span style="font-size: 11.5px; color: var(--text-secondary); display: block; margin-top: 2px;">
-                Student chose to submit this document later &bull; Cannot be reviewed yet
+              <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">
+                To follow up later &bull; Pending student submission
               </span>
             </div>
           </div>
 
           <div class="modal-doc-actions">
-            <span style="background: rgba(245, 158, 11, 0.12); color: #D97706; border: 1px solid rgba(245, 158, 11, 0.25); font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-              No File Attached
+            <span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
+              To Follow Up
             </span>
           </div>
         `;
@@ -1425,6 +1426,31 @@
         closeDocPreview();
       }
     });
+
+    const btnFullscreen = document.getElementById("doc-preview-fullscreen");
+    const previewContainer = document.getElementById("doc-preview-container");
+    const fullscreenText = document.getElementById("fullscreen-btn-text");
+    if (btnFullscreen && previewContainer) {
+      btnFullscreen.addEventListener("click", () => {
+        const isFull = previewContainer.classList.toggle("is-fullscreen");
+        if (fullscreenText) {
+          fullscreenText.textContent = isFull ? "Exit Full Screen" : "Full Screen";
+        }
+      });
+    }
+
+    const btnDownload = document.getElementById("doc-preview-download");
+    if (btnDownload) {
+      btnDownload.addEventListener("click", (e) => {
+        e.preventDefault();
+        // Download button with no function yet as requested
+      });
+    }
+
+    const btnCloseBottom = document.getElementById("modal-btn-close-bottom");
+    if (btnCloseBottom) {
+      btnCloseBottom.addEventListener("click", closeReviewModal);
+    }
   }
 
   function openDocPreview(fileName, fileUrl, base64Data) {
@@ -1435,51 +1461,58 @@
 
     const titleEl = document.getElementById("doc-preview-title");
     const bodyEl = document.getElementById("doc-preview-body");
-    const downloadBtn = document.getElementById("doc-preview-download");
 
-    if (titleEl) titleEl.textContent = fileName;
-    if (downloadBtn) {
-      downloadBtn.href = fileUrl || base64Data || "#";
-      downloadBtn.download = fileName;
-    }
+    if (titleEl) titleEl.textContent = fileName || "Document Preview";
 
-    const isPdf = fileName.toLowerCase().endsWith(".pdf");
     const targetUrl = fileUrl || base64Data;
+    const isPdf =
+      fileName.toLowerCase().endsWith(".pdf") ||
+      (typeof targetUrl === "string" && targetUrl.startsWith("data:application/pdf"));
+    const isImg =
+      typeof targetUrl === "string" &&
+      (targetUrl.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(targetUrl));
 
     if (bodyEl) {
-      if (targetUrl) {
+      if (targetUrl && (isImg || isPdf || targetUrl.startsWith("data:") || targetUrl.startsWith("http"))) {
         if (isPdf) {
-          bodyEl.innerHTML = `<iframe src="${targetUrl}" style="width:100%; height:450px; border:none; border-radius:8px;"></iframe>`;
+          bodyEl.innerHTML = `<iframe src="${targetUrl}" style="width:100%; height:72vh; border:none; border-radius:8px;"></iframe>`;
         } else {
           bodyEl.innerHTML = `
-            <div style="display:flex; justify-content:center; align-items:center; background:#111; border-radius:8px; padding:16px;">
-              <img src="${targetUrl}" alt="${escapeHtml(fileName)}" style="max-width:100%; max-height:450px; object-fit:contain;" />
+            <div style="display:flex; justify-content:center; align-items:center; background:rgba(0,0,0,0.03); border-radius:8px; padding:14px; min-height:320px;">
+              <img src="${targetUrl}" alt="${escapeHtml(fileName)}" style="max-width:100%; max-height:70vh; object-fit:contain; border-radius:6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);" />
             </div>
           `;
         }
       } else {
         bodyEl.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px; background: rgba(0,0,0,0.03); border-radius: 8px;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6941C6" stroke-width="1.8" style="margin-bottom:12px;">
+          <div style="text-align: center; padding: 48px 20px; background: rgba(0,0,0,0.02); border-radius: 8px;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#6941C6" stroke-width="1.8" style="margin-bottom:12px;">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <h4>${escapeHtml(fileName)}</h4>
-            <p style="font-size: 13.5px; opacity: 0.8; margin-top: 6px;">Document file verified by NEXO Student Drop-Box.</p>
+            <h4 style="font-size: 15px; margin: 0 0 6px 0; color: var(--text-primary);">${escapeHtml(fileName)}</h4>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Verification document submitted via NEXO Student Portal.</p>
           </div>
         `;
       }
     }
 
     docPreviewModalEl.classList.add("active");
+    document.body.style.overflow = "hidden";
   }
 
   function closeDocPreview() {
     if (!docPreviewModalEl) return;
     docPreviewModalEl.classList.remove("active");
+    if (!isModalOpen) {
+      document.body.style.overflow = "";
+    }
+    const container = document.getElementById("doc-preview-container");
+    if (container) container.classList.remove("is-fullscreen");
+    const fullscreenText = document.getElementById("fullscreen-btn-text");
+    if (fullscreenText) fullscreenText.textContent = "Full Screen";
   }
 
   // -------------------------------------------------------------
