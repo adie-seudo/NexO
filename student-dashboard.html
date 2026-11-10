@@ -22,9 +22,9 @@
     <!-- 1. GLOBAL UNIVERSAL HEADER                -->
     <!-- ========================================= -->
     <header class="global-header">
-      <!-- NEXO Brand Logo & Name (Student Avatar relocated to Welcome Hero Card) -->
+      <!-- NEXO Brand Logo & Name (Clicking navigates to About Us) -->
       <div class="logo-container">
-        <a href="student-dashboard.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+        <a href="student-about.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;" title="About Us">
           <img src="assets/logo.png" alt="NEXO" style="width: 28px; height: 28px; object-fit: contain;" />
           <span style="font-family: var(--font-heading); font-size: 19px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px;">NEXO</span>
         </a>
@@ -208,14 +208,8 @@
 
         <!-- Student Dynamic Greetings, Name, and Tagline -->
         <div class="student-welcome-content">
-          <div class="student-greeting-pill-row">
+          <div class="student-greeting-row">
             <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
-            <span class="student-verified-badge" title="Verified University Student">
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              Student Scholar
-            </span>
           </div>
           <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
           <p class="student-motto" id="student-motto">
@@ -227,25 +221,25 @@
       <!-- B. 2x2 METRIC CARDS GRID -->
       <section class="student-stats-grid">
         <!-- Metric 1: My Applications -->
-        <div class="student-stat-card">
+        <div class="student-stat-card is-disabled" id="card-stat-my-apps">
           <p class="student-stat-label">My Applications</p>
           <h2 class="student-stat-value" id="stat-my-apps">0</h2>
         </div>
 
         <!-- Metric 2: Approved -->
-        <div class="student-stat-card">
+        <div class="student-stat-card is-disabled" id="card-stat-approved">
           <p class="student-stat-label">Approved</p>
           <h2 class="student-stat-value" id="stat-approved">0</h2>
         </div>
 
         <!-- Metric 3: Under Review -->
-        <div class="student-stat-card">
+        <div class="student-stat-card is-disabled" id="card-stat-review">
           <p class="student-stat-label">Under Review</p>
           <h2 class="student-stat-value" id="stat-review">0</h2>
         </div>
 
         <!-- Metric 4: Rejected -->
-        <div class="student-stat-card">
+        <div class="student-stat-card is-disabled" id="card-stat-rejected">
           <p class="student-stat-label">Rejected</p>
           <h2 class="student-stat-value" id="stat-rejected">0</h2>
         </div>
@@ -254,15 +248,6 @@
       <!-- C. MY SCHOLARSHIP APPLICATIONS -->
       <section class="student-apps-section">
         <div class="student-section-header student-section-header-centered">
-          <div class="student-section-badge">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            Activity &amp; Submissions
-          </div>
           <h3 class="student-section-title">My Scholarship Applications</h3>
           <button
             type="button"

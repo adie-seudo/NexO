@@ -722,6 +722,77 @@ async function loadStudentData() {
   if (statReview) statReview.textContent = reviewCount + submittedCount;
   if (statRejected) statRejected.textContent = rejectedCount;
 
+  // Setup dynamic card navigation (clickable only if count >= 1)
+  const cardMyApps = document.getElementById("card-stat-my-apps");
+  const cardApproved = document.getElementById("card-stat-approved");
+  const cardReview = document.getElementById("card-stat-review");
+  const cardRejected = document.getElementById("card-stat-rejected");
+
+  if (cardMyApps) {
+    if (totalCount >= 1) {
+      cardMyApps.classList.add("is-clickable");
+      cardMyApps.classList.remove("is-disabled");
+      cardMyApps.title = "View all submitted applications";
+      cardMyApps.onclick = () => {
+        window.location.href = "student-submissions.html";
+      };
+    } else {
+      cardMyApps.classList.remove("is-clickable");
+      cardMyApps.classList.add("is-disabled");
+      cardMyApps.removeAttribute("title");
+      cardMyApps.onclick = null;
+    }
+  }
+
+  if (cardApproved) {
+    if (approvedCount >= 1) {
+      cardApproved.classList.add("is-clickable");
+      cardApproved.classList.remove("is-disabled");
+      cardApproved.title = "View approved scholarship grants";
+      cardApproved.onclick = () => {
+        window.location.href = "student-submissions.html?filter=approved";
+      };
+    } else {
+      cardApproved.classList.remove("is-clickable");
+      cardApproved.classList.add("is-disabled");
+      cardApproved.removeAttribute("title");
+      cardApproved.onclick = null;
+    }
+  }
+
+  const reviewAndSubmittedCount = reviewCount + submittedCount;
+  if (cardReview) {
+    if (reviewAndSubmittedCount >= 1) {
+      cardReview.classList.add("is-clickable");
+      cardReview.classList.remove("is-disabled");
+      cardReview.title = "View applications under review";
+      cardReview.onclick = () => {
+        window.location.href = "student-submissions.html?filter=review";
+      };
+    } else {
+      cardReview.classList.remove("is-clickable");
+      cardReview.classList.add("is-disabled");
+      cardReview.removeAttribute("title");
+      cardReview.onclick = null;
+    }
+  }
+
+  if (cardRejected) {
+    if (rejectedCount >= 1) {
+      cardRejected.classList.add("is-clickable");
+      cardRejected.classList.remove("is-disabled");
+      cardRejected.title = "View rejected applications";
+      cardRejected.onclick = () => {
+        window.location.href = "student-submissions.html?filter=rejected";
+      };
+    } else {
+      cardRejected.classList.remove("is-clickable");
+      cardRejected.classList.add("is-disabled");
+      cardRejected.removeAttribute("title");
+      cardRejected.onclick = null;
+    }
+  }
+
   // Update Filter Pill Counters (for My Scholarship Submissions)
   const filterCountAll = document.getElementById("filter-count-all");
   const filterCountSubmitted = document.getElementById("filter-count-submitted");
@@ -1519,6 +1590,35 @@ function initSubmissionsFiltering() {
   const resetBtn = document.getElementById("reset-submissions-filter");
 
   if (!filterTabsContainer && !searchInput) return;
+
+  // Pre-activate tab from URL parameter if passed (e.g. from Dashboard metric cards)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialFilter = (
+      urlParams.get("filter") ||
+      urlParams.get("status") ||
+      ""
+    ).toLowerCase();
+    if (initialFilter && filterTabsContainer) {
+      const targetTab = filterTabsContainer.querySelector(
+        `.filter-tab[data-filter="${initialFilter}"]`,
+      );
+      if (targetTab) {
+        filterTabsContainer
+          .querySelectorAll(".filter-tab")
+          .forEach((t) => t.classList.remove("active"));
+        targetTab.classList.add("active");
+        currentSubmissionsFilter = initialFilter;
+      }
+      try {
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      } catch (_) {}
+    }
+  } catch (_) {}
 
   if (filterTabsContainer) {
     filterTabsContainer.querySelectorAll(".filter-tab").forEach((tab) => {

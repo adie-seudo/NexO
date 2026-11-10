@@ -3532,7 +3532,7 @@ body.dark-theme .view-details-btn:hover {
   border: 1.5px solid var(--border-color);
   border-radius: 18px;
   padding: 16px 18px;
-  margin-bottom: 16px;
+  margin-bottom: 22px; /* Slightly more separated from the 4 cards below */
   display: flex;
   align-items: center;
   gap: 15px;
@@ -3586,39 +3586,22 @@ body.dark-theme .student-avatar-box {
   display: flex;
   flex-direction: column;
 }
-.student-greeting-pill-row {
+.student-greeting-row {
   display: flex;
   align-items: center;
-  gap: 6px;
   margin-bottom: 2px;
-  flex-wrap: wrap;
 }
 .student-greeting-time {
-  font-size: 12px;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 600;
   color: #8b5cf6;
-  letter-spacing: 0.2px;
+  letter-spacing: -0.2px;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  display: block;
 }
 body.dark-theme .student-greeting-time {
   color: #a78bfa;
-}
-.student-verified-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3.5px;
-  padding: 1.5px 6px;
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  line-height: 1.2;
-}
-body.dark-theme .student-verified-badge {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.35);
 }
 .student-name-title {
   font-family: var(--font-heading);
@@ -3658,11 +3641,26 @@ body.dark-theme .student-verified-badge {
   box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  user-select: none;
 }
-.student-stat-card:hover {
-  transform: translateY(-1.5px);
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+.student-stat-card.is-clickable {
+  cursor: pointer;
+}
+.student-stat-card.is-clickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.12);
+}
+.student-stat-card.is-clickable:active {
+  transform: scale(0.98);
+}
+.student-stat-card.is-disabled {
+  cursor: default;
+}
+.student-stat-card.is-disabled:hover {
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  border-color: var(--border-color);
 }
 body.dark-theme .student-stat-card {
   background: var(--bg-surface);
