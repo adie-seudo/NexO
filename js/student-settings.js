@@ -204,6 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   // 4. LOAD SETTINGS FROM SERVER / CACHE
   // -------------------------------------------------------------
+  let activeStudentSettings = null;
+
   async function loadSettings() {
     let settings = null;
     const currentEmail = (
@@ -254,6 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
         contactNumber: "",
         bio: "",
         profilePicture: "",
+        isProfileConfirmed: false,
         notifications: {
           scholarshipMatches: true,
           applicationUpdates: true,
@@ -264,6 +267,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       };
     }
+
+    activeStudentSettings = settings;
 
     // Populate UI inputs
     const nameInput = document.getElementById("input-student-fullname");
@@ -278,22 +283,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const idInput = document.getElementById("input-student-id");
     const phoneInput = document.getElementById("input-student-phone");
     const bioInput = document.getElementById("input-student-bio");
+    const statusBanner = document.getElementById("profile-status-banner");
+    const btnSave = document.getElementById("student-save-btn");
 
     const prefDark = document.getElementById("pref-student-dark-mode");
     const notifMatches = document.getElementById("pref-notif-matches");
     const notifStatus = document.getElementById("pref-notif-status");
     const notifDeadlines = document.getElementById("pref-notif-deadlines");
 
+    // Full name and Email are ALWAYS locked for student settings
     if (nameInput) {
       nameInput.value = settings.fullName || currentName || "";
-      if (!nameInput.dataset.boundInput) {
-        nameInput.dataset.boundInput = "true";
-        nameInput.addEventListener("input", () => {
-          setAvatarPreview(currentAvatarBase64);
-        });
-      }
+      nameInput.readOnly = true;
+      nameInput.tabIndex = -1;
+      nameInput.style.cursor = "not-allowed";
+      nameInput.style.background = "var(--bg-canvas)";
+      nameInput.style.opacity = "0.85";
     }
-    if (emailInput) emailInput.value = settings.email || currentEmail || "";
+    if (emailInput) {
+      emailInput.value = settings.email || currentEmail || "";
+      emailInput.readOnly = true;
+      emailInput.tabIndex = -1;
+      emailInput.style.cursor = "not-allowed";
+      emailInput.style.background = "var(--bg-canvas)";
+      emailInput.style.opacity = "0.85";
+    }
     if (uniInput) uniInput.value = settings.university || "";
     if (courseInput) courseInput.value = settings.course || "";
     if (yearSelect) yearSelect.value = settings.yearLevel || "";
@@ -303,6 +317,138 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentAvatarBase64 = settings.profilePicture || "";
     setAvatarPreview(currentAvatarBase64);
+
+    const isConfirmed = Boolean(settings.isProfileConfirmed);
+
+    if (isConfirmed) {
+      // PERMANENTLY LOCKED STATE
+      if (courseInput) {
+        courseInput.readOnly = true;
+        courseInput.style.cursor = "not-allowed";
+        courseInput.style.background = "var(--bg-canvas)";
+        courseInput.style.opacity = "0.85";
+      }
+      if (yearSelect) {
+        yearSelect.disabled = true;
+        yearSelect.style.cursor = "not-allowed";
+        yearSelect.style.background = "var(--bg-canvas)";
+        yearSelect.style.opacity = "0.85";
+      }
+      if (bioInput) {
+        bioInput.readOnly = true;
+        bioInput.style.cursor = "not-allowed";
+        bioInput.style.background = "var(--bg-canvas)";
+        bioInput.style.opacity = "0.85";
+      }
+      if (uniInput) {
+        uniInput.readOnly = true;
+        uniInput.style.cursor = "not-allowed";
+        uniInput.style.background = "var(--bg-canvas)";
+        uniInput.style.opacity = "0.85";
+      }
+      if (idInput) {
+        idInput.readOnly = true;
+        idInput.style.cursor = "not-allowed";
+        idInput.style.background = "var(--bg-canvas)";
+        idInput.style.opacity = "0.85";
+      }
+      if (phoneInput) {
+        phoneInput.readOnly = true;
+        phoneInput.style.cursor = "not-allowed";
+        phoneInput.style.background = "var(--bg-canvas)";
+        phoneInput.style.opacity = "0.85";
+      }
+
+      if (statusBanner) {
+        statusBanner.style.display = "flex";
+        statusBanner.style.background = "rgba(16, 185, 129, 0.08)";
+        statusBanner.style.border = "1px solid rgba(16, 185, 129, 0.4)";
+        statusBanner.style.color = "#10b981";
+        statusBanner.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <div>
+            <strong style="display:block; font-size:14px; margin-bottom:2px; color:#10b981;">✓ Profile Confirmed & Permanently Locked</strong>
+            Your official student profile and academic records have been verified. You are fully eligible to apply for scholarships. Profile information cannot be modified further.
+          </div>
+        `;
+      }
+
+      if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Profile Permanently Confirmed
+        `;
+        btnSave.style.opacity = "0.6";
+        btnSave.style.cursor = "not-allowed";
+      }
+    } else {
+      // EDITABLE ONE-TIME SETUP STATE
+      if (courseInput) {
+        courseInput.readOnly = false;
+        courseInput.style.cursor = "";
+        courseInput.style.background = "";
+        courseInput.style.opacity = "";
+      }
+      if (yearSelect) {
+        yearSelect.disabled = false;
+        yearSelect.style.cursor = "pointer";
+        yearSelect.style.background = "";
+        yearSelect.style.opacity = "";
+      }
+      if (bioInput) {
+        bioInput.readOnly = false;
+        bioInput.style.cursor = "";
+        bioInput.style.background = "";
+        bioInput.style.opacity = "";
+      }
+      if (uniInput) {
+        uniInput.readOnly = false;
+        uniInput.style.cursor = "";
+        uniInput.style.background = "";
+        uniInput.style.opacity = "";
+      }
+      if (idInput) {
+        idInput.readOnly = false;
+        idInput.style.cursor = "";
+        idInput.style.background = "";
+        idInput.style.opacity = "";
+      }
+      if (phoneInput) {
+        phoneInput.readOnly = false;
+        phoneInput.style.cursor = "";
+        phoneInput.style.background = "";
+        phoneInput.style.opacity = "";
+      }
+
+      if (statusBanner) {
+        statusBanner.style.display = "flex";
+        statusBanner.style.background = "rgba(245, 158, 11, 0.08)";
+        statusBanner.style.border = "1px solid rgba(245, 158, 11, 0.4)";
+        statusBanner.style.color = "#f59e0b";
+        statusBanner.innerHTML = `
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div>
+            <strong style="display:block; font-size:14px; margin-bottom:2px; color:#f59e0b;">⚠️ Profile Confirmation Required</strong>
+            Please enter your <strong>Program / Course</strong>, <strong>Year Level</strong>, and <strong>Academic Goal & Bio</strong> below and click "Confirm Academic Profile". <em>Once confirmed, these details will become permanent and cannot be modified.</em> You cannot apply for scholarships until this confirmation is completed.
+          </div>
+        `;
+      }
+
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Confirm Academic Profile
+        `;
+        btnSave.style.opacity = "1";
+        btnSave.style.cursor = "pointer";
+      }
+    }
 
     // Sync theme toggle
     const isDark =
@@ -337,15 +483,86 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------------
-  // 5. SAVE SETTINGS TO SERVER & LOCAL STORAGE
+  // 5. SAVE SETTINGS & PERMANENT CONFIRMATION MODAL
   // -------------------------------------------------------------
   const btnSave = document.getElementById("student-save-btn");
   const btnDiscard = document.getElementById("student-discard-btn");
+  const modalConfirmProfile = document.getElementById("modal-confirm-profile");
+  const btnCloseProfileModal = document.getElementById("btn-close-profile-modal");
+  const btnCancelProfileConfirm = document.getElementById("btn-cancel-profile-confirm");
+  const btnExecuteProfileConfirm = document.getElementById("btn-execute-profile-confirm");
+
+  function closeConfirmModal() {
+    if (modalConfirmProfile) {
+      modalConfirmProfile.style.display = "none";
+      document.body.style.overflow = "";
+    }
+  }
+
+  if (btnCloseProfileModal) btnCloseProfileModal.addEventListener("click", closeConfirmModal);
+  if (btnCancelProfileConfirm) btnCancelProfileConfirm.addEventListener("click", closeConfirmModal);
 
   if (btnSave) {
-    btnSave.addEventListener("click", async () => {
-      btnSave.disabled = true;
-      btnSave.textContent = "Saving...";
+    btnSave.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      if (activeStudentSettings && activeStudentSettings.isProfileConfirmed) {
+        showToast("Your academic profile is already confirmed and permanently locked.", true);
+        return;
+      }
+
+      const courseInput = document.getElementById("input-student-course");
+      const yearSelect = document.getElementById("select-student-year");
+      const bioInput = document.getElementById("input-student-bio");
+      const nameInput = document.getElementById("input-student-fullname");
+      const emailInput = document.getElementById("input-student-email");
+
+      const courseVal = courseInput ? courseInput.value.trim() : "";
+      const yearVal = yearSelect ? yearSelect.value : "";
+      const bioVal = bioInput ? bioInput.value.trim() : "";
+
+      if (!courseVal) {
+        showToast("Please enter your Program / Course.", true);
+        if (courseInput) courseInput.focus();
+        return;
+      }
+
+      if (!yearVal) {
+        showToast("Please select your Year Level.", true);
+        if (yearSelect) yearSelect.focus();
+        return;
+      }
+
+      if (!bioVal) {
+        showToast("Please write a brief Academic Goal & Bio.", true);
+        if (bioInput) bioInput.focus();
+        return;
+      }
+
+      // Populate preview modal
+      const previewName = document.getElementById("confirm-preview-name");
+      const previewEmail = document.getElementById("confirm-preview-email");
+      const previewCourse = document.getElementById("confirm-preview-course");
+      const previewYear = document.getElementById("confirm-preview-year");
+      const previewBio = document.getElementById("confirm-preview-bio");
+
+      if (previewName) previewName.textContent = (nameInput && nameInput.value) || "-";
+      if (previewEmail) previewEmail.textContent = (emailInput && emailInput.value) || "-";
+      if (previewCourse) previewCourse.textContent = courseVal;
+      if (previewYear) previewYear.textContent = yearVal;
+      if (previewBio) previewBio.textContent = bioVal;
+
+      if (modalConfirmProfile) {
+        modalConfirmProfile.style.display = "flex";
+        document.body.style.overflow = "hidden";
+      }
+    });
+  }
+
+  if (btnExecuteProfileConfirm) {
+    btnExecuteProfileConfirm.addEventListener("click", async () => {
+      btnExecuteProfileConfirm.disabled = true;
+      btnExecuteProfileConfirm.textContent = "Confirming & Locking...";
 
       const uniInput = document.getElementById("input-student-university");
       const courseInput = document.getElementById("input-student-course");
@@ -353,22 +570,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const idInput = document.getElementById("input-student-id");
       const phoneInput = document.getElementById("input-student-phone");
       const bioInput = document.getElementById("input-student-bio");
+      const nameInput = document.getElementById("input-student-fullname");
+      const emailInput = document.getElementById("input-student-email");
 
       const prefDark = document.getElementById("pref-student-dark-mode");
       const notifMatches = document.getElementById("pref-notif-matches");
       const notifStatus = document.getElementById("pref-notif-status");
       const notifDeadlines = document.getElementById("pref-notif-deadlines");
 
-      const nameInput = document.getElementById("input-student-fullname");
-      const emailInput = document.getElementById("input-student-email");
-      const savedEmail =
+      const savedEmail = (
         sessionStorage.getItem("nexo-student-email") ||
         localStorage.getItem("nexo-student-email") ||
-        "";
+        ""
+      ).toLowerCase();
 
       const payload = {
         fullName: nameInput ? nameInput.value.trim() : "",
-        email: emailInput ? (emailInput.value.trim() || savedEmail) : savedEmail,
+        email: emailInput ? (emailInput.value.trim().toLowerCase() || savedEmail) : savedEmail,
         university: uniInput ? uniInput.value.trim() : "",
         course: courseInput ? courseInput.value.trim() : "",
         yearLevel: yearSelect ? yearSelect.value : "",
@@ -376,6 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
         contactNumber: phoneInput ? phoneInput.value.trim() : "",
         bio: bioInput ? bioInput.value.trim() : "",
         profilePicture: currentAvatarBase64,
+        isProfileConfirmed: true,
         notifications: {
           scholarshipMatches: notifMatches ? notifMatches.checked : true,
           applicationUpdates: notifStatus ? notifStatus.checked : true,
@@ -387,19 +606,22 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       try {
-        await fetch(`${API_BASE}/api/student-settings`, {
+        const res = await fetch(`${API_BASE}/api/student-settings`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData && resData.settings) {
+            Object.assign(payload, resData.settings);
+          }
+        }
       } catch (err) {
-        console.warn(
-          "Could not save to /api/student-settings via server:",
-          err,
-        );
+        console.warn("Could not save to /api/student-settings via server:", err);
       }
 
-      // Keep local caches updated
+      // Update local storage caches
       try {
         localStorage.setItem("nexo_student_settings", JSON.stringify(payload));
         if (payload.email) {
@@ -409,44 +631,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         sessionStorage.setItem("nexo-student-name", payload.fullName || "");
         localStorage.setItem("nexo-student-name", payload.fullName || "");
-        if (currentAvatarBase64) {
-          sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
-        } else {
-          sessionStorage.removeItem("nexo-student-avatar");
-        }
       } catch (_) {}
 
-      // Refresh global identity & initials
+      // Refresh global identity
       if (typeof window.syncGlobalStudentIdentity === "function") {
         window.syncGlobalStudentIdentity();
       }
-      setAvatarPreview(currentAvatarBase64);
 
-      // Synchronize theme with body
-      if (prefDark) {
-        if (prefDark.checked) {
-          document.documentElement.classList.add("dark-theme");
-          document.body.classList.add("dark-theme");
-          localStorage.setItem("nexo-theme", "dark");
-        } else {
-          document.documentElement.classList.remove("dark-theme");
-          document.body.classList.remove("dark-theme");
-          localStorage.setItem("nexo-theme", "light");
-        }
-      }
+      closeConfirmModal();
+      btnExecuteProfileConfirm.disabled = false;
+      btnExecuteProfileConfirm.textContent = "🔒 Confirm & Lock Permanently";
 
-      btnSave.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M20 6L9 17l-5-5"></path>
-        </svg>
-        Saved!
-      `;
-      showToast("Customization saved");
-
-      setTimeout(() => {
-        btnSave.innerHTML = "Save Changes";
-        btnSave.disabled = false;
-      }, 1200);
+      showToast("Profile successfully confirmed and permanently locked! You can now apply for scholarships.");
+      await loadSettings();
     });
   }
 

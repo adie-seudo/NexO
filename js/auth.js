@@ -126,50 +126,20 @@ function initLoginToggleAndSubmit() {
         if (cached) userList = JSON.parse(cached);
       } catch (_) {}
 
+      const API_BASE =
+        window.location.origin && window.location.origin.includes(":3000")
+          ? ""
+          : "http://localhost:3000";
+
       try {
-        let res = await fetch("/api/users", { cache: "no-store" }).catch(() => null);
-        if (!res || !res.ok) {
-          res = await fetch("http://localhost:3000/api/users", {
-            cache: "no-store",
-          }).catch(() => null);
-        }
+        const res = await fetch(`${API_BASE}/api/users`, {
+          cache: "no-store",
+        }).catch(() => null);
         if (res && res.ok) {
           userList = await res.json();
           localStorage.setItem("nexo_users", JSON.stringify(userList));
         }
       } catch (_) {}
-
-      // Fallback baseline accounts if none loaded
-      if (!userList || userList.length === 0) {
-        userList = [
-          {
-            id: "usr_prov_nexo",
-            email: "admin@admin",
-            password: "admin",
-            role: "provider",
-            name: "NEXO",
-            orgName: "NEXO",
-            status: "active",
-          },
-          {
-            id: "usr_stud_adrian",
-            email: "adrian@batstate-u.edu.ph",
-            password: "password123",
-            role: "student",
-            name: "Adrian Del Mundo",
-            status: "active",
-          },
-          {
-            id: "usr_stud_2402924",
-            email: "24-02924@g.batstate-u.edu.ph",
-            password: "password123",
-            role: "student",
-            name: "",
-            status: "active",
-          },
-        ];
-        localStorage.setItem("nexo_users", JSON.stringify(userList));
-      }
 
       const matchedUser = userList.find(
         (u) => (u.email || "").toLowerCase() === emailValue,
@@ -234,23 +204,6 @@ function initLoginToggleAndSubmit() {
       }
 
       // 5. Successful Login Execution
-      if (matchedUser.role === "admin") {
-        sessionStorage.setItem("nexo-logged-in", "admin");
-        sessionStorage.setItem(
-          "nexo-provider-name",
-          matchedUser.name || "NEXO Admin",
-        );
-        sessionStorage.setItem("nexo-provider-email", matchedUser.email);
-        localStorage.setItem("nexo-logged-in", "admin");
-        localStorage.setItem(
-          "nexo-provider-name",
-          matchedUser.name || "NEXO Admin",
-        );
-        localStorage.setItem("nexo-provider-email", matchedUser.email);
-        window.location.href = "admin.html";
-        return;
-      }
-
       if (matchedUser.role === "provider") {
         localStorage.removeItem("nexo-provider-banner");
         localStorage.removeItem("provider-banner-preview");

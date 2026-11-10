@@ -536,6 +536,35 @@
       </div>
     </div>
 
+    <!-- ======================================================= -->
+    <!-- PROFILE UNCONFIRMED GUARD MODAL                         -->
+    <!-- ======================================================= -->
+    <div class="schol-modal-overlay" id="modal-profile-locked-guard" style="z-index: 16000;">
+      <div class="schol-modal-sheet" style="max-width: 480px; border-radius: 20px; padding: 24px; text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 16px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3 style="font-size: 19px; font-weight: 800; color: var(--text-primary); margin: 0 0 10px 0;">
+          Profile Confirmation Required
+        </h3>
+        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin: 0 0 22px 0;">
+          You cannot apply for scholarships until you confirm all your required academic details (<strong>Program / Course</strong>, <strong>Year Level</strong>, and <strong>Academic Bio</strong>) in Account Settings.
+          <br><br>
+          This is a one-time confirmation to ensure all scholarship submissions have verified academic standing.
+        </p>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn btn-secondary" id="btn-close-guard-modal" style="flex: 1; padding: 12px; font-weight: 600;">
+            Close
+          </button>
+          <a href="student-settings.html" class="btn btn-primary" style="flex: 1.4; padding: 12px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            Go to Settings &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast Notifier -->
     <div class="settings-toast" id="student-browse-toast" style="display: none;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5">

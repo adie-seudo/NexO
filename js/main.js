@@ -32,8 +32,9 @@
 // ==========================================
 window.DEFAULT_PROVIDER_BANNER = "";
 window.API_BASE =
-  window.API_BASE ||
-  (window.location.protocol.startsWith("http") ? "" : "http://localhost:3000");
+  (window.location.origin && window.location.origin.includes(":3000"))
+    ? ""
+    : "http://localhost:3000";
 
 // ==========================================
 // 1. INSTANT DARK MODE CHECK (Prevents white flash)
@@ -194,7 +195,9 @@ function isStudentProfileComplete() {
 
   let settings = null;
   try {
-    const raw = localStorage.getItem("nexo_student_settings");
+    const raw =
+      localStorage.getItem(`nexo_student_settings_${currentEmail}`) ||
+      localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (!parsed.email || !currentEmail || parsed.email.toLowerCase() === currentEmail) {
@@ -203,19 +206,13 @@ function isStudentProfileComplete() {
     }
   } catch (_) {}
 
-  const name =
-    (settings && settings.fullName) ||
-    sessionStorage.getItem("nexo-student-name") ||
-    "";
-  const studentId = (settings && settings.studentId) || "";
-  const university = (settings && settings.university) || "";
-  const course = (settings && settings.course) || "";
-
+  // Profile must be confirmed and have Course, Year Level, and Bio completed
   return Boolean(
-    name.trim() &&
-    studentId.trim() &&
-    university.trim() &&
-    course.trim()
+    settings &&
+    settings.isProfileConfirmed === true &&
+    (settings.course || "").trim() &&
+    (settings.yearLevel || "").trim() &&
+    (settings.bio || "").trim()
   );
 }
 

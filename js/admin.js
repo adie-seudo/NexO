@@ -5,10 +5,10 @@
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  const isHttp =
-    window.location.protocol === "http:" ||
-    window.location.protocol === "https:";
-  const API_BASE = isHttp ? "" : "http://localhost:3000";
+  const API_BASE =
+    window.location.origin && window.location.origin.includes(":3000")
+      ? ""
+      : "http://localhost:3000";
 
   // State
   let users = [];
@@ -211,74 +211,11 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     }
 
-    // Ensure default admin accounts exist if list is empty
-    ensureDefaultAccounts();
-
     if (liveSyncIndicator) {
       liveSyncIndicator.style.display = "inline-flex";
     }
 
     renderAll();
-  }
-
-  function ensureDefaultAccounts() {
-    let updated = false;
-    // Always purge any legacy "Juan Dela Cruz" or "admin@admin.edu.ph" residuals
-    const initialLen = users.length;
-    users = users.filter((u) => u && u.email !== "admin@admin.edu.ph" && u.name !== "Juan Dela Cruz");
-    if (users.length !== initialLen) updated = true;
-
-    // Only seed initial default baseline accounts if the user list is completely empty
-    if (users.length === 0) {
-      users.push({
-        id: "usr_prov_nexo",
-        email: "admin@admin",
-        password: "admin",
-        role: "provider",
-        name: "NEXO",
-        orgName: "NEXO",
-        createdAt: "2026-11-01T08:00:00.000Z",
-        formattedDate: "Nov 1, 2026",
-        status: "active",
-        notes: "Primary Scholarship Provider Account",
-      });
-      users.push({
-        id: "usr_stud_adrian",
-        email: "adrian@batstate-u.edu.ph",
-        password: "password123",
-        role: "student",
-        name: "Adrian Del Mundo",
-        university: "Batangas State University",
-        course: "BS Information Technology",
-        yearLevel: "3rd Year",
-        createdAt: "2026-11-01T08:00:00.000Z",
-        formattedDate: "Nov 1, 2026",
-        status: "active",
-        notes: "Verified Student Account",
-      });
-      users.push({
-        id: "usr_stud_2402924",
-        email: "24-02924@g.batstate-u.edu.ph",
-        password: "password123",
-        role: "student",
-        name: "Student 24-02924",
-        university: "Batangas State University",
-        course: "BS Information Technology",
-        yearLevel: "1st Year",
-        studentId: "24-02924",
-        createdAt: "2026-11-09T08:00:00.000Z",
-        formattedDate: "Nov 9, 2026",
-        status: "active",
-        notes: "Student Account created via Admin Panel",
-      });
-      updated = true;
-    }
-
-    if (updated) {
-      try {
-        localStorage.setItem("nexo_users", JSON.stringify(users));
-      } catch (_) {}
-    }
   }
 
   // -------------------------------------------------------------
@@ -394,8 +331,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 <span>${escapeHtml(user.email)}</span>
                 <span style="font-size: 11px; background: rgba(139, 92, 246, 0.12); color: #8b5cf6; padding: 2px 7px; border-radius: 6px; font-weight: 700;">🔑 Password: ${escapeHtml(user.password || "password123")}</span>
               </p>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);">
-                ${escapeHtml(user.course || "BS Information Technology")} &bull; ${escapeHtml(user.university || "Batangas State University")}
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <span>${escapeHtml(user.course || "Course: Not Set Yet")}</span>
+                <span>&bull;</span>
+                <span>${escapeHtml(user.yearLevel || "Year: Not Set Yet")}</span>
+                <span>&bull;</span>
+                <span>${user.isProfileConfirmed ? '<strong style="color: #10b981;">✓ Profile Confirmed</strong>' : '<span style="color: #f59e0b;">⏳ Setup Pending</span>'}</span>
               </p>
             </div>
           </div>
@@ -729,19 +670,36 @@ document.addEventListener("DOMContentLoaded", () => {
       const password = inputUserPassword ? inputUserPassword.value.trim() : "";
       const status = selectUserStatus ? selectUserStatus.value : "active";
 
-      if (!email) {
-        showToast("Please enter an account email", true);
+      if (!name) {
+        showToast("Full Name or Organization Name is required.", true);
+        if (inputUserName) inputUserName.focus();
+        return;
+      }
+
+      if (!email || !email.includes("@")) {
+        showToast("A valid email address is required.", true);
+        if (inputUserEmail) inputUserEmail.focus();
         return;
       }
 
       if (!password) {
-        showToast("Please enter an account password", true);
+        showToast("Password is required for the account.", true);
+        if (inputUserPassword) inputUserPassword.focus();
+        return;
+      }
+
+      if (activeRoleSelection === "student" && !email.endsWith(".edu.ph")) {
+        showToast(
+          "Access Denied: Student accounts must use an institutional @*.edu.ph email address.",
+          true,
+        );
+        if (inputUserEmail) inputUserEmail.focus();
         return;
       }
 
       // Check duplicate
-      if (users.some((u) => u.email.toLowerCase() === email)) {
-        showToast(`An account with email "${email}" already exists`, true);
+      if (users.some((u) => (u.email || "").toLowerCase() === email)) {
+        showToast(`An account with email "${email}" already exists.`, true);
         return;
       }
 
@@ -749,15 +707,14 @@ document.addEventListener("DOMContentLoaded", () => {
         email: email,
         password: password,
         role: activeRoleSelection,
-        name:
-          name ||
-          (activeRoleSelection === "provider"
-            ? "Scholarship Provider"
-            : ""),
+        name: name,
         university: "",
         course: "",
+        yearLevel: "",
+        bio: "",
         studentId: "",
         contactNumber: "",
+        isProfileConfirmed: false,
         status: status,
         createdByAdmin: true,
       };
@@ -768,6 +725,12 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newAccountPayload),
         }).catch(() => null);
+
+        if (res && !res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || "Failed to create account on server.", true);
+          return;
+        }
 
         let createdUser = null;
         if (res && res.ok) {
@@ -921,6 +884,13 @@ document.addEventListener("DOMContentLoaded", () => {
               method: "DELETE",
             },
           ).catch(() => null);
+
+          if (res && !res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            showToast(errData.error || "Failed to delete account on server.", true);
+            closeConfirmModal();
+            return;
+          }
 
           // Local state cascade removal
           const uid = String(pendingDeleteTarget.id);

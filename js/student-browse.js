@@ -84,6 +84,19 @@ document.addEventListener("DOMContentLoaded", () => {
           studentApplications = fullData.applications;
         }
 
+        const currentStudentEmail = (
+          sessionStorage.getItem("nexo-student-email") ||
+          localStorage.getItem("nexo-student-email") ||
+          ""
+        ).toLowerCase();
+        if (currentStudentEmail && fullData.studentProfiles && fullData.studentProfiles[currentStudentEmail]) {
+          studentSettings = fullData.studentProfiles[currentStudentEmail];
+          try {
+            localStorage.setItem(`nexo_student_settings_${currentStudentEmail}`, JSON.stringify(studentSettings));
+            localStorage.setItem("nexo_student_settings", JSON.stringify(studentSettings));
+          } catch (_) {}
+        }
+
         // Keep local cache exactly in sync with server
         try {
           localStorage.setItem(
@@ -610,6 +623,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
           }
           if (!isClosed) {
+            if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+              showProfileGuardModal();
+              return;
+            }
             openDropboxModal(item);
           }
         });
@@ -957,12 +974,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnCloseDropbox = document.getElementById("close-dropbox-modal");
   const btnSubmitDropbox = document.getElementById("btn-submit-dropbox");
 
-  function openDropboxModal(schol) {
-    if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
-      showToast("Profile Incomplete: Please complete your profile details in Settings before applying for scholarships.", true);
+  // Profile Confirmation Guard Modal
+  const guardModal = document.getElementById("modal-profile-locked-guard");
+  const btnCloseGuardModal = document.getElementById("btn-close-guard-modal");
+  if (btnCloseGuardModal && guardModal) {
+    btnCloseGuardModal.addEventListener("click", () => {
+      guardModal.classList.remove("active");
+      document.body.style.overflow = "";
+    });
+  }
+
+  function showProfileGuardModal() {
+    if (guardModal) {
+      guardModal.classList.add("active");
+      document.body.style.overflow = "hidden";
+    } else {
+      showToast(
+        "Profile Confirmation Required: Please complete and confirm your Course, Year Level, and Bio in Settings before applying.",
+        true,
+      );
       setTimeout(() => {
         window.location.href = "student-settings.html";
       }, 1200);
+    }
+  }
+
+  function openDropboxModal(schol) {
+    if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+      showProfileGuardModal();
       return;
     }
 
@@ -1021,6 +1060,10 @@ document.addEventListener("DOMContentLoaded", () => {
           "You have already submitted an application for this scholarship.",
           true,
         );
+        return;
+      }
+      if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
+        showProfileGuardModal();
         return;
       }
       openDropboxModal(activeScholarship);

@@ -100,109 +100,9 @@ const DEFAULT_DATA = {
       twoFactor: false,
     },
   },
-  studentSettings: {
-    fullName: "Adrian Del Mundo",
-    email: "adrian@batstate-u.edu.ph",
-    university: "Batangas State University",
-    course: "BS Information Technology",
-    yearLevel: "3rd Year",
-    studentId: "21-04589",
-    contactNumber: "+63 912 345 6789",
-    bio: "Passionate IT student striving for academic excellence and innovation in web technologies.",
-    profilePicture: "",
-    notifications: {
-      scholarshipMatches: true,
-      applicationUpdates: true,
-      deadlineReminders: true,
-    },
-    preferences: {
-      theme: "light",
-    },
-  },
-  users: [
-    {
-      id: "usr_prov_nexo",
-      email: "admin@admin",
-      password: "admin",
-      role: "provider",
-      name: "NEXO",
-      orgName: "NEXO",
-      createdAt: "2026-11-01T08:00:00.000Z",
-      formattedDate: "Nov 1, 2026",
-      status: "active",
-      notes: "Primary Scholarship Provider Account",
-    },
-    {
-      id: "usr_stud_adrian",
-      email: "adrian@batstate-u.edu.ph",
-      password: "password123",
-      role: "student",
-      name: "Adrian Del Mundo",
-      university: "Batangas State University",
-      course: "BS Information Technology",
-      yearLevel: "3rd Year",
-      studentId: "21-04589",
-      createdAt: "2026-11-01T08:00:00.000Z",
-      formattedDate: "Nov 1, 2026",
-      status: "active",
-      notes: "Verified Student Account",
-    },
-    {
-      id: "usr_stud_2402924",
-      email: "24-02924@g.batstate-u.edu.ph",
-      password: "password123",
-      role: "student",
-      name: "",
-      university: "Batangas State University",
-      course: "",
-      yearLevel: "",
-      studentId: "24-02924",
-      createdAt: "2026-11-09T08:00:00.000Z",
-      formattedDate: "Nov 9, 2026",
-      status: "active",
-      notes: "Student Account created via Admin Panel",
-    },
-  ],
-  studentProfiles: {
-    "adrian@batstate-u.edu.ph": {
-      fullName: "Adrian Del Mundo",
-      email: "adrian@batstate-u.edu.ph",
-      university: "Batangas State University",
-      course: "BS Information Technology",
-      yearLevel: "3rd Year",
-      studentId: "21-04589",
-      contactNumber: "+63 912 345 6789",
-      bio: "Passionate IT student striving for academic excellence and innovation in web technologies.",
-      profilePicture: "",
-      notifications: {
-        scholarshipMatches: true,
-        applicationUpdates: true,
-        deadlineReminders: true,
-      },
-      preferences: {
-        theme: "light",
-      },
-    },
-    "24-02924@g.batstate-u.edu.ph": {
-      fullName: "",
-      email: "24-02924@g.batstate-u.edu.ph",
-      university: "Batangas State University",
-      course: "",
-      yearLevel: "",
-      studentId: "24-02924",
-      contactNumber: "",
-      bio: "",
-      profilePicture: "",
-      notifications: {
-        scholarshipMatches: true,
-        applicationUpdates: true,
-        deadlineReminders: true,
-      },
-      preferences: {
-        theme: "light",
-      },
-    },
-  },
+  studentSettings: {},
+  users: [],
+  studentProfiles: {},
 };
 
 function cloneDefaultData() {
@@ -1501,38 +1401,57 @@ async function handleRequest(req, res) {
           },
         };
 
+        const isCurrentlyConfirmed = Boolean(current.isProfileConfirmed);
+
+        // Name and Email are permanently locked to account credentials
+        const matchedUser = Array.isArray(data.users)
+          ? data.users.find(
+              (user) => String(user.email || "").toLowerCase() === email,
+            )
+          : null;
+        const lockedName =
+          (matchedUser && matchedUser.name) || current.fullName || "";
+
+        // If profile was already confirmed, do not allow changing course, yearLevel, or bio
+        const course = isCurrentlyConfirmed
+          ? current.course
+          : (body.course !== undefined ? String(body.course).trim() : current.course);
+        const yearLevel = isCurrentlyConfirmed
+          ? current.yearLevel
+          : (body.yearLevel !== undefined ? String(body.yearLevel).trim() : current.yearLevel);
+        const bio = isCurrentlyConfirmed
+          ? current.bio
+          : (body.bio !== undefined ? String(body.bio).trim() : current.bio);
+
+        // Profile can be confirmed if requested or previously confirmed
+        const isProfileConfirmed =
+          isCurrentlyConfirmed ||
+          Boolean(body.isProfileConfirmed && course && yearLevel && bio);
+
         const updated = {
           ...current,
-          fullName:
-            body.fullName !== undefined
-              ? String(body.fullName).trim()
-              : current.fullName,
+          fullName: lockedName,
           email: email || current.email,
           university:
-            body.university !== undefined
-              ? String(body.university).trim()
-              : current.university,
-          course:
-            body.course !== undefined
-              ? String(body.course).trim()
-              : current.course,
-          yearLevel:
-            body.yearLevel !== undefined
-              ? String(body.yearLevel).trim()
-              : current.yearLevel,
+            current.university ||
+            (matchedUser && matchedUser.university) ||
+            (email.includes("batstate-u") ? "Batangas State University" : ""),
+          course: course || "",
+          yearLevel: yearLevel || "",
           studentId:
-            body.studentId !== undefined
-              ? String(body.studentId).trim()
-              : current.studentId,
+            current.studentId ||
+            (matchedUser && matchedUser.studentId) ||
+            (/^\d{2}-\d{4,6}$/.test(localPrefix) ? localPrefix : ""),
           contactNumber:
             body.contactNumber !== undefined
               ? String(body.contactNumber).trim()
               : current.contactNumber,
-          bio: body.bio !== undefined ? String(body.bio).trim() : current.bio,
+          bio: bio || "",
           profilePicture:
             body.profilePicture !== undefined
               ? body.profilePicture
               : current.profilePicture,
+          isProfileConfirmed: isProfileConfirmed,
           notifications: {
             ...current.notifications,
             ...(body.notifications || {}),
@@ -1553,16 +1472,13 @@ async function handleRequest(req, res) {
           data.studentSettings = updated;
         }
 
-        if (Array.isArray(data.users)) {
-          const u = data.users.find(
-            (user) => String(user.email || "").toLowerCase() === email,
-          );
-          if (u) {
-            if (body.fullName !== undefined) u.name = String(body.fullName).trim();
-            if (body.university !== undefined) u.university = String(body.university).trim();
-            if (body.course !== undefined) u.course = String(body.course).trim();
-            if (body.yearLevel !== undefined) u.yearLevel = String(body.yearLevel).trim();
-            if (body.studentId !== undefined) u.studentId = String(body.studentId).trim();
+        if (matchedUser) {
+          matchedUser.course = updated.course;
+          matchedUser.yearLevel = updated.yearLevel;
+          matchedUser.bio = updated.bio;
+          matchedUser.isProfileConfirmed = updated.isProfileConfirmed;
+          if (updated.profilePicture) {
+            matchedUser.profilePicture = updated.profilePicture;
           }
         }
 
@@ -1725,17 +1641,37 @@ async function handleRequest(req, res) {
           String(body.role || "student").trim().toLowerCase() === "provider"
             ? "provider"
             : "student";
-        const name =
-          String(body.name || "").trim() ||
-          (role === "provider" ? "Scholarship Provider" : "");
+        const name = String(body.name || "").trim();
+        const password = String(body.password || "").trim();
         const university = String(body.university || "").trim();
         const course = String(body.course || "").trim();
         const status = body.status === "banned" ? "banned" : "active";
+
+        if (!name) {
+          return sendJson(res, 400, {
+            success: false,
+            error: "Full name or organization name is required.",
+          });
+        }
 
         if (!email || !email.includes("@")) {
           return sendJson(res, 400, {
             success: false,
             error: "A valid email address is required.",
+          });
+        }
+
+        if (!password) {
+          return sendJson(res, 400, {
+            success: false,
+            error: "Password is required for the account.",
+          });
+        }
+
+        if (role === "student" && !email.endsWith(".edu.ph")) {
+          return sendJson(res, 400, {
+            success: false,
+            error: "Access Denied: Student accounts must use an institutional @*.edu.ph email address.",
           });
         }
 
@@ -1749,7 +1685,6 @@ async function handleRequest(req, res) {
           });
         }
 
-        const password = String(body.password || "").trim() || "password123";
         const localPrefix = email.split("@")[0] || "";
         const inferredStudentId =
           role === "student" && /^\d{2}-\d{4,6}$/.test(localPrefix)
@@ -1769,10 +1704,13 @@ async function handleRequest(req, res) {
                 (email.includes("batstate-u") ? "Batangas State University" : "")
               : undefined,
           course: role === "student" ? course : undefined,
+          yearLevel: "",
+          bio: "",
           studentId:
             role === "student"
               ? String(body.studentId || inferredStudentId).trim()
               : undefined,
+          isProfileConfirmed: false,
           status,
           createdAt: new Date().toISOString(),
           formattedDate: new Date().toLocaleDateString("en-US", {
@@ -1791,25 +1729,24 @@ async function handleRequest(req, res) {
 
         if (role === "student") {
           data.studentProfiles = data.studentProfiles || {};
-          if (!data.studentProfiles[email]) {
-            data.studentProfiles[email] = {
-              fullName: name,
-              email,
-              university: newUser.university || "",
-              course: course || "",
-              yearLevel: "",
-              studentId: newUser.studentId || "",
-              contactNumber: "",
-              bio: "",
-              profilePicture: "",
-              notifications: {
-                scholarshipMatches: true,
-                applicationUpdates: true,
-                deadlineReminders: true,
-              },
-              preferences: { theme: "light" },
-            };
-          }
+          data.studentProfiles[email] = {
+            fullName: name,
+            email,
+            university: newUser.university || "",
+            course: "",
+            yearLevel: "",
+            studentId: newUser.studentId || "",
+            contactNumber: "",
+            bio: "",
+            profilePicture: "",
+            isProfileConfirmed: false,
+            notifications: {
+              scholarshipMatches: true,
+              applicationUpdates: true,
+              deadlineReminders: true,
+            },
+            preferences: { theme: "light" },
+          };
         }
 
         if (!writeData(data)) {

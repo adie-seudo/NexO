@@ -2,18 +2,7 @@
   "scholarships": [],
   "drafts": [],
   "applications": [],
-  "notifications": [
-    {
-      "id": "notif_1004",
-      "recipient": "student",
-      "title": "Document Verification",
-      "message": "Your .edu.ph student identity is verified for Academic Year 2026-2027.",
-      "timestamp": "2026-11-08T12:00:00.000Z",
-      "formattedTime": "2 hours ago",
-      "read": false,
-      "link": "student-dashboard.html"
-    }
-  ],
+  "notifications": [],
   "settings": {
     "orgName": "NEXO",
     "location": "Batangas City, Philippines",
@@ -32,110 +21,9 @@
     "preferences": {
       "theme": "light",
       "twoFactor": false
-    },
-    "updatedAt": "2026-11-08T10:00:44.277Z"
-  },
-  "studentSettings": {
-    "fullName": "Adrian Del Mundo",
-    "email": "adrian@batstate-u.edu.ph",
-    "university": "Batangas State University",
-    "course": "BS Information Technology",
-    "yearLevel": "3rd Year",
-    "studentId": "21-04589",
-    "contactNumber": "+63 912 345 6789",
-    "bio": "Passionate IT student striving for academic excellence and innovation in web technologies.",
-    "profilePicture": "",
-    "notifications": {
-      "scholarshipMatches": true,
-      "applicationUpdates": true,
-      "deadlineReminders": true
-    },
-    "preferences": {
-      "theme": "dark"
-    },
-    "updatedAt": "2026-11-08T11:25:34.993Z"
-  },
-  "users": [
-    {
-      "id": "usr_prov_nexo",
-      "email": "admin@admin",
-      "password": "admin",
-      "role": "provider",
-      "name": "NEXO",
-      "orgName": "NEXO",
-      "createdAt": "2026-11-01T08:00:00.000Z",
-      "formattedDate": "Nov 1, 2026",
-      "status": "active",
-      "notes": "Primary Scholarship Provider Account"
-    },
-    {
-      "id": "usr_stud_adrian",
-      "email": "adrian@batstate-u.edu.ph",
-      "password": "password123",
-      "role": "student",
-      "name": "Adrian Del Mundo",
-      "university": "Batangas State University",
-      "course": "BS Information Technology",
-      "yearLevel": "3rd Year",
-      "createdAt": "2026-11-01T08:00:00.000Z",
-      "formattedDate": "Nov 1, 2026",
-      "status": "active",
-      "notes": "Verified Student Account"
-    },
-    {
-      "id": "usr_stud_2402924",
-      "email": "24-02924@g.batstate-u.edu.ph",
-      "password": "password123",
-      "role": "student",
-      "name": "",
-      "university": "Batangas State University",
-      "course": "",
-      "yearLevel": "",
-      "studentId": "24-02924",
-      "createdAt": "2026-11-09T08:00:00.000Z",
-      "formattedDate": "Nov 9, 2026",
-      "status": "active",
-      "notes": "Student Account created via Admin Panel"
     }
-  ],
-  "studentProfiles": {
-    "adrian@batstate-u.edu.ph": {
-      "fullName": "Adrian Del Mundo",
-      "email": "adrian@batstate-u.edu.ph",
-      "university": "Batangas State University",
-      "course": "BS Information Technology",
-      "yearLevel": "3rd Year",
-      "studentId": "21-04589",
-      "contactNumber": "+63 912 345 6789",
-      "bio": "Passionate IT student striving for academic excellence and innovation in web technologies.",
-      "profilePicture": "",
-      "notifications": {
-        "scholarshipMatches": true,
-        "applicationUpdates": true,
-        "deadlineReminders": true
-      },
-      "preferences": {
-        "theme": "light"
-      }
-    },
-    "24-02924@g.batstate-u.edu.ph": {
-      "fullName": "",
-      "email": "24-02924@g.batstate-u.edu.ph",
-      "university": "Batangas State University",
-      "course": "",
-      "yearLevel": "",
-      "studentId": "24-02924",
-      "contactNumber": "",
-      "bio": "",
-      "profilePicture": "",
-      "notifications": {
-        "scholarshipMatches": true,
-        "applicationUpdates": true,
-        "deadlineReminders": true
-      },
-      "preferences": {
-        "theme": "light"
-      }
-    }
-  }
+  },
+  "studentSettings": {},
+  "users": [],
+  "studentProfiles": {}
 }
