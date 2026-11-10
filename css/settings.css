@@ -528,8 +528,16 @@ textarea.settings-input {
 }
 
 /* ==========================================
-   BOTTOM STICKY ACTION BAR
+   BOTTOM STICKY ACTION BAR & FOOTER CLEARANCE
    ========================================== */
+.global-footer {
+  padding-bottom: 110px !important;
+}
+
+.settings-panel {
+  padding-bottom: 30px;
+}
+
 .settings-action-bar {
   position: fixed;
   bottom: 0;

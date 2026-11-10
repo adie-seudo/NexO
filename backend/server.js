@@ -1385,12 +1385,10 @@ async function handleRequest(req, res) {
         const current = data.studentProfiles[email] || {
           fullName: "",
           email,
-          university: email.includes("batstate-u")
-            ? "Batangas State University"
-            : "",
+          university: "",
           course: "",
           yearLevel: "",
-          studentId: /^\d{2}-\d{4,6}$/.test(localPrefix) ? localPrefix : "",
+          studentId: "",
           contactNumber: "",
           bio: "",
           profilePicture: "",
@@ -1737,15 +1735,14 @@ async function handleRequest(req, res) {
           orgName: role === "provider" ? name : undefined,
           university:
             role === "student"
-              ? university ||
-                (email.includes("batstate-u") ? "Batangas State University" : "")
+              ? String(university || "").trim()
               : undefined,
-          course: role === "student" ? course : undefined,
+          course: role === "student" ? String(course || "").trim() : undefined,
           yearLevel: "",
           bio: "",
           studentId:
             role === "student"
-              ? String(body.studentId || inferredStudentId).trim()
+              ? String(body.studentId || "").trim()
               : undefined,
           isProfileConfirmed: false,
           status,
