@@ -328,30 +328,31 @@
             </div>
           </div>
 
-          <!-- Provider Name & Scholarship Type Row -->
-          <div style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-            <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 6px;">
-              <span id="modal-schol-provider">NEXO</span>
-            </h4>
-            <span class="modal-type-badge" id="modal-schol-type">Merit-Based</span>
-          </div>
-
-          <!-- Scholarship Title -->
-          <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 8px 0; line-height: 1.3;" id="modal-schol-title">
+          <!-- 1. Scholarship Title -->
+          <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;" id="modal-schol-title">
             Scholarship Program
           </h2>
 
+          <!-- 2. Scholarship Provider Name under the Scholarship Title -->
+          <p style="font-size: 14.5px; font-weight: 600; color: var(--text-secondary); margin: 0 0 10px 0;" id="modal-schol-provider">
+            NEXO
+          </p>
+
+          <!-- 3. Followed by Scholarship Type and Status -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+            <span class="modal-type-badge" id="modal-schol-type">Merit-Based</span>
+            <span id="modal-schol-days-left" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+              Active
+            </span>
+          </div>
+
           <!-- Scholarship Key Metadata (Applicants, Posted Date, Deadline / Expiration) -->
           <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
-            <!-- Row 1: Applicants & Status Badge -->
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <!-- Row 1: Applicants -->
+            <div>
               <span id="modal-schol-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 <span id="modal-schol-applicants">0 / 200 Applicants</span>
-              </span>
-
-              <span id="modal-schol-days-left" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
-                Active
               </span>
             </div>
 

@@ -674,17 +674,15 @@ document.addEventListener("DOMContentLoaded", () => {
               ${logoHtml}
             </div>
             <div class="directory-card-titles">
-              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <h3 class="directory-card-title">${escapeHtml(item.title || "Scholarship Program")}</h3>
+              <h3 class="directory-card-title">${escapeHtml(item.title || "Scholarship Program")}</h3>
+              <p class="directory-card-provider">${escapeHtml(item.providerName || "NEXO")}</p>
+              <div class="directory-card-badges-row">
                 <span class="directory-type-badge">${escapeHtml(displayType)}</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap;">
-                <p class="directory-card-provider">${escapeHtml(item.providerName || "NEXO")}</p>
+                <span class="directory-status-pill ${statusClass}">${statusText}</span>
                 ${appStatusBadgeHtml}
               </div>
             </div>
           </div>
-          <span class="directory-status-pill ${statusClass}">${statusText}</span>
         </div>
 
         <div class="directory-card-meta-wrap">
@@ -880,13 +878,8 @@ document.addEventListener("DOMContentLoaded", () => {
           const item = document.createElement("div");
           item.className = "details-checklist-item";
           item.innerHTML = `
-            <div class="details-check-icon">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
             <div style="display: flex; flex-direction: column;">
-              <span style="font-weight: 600; color: var(--text-primary); font-size: 13.5px;">${escapeHtml(reqTitle)}</span>
+              <span style="font-weight: 650; color: var(--text-primary); font-size: 13.5px;">${escapeHtml(reqTitle)}</span>
               ${reqDesc}
             </div>
           `;
