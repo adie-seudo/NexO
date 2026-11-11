@@ -20,9 +20,82 @@ document.addEventListener("DOMContentLoaded", () => {
   let filterType = "all";
   let filterProvider = "all";
   let filterStatus = "all";
+  let isBrowseExpanded = false;
 
   // Document Uploads State for Digital Drop-Box
   let uploadedFiles = {};
+
+  // -------------------------------------------------------------
+  // HELPER: Scholarship Type Formatting
+  // -------------------------------------------------------------
+  function formatScholarshipType(type, typeText) {
+    const raw = (typeText || type || "").trim();
+    if (!raw) return "Merit-Based";
+    const l = raw.toLowerCase();
+    if (l === "merit" || l.includes("merit")) return "Merit-Based";
+    if (l === "need" || l.includes("need")) return "Need-Based";
+    if (l === "athletic" || l.includes("athletic")) return "Athletic";
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+
+  // -------------------------------------------------------------
+  // HELPER: Application Status Styling & Distinction
+  // -------------------------------------------------------------
+  function getApplicationStatusInfo(statusRaw) {
+    const s = (statusRaw || "Submitted").trim();
+    const lower = s.toLowerCase();
+    if (lower.includes("approved")) {
+      return {
+        label: "Approved",
+        badgeClass: "status-approved",
+        bannerBg: "rgba(16, 185, 129, 0.08)",
+        bannerBorder: "rgba(16, 185, 129, 0.35)",
+        iconBg: "#059669",
+        textColor: "#059669",
+        title: "Application Approved",
+        message: "Congratulations! Your scholarship application has been approved by the provider.",
+        iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+      };
+    }
+    if (lower.includes("rejected")) {
+      return {
+        label: "Rejected",
+        badgeClass: "status-rejected",
+        bannerBg: "rgba(239, 68, 68, 0.08)",
+        bannerBorder: "rgba(239, 68, 68, 0.35)",
+        iconBg: "#dc2626",
+        textColor: "#dc2626",
+        title: "Application Not Selected",
+        message: "Your application was reviewed and not selected for this cycle.",
+        iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`
+      };
+    }
+    if (lower.includes("review")) {
+      return {
+        label: "Under Review",
+        badgeClass: "status-review",
+        bannerBg: "rgba(245, 158, 11, 0.08)",
+        bannerBorder: "rgba(245, 158, 11, 0.35)",
+        iconBg: "#d97706",
+        textColor: "#d97706",
+        title: "Application Under Review",
+        message: "The provider is actively evaluating your documents and application.",
+        iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
+      };
+    }
+    // Default: Submitted
+    return {
+      label: "Submitted",
+      badgeClass: "status-submitted",
+      bannerBg: "rgba(37, 99, 235, 0.08)",
+      bannerBorder: "rgba(37, 99, 235, 0.30)",
+      iconBg: "#2563eb",
+      textColor: "#2563eb",
+      title: "Application Submitted",
+      message: "Your application and uploaded documents have been received successfully.",
+      iconSvg: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+    };
+  }
 
   // -------------------------------------------------------------
   // 1. TOAST NOTIFIER HELPER
@@ -341,6 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
           btnType.classList.toggle("is-filtered", filterType !== "all");
         }
         closeAllDropdowns();
+        isBrowseExpanded = false;
         renderFeed();
       };
       item.onclick = handleSelect;
@@ -364,6 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
           btnProvider.classList.toggle("is-filtered", filterProvider !== "all");
         }
         closeAllDropdowns();
+        isBrowseExpanded = false;
         renderFeed();
       };
       item.onclick = handleSelect;
@@ -387,6 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
           btnStatus.classList.toggle("is-filtered", filterStatus !== "all");
         }
         closeAllDropdowns();
+        isBrowseExpanded = false;
         renderFeed();
       };
       item.onclick = handleSelect;
@@ -399,6 +475,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       searchQuery = e.target.value.trim().toLowerCase();
+      isBrowseExpanded = false;
       renderFeed();
     });
   }
@@ -411,6 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
       filterProvider = "all";
       filterStatus = "all";
       searchQuery = "";
+      isBrowseExpanded = false;
       if (searchInput) searchInput.value = "";
       if (labelType) labelType.textContent = "Type";
       if (labelProvider) labelProvider.textContent = "Provider";
@@ -515,7 +593,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (emptyState) emptyState.style.display = "none";
     feedContainer.innerHTML = "";
 
-    filtered.forEach((item) => {
+    const totalMatching = filtered.length;
+    const displayedItems =
+      totalMatching > 3 && !isBrowseExpanded ? filtered.slice(0, 3) : filtered;
+
+    displayedItems.forEach((item) => {
       const card = document.createElement("div");
       card.className = "directory-card";
 
@@ -548,6 +630,13 @@ document.addEventListener("DOMContentLoaded", () => {
           String(a.scholarshipId) === String(item.id),
       );
       const isAlreadyApplied = !!existingApp;
+
+      const displayType = formatScholarshipType(item.type, item.typeText);
+      let appStatusBadgeHtml = "";
+      if (isAlreadyApplied) {
+        const statusInfo = getApplicationStatusInfo(existingApp.status);
+        appStatusBadgeHtml = `<span class="directory-app-status-badge ${statusInfo.badgeClass}">${statusInfo.label}</span>`;
+      }
 
       let applyBtnHtml = "";
       if (isAlreadyApplied) {
@@ -585,8 +674,14 @@ document.addEventListener("DOMContentLoaded", () => {
               ${logoHtml}
             </div>
             <div class="directory-card-titles">
-              <h3 class="directory-card-title">${escapeHtml(item.title || "Scholarship Program")}</h3>
-              <p class="directory-card-provider">${escapeHtml(item.providerName || "NEXO")}</p>
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <h3 class="directory-card-title">${escapeHtml(item.title || "Scholarship Program")}</h3>
+                <span class="directory-type-badge">${escapeHtml(displayType)}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap;">
+                <p class="directory-card-provider">${escapeHtml(item.providerName || "NEXO")}</p>
+                ${appStatusBadgeHtml}
+              </div>
             </div>
           </div>
           <span class="directory-status-pill ${statusClass}">${statusText}</span>
@@ -669,6 +764,35 @@ document.addEventListener("DOMContentLoaded", () => {
 
       feedContainer.appendChild(card);
     });
+
+    if (totalMatching > 3) {
+      const toggleContainer = document.createElement("div");
+      toggleContainer.style.cssText =
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%;";
+      toggleContainer.innerHTML = `
+        <button type="button" id="btn-toggle-browse-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+          ${
+            isBrowseExpanded
+              ? `<span>Show Less</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+              : `<span>View All Scholarships (${totalMatching})</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+          }
+        </button>
+      `;
+      feedContainer.appendChild(toggleContainer);
+
+      const toggleBtn = toggleContainer.querySelector("#btn-toggle-browse-all");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          isBrowseExpanded = !isBrowseExpanded;
+          renderFeed();
+          if (!isBrowseExpanded) {
+            feedContainer.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+    }
   }
 
   // -------------------------------------------------------------
@@ -729,6 +853,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (providerEl) providerEl.textContent = schol.providerName || "NEXO";
+    const modalTypeEl = document.getElementById("modal-schol-type");
+    if (modalTypeEl) {
+      modalTypeEl.textContent = formatScholarshipType(schol.type, schol.typeText);
+    }
     if (titleEl) titleEl.textContent = schol.title;
     if (deadlineEl) deadlineEl.textContent = schol.formattedDate;
     if (descEl) descEl.textContent = schol.desc;
@@ -861,30 +989,23 @@ document.addEventListener("DOMContentLoaded", () => {
               })
             : "Recently");
 
-        let statusColor = "#10b981";
-        if (appStatus.toLowerCase().includes("review")) statusColor = "#8b5cf6";
-        if (appStatus.toLowerCase().includes("rejected"))
-          statusColor = "#ef4444";
+        const statusInfo = getApplicationStatusInfo(appStatus);
 
         bannerEl.style.display = "block";
         bannerEl.innerHTML = `
-          <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-            <div style="display: flex; align-items: flex-start; gap: 12px; min-width: 0; flex: 1;">
-              <div style="width: 24px; height: 24px; border-radius: 50%; background: #8b5cf6; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
+          <div style="background: ${statusInfo.bannerBg}; border: 1.5px solid ${statusInfo.bannerBorder}; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; align-items: flex-start; gap: 12px;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: ${statusInfo.iconBg}; color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;">
+              ${statusInfo.iconSvg}
+            </div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 3px;">
+                <span style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${statusInfo.title}</span>
+                <span class="directory-app-status-badge ${statusInfo.badgeClass}">${statusInfo.label}</span>
               </div>
-              <div style="flex: 1;">
-                <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">Application Submitted</div>
-                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45;">
-                  Applied on <strong>${escapeHtml(dateFormatted)}</strong> &bull; Status: <span style="font-weight: 700; color: ${statusColor};">${escapeHtml(appStatus)}</span>
-                </div>
+              <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.45;">
+                Applied on <strong>${escapeHtml(dateFormatted)}</strong> &bull; ${statusInfo.message}
               </div>
             </div>
-            <a href="student-submissions.html?id=${encodeURIComponent(existingApp.id)}" class="btn btn-primary" style="padding: 8px 16px; font-size: 13px; font-weight: 700; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-              View My Submission &rarr;
-            </a>
           </div>
         `;
       } else {
@@ -896,11 +1017,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Configure CTA button
     if (btnOpenDropbox) {
       if (isAlreadyApplied) {
-        const appStatus = existingApp.status || "Submitted";
         btnOpenDropbox.disabled = false;
         btnOpenDropbox.classList.remove("disabled");
-        btnOpenDropbox.style.background = "#8b5cf6";
-        btnOpenDropbox.style.borderColor = "#8b5cf6";
+        btnOpenDropbox.style.background = "#6941C6";
+        btnOpenDropbox.style.borderColor = "#6941C6";
         btnOpenDropbox.style.color = "#ffffff";
         btnOpenDropbox.style.cursor = "pointer";
         btnOpenDropbox.style.opacity = "1";
