@@ -3843,6 +3843,10 @@ body.dark-theme .student-empty-icon {
 .student-app-logo {
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 44px;
+  max-height: 44px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--border-color);
@@ -3854,6 +3858,18 @@ body.dark-theme .student-empty-icon {
   font-weight: 700;
   font-size: 14px;
   color: #6b7280;
+  overflow: hidden;
+}
+.student-app-logo img,
+img.student-app-logo {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 44px !important;
+  max-height: 44px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: block !important;
+  flex-shrink: 0 !important;
 }
 body.dark-theme .student-app-logo {
   background: #1f2937;
@@ -4733,6 +4749,84 @@ body.dark-theme .modal-close-icon-btn:hover {
   color: #FFFFFF;
 }
 
+/* Submission Modal Bottom Actions (Two-Button Layout: View Post Details & Close Details) */
+.sub-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  width: 100%;
+}
+@media (max-width: 520px) {
+  .sub-modal-actions {
+    flex-direction: column;
+  }
+}
+.btn-sub-modal-view-post {
+  flex: 1;
+  background-color: #6941C6;
+  color: #ffffff !important;
+  border: none;
+  border-radius: 100px;
+  padding: 12px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(105, 65, 198, 0.35);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+.btn-sub-modal-view-post:hover {
+  background-color: #53389E;
+  box-shadow: 0 4px 12px rgba(105, 65, 198, 0.45);
+  transform: translateY(-1px);
+}
+body.dark-theme .btn-sub-modal-view-post {
+  background-color: #7F56D9;
+}
+body.dark-theme .btn-sub-modal-view-post:hover {
+  background-color: #6941C6;
+}
+
+.btn-sub-modal-close-secondary {
+  flex: 1;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 100px;
+  padding: 12px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  width: 100%;
+}
+.btn-sub-modal-close-secondary:hover {
+  background-color: rgba(139, 92, 246, 0.08);
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+body.dark-theme .btn-sub-modal-close-secondary {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+body.dark-theme .btn-sub-modal-close-secondary:hover {
+  background-color: rgba(139, 92, 246, 0.15);
+  border-color: #a78bfa;
+  color: #ffffff;
+}
+
 /* Submission Modal Primary Close Button (Consistent with View My Submission pill design) */
 .btn-sub-modal-close {
   background-color: #6941C6;
@@ -4762,6 +4856,90 @@ body.dark-theme .btn-sub-modal-close {
 }
 body.dark-theme .btn-sub-modal-close:hover {
   background-color: #6941C6;
+}
+
+/* Follow-Up Document Inline Upload Pill Button */
+.btn-fu-upload {
+  background-color: #D97706;
+  color: #ffffff;
+  border: none;
+  border-radius: 100px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-fu-upload:hover {
+  background-color: #B45309;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
+  transform: translateY(-1px);
+}
+.btn-fu-upload:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Redesigned Verified Applicant Identity Layout */
+.sub-identity-card {
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-color);
+  margin-bottom: 22px;
+}
+.sub-identity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+}
+@media (max-width: 440px) {
+  .sub-identity-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+/* Follow-Up Document Review & Success Modals */
+.fu-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+  padding: 16px;
+}
+.fu-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.fu-modal-sheet {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  max-width: 480px;
+  width: 100%;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: scale(0.96);
+  transition: transform 0.25s ease;
+  box-sizing: border-box;
+}
+.fu-modal-overlay.active .fu-modal-sheet {
+  transform: scale(1);
 }
 .directory-apply-btn {
   background-color: #6941C6;

@@ -900,13 +900,17 @@ async function loadStudentData() {
   renderFilteredSubmissions();
 
   // Handle direct one-tap navigation to submission from Scholarship Directory or Notification
-  if (!window._hasHandledSubDetailDeepLink) {
+  // (ONLY execute on student-submissions.html so it NEVER hijacks student-browse.html or other pages)
+  if (
+    !window._hasHandledSubDetailDeepLink &&
+    window.location.pathname.includes("student-submissions.html")
+  ) {
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const targetId =
-        urlParams.get("id") ||
+        urlParams.get("appId") ||
         urlParams.get("applicationId") ||
-        urlParams.get("appId");
+        urlParams.get("id");
       if (targetId) {
         window._hasHandledSubDetailDeepLink = true;
         const match = applications.find(
@@ -1100,7 +1104,7 @@ function renderApplicationCards(applications, container) {
     const resolvedLogo = resolveAppProviderLogo(app);
     const logoHtml =
       resolvedLogo
-        ? `<img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" class="student-app-logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
+        ? `<div class="student-app-logo" style="padding: 0; overflow: hidden; width: 44px; height: 44px; min-width: 44px; min-height: 44px; max-width: 44px; max-height: 44px; flex-shrink: 0;"><img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;" /></div>`
         : `<div class="student-app-logo">${initials || "NX"}</div>`;
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
@@ -1200,6 +1204,163 @@ function renderApplicationCards(applications, container) {
   });
 }
 
+// =========================================
+// DOCUMENT UPLOAD REVIEW & SUCCESS MODALS
+// =========================================
+function showFileUploadReviewModal(file, reqTitle, onConfirm) {
+  let overlay = document.getElementById("fu-review-modal-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "fu-review-modal-overlay";
+    overlay.className = "fu-modal-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.innerHTML = `
+      <div class="fu-modal-sheet">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3 style="margin: 0; font-size: 16.5px; font-weight: 700; color: var(--text-primary);">Review Document Submission</h3>
+          </div>
+          <button type="button" id="btn-close-fu-review" class="modal-close-icon-btn" aria-label="Cancel upload">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div style="margin-bottom: 14px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Requirement</span>
+          <p id="fu-review-req-title" style="margin: 0; font-size: 14px; font-weight: 700; color: #6941C6;"></p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 16px;">
+          <div id="fu-review-file-icon" style="width: 38px; height: 38px; border-radius: 8px; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">
+            FILE
+          </div>
+          <div style="min-width: 0; flex: 1;">
+            <p id="fu-review-file-name" style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">filename.pdf</p>
+            <span id="fu-review-file-size" style="font-size: 11.5px; color: var(--text-secondary);">1.2 MB</span>
+          </div>
+        </div>
+        <div style="padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, 0.08); border-left: 4px solid #D97706; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <strong style="font-size: 12.5px; color: #D97706;">Permanent Submission Notice</strong>
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--text-primary); line-height: 1.5;">
+            Once confirmed and uploaded, this document is locked on your scholarship application record and will be immediately submitted to the scholarship committee. It cannot be deleted or replaced. Please confirm you have selected the correct, legible document.
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" id="btn-cancel-fu-review" class="btn-sub-modal-close-secondary" style="flex: 1;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Cancel</span>
+          </button>
+          <button type="button" id="btn-confirm-fu-upload" class="btn-sub-modal-view-post" style="flex: 1.3;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Confirm &amp; Upload</span>
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  const reqEl = overlay.querySelector("#fu-review-req-title");
+  const nameEl = overlay.querySelector("#fu-review-file-name");
+  const sizeEl = overlay.querySelector("#fu-review-file-size");
+  const iconEl = overlay.querySelector("#fu-review-file-icon");
+  const btnClose = overlay.querySelector("#btn-close-fu-review");
+  const btnCancel = overlay.querySelector("#btn-cancel-fu-review");
+  const btnConfirm = overlay.querySelector("#btn-confirm-fu-upload");
+
+  if (reqEl) reqEl.textContent = reqTitle;
+  if (nameEl) nameEl.textContent = file.name;
+  const isPdf = file.name.toLowerCase().endsWith(".pdf");
+  if (iconEl) {
+    iconEl.textContent = isPdf ? "PDF" : "IMG";
+    iconEl.style.background = isPdf ? "rgba(239, 68, 68, 0.12)" : "rgba(105, 65, 198, 0.12)";
+    iconEl.style.color = isPdf ? "#ef4444" : "#6941C6";
+  }
+  const formattedSize =
+    file.size >= 1024 * 1024
+      ? (file.size / (1024 * 1024)).toFixed(1) + " MB"
+      : (file.size / 1024).toFixed(0) + " KB";
+  if (sizeEl) sizeEl.textContent = formattedSize;
+
+  function closeReview() {
+    overlay.classList.remove("active");
+  }
+
+  if (btnClose) btnClose.onclick = closeReview;
+  if (btnCancel) btnCancel.onclick = closeReview;
+
+  if (btnConfirm) {
+    btnConfirm.disabled = false;
+    btnConfirm.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+      <span>Confirm &amp; Upload</span>
+    `;
+    btnConfirm.onclick = async () => {
+      btnConfirm.disabled = true;
+      btnConfirm.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10"></path>
+        </svg>
+        <span>Uploading...</span>
+      `;
+      closeReview();
+      if (typeof onConfirm === "function") {
+        await onConfirm();
+      }
+    };
+  }
+
+  overlay.classList.add("active");
+}
+
+function showFileUploadSuccessModal(fileName, providerName, onDone) {
+  let overlay = document.getElementById("fu-success-modal-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "fu-success-modal-overlay";
+    overlay.className = "fu-modal-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.innerHTML = `
+      <div class="fu-modal-sheet" style="text-align: center; max-width: 440px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">Document Submitted Successfully!</h3>
+        <p id="fu-success-message" style="margin: 0 0 22px 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;"></p>
+        <button type="button" id="btn-done-fu-success" class="btn-sub-modal-view-post" style="width: 100%;">
+          <span>Done</span>
+        </button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  const msgEl = overlay.querySelector("#fu-success-message");
+  if (msgEl) {
+    msgEl.innerHTML = `<strong>&ldquo;${escapeHtml(fileName)}&rdquo;</strong> has been uploaded and officially attached to your scholarship application for evaluation by <strong>${escapeHtml(providerName || "the provider")}</strong>.`;
+  }
+
+  const btnDone = overlay.querySelector("#btn-done-fu-success");
+  if (btnDone) {
+    btnDone.onclick = () => {
+      overlay.classList.remove("active");
+      if (typeof onDone === "function") onDone();
+    };
+  }
+
+  overlay.classList.add("active");
+}
+
 // Open the Full Submission Details Modal
 function openSubmissionDetailsModal(app) {
   window._subModalUserDismissed = false;
@@ -1235,7 +1396,7 @@ function openSubmissionDetailsModal(app) {
           </button>
         </div>
         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
-          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">NX</div>
+          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; min-width: 52px; min-height: 52px; max-width: 52px; max-height: 52px; font-size: 16px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">NX</div>
           <div style="flex: 1; min-width: 0;">
             <h4 id="modal-sub-title" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;">Scholarship Program</h4>
             <p id="modal-sub-provider" style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provider Organization</p>
@@ -1243,7 +1404,7 @@ function openSubmissionDetailsModal(app) {
         </div>
         <div id="modal-sub-status-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2);">
           <div>
-            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 2px;">Decision Status</span>
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 2px;">Status</span>
             <span id="modal-sub-status-text" style="font-size: 15px; font-weight: 800; color: #8b5cf6;">Under Review</span>
           </div>
           <div id="modal-sub-badge-wrap">
@@ -1275,14 +1436,74 @@ function openSubmissionDetailsModal(app) {
           </h5>
           <div id="modal-sub-doc-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
-        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 24px;">
-          <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
-          <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Student Scholar</p>
-          <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">Verified Student Account</p>
+        <!-- VERIFIED APPLICANT IDENTITY (Redesigned Modern Structured Layout) -->
+        <div class="sub-identity-card">
+          <!-- Identity Header: Avatar + Student Name + Verified Pill -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+              <div id="modal-sub-student-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; border: 1.5px solid rgba(105, 65, 198, 0.25);">
+                ST
+              </div>
+              <div style="min-width: 0;">
+                <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); display: block;">Verified Applicant Identity</span>
+                <h4 id="modal-sub-student-name" style="margin: 2px 0 0 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student Scholar</h4>
+              </div>
+            </div>
+            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; background: rgba(16, 185, 129, 0.12); color: #10B981; font-size: 11.5px; font-weight: 700; flex-shrink: 0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Verified
+            </span>
+          </div>
+
+          <!-- Information Grid: 2 columns, aligned, no dots -->
+          <div class="sub-identity-grid">
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Degree &amp; Year</span>
+              <strong id="modal-sub-student-course" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">BSIT - Service Management</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Institution</span>
+              <strong id="modal-sub-student-uni" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">Batangas State University</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Student ID / SR-Code</span>
+              <strong id="modal-sub-student-id" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35;">24-02924</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Institutional Email</span>
+              <strong id="modal-sub-student-email" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">student@batstate-u.edu.ph</strong>
+            </div>
+          </div>
         </div>
-        <button type="button" id="btn-close-sub-modal" class="btn-sub-modal-close" style="width: 100%; padding: 12px 24px; font-size: 14px; font-weight: 700; border-radius: 100px; background: #6941C6; color: #ffffff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(105, 65, 198, 0.35); transition: all 0.2s ease;">
-          Close Details
-        </button>
+        <!-- MODAL BOTTOM ACTIONS: 1) View Scholarship Post Details, 2) Close Application Details -->
+        <div class="sub-modal-actions">
+          <button
+            type="button"
+            id="btn-sub-view-post"
+            class="btn-sub-modal-view-post"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>View Scholarship Post</span>
+          </button>
+          <button
+            type="button"
+            id="btn-close-sub-modal"
+            class="btn-sub-modal-close-secondary"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Close Application Details</span>
+          </button>
+        </div>
       </div>
     `;
     document.body.appendChild(modalOverlay);
@@ -1300,7 +1521,7 @@ function openSubmissionDetailsModal(app) {
   if (logoEl) {
     const resolvedLogo = resolveAppProviderLogo(app);
     if (resolvedLogo) {
-      logoEl.innerHTML = `<img src="${resolvedLogo}" alt="${escapeHtml(org)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+      logoEl.innerHTML = `<img src="${resolvedLogo}" alt="${escapeHtml(org)}" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
     } else {
       const inits = org
         .split(" ")
@@ -1470,7 +1691,7 @@ function openSubmissionDetailsModal(app) {
 
       // 2. Requirements To Follow Up
       if (followUpDocs.length > 0) {
-        followUpDocs.forEach((doc) => {
+        followUpDocs.forEach((doc, fuIdx) => {
           const reqTitle =
             typeof doc === "object"
               ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
@@ -1478,23 +1699,136 @@ function openSubmissionDetailsModal(app) {
 
           const fuItem = document.createElement("div");
           fuItem.style.cssText =
-            "display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.35); gap: 10px;";
+            "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.35); gap: 10px; margin-top: 6px;";
           fuItem.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-              <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <input type="file" id="fu-file-input-${fuIdx}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div style="min-width: 0;">
+                  <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    ${escapeHtml(reqTitle)}
+                  </p>
+                  <span style="font-size: 11px; color: #D97706; font-weight: 600;">Pending</span>
+                </div>
               </div>
-              <div style="min-width: 0;">
-                <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                  ${escapeHtml(reqTitle)}
-                </p>
-                <span style="font-size: 11px; color: #D97706; font-weight: 600;">Pending</span>
-              </div>
+              <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
+                To Follow Up
+              </span>
             </div>
-            <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
-              To Follow Up
-            </span>
+
+            <div style="display: flex; justify-content: flex-end; width: 100%;">
+              <button type="button" id="btn-upload-fu-${fuIdx}" class="btn-fu-upload">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <span>Upload Document</span>
+              </button>
+            </div>
           `;
+
+          const fileInput = fuItem.querySelector(`#fu-file-input-${fuIdx}`);
+          const btnUploadFu = fuItem.querySelector(`#btn-upload-fu-${fuIdx}`);
+
+          if (btnUploadFu && fileInput) {
+            btnUploadFu.onclick = () => fileInput.click();
+
+            fileInput.onchange = (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              if (file.size > 5 * 1024 * 1024) {
+                alert("File size exceeds 5MB limit. Please choose a smaller file.");
+                fileInput.value = "";
+                return;
+              }
+
+              showFileUploadReviewModal(file, reqTitle, async () => {
+                btnUploadFu.disabled = true;
+                btnUploadFu.innerHTML = `
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                    <path d="M12 2a10 10 0 0 1 10 10"></path>
+                  </svg>
+                  <span>Uploading...</span>
+                `;
+
+                const reader = new FileReader();
+                reader.onload = async () => {
+                  const base64Data = reader.result;
+                  const formattedSize =
+                    file.size >= 1024 * 1024
+                      ? (file.size / (1024 * 1024)).toFixed(1) + " MB"
+                      : (file.size / 1024).toFixed(0) + " KB";
+
+                  const followUpPayload = {
+                    followUpDocument: {
+                      name: file.name,
+                      title: reqTitle,
+                      requirement: reqTitle,
+                      size: formattedSize,
+                      type: file.type || "application/pdf",
+                      data: base64Data,
+                      status: "attached",
+                      isFollowUp: false,
+                    },
+                  };
+
+                  try {
+                    const res = await fetch(`${API_BASE}/api/applications/${app.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(followUpPayload),
+                    }).catch(() => null);
+
+                    if (res && res.ok) {
+                      const resData = await res.json();
+                      if (resData.application) {
+                        Object.assign(app, resData.application);
+                      }
+                    } else {
+                      const updatedDocs = (app.documents || []).map((d) => {
+                        const dName = typeof d === "string" ? d : d.requirement || d.title || d.name || "";
+                        if (dName.toLowerCase().includes(reqTitle.toLowerCase())) {
+                          return {
+                            name: file.name,
+                            title: reqTitle,
+                            requirement: reqTitle,
+                            size: formattedSize,
+                            type: file.type || "application/pdf",
+                            status: "attached",
+                            isFollowUp: false,
+                          };
+                        }
+                        return d;
+                      });
+                      app.documents = updatedDocs;
+                      app.uploadedDocuments = updatedDocs
+                        .filter((d) => (typeof d === "string" ? !d.includes("(To Follow Up)") : !d.isFollowUp))
+                        .map((d) => (typeof d === "string" ? d : d.name));
+                    }
+                  } catch (err) {
+                    console.warn("Could not patch application follow-up doc:", err);
+                  }
+
+                  try {
+                    const cached = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+                    const idx = cached.findIndex((a) => String(a.id) === String(app.id));
+                    if (idx !== -1) {
+                      cached[idx] = app;
+                      localStorage.setItem("nexo_applications", JSON.stringify(cached));
+                    }
+                  } catch (_) {}
+
+                  showFileUploadSuccessModal(file.name, app.providerName || app.organization || "NEXO", () => {
+                    openSubmissionDetailsModal(app);
+                  });
+                };
+                reader.readAsDataURL(file);
+              });
+            };
+          }
+
           docListEl.appendChild(fuItem);
         });
       }
@@ -1505,21 +1839,51 @@ function openSubmissionDetailsModal(app) {
         "margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;";
       lockNotice.innerHTML = `
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked on record to maintain verification integrity.</span>
+        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked on record to maintain verification integrity. Only requirements designated as <em>"To Follow Up"</em> allow additional file attachments.</span>
       `;
       docListEl.appendChild(lockNotice);
     }
   }
 
-  // Populate Student Identity
+  // Populate Student Identity (Structured Card)
   const nameEl = document.getElementById("modal-sub-student-name");
-  const infoEl = document.getElementById("modal-sub-student-info");
-  if (nameEl) nameEl.textContent = app.studentName || "Student Scholar";
-  if (infoEl) {
-    const course = app.course || "";
-    const uni = app.university || "";
-    const email = app.studentEmail || "";
-    infoEl.textContent = [course, uni, email].filter(Boolean).join(" • ") || "Verified Student Account";
+  const avatarEl = document.getElementById("modal-sub-student-avatar");
+  const courseEl = document.getElementById("modal-sub-student-course");
+  const uniEl = document.getElementById("modal-sub-student-uni");
+  const idEl = document.getElementById("modal-sub-student-id");
+  const emailEl = document.getElementById("modal-sub-student-email");
+
+  const sName = app.studentName || "Student Scholar";
+  if (nameEl) nameEl.textContent = sName;
+
+  if (avatarEl) {
+    const sPic = app.studentProfilePic || localStorage.getItem("nexo-student-avatar") || "";
+    if (sPic && sPic.trim()) {
+      avatarEl.innerHTML = `<img src="${sPic}" alt="${escapeHtml(sName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
+    } else {
+      const inits = sName
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0] || "")
+        .join("")
+        .toUpperCase();
+      avatarEl.textContent = inits || "ST";
+    }
+  }
+
+  if (courseEl) {
+    const c = app.course || "";
+    const y = app.yearLevel || "";
+    courseEl.textContent = [c, y].filter(Boolean).join(" - ") || "Undergraduate Scholar";
+  }
+  if (uniEl) {
+    uniEl.textContent = app.university || "Batangas State University";
+  }
+  if (idEl) {
+    idEl.textContent = app.studentId || "Verified Account";
+  }
+  if (emailEl) {
+    emailEl.textContent = app.studentEmail || "student@batstate-u.edu.ph";
   }
 
   // Open Modal
@@ -1548,9 +1912,28 @@ function openSubmissionDetailsModal(app) {
 
   const closeBtn = document.getElementById("close-student-sub-modal");
   const bottomCloseBtn = document.getElementById("btn-close-sub-modal");
+  const btnViewPost = document.getElementById("btn-sub-view-post");
 
   if (closeBtn) closeBtn.onclick = closeSubModal;
   if (bottomCloseBtn) bottomCloseBtn.onclick = closeSubModal;
+  if (btnViewPost) {
+    btnViewPost.onclick = () => {
+      const targetScholId = app.scholarshipId || app.id || "";
+      closeSubModal();
+      if (
+        window.location.pathname.includes("student-browse.html") &&
+        typeof openDetailsModal === "function" &&
+        Array.isArray(window.allScholarships)
+      ) {
+        const match = window.allScholarships.find((s) => String(s.id) === String(targetScholId));
+        if (match) {
+          openDetailsModal(match);
+          return;
+        }
+      }
+      window.location.href = `student-browse.html?scholId=${encodeURIComponent(targetScholId)}`;
+    };
+  }
 
   modalOverlay.onclick = (e) => {
     if (e.target === modalOverlay) closeSubModal();

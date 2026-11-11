@@ -831,6 +831,34 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Deep-linking: auto-open scholarship post details if navigated with ?id=... or ?scholId=...
+    if (!window._hasHandledBrowseDetailsDeepLink && Array.isArray(allScholarships) && allScholarships.length > 0) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get("scholId") || urlParams.get("id") || urlParams.get("scholarshipId");
+        if (targetId) {
+          const match = allScholarships.find(
+            (s) =>
+              String(s.id) === String(targetId) ||
+              (s.title && s.title.toLowerCase() === targetId.toLowerCase())
+          );
+          if (match) {
+            window._hasHandledBrowseDetailsDeepLink = true;
+            setTimeout(() => {
+              openDetailsModal(match);
+              const card = feedContainer.querySelector(`[data-id="${match.id}"]`);
+              if (card) {
+                card.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
+            }, 200);
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
   }
 
   // -------------------------------------------------------------
@@ -845,6 +873,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function openDetailsModal(schol) {
     activeScholarship = schol;
+    window.activeScholarship = schol;
+    window.openDetailsModal = openDetailsModal;
+    window.allScholarships = allScholarships;
     if (!modalOverlay || !modalViewDetails) return;
 
     modalViewDetails.style.display = "block";
