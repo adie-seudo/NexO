@@ -940,7 +940,8 @@ function renderFilteredSubmissions() {
   const filterEmptyCard = document.getElementById("student-filter-empty");
   const appsFeed = document.getElementById("student-apps-feed");
   const hasFilterTools = Boolean(
-    document.getElementById("submissions-status-filters"),
+    document.getElementById("submissions-status-filters") ||
+      document.getElementById("btn-submissions-filter"),
   );
   const viewAllBtn = document.getElementById("student-view-all-link");
 
@@ -1948,17 +1949,50 @@ function openSubmissionDetailsModal(app) {
   document.addEventListener("keydown", handleEsc);
 }
 
-// Initialize Submissions Page Filtering (Status Tabs & Search Bar)
+// Initialize Submissions Page Filtering (Status Dropdown & Search Bar)
 function initSubmissionsFiltering() {
-  const filterTabsContainer = document.getElementById(
-    "submissions-status-filters",
+  const filterDropdownBtn = document.getElementById("btn-submissions-filter");
+  const filterDropdownMenu = document.getElementById("menu-submissions-filter");
+  const filterDropdownWrapper = document.getElementById(
+    "dropdown-wrapper-submissions-filter",
   );
+  const filterLabel = document.getElementById("label-submissions-filter");
   const searchInput = document.getElementById("submissions-search-input");
   const resetBtn = document.getElementById("reset-submissions-filter");
+  const legacyFilterTabs = document.getElementById("submissions-status-filters");
 
-  if (!filterTabsContainer && !searchInput) return;
+  if (!filterDropdownBtn && !legacyFilterTabs && !searchInput) return;
 
-  // Pre-activate tab from URL parameter if passed (e.g. from Dashboard metric cards)
+  const statusLabelMap = {
+    all: "Status",
+    submitted: "Submitted",
+    review: "Under Review",
+    approved: "Approved",
+    rejected: "Rejected",
+  };
+
+  const updateDropdownUI = (activeStatus) => {
+    if (filterLabel) {
+      filterLabel.textContent = statusLabelMap[activeStatus] || "Status";
+    }
+    if (filterDropdownBtn) {
+      filterDropdownBtn.classList.toggle("is-filtered", activeStatus !== "all");
+    }
+    if (filterDropdownMenu) {
+      filterDropdownMenu
+        .querySelectorAll(".directory-dropdown-item")
+        .forEach((item) => {
+          item.classList.toggle("active", item.dataset.filter === activeStatus);
+        });
+    }
+    if (legacyFilterTabs) {
+      legacyFilterTabs.querySelectorAll(".filter-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.filter === activeStatus);
+      });
+    }
+  };
+
+  // Pre-activate filter from URL parameter if passed (e.g. from Dashboard metric cards: ?filter=approved)
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const initialFilter = (
@@ -1966,17 +2000,12 @@ function initSubmissionsFiltering() {
       urlParams.get("status") ||
       ""
     ).toLowerCase();
-    if (initialFilter && filterTabsContainer) {
-      const targetTab = filterTabsContainer.querySelector(
-        `.filter-tab[data-filter="${initialFilter}"]`,
-      );
-      if (targetTab) {
-        filterTabsContainer
-          .querySelectorAll(".filter-tab")
-          .forEach((t) => t.classList.remove("active"));
-        targetTab.classList.add("active");
-        currentSubmissionsFilter = initialFilter;
-      }
+    if (
+      initialFilter &&
+      (statusLabelMap[initialFilter] !== undefined || initialFilter === "all")
+    ) {
+      currentSubmissionsFilter = initialFilter;
+      updateDropdownUI(initialFilter);
       try {
         window.history.replaceState(
           {},
@@ -1987,19 +2016,62 @@ function initSubmissionsFiltering() {
     }
   } catch (_) {}
 
-  if (filterTabsContainer) {
-    filterTabsContainer.querySelectorAll(".filter-tab").forEach((tab) => {
+  // Toggle Dropdown Menu
+  if (filterDropdownBtn && filterDropdownMenu) {
+    filterDropdownBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = filterDropdownMenu.classList.contains("show");
+      filterDropdownMenu.classList.toggle("show", !isOpen);
+      filterDropdownBtn.setAttribute("aria-expanded", String(!isOpen));
+      if (filterDropdownWrapper) {
+        filterDropdownWrapper.classList.toggle("is-open", !isOpen);
+      }
+    });
+
+    // Handle Dropdown Item Clicks
+    filterDropdownMenu
+      .querySelectorAll(".directory-dropdown-item")
+      .forEach((item) => {
+        item.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const selectedStatus = item.dataset.filter || "all";
+          currentSubmissionsFilter = selectedStatus;
+          updateDropdownUI(selectedStatus);
+
+          filterDropdownMenu.classList.remove("show");
+          filterDropdownBtn.setAttribute("aria-expanded", "false");
+          if (filterDropdownWrapper) {
+            filterDropdownWrapper.classList.remove("is-open");
+          }
+          renderFilteredSubmissions();
+        });
+      });
+
+    // Close Dropdown on Outside Click
+    document.addEventListener("click", (e) => {
+      if (!filterDropdownWrapper || !filterDropdownWrapper.contains(e.target)) {
+        filterDropdownMenu.classList.remove("show");
+        filterDropdownBtn.setAttribute("aria-expanded", "false");
+        if (filterDropdownWrapper) {
+          filterDropdownWrapper.classList.remove("is-open");
+        }
+      }
+    });
+  }
+
+  // Legacy tab listener support (if ever rendered)
+  if (legacyFilterTabs) {
+    legacyFilterTabs.querySelectorAll(".filter-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
-        filterTabsContainer
-          .querySelectorAll(".filter-tab")
-          .forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentSubmissionsFilter = tab.dataset.filter || "all";
+        const filterVal = tab.dataset.filter || "all";
+        currentSubmissionsFilter = filterVal;
+        updateDropdownUI(filterVal);
         renderFilteredSubmissions();
       });
     });
   }
 
+  // Live Search Input Listener
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       currentSubmissionsSearch = e.target.value;
@@ -2007,16 +2079,13 @@ function initSubmissionsFiltering() {
     });
   }
 
+  // Reset Filters Button Listener
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       currentSubmissionsFilter = "all";
       currentSubmissionsSearch = "";
       if (searchInput) searchInput.value = "";
-      if (filterTabsContainer) {
-        filterTabsContainer.querySelectorAll(".filter-tab").forEach((t) => {
-          t.classList.toggle("active", t.dataset.filter === "all");
-        });
-      }
+      updateDropdownUI("all");
       renderFilteredSubmissions();
     });
   }
