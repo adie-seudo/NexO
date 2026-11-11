@@ -820,13 +820,8 @@ function initializeHeaderFunctions() {
         document.body.classList.remove("menu-open");
       }
       if (globalHeader) {
-        const currentScrollY = window.scrollY;
-        if (currentScrollY > lastScrollY && currentScrollY > 72) {
-          globalHeader.classList.add("scroll-down");
-        } else {
-          globalHeader.classList.remove("scroll-down");
-        }
-        lastScrollY = currentScrollY;
+        // Sticky glass top bar stays permanently visible on all pages even when scrolling
+        globalHeader.classList.remove("scroll-down");
       }
     },
     { passive: true },

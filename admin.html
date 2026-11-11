@@ -47,13 +47,23 @@
 
       /* 1. Mobile-First Top Header */
       .admin-top-header {
-        background: var(--bg-surface);
-        border-bottom: 1px solid var(--border-color);
+        background: rgba(255, 255, 255, 0.42) !important;
+        border: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
         padding: 10px 14px;
         position: sticky;
         top: 0;
         z-index: 100;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+      }
+      body.dark-theme .admin-top-header {
+        background: rgba(15, 23, 42, 0.45) !important;
+        border: none !important;
+        border-bottom: none !important;
+        box-shadow: none !important;
       }
       .admin-header-inner {
         width: 100%;
