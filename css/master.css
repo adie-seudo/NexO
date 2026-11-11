@@ -4043,8 +4043,12 @@ body.dark-theme .view-sub-details-btn:hover {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 84px 16px 60px 16px;
+  padding: 88px 18px 48px 18px; /* 72px fixed header + 16px space */
   box-sizing: border-box;
+  min-height: calc(100vh + 50px);
+  min-height: calc(100dvh + 50px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Search Bar Wrapper */
@@ -4603,10 +4607,23 @@ body.dark-theme .directory-apply-btn:disabled {
   color: #6941C6;
   font-size: 18px;
   z-index: 5;
+  overflow: hidden;
+}
+.details-provider-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
 }
 body.dark-theme .details-provider-avatar {
   border-color: var(--bg-surface, #1E1B2E);
   background: #2E1B4E;
+  color: #D6BBFB;
+}
+body.dark-theme .directory-card-logo {
+  border-color: rgba(255, 255, 255, 0.1);
+  background-color: #2E1B4E;
   color: #D6BBFB;
 }
 .details-verified-pill {

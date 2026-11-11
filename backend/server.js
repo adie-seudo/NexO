@@ -1196,6 +1196,18 @@ async function handleRequest(req, res) {
         };
 
         data.settings = updated;
+
+        // Cascade logoImage, bannerImage, and orgName to existing scholarships posted by this provider
+        if (Array.isArray(data.scholarships)) {
+          data.scholarships.forEach((s) => {
+            if (!s.providerName || s.providerName === "NEXO" || s.providerName === updated.orgName) {
+              if (updated.logoImage !== undefined) s.providerLogo = updated.logoImage;
+              if (updated.bannerImage !== undefined) s.providerBanner = updated.bannerImage;
+              if (updated.orgName) s.providerName = updated.orgName;
+            }
+          });
+        }
+
         if (!writeData(data)) {
           return sendJson(res, 500, {
             success: false,

@@ -57,6 +57,38 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/'/g, "&#039;");
   }
 
+  function getProviderInitials(name) {
+    if (!name || !name.trim()) return "NX";
+    const clean = name.trim();
+    const words = clean.split(/\s+/);
+    if (words.length === 1) {
+      return clean.slice(0, 2).toUpperCase();
+    }
+    return (words[0][0] + (words[1] ? words[1][0] : "")).toUpperCase();
+  }
+
+  function resolveProviderLogo(item, pSettings) {
+    if (item && item.providerLogo && String(item.providerLogo).trim()) {
+      return item.providerLogo;
+    }
+    if (item && item.logoImage && String(item.logoImage).trim()) {
+      return item.logoImage;
+    }
+    const activeOrgName =
+      (pSettings && pSettings.orgName) ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
+    const itemOrg = (item && item.providerName ? item.providerName.trim() : "");
+    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+      const settingsLogo =
+        (pSettings && pSettings.logoImage) ||
+        localStorage.getItem("nexo-provider-logo") ||
+        "";
+      if (settingsLogo) return settingsLogo;
+    }
+    return "";
+  }
+
   // -------------------------------------------------------------
   // 2. FETCH REAL-TIME SCHOLARSHIPS FROM BACKEND & DATA.JSON ONLY
   // (No fake seed scholarships - only synchronized provider posts)
@@ -401,13 +433,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!feedContainer) return;
 
     const filtered = allScholarships.filter((item) => {
-      // Type match
+      // Type match (accurately matching Merit-Based, Need-Based, and Athletic)
       let matchesType = true;
       if (filterType !== "all") {
-        matchesType =
-          (item.type && item.type.toLowerCase() === filterType.toLowerCase()) ||
-          (item.typeText &&
-            item.typeText.toLowerCase().includes(filterType.toLowerCase()));
+        const ft = filterType.toLowerCase();
+        const t = (item.type || "").toLowerCase();
+        const tt = (item.typeText || "").toLowerCase();
+        if (ft.includes("merit")) {
+          matchesType = t === "merit" || t.includes("merit") || tt.includes("merit");
+        } else if (ft.includes("need")) {
+          matchesType = t === "need" || t.includes("need") || tt.includes("need");
+        } else if (ft.includes("athletic")) {
+          matchesType = t === "athletic" || t.includes("athletic") || tt.includes("athletic");
+        } else {
+          matchesType = t === ft || tt.includes(ft);
+        }
       }
 
       // Provider match
@@ -442,9 +482,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (countLabel) {
-      countLabel.textContent = `Showing ${filtered.length} scholarship${
-        filtered.length === 1 ? "" : "s"
-      }`;
+      countLabel.textContent = "";
+      countLabel.style.display = "none";
     }
 
     if (filtered.length === 0) {
@@ -480,16 +519,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const card = document.createElement("div");
       card.className = "directory-card";
 
-      const initials = (item.providerName || "NEXO")
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
+      const resolvedLogo = resolveProviderLogo(item, providerSettings);
+      const initials = getProviderInitials(item.providerName || "NEXO");
 
-      const logoHtml = item.providerLogo
-        ? `<img src="${item.providerLogo}" alt="${item.providerName}">`
-        : `<span>${initials || "NX"}</span>`;
+      const logoHtml = resolvedLogo
+        ? `<img src="${resolvedLogo}" alt="${escapeHtml(item.providerName || 'Provider')}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`
+        : `<span>${initials}</span>`;
 
       const isQuotaFull = (item.status || "").toLowerCase().includes("quota");
       const isClosed =
@@ -682,22 +717,13 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
 
-    const logoSrc =
-      schol.providerLogo ||
-      schol.logoImage ||
-      localStorage.getItem("nexo-provider-logo") ||
-      (providerSettings && providerSettings.logoImage);
+    const logoSrc = resolveProviderLogo(schol, providerSettings);
 
     if (logoBox) {
       if (logoSrc) {
         logoBox.innerHTML = `<img src="${logoSrc}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
       } else {
-        const initials = (schol.providerName || "NX")
-          .split(" ")
-          .map((w) => w[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase();
+        const initials = getProviderInitials(schol.providerName || "NEXO");
         logoBox.innerHTML = initials;
       }
     }

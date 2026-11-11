@@ -635,6 +635,15 @@ class NexoHandler(BaseHTTPRequestHandler):
             current = data.get("settings", DEFAULT_DATA["settings"])
             current.update(body)
             data["settings"] = current
+            if "logoImage" in body or "bannerImage" in body or "orgName" in body:
+                for s in data.get("scholarships", []):
+                    if not s.get("providerName") or s.get("providerName") == "NEXO" or s.get("providerName") == current.get("orgName"):
+                        if "logoImage" in body:
+                            s["providerLogo"] = body["logoImage"]
+                        if "bannerImage" in body:
+                            s["providerBanner"] = body["bannerImage"]
+                        if "orgName" in body:
+                            s["providerName"] = body["orgName"]
             write_data(data)
             return self._send_json(200, {"success": True, "settings": current})
 

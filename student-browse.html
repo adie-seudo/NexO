@@ -23,9 +23,11 @@
     <!-- 1. GLOBAL UNIVERSAL HEADER                -->
     <!-- ========================================= -->
     <header class="global-header">
+      <!-- NEXO Brand Logo & Name (Consistent with Home page) -->
       <div class="logo-container">
-        <a href="student-dashboard.html" style="text-decoration: none;">
-          <div class="avatar-btn" id="student-header-avatar" style="cursor: pointer" title="Back to Dashboard"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+        <a href="student-about.html" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;" title="About Us">
+          <img src="assets/logo.png" alt="NEXO" style="width: 28px; height: 28px; object-fit: contain;" />
+          <span style="font-family: var(--font-heading); font-size: 19px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px;">NEXO</span>
         </a>
       </div>
 
@@ -193,17 +195,7 @@
     <!-- 2. MAIN BROWSE VIEWPORT (Mobile First)    -->
     <!-- ========================================= -->
     <main class="browse-page-main">
-      <!-- Back to Dashboard Link -->
-      <div style="margin-bottom: 12px;">
-        <a href="student-dashboard.html" class="btn-back-nav">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          Back to Dashboard
-        </a>
-      </div>
-
-      <div style="margin-bottom: 18px;">
+      <div style="margin-bottom: 20px;">
         <h1 class="settings-title" style="margin-bottom: 4px;">Scholarship Directory</h1>
         <p class="settings-subtitle">
           Find the right scholarship for your future.
@@ -227,18 +219,17 @@
 
       <!-- 3 Pill Filter Dropdowns (Type ˇ, Provider ˇ, Status ˇ) -->
       <div class="directory-filter-row">
-        <!-- Type Filter -->
+        <!-- Type Filter: 3 accurate provider scholarship types -->
         <div class="directory-filter-dropdown" id="dropdown-wrapper-type">
-          <button type="button" class="directory-pill-btn active" id="btn-filter-type">
+          <button type="button" class="directory-pill-btn" id="btn-filter-type">
             <span id="label-filter-type">Type</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
           <div class="directory-dropdown-menu" id="menu-filter-type">
             <button type="button" class="directory-dropdown-item active" data-filter-type="all">All Types</button>
-            <button type="button" class="directory-dropdown-item" data-filter-type="STEM">STEM</button>
-            <button type="button" class="directory-dropdown-item" data-filter-type="Academic">Academic</button>
-            <button type="button" class="directory-dropdown-item" data-filter-type="Financial Need">Financial Need</button>
-            <button type="button" class="directory-dropdown-item" data-filter-type="Government">Government / LGU</button>
+            <button type="button" class="directory-dropdown-item" data-filter-type="Merit-Based">Merit-Based</button>
+            <button type="button" class="directory-dropdown-item" data-filter-type="Need-Based">Need-Based</button>
+            <button type="button" class="directory-dropdown-item" data-filter-type="Athletic">Athletic</button>
           </div>
         </div>
 
@@ -268,11 +259,6 @@
         </div>
       </div>
 
-      <!-- Live Meta Count Row -->
-      <div class="browse-meta-row">
-        <span id="browse-count-label">Loading scholarships...</span>
-      </div>
-
       <!-- Vertical Scholarship Feed (Infinite Doom Scrolling) -->
       <div class="browse-feed" id="browse-scholarships-feed">
         <!-- Dynamically rendered by js/student-browse.js -->
@@ -294,15 +280,17 @@
           Clear Filters
         </button>
       </div>
-
-      <!-- Footer (Matching Canva Mockup) -->
-      <footer class="directory-footer">
-        <p class="directory-footer-copy">Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
-        <p class="directory-footer-links">
-          <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp; <a href="terms.html">Terms of Service</a> &nbsp;|&nbsp; <a href="credits.html">Credits</a>
-        </p>
-      </footer>
     </main>
+
+    <!-- Global Footer (Consistent with Home page) -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
 
     <!-- ========================================= -->
     <!-- 3. SCHOLARSHIP DETAILS & DIGITAL DROP-BOX  -->
