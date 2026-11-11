@@ -864,12 +864,24 @@ body.dark-theme .theme-toggle {
 /* ==========================================
    7. PAGE LAYOUTS & CARDS
    ========================================== */
-.landing-page,
-.about-page {
+.landing-page {
   padding: 96px 20px 24px 20px;
   display: flex;
   flex-direction: column;
   gap: 40px;
+}
+.about-page {
+  padding: 72px 20px 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 860px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.about-card p {
+  line-height: 1.65;
+  color: var(--text-secondary);
 }
 .hero-section,
 .feature-card,
@@ -3544,7 +3556,7 @@ body.dark-theme .view-details-btn:hover {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 88px 18px 48px 18px; /* 72px fixed header + 16px space */
+  padding: 72px 18px 48px 18px; /* Consistent 72px header clearance */
   box-sizing: border-box;
   /* Ensure page content exceeds viewport so footer is naturally below the fold on mobile */
   min-height: calc(100vh + 50px);
@@ -3646,10 +3658,10 @@ body.dark-theme .student-greeting-time {
   text-overflow: ellipsis;
 }
 .student-motto {
-  font-size: 11.5px;
+  font-size: 13.5px;
   color: var(--text-secondary);
-  line-height: 1.35;
-  margin: 3px 0 0 0;
+  line-height: 1.65;
+  margin: 5px 0 0 0;
 }
 
 /* 2x2 Metric Cards Grid (Consistent design system) */
@@ -4086,7 +4098,7 @@ body.dark-theme .view-sub-details-btn:hover {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 88px 18px 48px 18px; /* 72px fixed header + 16px space */
+  padding: 72px 18px 48px 18px; /* Consistent 72px header clearance */
   box-sizing: border-box;
   min-height: calc(100vh + 50px);
   min-height: calc(100dvh + 50px);
@@ -5360,12 +5372,12 @@ body.dark-theme .dropbox-info-banner {
    26. DOCUMENTATION & LEGAL PAGES (Credits, Privacy, Terms)
    ========================================== */
 .doc-page {
-  padding: 90px 20px 40px 20px;
+  padding: 72px 20px 40px 20px;
   max-width: 860px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 20px;
   box-sizing: border-box;
 }
 
@@ -5442,10 +5454,10 @@ body.dark-theme .doc-back-btn:hover {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 32px 24px;
+  padding: 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   box-shadow: var(--shadow-card);
   position: relative;
   overflow: hidden;
@@ -5490,16 +5502,18 @@ body.dark-theme .doc-academic-tag {
 
 .doc-title {
   font-family: var(--font-heading);
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
   color: var(--text-primary);
-  line-height: 1.25;
+  line-height: 1.3;
+  margin: 2px 0 0 0;
 }
 
 .doc-subtitle {
-  font-size: 15px;
+  font-size: 14.5px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
+  margin: 0;
 }
 
 .doc-institution-card {

@@ -48,10 +48,10 @@
 }
 
 .settings-subtitle {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 18px;
-  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-secondary, #6B7280);
+  line-height: 1.65;
+  margin: 6px 0 0 0;
 }
 
 /* ==========================================
