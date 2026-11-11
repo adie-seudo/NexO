@@ -149,30 +149,66 @@ document.addEventListener("DOMContentLoaded", () => {
         currentAvatarBase64 = event.target.result;
         setAvatarPreview(currentAvatarBase64);
         updateHeaderAvatar(currentAvatarBase64);
+
+        const currentEmail = (
+          sessionStorage.getItem("nexo-student-email") ||
+          localStorage.getItem("nexo-student-email") ||
+          ""
+        ).toLowerCase().trim();
+
         try {
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
+          localStorage.setItem("nexo-student-avatar", currentAvatarBase64);
+          if (currentEmail) {
+            localStorage.setItem("nexo_avatar_" + currentEmail, currentAvatarBase64);
+            localStorage.setItem("nexo-student-avatar-" + currentEmail, currentAvatarBase64);
+          }
+
           const cached = JSON.parse(
             localStorage.getItem("nexo_student_settings") || "{}",
           );
           cached.profilePicture = currentAvatarBase64;
+          if (currentEmail && !cached.email) cached.email = currentEmail;
           localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
+
+          if (currentEmail) {
+            const scoped = JSON.parse(
+              localStorage.getItem(`nexo_student_settings_${currentEmail}`) || "{}",
+            );
+            scoped.profilePicture = currentAvatarBase64;
+            scoped.email = currentEmail;
+            localStorage.setItem(`nexo_student_settings_${currentEmail}`, JSON.stringify(scoped));
+
+            let profiles = {};
+            try {
+              profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+            } catch (_) {}
+            profiles[currentEmail] = { ...(profiles[currentEmail] || {}), profilePicture: currentAvatarBase64 };
+            localStorage.setItem("nexo_student_profiles", JSON.stringify(profiles));
+
+            let usersList = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+            if (Array.isArray(usersList)) {
+              let u = usersList.find((x) => (x.email || "").toLowerCase().trim() === currentEmail);
+              if (u) {
+                u.profilePicture = currentAvatarBase64;
+                localStorage.setItem("nexo_users", JSON.stringify(usersList));
+              }
+            }
+          }
         } catch (_) {}
         showToast("Profile image updated");
 
         // Auto-save immediately to server
-        try {
-          const currentEmail = (
-            sessionStorage.getItem("nexo-student-email") ||
-            localStorage.getItem("nexo-student-email") ||
-            ""
-          ).toLowerCase();
-          await fetch(`${API_BASE}/api/student-settings`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: currentEmail, profilePicture: currentAvatarBase64 }),
-          });
-        } catch (err) {
-          console.warn("Could not auto-save avatar to server:", err);
+        if (currentEmail) {
+          try {
+            await fetch(`${API_BASE}/api/student-settings`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: currentEmail, profilePicture: currentAvatarBase64 }),
+            });
+          } catch (err) {
+            console.warn("Could not auto-save avatar to server:", err);
+          }
         }
       };
       reader.readAsDataURL(file);
@@ -185,29 +221,65 @@ document.addEventListener("DOMContentLoaded", () => {
       if (fileInput) fileInput.value = "";
       setAvatarPreview("");
       updateHeaderAvatar("");
+
+      const currentEmail = (
+        sessionStorage.getItem("nexo-student-email") ||
+        localStorage.getItem("nexo-student-email") ||
+        ""
+      ).toLowerCase().trim();
+
       try {
         sessionStorage.removeItem("nexo-student-avatar");
+        localStorage.removeItem("nexo-student-avatar");
+        if (currentEmail) {
+          localStorage.removeItem("nexo_avatar_" + currentEmail);
+          localStorage.removeItem("nexo-student-avatar-" + currentEmail);
+        }
+
         const cached = JSON.parse(
           localStorage.getItem("nexo_student_settings") || "{}",
         );
         cached.profilePicture = "";
         localStorage.setItem("nexo_student_settings", JSON.stringify(cached));
+
+        if (currentEmail) {
+          const scoped = JSON.parse(
+            localStorage.getItem(`nexo_student_settings_${currentEmail}`) || "{}",
+          );
+          scoped.profilePicture = "";
+          localStorage.setItem(`nexo_student_settings_${currentEmail}`, JSON.stringify(scoped));
+
+          let profiles = {};
+          try {
+            profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+          } catch (_) {}
+          if (profiles[currentEmail]) {
+            profiles[currentEmail].profilePicture = "";
+            localStorage.setItem("nexo_student_profiles", JSON.stringify(profiles));
+          }
+
+          let usersList = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+          if (Array.isArray(usersList)) {
+            let u = usersList.find((x) => (x.email || "").toLowerCase().trim() === currentEmail);
+            if (u) {
+              u.profilePicture = "";
+              localStorage.setItem("nexo_users", JSON.stringify(usersList));
+            }
+          }
+        }
       } catch (_) {}
       showToast("Profile image removed");
 
-      try {
-        const currentEmail = (
-          sessionStorage.getItem("nexo-student-email") ||
-          localStorage.getItem("nexo-student-email") ||
-          ""
-        ).toLowerCase();
-        await fetch(`${API_BASE}/api/student-settings`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: currentEmail, profilePicture: "" }),
-        });
-      } catch (err) {
-        console.warn("Could not auto-save removed avatar to server:", err);
+      if (currentEmail) {
+        try {
+          await fetch(`${API_BASE}/api/student-settings`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: currentEmail, profilePicture: "" }),
+          });
+        } catch (err) {
+          console.warn("Could not auto-save removed avatar to server:", err);
+        }
       }
     });
   }
@@ -379,8 +451,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (phoneInput) phoneInput.value = settings.contactNumber || "";
     if (bioInput) bioInput.value = settings.bio || "";
 
+    if (!settings.profilePicture) {
+      const fallbackAvatar =
+        (typeof window.getStudentAvatar === "function"
+          ? window.getStudentAvatar(currentEmail)
+          : null) ||
+        (currentEmail ? localStorage.getItem("nexo_avatar_" + currentEmail) : null) ||
+        (currentEmail ? localStorage.getItem("nexo-student-avatar-" + currentEmail) : null) ||
+        localStorage.getItem("nexo-student-avatar") ||
+        sessionStorage.getItem("nexo-student-avatar") ||
+        "";
+      if (fallbackAvatar) {
+        settings.profilePicture = fallbackAvatar;
+      }
+    }
     currentAvatarBase64 = settings.profilePicture || "";
     setAvatarPreview(currentAvatarBase64);
+    updateHeaderAvatar(currentAvatarBase64);
 
     const isConfirmed = Boolean(settings.isProfileConfirmed);
 
@@ -595,8 +682,16 @@ document.addEventListener("DOMContentLoaded", () => {
     // Comprehensive LocalStorage sync
     try {
       localStorage.setItem("nexo_student_settings", JSON.stringify(payload));
+      if (payload.profilePicture) {
+        sessionStorage.setItem("nexo-student-avatar", payload.profilePicture);
+        localStorage.setItem("nexo-student-avatar", payload.profilePicture);
+      }
       if (payload.email) {
         const emailLower = payload.email.toLowerCase().trim();
+        if (payload.profilePicture) {
+          localStorage.setItem("nexo_avatar_" + emailLower, payload.profilePicture);
+          localStorage.setItem("nexo-student-avatar-" + emailLower, payload.profilePicture);
+        }
         localStorage.setItem(
           `nexo_student_settings_${emailLower}`,
           JSON.stringify(payload),

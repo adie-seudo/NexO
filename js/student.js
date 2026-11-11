@@ -635,29 +635,70 @@ async function loadStudentData() {
     const data = await response.json();
     applications = Array.isArray(data.applications) ? data.applications : [];
 
-    // Sync student settings and header avatar ONLY if it belongs to current active student
-    if (
+    // Sync student settings and avatar from server data
+    let serverProfile = null;
+    if (activeStudentEmail && data.studentProfiles && data.studentProfiles[activeStudentEmail]) {
+      serverProfile = data.studentProfiles[activeStudentEmail];
+    } else if (
       data.studentSettings &&
       data.studentSettings.email &&
       activeStudentEmail &&
       data.studentSettings.email.toLowerCase() === activeStudentEmail
     ) {
+      serverProfile = data.studentSettings;
+    } else if (activeStudentEmail && Array.isArray(data.users)) {
+      const u = data.users.find((x) => (x.email || "").toLowerCase() === activeStudentEmail);
+      if (u) {
+        serverProfile = {
+          email: u.email,
+          fullName: u.name,
+          profilePicture: u.profilePicture || "",
+          course: u.course || "",
+          yearLevel: u.yearLevel || "",
+          university: u.university || "",
+          isProfileConfirmed: Boolean(u.isProfileConfirmed),
+        };
+      }
+    }
+
+    if (serverProfile) {
       try {
         localStorage.setItem(
           "nexo_student_settings",
-          JSON.stringify(data.studentSettings),
+          JSON.stringify(serverProfile),
         );
-        if (data.studentSettings.profilePicture) {
+        if (activeStudentEmail) {
+          localStorage.setItem(
+            `nexo_student_settings_${activeStudentEmail}`,
+            JSON.stringify(serverProfile),
+          );
+        }
+        if (serverProfile.profilePicture) {
           sessionStorage.setItem(
             "nexo-student-avatar",
-            data.studentSettings.profilePicture,
+            serverProfile.profilePicture,
           );
-          const headerAvatar = document.querySelector(".header-avatar");
-          if (headerAvatar && !headerAvatar.querySelector("img")) {
-            headerAvatar.innerHTML = `<img src="${data.studentSettings.profilePicture}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+          localStorage.setItem(
+            "nexo-student-avatar",
+            serverProfile.profilePicture,
+          );
+          if (activeStudentEmail) {
+            localStorage.setItem(
+              "nexo_avatar_" + activeStudentEmail,
+              serverProfile.profilePicture,
+            );
+            localStorage.setItem(
+              "nexo-student-avatar-" + activeStudentEmail,
+              serverProfile.profilePicture,
+            );
           }
         }
       } catch (_) {}
+    }
+
+    // Trigger UI identity sync with server-updated data
+    if (typeof window.syncGlobalStudentIdentity === "function") {
+      window.syncGlobalStudentIdentity();
     }
 
     // Cache local copy

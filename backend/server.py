@@ -306,7 +306,12 @@ class NexoHandler(BaseHTTPRequestHandler):
             if query_email:
                 profiles = data.setdefault("studentProfiles", {})
                 if query_email in profiles:
-                    return self._send_json(200, profiles[query_email])
+                    prof = profiles[query_email]
+                    if not prof.get("profilePicture"):
+                        matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == query_email), None)
+                        if matched and matched.get("profilePicture"):
+                            prof["profilePicture"] = matched.get("profilePicture")
+                    return self._send_json(200, prof)
                 matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == query_email), None)
                 prof = {
                     "fullName": (matched.get("name") if matched else "") or "",
@@ -317,7 +322,7 @@ class NexoHandler(BaseHTTPRequestHandler):
                     "studentId": (matched.get("studentId") if matched else "") or (query_email.split("@")[0] if len(query_email.split("@")[0].split("-")) == 2 else ""),
                     "contactNumber": "",
                     "bio": "",
-                    "profilePicture": "",
+                    "profilePicture": (matched.get("profilePicture") if matched else "") or "",
                     "notifications": {
                         "scholarshipMatches": True,
                         "applicationUpdates": True,
@@ -649,6 +654,8 @@ class NexoHandler(BaseHTTPRequestHandler):
                             u["university"] = body["university"]
                         if "course" in body:
                             u["course"] = body["course"]
+                        if "profilePicture" in body:
+                            u["profilePicture"] = body["profilePicture"]
             data["studentSettings"] = current
             if "profilePicture" in body:
                 for app in data.get("applications", []):

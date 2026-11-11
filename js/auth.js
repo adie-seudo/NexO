@@ -222,13 +222,58 @@ function initLoginToggleAndSubmit() {
         window.location.href = "provider-dashboard.html";
         return;
       } else {
+        const emailLower = (matchedUser.email || "").toLowerCase().trim();
         const lastStudentEmail = localStorage.getItem("nexo-student-email");
-        if (lastStudentEmail && lastStudentEmail.toLowerCase() !== matchedUser.email.toLowerCase()) {
+        if (lastStudentEmail && lastStudentEmail.toLowerCase() !== emailLower) {
           // Different student account logging in - clear stale cached settings & avatar
           localStorage.removeItem("nexo_student_settings");
           localStorage.removeItem("nexo-student-avatar");
           sessionStorage.removeItem("nexo-student-avatar");
         }
+
+        // Restore avatar if this student has one
+        let userAvatar = matchedUser.profilePicture || "";
+        if (!userAvatar && emailLower) {
+          userAvatar =
+            localStorage.getItem("nexo_avatar_" + emailLower) ||
+            localStorage.getItem("nexo-student-avatar-" + emailLower) ||
+            "";
+        }
+        if (!userAvatar && emailLower) {
+          try {
+            const profs = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+            if (profs[emailLower] && profs[emailLower].profilePicture) {
+              userAvatar = profs[emailLower].profilePicture;
+            }
+          } catch (_) {}
+        }
+        if (!userAvatar && emailLower) {
+          try {
+            const scoped = JSON.parse(localStorage.getItem(`nexo_student_settings_${emailLower}`) || "{}");
+            if (scoped && scoped.profilePicture) {
+              userAvatar = scoped.profilePicture;
+            }
+          } catch (_) {}
+        }
+        if (userAvatar) {
+          sessionStorage.setItem("nexo-student-avatar", userAvatar);
+          localStorage.setItem("nexo-student-avatar", userAvatar);
+          if (emailLower) {
+            localStorage.setItem("nexo_avatar_" + emailLower, userAvatar);
+            localStorage.setItem("nexo-student-avatar-" + emailLower, userAvatar);
+          }
+        }
+
+        // Restore scoped settings if available
+        if (emailLower) {
+          try {
+            const scopedSettings = localStorage.getItem(`nexo_student_settings_${emailLower}`);
+            if (scopedSettings) {
+              localStorage.setItem("nexo_student_settings", scopedSettings);
+            }
+          } catch (_) {}
+        }
+
         sessionStorage.setItem("nexo-logged-in", "student");
         sessionStorage.setItem(
           "nexo-student-name",

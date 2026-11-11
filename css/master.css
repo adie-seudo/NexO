@@ -3546,8 +3546,9 @@ body.dark-theme .student-welcome-card {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Squircle Avatar Box (Square shape with smooth radius & subtle border) */
-.student-avatar-box {
+/* Squircle Avatar Box on Dashboard Welcome Card (Square shape with smooth radius & subtle border) */
+.student-welcome-avatar,
+.student-welcome-card .student-avatar-box {
   width: 62px;
   height: 62px;
   border-radius: 16px;
@@ -3567,14 +3568,16 @@ body.dark-theme .student-welcome-card {
   box-sizing: border-box;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
-.student-avatar-box img {
+.student-welcome-avatar img,
+.student-welcome-card .student-avatar-box img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 14px;
   display: block;
 }
-body.dark-theme .student-avatar-box {
+body.dark-theme .student-welcome-avatar,
+body.dark-theme .student-welcome-card .student-avatar-box {
   border-color: rgba(167, 139, 250, 0.3);
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.25));
   color: #c084fc;

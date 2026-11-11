@@ -1639,6 +1639,7 @@ document.addEventListener("DOMContentLoaded", () => {
         (studentSettings && studentSettings.bio) ||
         "";
       const sAvatar =
+        (typeof window.getStudentAvatar === "function" ? window.getStudentAvatar(sEmail) : null) ||
         sessionStorage.getItem("nexo-student-avatar") ||
         (studentSettings && studentSettings.profilePicture) ||
         "";

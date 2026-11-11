@@ -216,6 +216,85 @@ function isStudentProfileComplete() {
   );
 }
 
+function getStudentAvatar(currentEmail) {
+  const email = (currentEmail || "").toLowerCase().trim();
+  // 1. Session storage (for immediate changes in current tab)
+  let pic = "";
+  try {
+    pic = sessionStorage.getItem("nexo-student-avatar") || "";
+  } catch (_) {}
+  if (pic) return pic;
+
+  // 2. Email-scoped localStorage keys
+  if (email) {
+    try {
+      pic =
+        localStorage.getItem("nexo_avatar_" + email) ||
+        localStorage.getItem("nexo-student-avatar-" + email) ||
+        "";
+    } catch (_) {}
+    if (pic) return pic;
+  }
+
+  // 3. Global localStorage avatar
+  try {
+    pic = localStorage.getItem("nexo-student-avatar") || "";
+  } catch (_) {}
+  if (pic) return pic;
+
+  // 4. Email-scoped student settings in localStorage
+  if (email) {
+    try {
+      const scopedSettings = JSON.parse(
+        localStorage.getItem(`nexo_student_settings_${email}`) || "null",
+      );
+      if (scopedSettings && scopedSettings.profilePicture) {
+        return scopedSettings.profilePicture;
+      }
+    } catch (_) {}
+  }
+
+  // 5. Global student settings in localStorage
+  try {
+    const raw = localStorage.getItem("nexo_student_settings");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (!parsed.email || !email || parsed.email.toLowerCase() === email) {
+        if (parsed.profilePicture) return parsed.profilePicture;
+      }
+    }
+  } catch (_) {}
+
+  // 6. nexo_student_profiles in localStorage
+  if (email) {
+    try {
+      const profiles = JSON.parse(
+        localStorage.getItem("nexo_student_profiles") || "{}",
+      );
+      if (profiles[email] && profiles[email].profilePicture) {
+        return profiles[email].profilePicture;
+      }
+    } catch (_) {}
+  }
+
+  // 7. nexo_users in localStorage
+  if (email) {
+    try {
+      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+      if (Array.isArray(users)) {
+        const matched = users.find(
+          (u) => (u.email || "").toLowerCase().trim() === email,
+        );
+        if (matched && matched.profilePicture) {
+          return matched.profilePicture;
+        }
+      }
+    } catch (_) {}
+  }
+
+  return "";
+}
+
 function syncGlobalStudentIdentity() {
   const currentEmail = (
     sessionStorage.getItem("nexo-student-email") ||
@@ -239,11 +318,31 @@ function syncGlobalStudentIdentity() {
     }
   } catch (_) {}
 
+  if (!studentSettings && currentEmail) {
+    try {
+      const rawScoped = localStorage.getItem(`nexo_student_settings_${currentEmail}`);
+      if (rawScoped) {
+        studentSettings = JSON.parse(rawScoped);
+      }
+    } catch (_) {}
+  }
+
   const effectiveName = (studentSettings && studentSettings.fullName) || storedName;
-  const avatarPic =
-    sessionStorage.getItem("nexo-student-avatar") ||
-    (studentSettings && studentSettings.profilePicture) ||
-    "";
+  const avatarPic = getStudentAvatar(currentEmail);
+
+  if (avatarPic) {
+    try {
+      if (!sessionStorage.getItem("nexo-student-avatar")) {
+        sessionStorage.setItem("nexo-student-avatar", avatarPic);
+      }
+      if (!localStorage.getItem("nexo-student-avatar")) {
+        localStorage.setItem("nexo-student-avatar", avatarPic);
+      }
+      if (currentEmail && !localStorage.getItem("nexo_avatar_" + currentEmail)) {
+        localStorage.setItem("nexo_avatar_" + currentEmail, avatarPic);
+      }
+    } catch (_) {}
+  }
 
   if (avatarEl) {
     if (avatarPic) {
@@ -292,6 +391,7 @@ function syncGlobalStudentIdentity() {
 }
 
 window.getDynamicInitials = getDynamicInitials;
+window.getStudentAvatar = getStudentAvatar;
 window.isStudentProfileComplete = isStudentProfileComplete;
 window.syncGlobalStudentIdentity = syncGlobalStudentIdentity;
 
@@ -299,7 +399,12 @@ document.addEventListener("DOMContentLoaded", () => {
   syncGlobalStudentIdentity();
 });
 window.addEventListener("storage", (e) => {
-  if (e.key === "nexo_student_settings" || e.key === "nexo-student-name") {
+  if (
+    e.key === "nexo_student_settings" ||
+    e.key === "nexo-student-name" ||
+    e.key === "nexo-student-avatar" ||
+    (e.key && e.key.startsWith("nexo_avatar_"))
+  ) {
     syncGlobalStudentIdentity();
   }
 });

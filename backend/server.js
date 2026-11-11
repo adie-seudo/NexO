@@ -1331,7 +1331,16 @@ async function handleRequest(req, res) {
         if (queryEmail) {
           data.studentProfiles = data.studentProfiles || {};
           if (data.studentProfiles[queryEmail]) {
-            return sendJson(res, 200, data.studentProfiles[queryEmail]);
+            const prof = data.studentProfiles[queryEmail];
+            if (!prof.profilePicture) {
+              const matched = (data.users || []).find(
+                (u) => String(u.email || "").toLowerCase() === queryEmail,
+              );
+              if (matched && matched.profilePicture) {
+                prof.profilePicture = matched.profilePicture;
+              }
+            }
+            return sendJson(res, 200, prof);
           }
           const matched = (data.users || []).find(
             (u) => String(u.email || "").toLowerCase() === queryEmail,
@@ -1467,7 +1476,8 @@ async function handleRequest(req, res) {
         data.studentProfiles[email] = updated;
 
         if (
-          data.studentSettings &&
+          !data.studentSettings ||
+          !data.studentSettings.email ||
           String(data.studentSettings.email || "").toLowerCase() === email
         ) {
           data.studentSettings = updated;
@@ -1481,7 +1491,7 @@ async function handleRequest(req, res) {
           if (updated.contactNumber) matchedUser.contactNumber = updated.contactNumber;
           matchedUser.bio = updated.bio || "";
           matchedUser.isProfileConfirmed = updated.isProfileConfirmed;
-          if (updated.profilePicture) {
+          if (updated.profilePicture !== undefined) {
             matchedUser.profilePicture = updated.profilePicture;
           }
         }
