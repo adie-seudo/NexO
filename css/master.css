@@ -450,8 +450,8 @@ button:disabled,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 72px;
-  padding: 0 20px;
+  height: 60px;
+  padding: 0 18px;
   background-color: rgba(255, 255, 255, 0.42) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
@@ -471,7 +471,7 @@ button:disabled,
   transform: none !important;
 }
 body.dark-theme .global-header {
-  background-color: rgba(15, 23, 42, 0.45) !important;
+  background-color: rgba(10, 13, 18, 0.38) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   border: none !important;
@@ -591,7 +591,7 @@ body.dark-theme .global-header {
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
-  padding: 68px 14px 20px 14px;
+  padding: 58px 14px 20px 14px;
   margin: 0;
   overflow-y: auto;
   overflow-x: hidden;
