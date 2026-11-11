@@ -31,33 +31,36 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sessionEmailInitial && initialEmail) sessionEmailInitial.textContent = initialEmail;
 
   // -------------------------------------------------------------
-  // 1. TAB SWITCHING SYSTEM
+  // 1. EXPANDABLE SETTINGS CATEGORY BARS (Independent Accordions)
   // -------------------------------------------------------------
-  const tabButtons = document.querySelectorAll(".settings-tab-btn");
-  const tabPanels = document.querySelectorAll(".settings-panel");
-
-  tabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-tab");
-      tabButtons.forEach((b) => b.classList.remove("active"));
-      tabPanels.forEach((p) => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      const targetPanel = document.getElementById(targetId);
-      if (targetPanel) {
-        targetPanel.classList.add("active");
-      }
+  const categoryBars = document.querySelectorAll(".settings-category-bar");
+  categoryBars.forEach((bar) => {
+    bar.addEventListener("click", (e) => {
+      e.preventDefault();
+      const group = bar.closest(".settings-category-group");
+      if (!group) return;
+      const isOpen = group.classList.contains("is-open");
+      group.classList.toggle("is-open", !isOpen);
+      bar.setAttribute("aria-expanded", String(!isOpen));
     });
   });
 
-  // Check URL query parameters for active tab (e.g., ?tab=panel-student-preferences)
+  // Check URL query parameters for category to open (e.g., ?category=preferences or ?tab=preferences)
   const urlParams = new URLSearchParams(window.location.search);
-  const activeTabParam = urlParams.get("tab");
-  if (activeTabParam) {
-    const matchingBtn = document.querySelector(
-      `[data-tab="${activeTabParam}"]`,
-    );
-    if (matchingBtn) matchingBtn.click();
+  const targetCategory = urlParams.get("category") || urlParams.get("tab");
+  if (targetCategory) {
+    const cleanName = targetCategory
+      .replace("panel-student-", "")
+      .replace("category-student-", "");
+    const match = document.getElementById(`category-student-${cleanName}`);
+    if (match) {
+      document
+        .querySelectorAll(".settings-category-group")
+        .forEach((g) => g.classList.remove("is-open"));
+      match.classList.add("is-open");
+      const barBtn = match.querySelector(".settings-category-bar");
+      if (barBtn) barBtn.setAttribute("aria-expanded", "true");
+    }
   }
 
   // -------------------------------------------------------------
@@ -512,17 +515,8 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       if (statusBanner) {
-        statusBanner.style.display = "flex";
-        statusBanner.style.background = "rgba(16, 185, 129, 0.08)";
-        statusBanner.style.border = "1px solid rgba(16, 185, 129, 0.4)";
-        statusBanner.style.color = "#10b981";
-        statusBanner.innerHTML = `
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <div>
-            <strong style="display:block; font-size:14px; margin-bottom:2px; color:#10b981;">✓ Academic Records Verified & Confirmed</strong>
-            Your official student profile and academic records are verified. You are fully eligible to apply for scholarships. Academic records are locked, and your Bio can be updated anytime.
-          </div>
-        `;
+        statusBanner.style.display = "none";
+        statusBanner.innerHTML = "";
       }
     } else {
       // UNCONFIRMED STATE - All editable fields are open
@@ -908,7 +902,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------------
-  // 7. PASSWORD TOGGLES & CHANGE PASSWORD FORM
+  // 7. PASSWORD TOGGLES & CHANGE PASSWORD FORM (DESIGN PREVIEW ONLY)
   // -------------------------------------------------------------
   document.querySelectorAll(".password-toggle-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -922,71 +916,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const passForm = document.getElementById("student-password-form");
   if (passForm) {
-    passForm.addEventListener("submit", async (e) => {
+    passForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      const curr = document.getElementById("student-curr-pass").value;
-      const newP = document.getElementById("student-new-pass").value;
-      const conf = document.getElementById("student-confirm-pass").value;
-
-      if (!curr || !newP || !conf) {
-        showToast("Please fill in all password fields.", true);
-        return;
-      }
-      if (newP.length < 8) {
-        showToast("New password must be at least 8 characters.", true);
-        return;
-      }
-      if (newP !== conf) {
-        showToast("New passwords do not match.", true);
-        return;
-      }
-
-      const currentStudentEmail = (
-        sessionStorage.getItem("nexo-student-email") ||
-        localStorage.getItem("nexo-student-email") ||
-        ""
-      ).toLowerCase();
-
-      try {
-        const res = await fetch(`${API_BASE}/api/settings/password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: currentStudentEmail,
-            role: "student",
-            currentPassword: curr,
-            newPassword: newP,
-            confirmPassword: conf,
-          }),
-        });
-        if (res.ok) {
-          showToast("Password updated successfully!");
-          passForm.reset();
-          try {
-            const uList = JSON.parse(
-              localStorage.getItem("nexo_users") || "[]",
-            );
-            const u = uList.find(
-              (x) => (x.email || "").toLowerCase() === currentStudentEmail,
-            );
-            if (u) {
-              u.password = newP;
-              localStorage.setItem("nexo_users", JSON.stringify(uList));
-            }
-          } catch (_) {}
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          showToast(errData.message || "Failed to update password.", true);
-        }
-      } catch (err) {
-        showToast("Password updated successfully!");
-        passForm.reset();
-      }
+      // Design preview only - functionality not active yet per user request
+      showToast("Security settings are currently in preview mode");
     });
   }
 
   // -------------------------------------------------------------
-  // 8. THEME TOGGLES & INITIAL LOAD
+  // 8. AUTO-APPLYING PREFERENCES & THEME TOGGLES
   // -------------------------------------------------------------
   const prefDarkToggle = document.getElementById("pref-student-dark-mode");
   const topHeaderToggle =
@@ -1022,6 +960,50 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 50);
     });
   }
+
+  // Auto-apply notification alert preference changes immediately
+  const notifMatches = document.getElementById("pref-notif-matches");
+  const notifStatus = document.getElementById("pref-notif-status");
+  const notifDeadlines = document.getElementById("pref-notif-deadlines");
+
+  const autoSavePreferences = () => {
+    const savedEmail = (
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      (activeStudentSettings && activeStudentSettings.email) ||
+      ""
+    ).toLowerCase().trim();
+
+    const notifData = {
+      scholarshipMatches: notifMatches ? notifMatches.checked : true,
+      applicationUpdates: notifStatus ? notifStatus.checked : true,
+      deadlineReminders: notifDeadlines ? notifDeadlines.checked : true,
+    };
+
+    if (activeStudentSettings) {
+      activeStudentSettings.notifications = notifData;
+    }
+
+    try {
+      localStorage.setItem("nexo_student_notifications", JSON.stringify(notifData));
+      if (savedEmail) {
+        localStorage.setItem(`nexo_student_notifications_${savedEmail}`, JSON.stringify(notifData));
+        const rawSettings = localStorage.getItem(`nexo_student_settings_${savedEmail}`);
+        if (rawSettings) {
+          const parsed = JSON.parse(rawSettings);
+          parsed.notifications = notifData;
+          localStorage.setItem(`nexo_student_settings_${savedEmail}`, JSON.stringify(parsed));
+        }
+      }
+    } catch (_) {}
+    showToast("Preferences updated");
+  };
+
+  [notifMatches, notifStatus, notifDeadlines].forEach((el) => {
+    if (el) {
+      el.addEventListener("change", autoSavePreferences);
+    }
+  });
 
   // Run initial load
   loadSettings();

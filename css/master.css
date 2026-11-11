@@ -486,15 +486,29 @@ body.dark-theme .global-header {
   display: flex;
   align-items: center;
 }
-.nexo-logo {
-  height: 40px;
-  width: auto;
+.nexo-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  user-select: none;
 }
-.logo-text {
+.nexo-logo,
+.nexo-brand-logo {
+  width: 34px !important;
+  height: 34px !important;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+}
+.logo-text,
+.nexo-brand-text {
   font-family: var(--font-heading);
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 20px;
   color: var(--text-primary);
+  letter-spacing: -0.4px;
+  line-height: 1;
 }
 .header-actions {
   display: flex;

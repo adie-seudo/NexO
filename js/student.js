@@ -1437,23 +1437,17 @@ function openSubmissionDetailsModal(app) {
           </h5>
           <div id="modal-sub-doc-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
-        <!-- VERIFIED APPLICANT IDENTITY (Redesigned Modern Structured Layout) -->
+        <!-- APPLICANT IDENTITY (Redesigned Modern Structured Layout) -->
         <div class="sub-identity-card">
-          <!-- Identity Header: Avatar + Student Name + Verified Pill -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
-            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-              <div id="modal-sub-student-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; border: 1.5px solid rgba(105, 65, 198, 0.25);">
-                ST
-              </div>
-              <div style="min-width: 0;">
-                <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); display: block;">Verified Applicant Identity</span>
-                <h4 id="modal-sub-student-name" style="margin: 2px 0 0 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student Scholar</h4>
-              </div>
+          <!-- Identity Header: Avatar + Student Name -->
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+            <div id="modal-sub-student-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; border: 1.5px solid rgba(105, 65, 198, 0.25);">
+              ST
             </div>
-            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; background: rgba(16, 185, 129, 0.12); color: #10B981; font-size: 11.5px; font-weight: 700; flex-shrink: 0;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              Verified
-            </span>
+            <div style="min-width: 0;">
+              <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); display: block;">Applicant Identity</span>
+              <h4 id="modal-sub-student-name" style="margin: 2px 0 0 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student Scholar</h4>
+            </div>
           </div>
 
           <!-- Information Grid: 2 columns, aligned, no dots -->
@@ -1833,16 +1827,6 @@ function openSubmissionDetailsModal(app) {
           docListEl.appendChild(fuItem);
         });
       }
-
-      // 3. Document Integrity Notice
-      const lockNotice = document.createElement("div");
-      lockNotice.style.cssText =
-        "margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;";
-      lockNotice.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked on record to maintain verification integrity. Only requirements designated as <em>"To Follow Up"</em> allow additional file attachments.</span>
-      `;
-      docListEl.appendChild(lockNotice);
     }
   }
 
