@@ -1956,7 +1956,6 @@ function initSubmissionsFiltering() {
   const filterDropdownWrapper = document.getElementById(
     "dropdown-wrapper-submissions-filter",
   );
-  const filterLabel = document.getElementById("label-submissions-filter");
   const searchInput = document.getElementById("submissions-search-input");
   const resetBtn = document.getElementById("reset-submissions-filter");
   const legacyFilterTabs = document.getElementById("submissions-status-filters");
@@ -1972,11 +1971,11 @@ function initSubmissionsFiltering() {
   };
 
   const updateDropdownUI = (activeStatus) => {
-    if (filterLabel) {
-      filterLabel.textContent = statusLabelMap[activeStatus] || "Status";
-    }
     if (filterDropdownBtn) {
       filterDropdownBtn.classList.toggle("is-filtered", activeStatus !== "all");
+      const statusTitle = statusLabelMap[activeStatus] || "Status";
+      filterDropdownBtn.title =
+        activeStatus === "all" ? "Filter by status" : `Filter: ${statusTitle}`;
     }
     if (filterDropdownMenu) {
       filterDropdownMenu

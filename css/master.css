@@ -5778,6 +5778,80 @@ body.dark-theme .doc-callout svg {
   gap: 10px;
   width: 100%;
 }
+.submissions-search-filter-row .browse-search-wrapper {
+  flex: 1;
+  margin-bottom: 0;
+}
+.submissions-search-filter-row .directory-dropdown-menu {
+  right: 0;
+  left: auto;
+}
+.directory-filter-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1.5px solid var(--border-color, #D0D5DD);
+  color: var(--text-secondary, #344054);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.directory-filter-icon-btn:hover {
+  border-color: #7F56D9;
+  color: #6941C6;
+  background-color: #F9F5FF;
+}
+.directory-filter-icon-btn.is-filtered,
+.directory-filter-icon-btn.active {
+  background-color: #F4EBFF !important;
+  border-color: #7F56D9 !important;
+  color: #6941C6 !important;
+  box-shadow: 0 0 0 3px rgba(127, 86, 217, 0.16) !important;
+}
+.directory-filter-icon-btn.is-filtered::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #7F56D9;
+  border: 2px solid var(--bg-surface, #ffffff);
+}
+body.dark-theme .directory-filter-icon-btn {
+  background-color: #1A1F2C;
+  border-color: #374151;
+  color: #D1D5DB;
+}
+body.dark-theme .directory-filter-icon-btn:hover {
+  border-color: #8B5CF6;
+  color: #D6BBFB;
+  background-color: #241A3D;
+}
+body.dark-theme .directory-filter-icon-btn.is-filtered,
+body.dark-theme .directory-filter-icon-btn.active {
+  background-color: #2E1B4E !important;
+  border-color: #8B5CF6 !important;
+  color: #D6BBFB !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.26) !important;
+}
+body.dark-theme .directory-filter-icon-btn.is-filtered::after {
+  background-color: #A78BFA;
+  border-color: #1A1F2C;
+}
 .sub-filter-badge {
   margin-left: auto;
   font-size: 11px;

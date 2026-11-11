@@ -117,12 +117,18 @@
 
           <!-- Status Filter Dropdown on Right Side -->
           <div class="directory-filter-dropdown" id="dropdown-wrapper-submissions-filter">
-            <button type="button" class="directory-pill-btn" id="btn-submissions-filter" aria-haspopup="true" aria-expanded="false">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 2px;">
+            <button
+              type="button"
+              class="directory-filter-icon-btn"
+              id="btn-submissions-filter"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Filter submissions by status"
+              title="Filter by status"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
-              <span id="label-submissions-filter">Status</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <div class="directory-dropdown-menu" id="menu-submissions-filter" role="menu" style="min-width: 200px; right: 0; left: auto;">
               <button type="button" class="directory-dropdown-item active" data-filter="all" role="menuitem">
