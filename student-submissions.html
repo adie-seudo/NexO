@@ -189,23 +189,25 @@
     <!-- ========================================= -->
     <div id="student-sub-modal-overlay" class="schol-modal-overlay" aria-hidden="true">
       <div class="schol-modal-sheet" id="student-sub-modal-sheet" style="max-width: 560px;">
-        <!-- Modal Top Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
+        <!-- Modal Top Bar: Consistent Clean X Close Button -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+          <button
+            type="button"
+            id="close-student-sub-modal"
+            class="modal-close-icon-btn"
+            aria-label="Close details"
+            title="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
-            <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">Application Details</h3>
-          </div>
-          <button type="button" id="close-student-sub-modal" style="background: none; border: none; font-size: 26px; line-height: 1; color: var(--text-secondary); cursor: pointer; padding: 2px 6px;">&times;</button>
+          </button>
         </div>
 
         <!-- Program & Provider Header -->
         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
-          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%;">NX</div>
+          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">NX</div>
           <div style="flex: 1; min-width: 0;">
             <h4 id="modal-sub-title" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;">Scholarship Program</h4>
             <p id="modal-sub-provider" style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provider Organization</p>
@@ -236,16 +238,13 @@
           </div>
         </div>
 
-        <!-- SUBMISSION METADATA -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
-            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Date Submitted</span>
-            <strong id="modal-sub-date" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">Nov 8, 2026</strong>
+        <!-- SUBMISSION METADATA (Clearer Date Submitted, Grant Capacity Removed) -->
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary);">Date Submitted</span>
           </div>
-          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
-            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Grant Capacity</span>
-            <strong id="modal-sub-capacity" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">1 / 200 Applicants</strong>
-          </div>
+          <strong id="modal-sub-date" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Nov 8, 2026</strong>
         </div>
 
         <!-- ATTACHED DOCUMENTS LIST -->
@@ -261,15 +260,15 @@
           </div>
         </div>
 
-        <!-- STUDENT SUBMITTED PROFILE INFO -->
-        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px dashed var(--border-color); margin-bottom: 24px;">
+        <!-- STUDENT SUBMITTED PROFILE INFO (Solid Border Line) -->
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 24px;">
           <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
           <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Student Scholar</p>
           <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">Verified Student Account</p>
         </div>
 
-        <!-- CLOSE ACTION BUTTON -->
-        <button type="button" id="btn-close-sub-modal" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px;">
+        <!-- CLOSE ACTION BUTTON (Consistent Pill Design) -->
+        <button type="button" id="btn-close-sub-modal" class="btn-sub-modal-close" style="width: 100%; padding: 12px 24px; font-size: 14px; font-weight: 700; border-radius: 100px; background: #6941C6; color: #ffffff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(105, 65, 198, 0.35); transition: all 0.2s ease;">
           Close Details
         </button>
       </div>

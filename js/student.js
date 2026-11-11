@@ -64,6 +64,53 @@ window.handleMenuToggle = function (e) {
 };
 
 // =========================================
+// HELPER: Resolve Provider Profile Picture for Submissions
+// =========================================
+function resolveAppProviderLogo(app) {
+  if (app && app.providerLogo && String(app.providerLogo).trim()) {
+    return app.providerLogo;
+  }
+  if (app && app.logo && String(app.logo).trim()) {
+    return app.logo;
+  }
+  let schols = window.cachedScholarships || [];
+  if (schols.length === 0) {
+    try {
+      schols = JSON.parse(localStorage.getItem("nexo_scholarships") || "[]");
+    } catch (_) {}
+  }
+  const match = schols.find(
+    (s) =>
+      (app && app.scholarshipId && s.id && String(s.id) === String(app.scholarshipId)) ||
+      (app && app.scholarshipTitle && s.title && s.title.toLowerCase() === app.scholarshipTitle.toLowerCase()) ||
+      (app && app.title && s.title && s.title.toLowerCase() === app.title.toLowerCase())
+  );
+  if (match) {
+    if (match.providerLogo && String(match.providerLogo).trim()) return match.providerLogo;
+    if (match.logoImage && String(match.logoImage).trim()) return match.logoImage;
+  }
+
+  let pSet = window.cachedProviderSettings;
+  if (!pSet) {
+    try {
+      pSet = JSON.parse(localStorage.getItem("nexo_provider_settings") || localStorage.getItem("nexo_settings") || "null");
+    } catch (_) {}
+  }
+  const activeOrgName = (pSet && pSet.orgName) || localStorage.getItem("nexo-provider-name") || "NEXO";
+  const appOrg = (app && (app.providerName || app.organization) ? (app.providerName || app.organization).trim() : "");
+  if (!appOrg || appOrg.toLowerCase() === activeOrgName.toLowerCase() || appOrg.toLowerCase() === "nexo") {
+    if (pSet && pSet.logoImage && String(pSet.logoImage).trim()) {
+      return pSet.logoImage;
+    }
+    const lsLogo = localStorage.getItem("nexo-provider-logo") || "";
+    if (lsLogo && String(lsLogo).trim()) {
+      return lsLogo;
+    }
+  }
+  return "";
+}
+
+// =========================================
 // 2. NOTIFICATION BELL & LIVE POPOVER
 // =========================================
 function escapeStudentNotifHtml(text) {
@@ -634,6 +681,8 @@ async function loadStudentData() {
     }
     const data = await response.json();
     applications = Array.isArray(data.applications) ? data.applications : [];
+    if (data.settings) window.cachedProviderSettings = data.settings;
+    if (Array.isArray(data.scholarships)) window.cachedScholarships = data.scholarships;
 
     // Sync student settings and avatar from server data
     let serverProfile = null;
@@ -1048,9 +1097,10 @@ function renderApplicationCards(applications, container) {
       .join("")
       .toUpperCase();
 
+    const resolvedLogo = resolveAppProviderLogo(app);
     const logoHtml =
-      app.logo || app.providerLogo
-        ? `<img src="${app.logo || app.providerLogo}" alt="${escapeHtml(orgName)}" class="student-app-logo" />`
+      resolvedLogo
+        ? `<img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" class="student-app-logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
         : `<div class="student-app-logo">${initials || "NX"}</div>`;
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
@@ -1169,15 +1219,23 @@ function openSubmissionDetailsModal(app) {
     modalOverlay.setAttribute("aria-hidden", "true");
     modalOverlay.innerHTML = `
       <div class="schol-modal-sheet" id="student-sub-modal-sheet" style="max-width: 560px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            <h3 style="font-size: 18px; font-weight: 700; margin: 0; color: var(--text-primary);">Application Details</h3>
-          </div>
-          <button type="button" id="close-student-sub-modal" style="background: none; border: none; font-size: 26px; line-height: 1; color: var(--text-secondary); cursor: pointer; padding: 2px 6px;">&times;</button>
+        <!-- Modal Top Bar: Consistent Clean X Close Button -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+          <button
+            type="button"
+            id="close-student-sub-modal"
+            class="modal-close-icon-btn"
+            aria-label="Close details"
+            title="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
-          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%;">NX</div>
+          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; font-size: 16px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">NX</div>
           <div style="flex: 1; min-width: 0;">
             <h4 id="modal-sub-title" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;">Scholarship Program</h4>
             <p id="modal-sub-provider" style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provider Organization</p>
@@ -1194,34 +1252,35 @@ function openSubmissionDetailsModal(app) {
         </div>
         <div style="margin-bottom: 22px;">
           <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
             Provider Remarks &amp; Follow-Up Message
           </h5>
           <div id="modal-sub-feedback-box" style="padding: 14px 16px; border-radius: 12px; background: var(--bg-canvas); border: 1px solid var(--border-color); font-size: 13.5px; line-height: 1.55; color: var(--text-primary);"></div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
-            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Date Submitted</span>
-            <strong id="modal-sub-date" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">Nov 8, 2026</strong>
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary);">Date Submitted</span>
           </div>
-          <div style="padding: 10px 12px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color);">
-            <span style="font-size: 11px; color: var(--text-secondary); display: block;">Grant Capacity</span>
-            <strong id="modal-sub-capacity" style="font-size: 13px; color: var(--text-primary); margin-top: 2px; display: block;">1 / 200 Applicants</strong>
-          </div>
+          <strong id="modal-sub-date" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Nov 8, 2026</strong>
         </div>
         <div style="margin-bottom: 24px;">
           <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
             Attached Verification Documents (<span id="modal-sub-doc-count">0</span>)
           </h5>
           <div id="modal-sub-doc-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
         </div>
-        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px dashed var(--border-color); margin-bottom: 24px;">
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 24px;">
           <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; display: block; margin-bottom: 4px;">Verified Applicant Identity</span>
           <p style="margin: 0; font-size: 13px; color: var(--text-primary); font-weight: 600;" id="modal-sub-student-name">Student Scholar</p>
           <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-secondary);" id="modal-sub-student-info">Verified Student Account</p>
         </div>
-        <button type="button" id="btn-close-sub-modal" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600; border-radius: 10px;">
+        <button type="button" id="btn-close-sub-modal" class="btn-sub-modal-close" style="width: 100%; padding: 12px 24px; font-size: 14px; font-weight: 700; border-radius: 100px; background: #6941C6; color: #ffffff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 8px rgba(105, 65, 198, 0.35); transition: all 0.2s ease;">
           Close Details
         </button>
       </div>
@@ -1239,8 +1298,9 @@ function openSubmissionDetailsModal(app) {
   if (titleEl) titleEl.textContent = title;
   if (provEl) provEl.textContent = org;
   if (logoEl) {
-    if (app.logo || app.providerLogo) {
-      logoEl.innerHTML = `<img src="${app.logo || app.providerLogo}" alt="${escapeHtml(org)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    const resolvedLogo = resolveAppProviderLogo(app);
+    if (resolvedLogo) {
+      logoEl.innerHTML = `<img src="${resolvedLogo}" alt="${escapeHtml(org)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
     } else {
       const inits = org
         .split(" ")
@@ -1313,51 +1373,39 @@ function openSubmissionDetailsModal(app) {
     }
   }
 
-  // Populate Provider Feedback / Follow-Up Message
+  // Populate Provider Feedback / Follow-Up Message (Straight to the point remark)
   const feedbackBox = document.getElementById("modal-sub-feedback-box");
   const feedbackMsg = app.remarks || app.feedback || app.notes;
 
   if (feedbackBox) {
-    if (feedbackMsg && feedbackMsg.trim()) {
-      feedbackBox.innerHTML = `
-        <div style="background: rgba(139, 92, 246, 0.08); border-left: 4px solid #8b5cf6; border-radius: 8px; padding: 12px 14px;">
-          <strong style="color: #8b5cf6; font-size: 12.5px; display: block; margin-bottom: 4px;">Official Provider Remarks:</strong>
-          <span style="white-space: pre-wrap; font-size: 13.5px; line-height: 1.55; color: var(--text-primary);">${escapeHtml(feedbackMsg)}</span>
-        </div>
-      `;
-    } else {
-      let defaultMsg =
-        "Your academic verification files are currently on record with the scholarship evaluation committee. Official follow-up notes from the provider will appear here once processed.";
+    let msg = feedbackMsg && feedbackMsg.trim() ? feedbackMsg.trim() : "";
+    if (!msg) {
       if (rawStatus.includes("approved")) {
-        defaultMsg =
-          "Congratulations! Your scholarship application has been officially approved. Please monitor your institutional university email and contact phone for disbursement and onboarding instructions outside of NexO.";
+        msg =
+          "Congratulations! Your scholarship application has been officially approved. Please monitor your institutional university email and contact phone for disbursement and onboarding instructions outside of NEXO.";
       } else if (rawStatus.includes("rejected")) {
-        defaultMsg =
+        msg =
           "Thank you for applying. After careful evaluation of all applicants, your application was not accepted for this cycle. You are encouraged to explore other grants.";
       } else if (rawStatus.includes("review")) {
-        defaultMsg =
+        msg =
           "Your application and verification documents are currently under evaluation by the scholarship committee. Official follow-up notes from the provider will appear here.";
+      } else {
+        msg =
+          "Your academic verification files are currently on record with the scholarship evaluation committee. Official follow-up notes from the provider will appear here once processed.";
       }
-      feedbackBox.innerHTML = `
-        <div style="background: rgba(139, 92, 246, 0.05); border-left: 4px solid #a855f7; border-radius: 8px; padding: 12px 14px;">
-          <strong style="color: #a855f7; font-size: 12px; display: block; margin-bottom: 4px;">Evaluation Status Remark:</strong>
-          <p style="margin: 0; font-size: 13px; color: var(--text-secondary); line-height: 1.5;">${escapeHtml(defaultMsg)}</p>
-        </div>
-      `;
     }
+    feedbackBox.innerHTML = `
+      <div style="background: rgba(139, 92, 246, 0.06); border-left: 4px solid #8b5cf6; border-radius: 8px; padding: 12px 14px;">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-primary); line-height: 1.55; white-space: pre-wrap;">${escapeHtml(msg)}</p>
+      </div>
+    `;
   }
 
-  // Populate Dates & Capacity
+  // Populate Date Submitted (Clearer date, Grant Capacity removed)
   const dateEl = document.getElementById("modal-sub-date");
-  const capEl = document.getElementById("modal-sub-capacity");
-  if (dateEl)
+  if (dateEl) {
     dateEl.textContent =
       app.formattedDate || app.appliedDate || "Recently Applied";
-  if (capEl) {
-    let cap = app.applicantCount || "1 / 200 Applicants";
-    if (cap.includes("/ 10 Applicants"))
-      cap = cap.replace("/ 10 Applicants", "/ 200 Applicants");
-    capEl.textContent = cap;
   }
 
   // Populate Documents List
@@ -1420,9 +1468,9 @@ function openSubmissionDetailsModal(app) {
         docListEl.appendChild(docItem);
       });
 
-      // 2. Requirements To Follow Up (With Direct In-Modal Upload Ability)
+      // 2. Requirements To Follow Up
       if (followUpDocs.length > 0) {
-        followUpDocs.forEach((doc, fuIdx) => {
+        followUpDocs.forEach((doc) => {
           const reqTitle =
             typeof doc === "object"
               ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
@@ -1430,128 +1478,23 @@ function openSubmissionDetailsModal(app) {
 
           const fuItem = document.createElement("div");
           fuItem.style.cssText =
-            "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 12px; background: rgba(245, 158, 11, 0.06); border: 1.5px dashed rgba(245, 158, 11, 0.4); gap: 10px; margin-top: 6px;";
+            "display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.35); gap: 10px;";
           fuItem.innerHTML = `
-            <input type="file" id="fu-file-input-${fuIdx}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-                <div style="min-width: 0;">
-                  <p style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    ${escapeHtml(reqTitle)}
-                  </p>
-                  <span style="font-size: 11px; color: #D97706; font-weight: 600;">Incomplete &bull; Pending Document Upload</span>
-                </div>
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
-              <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
-                To Follow Up
-              </span>
+              <div style="min-width: 0;">
+                <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${escapeHtml(reqTitle)}
+                </p>
+                <span style="font-size: 11px; color: #D97706; font-weight: 600;">Pending</span>
+              </div>
             </div>
-
-            <button type="button" class="btn btn-primary" id="btn-upload-fu-${fuIdx}" style="width: 100%; min-height: 40px; padding: 0 14px; font-size: 13px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-              <span>Upload Document Now</span>
-            </button>
+            <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
+              To Follow Up
+            </span>
           `;
-
-          const fileInput = fuItem.querySelector(`#fu-file-input-${fuIdx}`);
-          const btnUploadFu = fuItem.querySelector(`#btn-upload-fu-${fuIdx}`);
-
-          if (btnUploadFu && fileInput) {
-            btnUploadFu.onclick = () => fileInput.click();
-
-            fileInput.onchange = async (e) => {
-              const file = e.target.files[0];
-              if (!file) return;
-
-              if (file.size > 5 * 1024 * 1024) {
-                alert("File size exceeds 5MB limit. Please choose a smaller file.");
-                fileInput.value = "";
-                return;
-              }
-
-              btnUploadFu.disabled = true;
-              btnUploadFu.innerHTML = `
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
-                  <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-                  <path d="M12 2a10 10 0 0 1 10 10"></path>
-                </svg>
-                Uploading...
-              `;
-
-              const reader = new FileReader();
-              reader.onload = async () => {
-                const base64Data = reader.result;
-                const formattedSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
-
-                const followUpPayload = {
-                  followUpDocument: {
-                    name: file.name,
-                    title: reqTitle,
-                    requirement: reqTitle,
-                    size: formattedSize,
-                    type: file.type || "application/pdf",
-                    data: base64Data,
-                    status: "attached",
-                    isFollowUp: false,
-                  },
-                };
-
-                try {
-                  const res = await fetch(`${API_BASE}/api/applications/${app.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(followUpPayload),
-                  }).catch(() => null);
-
-                  if (res && res.ok) {
-                    const resData = await res.json();
-                    if (resData.application) {
-                      Object.assign(app, resData.application);
-                    }
-                  } else {
-                    const updatedDocs = (app.documents || []).map((d) => {
-                      const dName = typeof d === "string" ? d : d.requirement || d.title || d.name || "";
-                      if (dName.toLowerCase().includes(reqTitle.toLowerCase())) {
-                        return {
-                          name: file.name,
-                          title: reqTitle,
-                          requirement: reqTitle,
-                          size: formattedSize,
-                          type: file.type || "application/pdf",
-                          status: "attached",
-                          isFollowUp: false,
-                        };
-                      }
-                      return d;
-                    });
-                    app.documents = updatedDocs;
-                    app.uploadedDocuments = updatedDocs
-                      .filter((d) => (typeof d === "string" ? !d.includes("(To Follow Up)") : !d.isFollowUp))
-                      .map((d) => (typeof d === "string" ? d : d.name));
-                  }
-                } catch (err) {
-                  console.warn("Could not patch application follow-up doc:", err);
-                }
-
-                try {
-                  const cached = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
-                  const idx = cached.findIndex((a) => String(a.id) === String(app.id));
-                  if (idx !== -1) {
-                    cached[idx] = app;
-                    localStorage.setItem("nexo_applications", JSON.stringify(cached));
-                  }
-                } catch (_) {}
-
-                openSubmissionDetailsModal(app);
-                alert(`"${file.name}" has been uploaded successfully and submitted to the scholarship provider!`);
-              };
-              reader.readAsDataURL(file);
-            };
-          }
-
           docListEl.appendChild(fuItem);
         });
       }
@@ -1562,7 +1505,7 @@ function openSubmissionDetailsModal(app) {
         "margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.2); font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; display: flex; align-items: flex-start; gap: 8px;";
       lockNotice.innerHTML = `
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" style="flex-shrink: 0; margin-top: 1px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked to maintain verification integrity. Only requirements designated as <em>"To Follow Up"</em> allow additional file attachments.</span>
+        <span><strong>Document Integrity Notice:</strong> Submitted documents are locked on record to maintain verification integrity.</span>
       `;
       docListEl.appendChild(lockNotice);
     }

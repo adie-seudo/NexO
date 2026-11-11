@@ -4732,6 +4732,37 @@ body.dark-theme .modal-close-icon-btn:hover {
   background: #322d4a;
   color: #FFFFFF;
 }
+
+/* Submission Modal Primary Close Button (Consistent with View My Submission pill design) */
+.btn-sub-modal-close {
+  background-color: #6941C6;
+  color: #ffffff;
+  border: none;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(105, 65, 198, 0.35);
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+.btn-sub-modal-close:hover {
+  background-color: #53389E;
+  box-shadow: 0 4px 12px rgba(105, 65, 198, 0.45);
+  transform: translateY(-1px);
+}
+body.dark-theme .btn-sub-modal-close {
+  background-color: #7F56D9;
+}
+body.dark-theme .btn-sub-modal-close:hover {
+  background-color: #6941C6;
+}
 .directory-apply-btn {
   background-color: #6941C6;
   color: #FFFFFF;
