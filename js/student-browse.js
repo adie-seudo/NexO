@@ -162,6 +162,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return "";
   }
 
+  function resolveProviderBanner(item, pSettings) {
+    if (item && item.providerBanner && String(item.providerBanner).trim()) {
+      return item.providerBanner;
+    }
+    if (item && item.bannerImage && String(item.bannerImage).trim()) {
+      return item.bannerImage;
+    }
+    if (item && item.banner && String(item.banner).trim()) {
+      return item.banner;
+    }
+    const activeOrgName =
+      (pSettings && pSettings.orgName) ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
+    const itemOrg = (item && item.providerName ? item.providerName.trim() : "");
+    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+      const settingsBanner =
+        (pSettings && pSettings.bannerImage) ||
+        localStorage.getItem("nexo-provider-banner") ||
+        "";
+      if (settingsBanner) return settingsBanner;
+    }
+    return "";
+  }
+
   // -------------------------------------------------------------
   // 2. FETCH REAL-TIME SCHOLARSHIPS FROM BACKEND & DATA.JSON ONLY
   // (No fake seed scholarships - only synchronized provider posts)
@@ -267,6 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "";
     const orgBanner =
       (providerSettings && providerSettings.bannerImage) ||
+      localStorage.getItem("nexo-provider-banner") ||
       "";
 
     // Format for display
@@ -599,7 +625,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     displayedItems.forEach((item) => {
       const card = document.createElement("div");
-      card.className = "directory-card";
+
+      const resolvedBanner = resolveProviderBanner(item, providerSettings);
+      const hasCover = Boolean(resolvedBanner && String(resolvedBanner).trim());
+
+      card.className = `directory-card ${hasCover ? "has-cover" : ""}`;
 
       const resolvedLogo = resolveProviderLogo(item, providerSettings);
       const initials = getProviderInitials(item.providerName || "NEXO");
@@ -667,7 +697,17 @@ document.addEventListener("DOMContentLoaded", () => {
         item.applicantCount ||
         `0 / ${item.applicantLimit || item.maxApplicants || 200} Applicants`;
 
+      const coverHtml = hasCover
+        ? `
+        <div class="directory-card-cover" aria-hidden="true">
+          <div class="directory-card-cover-img" style="background-image: url('${escapeHtml(resolvedBanner)}');"></div>
+          <div class="directory-card-cover-fade"></div>
+        </div>
+        `
+        : "";
+
       card.innerHTML = `
+        ${coverHtml}
         <div class="directory-card-header">
           <div class="directory-card-brand">
             <div class="directory-card-logo">
@@ -819,11 +859,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const descEl = document.getElementById("modal-schol-desc");
     const reqsContainer = document.getElementById("modal-schol-reqs");
 
-    const bannerSrc =
-      schol.providerBanner ||
-      schol.bannerImage ||
-      schol.banner ||
-      "";
+    const bannerSrc = resolveProviderBanner(schol, providerSettings);
 
     if (coverImg) {
       if (bannerSrc && typeof bannerSrc === "string" && bannerSrc.trim()) {
