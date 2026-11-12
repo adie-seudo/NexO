@@ -609,29 +609,47 @@
     });
   }
 
+  function getApplicationTimestamp(app) {
+    if (!app) return 0;
+    const candidates = [
+      app.submittedAt,
+      app.appliedAt,
+      app.createdAt,
+      app.submissionDate,
+      app.date,
+    ];
+    for (const c of candidates) {
+      if (c) {
+        const t = new Date(c).getTime();
+        if (!isNaN(t) && t > 0) return t;
+      }
+    }
+    return 0;
+  }
+
   function getPostApplications(schol) {
     if (!schol) return [];
+    const targetId = String(schol.id || "").trim();
+    const targetTitle = String(schol.title || "").trim().toLowerCase();
+
     const related = allApplications.filter((app) => {
-      if (app.scholarshipId && schol.id && String(app.scholarshipId) === String(schol.id)) {
+      if (app.scholarshipId && targetId && String(app.scholarshipId).trim() === targetId) {
         return true;
       }
-      if (
-        schol.title &&
-        (String(app.scholarshipTitle || "").toLowerCase() ===
-          String(schol.title).toLowerCase() ||
-          String(app.title || "").toLowerCase() ===
-            String(schol.title).toLowerCase())
-      ) {
+      const appScholTitle = String(app.scholarshipTitle || app.title || "").trim().toLowerCase();
+      if (targetTitle && appScholTitle && appScholTitle === targetTitle) {
         return true;
       }
       return false;
     });
 
-    // Sort First-Come First-Served: oldest submission first (chronological order)
+    // Sort strictly First-Come, First-Served: earliest application submission timestamp first
     related.sort((a, b) => {
-      const timeA = new Date(a.submittedAt || a.appliedAt || a.createdAt || 0).getTime();
-      const timeB = new Date(b.submittedAt || b.appliedAt || b.createdAt || 0).getTime();
+      const timeA = getApplicationTimestamp(a);
+      const timeB = getApplicationTimestamp(b);
       if (timeA && timeB && timeA !== timeB) return timeA - timeB;
+      if (timeA && !timeB) return -1;
+      if (!timeA && timeB) return 1;
       return String(a.id || "").localeCompare(String(b.id || ""));
     });
 
@@ -674,7 +692,6 @@
       <div class="post-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%;">
         <div class="post-card-title-group" style="flex: 1; min-width: 0;">
           <h3 class="post-title-text">${escapeHtml(schol.title || "Untitled Scholarship")}</h3>
-          <div class="post-provider-text">${escapeHtml(providerName)}</div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
           <span class="directory-type-pill">${escapeHtml(typeText)}</span>
@@ -767,6 +784,28 @@
   // =============================================================
   // VIEW 2: POST APPLICANTS MANAGEMENT LOGIC
   // =============================================================
+  function updateApplicantFilterUI(activeFilter) {
+    const filterBtn = document.getElementById("btn-applicant-filter");
+    const filterMenu = document.getElementById("menu-applicant-filter");
+    if (filterBtn) {
+      filterBtn.classList.toggle("is-filtered", activeFilter !== "all");
+      const labelMap = {
+        all: "All Applicants",
+        submitted: "Submitted",
+        under_review: "Under Review",
+        approved: "Approved",
+        rejected: "Rejected",
+      };
+      const titleStr = labelMap[activeFilter] || "All Applicants";
+      filterBtn.title = activeFilter === "all" ? "Filter applicants by status" : `Filter: ${titleStr}`;
+    }
+    if (filterMenu) {
+      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
+        item.classList.toggle("active", (item.dataset.applicantFilter || "all") === activeFilter);
+      });
+    }
+  }
+
   function initApplicantFilters() {
     if (appSearchInputEl) {
       appSearchInputEl.addEventListener("input", (e) => {
@@ -775,15 +814,41 @@
       });
     }
 
-    const tabsContainer = document.getElementById("applicant-filter-tabs");
-    if (tabsContainer) {
-      tabsContainer.querySelectorAll(".filter-tab").forEach((tab) => {
-        tab.addEventListener("click", function () {
-          tabsContainer.querySelectorAll(".filter-tab").forEach((t) => t.classList.remove("active"));
-          this.classList.add("active");
-          appFilterTab = this.dataset.applicantFilter || "all";
+    const filterBtn = document.getElementById("btn-applicant-filter");
+    const filterMenu = document.getElementById("menu-applicant-filter");
+    const filterWrapper = document.getElementById("dropdown-wrapper-applicant-filter");
+
+    if (filterBtn && filterMenu) {
+      filterBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = filterMenu.classList.contains("show");
+        const postsMenu = document.getElementById("menu-posts-filter");
+        if (postsMenu) postsMenu.classList.remove("show");
+
+        filterMenu.classList.toggle("show", !isOpen);
+        filterBtn.setAttribute("aria-expanded", String(!isOpen));
+        if (filterWrapper) filterWrapper.classList.toggle("is-open", !isOpen);
+      });
+
+      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
+        item.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const selected = this.dataset.applicantFilter || "all";
+          appFilterTab = selected;
+          updateApplicantFilterUI(selected);
+          filterMenu.classList.remove("show");
+          filterBtn.setAttribute("aria-expanded", "false");
+          if (filterWrapper) filterWrapper.classList.remove("is-open");
           renderPostApplicantsFeed();
         });
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+          filterMenu.classList.remove("show");
+          filterBtn.setAttribute("aria-expanded", "false");
+          if (filterWrapper) filterWrapper.classList.remove("is-open");
+        }
       });
     }
   }
@@ -800,14 +865,7 @@
     appFilterTab = "all";
     appSearchQuery = "";
     if (appSearchInputEl) appSearchInputEl.value = "";
-
-    // Reset tabs active class
-    const tabsContainer = document.getElementById("applicant-filter-tabs");
-    if (tabsContainer) {
-      tabsContainer.querySelectorAll(".filter-tab").forEach((t) => {
-        t.classList.toggle("active", t.dataset.applicantFilter === "all");
-      });
-    }
+    updateApplicantFilterUI("all");
 
     if (postsListViewEl) postsListViewEl.style.display = "none";
     if (postApplicantsViewEl) postApplicantsViewEl.style.display = "block";
@@ -846,7 +904,6 @@
     const typeEl = document.getElementById("post-view-type");
     const deadlineEl = document.getElementById("post-view-deadline");
     const appsCountEl = document.getElementById("post-view-applicants");
-    const descEl = document.getElementById("post-view-desc");
 
     const relatedApps = getPostApplications(schol);
     const limit = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
@@ -859,8 +916,7 @@
     }
     if (typeEl) typeEl.textContent = formatScholarshipType(schol);
     if (deadlineEl) deadlineEl.textContent = schol.formattedDate || schol.deadline || "No Deadline";
-    if (appsCountEl) appsCountEl.textContent = `${relatedApps.length} / ${limit}`;
-    if (descEl) descEl.textContent = schol.desc || "No description provided.";
+    if (appsCountEl) appsCountEl.textContent = `${relatedApps.length} / ${limit} Applicants`;
   }
 
   function renderPostApplicantsFeed() {
@@ -868,47 +924,47 @@
 
     const baseApps = getPostApplications(currentActivePost);
 
-    // Update Applicant Tab Counters for this post
+    // Update Dropdown Badge Counters for this post
     let countAll = baseApps.length;
+    let countSubmitted = 0;
     let countReviewed = 0;
     let countApproved = 0;
     let countRejected = 0;
-    let countPending = 0;
 
     baseApps.forEach((app) => {
       const st = (app.status || "Submitted").toLowerCase();
       if (st.includes("approved")) countApproved++;
       else if (st.includes("review")) countReviewed++;
       else if (st.includes("rejected")) countRejected++;
-      else countPending++;
+      else countSubmitted++;
     });
 
-    const tabAll = document.getElementById("app-tab-all");
-    const tabReview = document.getElementById("app-tab-review");
-    const tabApproved = document.getElementById("app-tab-approved");
-    const tabRejected = document.getElementById("app-tab-rejected");
-    const tabPending = document.getElementById("app-tab-pending");
+    const cntAll = document.getElementById("app-filter-count-all");
+    const cntSubmitted = document.getElementById("app-filter-count-submitted");
+    const cntReview = document.getElementById("app-filter-count-review");
+    const cntApproved = document.getElementById("app-filter-count-approved");
+    const cntRejected = document.getElementById("app-filter-count-rejected");
 
-    if (tabAll) tabAll.textContent = `All (${countAll})`;
-    if (tabReview) tabReview.textContent = `Under Review (${countReviewed})`;
-    if (tabApproved) tabApproved.textContent = `Approved (${countApproved})`;
-    if (tabRejected) tabRejected.textContent = `Rejected (${countRejected})`;
-    if (tabPending) tabPending.textContent = `Pending (${countPending})`;
+    if (cntAll) cntAll.textContent = countAll;
+    if (cntSubmitted) cntSubmitted.textContent = countSubmitted;
+    if (cntReview) cntReview.textContent = countReviewed;
+    if (cntApproved) cntApproved.textContent = countApproved;
+    if (cntRejected) cntRejected.textContent = countRejected;
 
     // Filter by tab
     let filtered = baseApps.filter((app) => {
       const st = (app.status || "Submitted").toLowerCase();
       if (appFilterTab === "all") return true;
-      if (appFilterTab === "under_review") return st.includes("review");
-      if (appFilterTab === "approved") return st.includes("approved");
-      if (appFilterTab === "rejected") return st.includes("rejected");
-      if (appFilterTab === "pending") {
+      if (appFilterTab === "submitted") {
         return (
           !st.includes("approved") &&
           !st.includes("review") &&
           !st.includes("rejected")
         );
       }
+      if (appFilterTab === "under_review") return st.includes("review");
+      if (appFilterTab === "approved") return st.includes("approved");
+      if (appFilterTab === "rejected") return st.includes("rejected");
       return true;
     });
 
@@ -951,7 +1007,7 @@
       if (title) title.textContent = "No Matching Applicants";
       if (desc)
         desc.textContent =
-          "Try clearing your search query or switching tabs to view other applicants for this post.";
+          "Try clearing your search query or switching filters to view other applicants for this post.";
       return;
     }
 
@@ -959,7 +1015,7 @@
     postApplicantsFeedEl.style.display = "flex";
     postApplicantsFeedEl.innerHTML = "";
 
-    filtered.forEach((app, idx) => {
+    filtered.forEach((app) => {
       // Find original queue index among all baseApps for FCFS display
       const queueIndex = baseApps.indexOf(app) + 1;
       postApplicantsFeedEl.appendChild(createApplicantCard(app, queueIndex));
@@ -1032,12 +1088,15 @@
           <div class="provider-app-school">${escapeHtml(info.university || "Batangas State University")}</div>
 
           <div class="provider-app-meta-row">
+            <div class="provider-app-meta-item" style="font-weight: 700; color: #8b5cf6;">
+              <span>Queue #${queueNumber}</span>
+            </div>
             <div class="provider-app-meta-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>Submitted: ${escapeHtml(formattedAppliedDate)}</span>
+              <span>Applied: ${escapeHtml(formattedAppliedDate)}</span>
             </div>
             <div class="provider-app-meta-item">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1123,6 +1182,8 @@
           closeScholModal();
         } else if (reviewModalEl && reviewModalEl.classList.contains("active")) {
           closeReviewModal();
+        } else if (postApplicantsViewEl && postApplicantsViewEl.style.display !== "none") {
+          backToPostsList();
         }
       }
     });
