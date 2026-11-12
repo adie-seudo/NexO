@@ -84,6 +84,67 @@ function cacheDOM() {
 // =========================================
 // 1. DASHBOARD MODALS (Fixed Multi-Button Listener)
 // =========================================
+function openNewScholarshipCreationModal() {
+  if (!DOM.creationModal) return;
+
+  // Reset editing trackers and button text
+  currentEditingDraftCard = null;
+  currentEditingDraftId = null;
+  maxStepReached = 1;
+  const draftBtn = document.getElementById("draft-btn");
+  if (draftBtn) draftBtn.textContent = "Save as Draft";
+
+  // Reset the form so it opens fresh
+  const step1Form = document.getElementById("step-1-form");
+  if (step1Form) step1Form.reset();
+  if (DOM.typeSelected) {
+    DOM.typeSelected.querySelector("span").textContent = "Select type";
+    DOM.typeSelected.classList.remove("has-value");
+    if (DOM.typeInput) DOM.typeInput.value = "";
+  }
+  if (DOM.reqList) {
+    DOM.reqList.innerHTML = `
+      <div class="req-card">
+        <div class="req-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+            <circle cx="9" cy="10" r="2"></circle>
+            <line x1="15" y1="8" x2="17" y2="8"></line>
+            <line x1="15" y1="12" x2="17" y2="12"></line>
+            <line x1="7" y1="16" x2="17" y2="16"></line>
+          </svg>
+        </div>
+        <div class="req-text">
+          <h4>Valid School ID</h4>
+          <p>Upload a clear photo of your student ID. (Max 5MB)</p>
+        </div>
+        <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
+      </div>
+      <div class="req-card">
+        <div class="req-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+        </div>
+        <div class="req-text">
+          <h4>Latest Grades/Transcript</h4>
+          <p>Upload your latest grades or official transcript.</p>
+        </div>
+        <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
+      </div>
+    `;
+  }
+
+  DOM.creationModal.classList.add("active");
+  DOM.creationModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  goToStep(1, false);
+}
+window.openNewScholarshipCreationModal = openNewScholarshipCreationModal;
+
 function initDashboardModals() {
   // Select BOTH the main dashboard button (by ID) and the drafts button (by Class)
   const openBtns = document.querySelectorAll(
@@ -95,61 +156,7 @@ function initDashboardModals() {
     openBtns.forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-
-        // Reset editing trackers and button text
-        currentEditingDraftCard = null;
-        currentEditingDraftId = null;
-        const draftBtn = document.getElementById("draft-btn");
-        if (draftBtn) draftBtn.textContent = "Save as Draft";
-
-        // Reset the form so it opens fresh
-        const step1Form = document.getElementById("step-1-form");
-        if (step1Form) step1Form.reset();
-        if (DOM.typeSelected) {
-          DOM.typeSelected.querySelector("span").textContent = "Select type";
-          DOM.typeSelected.classList.remove("has-value");
-          if (DOM.typeInput) DOM.typeInput.value = "";
-        }
-        if (DOM.reqList) {
-          DOM.reqList.innerHTML = `
-            <div class="req-card">
-              <div class="req-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                  <circle cx="9" cy="10" r="2"></circle>
-                  <line x1="15" y1="8" x2="17" y2="8"></line>
-                  <line x1="15" y1="12" x2="17" y2="12"></line>
-                  <line x1="7" y1="16" x2="17" y2="16"></line>
-                </svg>
-              </div>
-              <div class="req-text">
-                <h4>Valid School ID</h4>
-                <p>Upload a clear photo of your student ID. (Max 5MB)</p>
-              </div>
-              <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
-            </div>
-            <div class="req-card">
-              <div class="req-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-              </div>
-              <div class="req-text">
-                <h4>Latest Grades/Transcript</h4>
-                <p>Upload your latest grades or official transcript.</p>
-              </div>
-              <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
-            </div>
-          `;
-        }
-
-        DOM.creationModal.classList.add("active");
-        DOM.creationModal.setAttribute("aria-hidden", "false");
-        document.body.style.overflow = "hidden";
-        goToStep(1, false);
+        openNewScholarshipCreationModal();
       });
     });
   } else {
@@ -157,6 +164,31 @@ function initDashboardModals() {
       "Dashboard Notice: Modal open buttons or 'create-scholarship-modal' not found on this page.",
     );
   }
+
+  // Auto-open creation modal if arriving via link with #open-create or ?action=create
+  function checkUrlForCreationTrigger() {
+    const hash = (window.location.hash || "").toLowerCase();
+    const search = (window.location.search || "").toLowerCase();
+    if (
+      hash === "#open-create" ||
+      hash === "#create" ||
+      search.includes("action=create") ||
+      search.includes("create=true") ||
+      search.includes("open=create")
+    ) {
+      setTimeout(() => {
+        openNewScholarshipCreationModal();
+        try {
+          if (window.location.hash || window.location.search.includes("create")) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (_) {}
+      }, 120);
+    }
+  }
+
+  checkUrlForCreationTrigger();
+  window.addEventListener("hashchange", checkUrlForCreationTrigger);
 }
 
 // =========================================
@@ -195,8 +227,13 @@ function initCustomDropdown() {
 // =========================================
 // 3. STEP NAVIGATION & MODAL LOGIC
 // =========================================
+let maxStepReached = 1;
+
 function goToStep(stepNumber = 1, isEdit = false) {
   if (!DOM.stepContainers || DOM.stepContainers.length === 0) return;
+  if (typeof stepNumber === "number" && stepNumber > maxStepReached) {
+    maxStepReached = stepNumber;
+  }
 
   // Populate Review Step before showing it
   if (stepNumber === 3 && !isEdit) {
@@ -1634,6 +1671,62 @@ function initModalCancellation() {
     ? creationModal.querySelectorAll(".close-modal-btn, .close-btn")
     : [];
 
+  function hasCreationProgress() {
+    if (currentEditingDraftCard || currentEditingDraftId) return true;
+    if (typeof maxStepReached === "number" && maxStepReached > 1) return true;
+
+    // Check step 1 inputs
+    const nameVal = DOM.nameInput ? DOM.nameInput.value.trim() : "";
+    const descVal = DOM.descInput ? DOM.descInput.value.trim() : "";
+    const typeVal = DOM.typeInput ? DOM.typeInput.value.trim() : "";
+    const dateVal = DOM.dateInput ? DOM.dateInput.value.trim() : "";
+    const limitVal = DOM.limitInput ? DOM.limitInput.value.trim() : "";
+
+    if (nameVal.length > 0) return true;
+    if (descVal.length > 0) return true;
+    if (typeVal.length > 0) return true;
+    if (dateVal.length > 0) return true;
+    if (limitVal.length > 0 && limitVal !== "200") return true;
+
+    return false;
+  }
+
+  function dismissCreationModalImmediately() {
+    currentEditingDraftCard = null;
+    currentEditingDraftId = null;
+    maxStepReached = 1;
+
+    if (DOM.creationModal) {
+      DOM.creationModal.classList.remove("active");
+      DOM.creationModal.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "auto";
+    }
+
+    setTimeout(() => {
+      goToStep(1, false);
+      const step1Form = document.getElementById("step-1-form");
+      if (step1Form) step1Form.reset();
+
+      const dropdownHidden = document.getElementById("schol-type");
+      if (DOM.typeSelected && dropdownHidden) {
+        DOM.typeSelected.querySelector("span").textContent = "Select type";
+        DOM.typeSelected.classList.remove("has-value");
+        dropdownHidden.value = "";
+      }
+
+      if (DOM.limitInput) {
+        DOM.limitInput.value = "200";
+      }
+
+      if (DOM.confirmCheck) DOM.confirmCheck.checked = false;
+
+      if (DOM.creationModal) {
+        const errorMsgs = DOM.creationModal.querySelectorAll(".error-msg");
+        errorMsgs.forEach((msg) => (msg.textContent = ""));
+      }
+    }, 200);
+  }
+
   function triggerCancelWarning() {
     if (cancelConfirmModal) {
       cancelConfirmModal.style.display = "flex";
@@ -1641,11 +1734,44 @@ function initModalCancellation() {
     }
   }
 
-  if (step1CancelBtn)
-    step1CancelBtn.addEventListener("click", triggerCancelWarning);
-  xCloseBtns.forEach((btn) =>
-    btn.addEventListener("click", triggerCancelWarning),
-  );
+  function handleCreationCancelAttempt() {
+    if (hasCreationProgress()) {
+      triggerCancelWarning();
+    } else {
+      dismissCreationModalImmediately();
+    }
+  }
+
+  if (step1CancelBtn) {
+    step1CancelBtn.addEventListener("click", handleCreationCancelAttempt);
+  }
+
+  xCloseBtns.forEach((btn) => {
+    btn.addEventListener("click", handleCreationCancelAttempt);
+  });
+
+  if (creationModal) {
+    creationModal.addEventListener("click", (e) => {
+      if (e.target === creationModal) {
+        handleCreationCancelAttempt();
+      }
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Escape" &&
+      DOM.creationModal &&
+      DOM.creationModal.classList.contains("active")
+    ) {
+      if (cancelConfirmModal && cancelConfirmModal.style.display === "flex") {
+        cancelConfirmModal.style.opacity = "0";
+        setTimeout(() => (cancelConfirmModal.style.display = "none"), 200);
+      } else {
+        handleCreationCancelAttempt();
+      }
+    }
+  });
 
   if (stayEditingBtn) {
     stayEditingBtn.addEventListener("click", () => {
@@ -1656,31 +1782,11 @@ function initModalCancellation() {
 
   if (confirmDiscardBtn) {
     confirmDiscardBtn.addEventListener("click", () => {
-      cancelConfirmModal.style.opacity = "0";
-      setTimeout(() => (cancelConfirmModal.style.display = "none"), 200);
-
-      currentEditingDraftCard = null;
-
-      if (DOM.creationModal) {
-        DOM.creationModal.classList.remove("active");
-        DOM.creationModal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "auto";
+      if (cancelConfirmModal) {
+        cancelConfirmModal.style.opacity = "0";
+        setTimeout(() => (cancelConfirmModal.style.display = "none"), 200);
       }
-
-      setTimeout(() => {
-        goToStep(1, false);
-        const step1Form = document.getElementById("step-1-form");
-        if (step1Form) step1Form.reset();
-
-        const dropdownHidden = document.getElementById("schol-type");
-        if (DOM.typeSelected && dropdownHidden) {
-          DOM.typeSelected.querySelector("span").textContent = "Select type";
-          DOM.typeSelected.classList.remove("has-value");
-          dropdownHidden.value = "";
-        }
-
-        if (DOM.confirmCheck) DOM.confirmCheck.checked = false;
-      }, 400);
+      dismissCreationModalImmediately();
     });
   }
 }

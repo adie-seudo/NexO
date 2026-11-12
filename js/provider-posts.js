@@ -291,14 +291,8 @@
       ""
     ).toLowerCase();
 
-    // Filter scholarships posted by this provider
-    allScholarships = currentProviderEmail
-      ? scholarships.filter(
-          (s) =>
-            !s.providerEmail ||
-            s.providerEmail.toLowerCase() === currentProviderEmail,
-        )
-      : scholarships;
+    // Synchronize with portal scholarships (matches provider-dashboard.html)
+    allScholarships = scholarships;
 
     allApplications = applications;
 
