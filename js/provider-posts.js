@@ -251,6 +251,96 @@
       .replace(/'/g, "&#039;");
   }
 
+  function formatScholarshipType(schol) {
+    if (!schol) return "General";
+    if (schol.typeText && String(schol.typeText).trim()) return String(schol.typeText).trim();
+    const raw = String(schol.type || "").trim().toLowerCase();
+    if (raw === "merit" || raw === "merit-based") return "Merit-Based";
+    if (raw === "need" || raw === "need-based") return "Need-Based";
+    if (raw === "athletic") return "Athletic";
+    if (raw === "academic") return "Academic";
+    if (raw === "special") return "Special";
+    if (raw) return raw.charAt(0).toUpperCase() + raw.slice(1);
+    return "General";
+  }
+
+  function resolveProviderBanner(schol) {
+    if (!schol) return "";
+    if (schol.bannerImage && String(schol.bannerImage).trim()) {
+      return String(schol.bannerImage).trim();
+    }
+    if (schol.banner && String(schol.banner).trim()) {
+      return String(schol.banner).trim();
+    }
+
+    let settings = null;
+    try {
+      const cached = localStorage.getItem("nexo_provider_settings");
+      if (cached) settings = JSON.parse(cached);
+    } catch (_) {}
+
+    const activeOrgName =
+      (settings && settings.orgName) ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
+    const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
+    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+      const settingsBanner =
+        (settings && settings.bannerImage) ||
+        localStorage.getItem("nexo-provider-banner") ||
+        localStorage.getItem("provider-banner-preview") ||
+        "";
+      if (settingsBanner && String(settingsBanner).trim()) {
+        return String(settingsBanner).trim();
+      }
+    }
+    return "";
+  }
+
+  function resolveProviderLogo(schol) {
+    if (!schol) return "";
+    if (schol.providerLogo && String(schol.providerLogo).trim()) {
+      return String(schol.providerLogo).trim();
+    }
+    if (schol.logoImage && String(schol.logoImage).trim()) {
+      return String(schol.logoImage).trim();
+    }
+    if (schol.logo && String(schol.logo).trim()) {
+      return String(schol.logo).trim();
+    }
+
+    let settings = null;
+    try {
+      const cached = localStorage.getItem("nexo_provider_settings");
+      if (cached) settings = JSON.parse(cached);
+    } catch (_) {}
+
+    const activeOrgName =
+      (settings && settings.orgName) ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
+    const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
+    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+      const settingsLogo =
+        (settings && settings.logoImage) ||
+        localStorage.getItem("nexo-provider-logo") ||
+        "";
+      if (settingsLogo && String(settingsLogo).trim()) {
+        return String(settingsLogo).trim();
+      }
+    }
+    return "";
+  }
+
+  function extractInitials(name) {
+    if (!name || !name.trim()) return "NX";
+    const clean = name.trim();
+    if (clean.toUpperCase().startsWith("NEXO")) return "NX";
+    const parts = clean.split(/\s+/);
+    if (parts.length === 1) return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+
   // -------------------------------------------------------------
   // DATA FETCHING & LIVE SYNC
   // -------------------------------------------------------------
@@ -575,52 +665,56 @@
     const statusText = isOpen ? "Open" : "Closed";
     const statusClass = isOpen ? "open" : "closed";
 
-    const initial = (schol.title || "S").trim().charAt(0).toUpperCase();
     const providerName = schol.providerName || "NEXO Provider";
     const deadlineText = schol.formattedDate || schol.deadline || "No Deadline";
-    const postedDate = schol.formattedPostedDate || "Recently";
+    const postedDate = schol.formattedPostedDate || schol.postedDate || "Recently";
+    const typeText = formatScholarshipType(schol);
 
     card.innerHTML = `
-      <div class="post-card-header">
-        <div class="post-card-title-group">
-          <div class="post-avatar-icon">${initial}</div>
-          <div>
-            <h3 class="post-title-text">${escapeHtml(schol.title || "Untitled Scholarship")}</h3>
-            <div class="post-provider-text">${escapeHtml(providerName)} • <span style="color: #8b5cf6; font-weight: 600;">${escapeHtml(schol.type || schol.typeText || "General")}</span></div>
-          </div>
+      <div class="post-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%;">
+        <div class="post-card-title-group" style="flex: 1; min-width: 0;">
+          <h3 class="post-title-text">${escapeHtml(schol.title || "Untitled Scholarship")}</h3>
+          <div class="post-provider-text">${escapeHtml(providerName)}</div>
         </div>
-        <span class="post-status-badge ${statusClass}">${statusText}</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <span class="directory-type-pill">${escapeHtml(typeText)}</span>
+          <span class="post-status-badge ${statusClass}">${statusText}</span>
+        </div>
       </div>
 
-      <div class="post-meta-row">
-        <div class="post-meta-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <p class="post-desc">${escapeHtml(schol.desc || "No description provided.")}</p>
+
+      <div class="post-meta-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin: 2px 0;">
+        <div class="directory-dates-row" style="display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); flex-wrap: wrap;">
+          <span class="directory-date-item" style="display: inline-flex; align-items: center; gap: 5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <span>Posted: <strong style="color: var(--text-primary);">${escapeHtml(postedDate)}</strong></span>
+          </span>
+          <span class="directory-date-dot" style="opacity: 0.45; font-size: 11px;">&bull;</span>
+          <span class="directory-date-item" style="display: inline-flex; align-items: center; gap: 5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Expires: <strong style="color: var(--text-primary);">${escapeHtml(deadlineText)}</strong></span>
+          </span>
+        </div>
+
+        <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #8b5cf6;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
             <circle cx="9" cy="7" r="4"></circle>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
           </svg>
-          <strong style="color: var(--text-primary);">${totalApps} / ${limit}</strong> Applicants
-        </div>
-        <div class="post-meta-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          <span>Posted: ${escapeHtml(postedDate)}</span>
-        </div>
-        <div class="post-meta-item">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          <span>Deadline: ${escapeHtml(deadlineText)}</span>
-        </div>
+          <span>${totalApps} / ${limit} Applicants</span>
+        </span>
       </div>
-
-      <p class="post-desc">${escapeHtml(schol.desc || "No description provided.")}</p>
 
       <div class="post-breakdown-row">
         <span class="post-breakdown-pill review">Under Review: ${underReviewCount}</span>
@@ -637,11 +731,15 @@
           title="View and manage applicants specifically for this post"
         >
           <span>View Applications (${totalApps})</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </button>
-        <button type="button" class="btn-view-details-sub" aria-label="View Details">
+        <button
+          type="button"
+          class="directory-view-details-btn view-details-btn btn-view-details-sub"
+          aria-label="View Details"
+        >
           View Details
         </button>
       </div>
@@ -759,7 +857,7 @@
       statusPill.className = `post-status-badge ${isOpen ? "open" : "closed"}`;
       statusPill.textContent = isOpen ? "Open" : "Closed";
     }
-    if (typeEl) typeEl.textContent = schol.type || schol.typeText || "General";
+    if (typeEl) typeEl.textContent = formatScholarshipType(schol);
     if (deadlineEl) deadlineEl.textContent = schol.formattedDate || schol.deadline || "No Deadline";
     if (appsCountEl) appsCountEl.textContent = `${relatedApps.length} / ${limit}`;
     if (descEl) descEl.textContent = schol.desc || "No description provided.";
@@ -996,7 +1094,6 @@
     // 1. Scholarship Criteria Modal
     const closeScholBtn = document.getElementById("close-details-btn");
     const closeScholActionBtn = document.getElementById("view-modal-close-action-btn");
-    const manageScholBtn = document.getElementById("view-modal-manage-btn");
 
     const closeScholModal = () => {
       if (scholModalEl) {
@@ -1005,6 +1102,7 @@
         if (!isModalOpen) document.body.style.overflow = "auto";
       }
     };
+    window.closeScholarshipModal = closeScholModal;
 
     if (closeScholBtn) closeScholBtn.addEventListener("click", closeScholModal);
     if (closeScholActionBtn) closeScholActionBtn.addEventListener("click", closeScholModal);
@@ -1014,14 +1112,20 @@
       });
     }
 
-    if (manageScholBtn) {
-      manageScholBtn.addEventListener("click", () => {
-        closeScholModal();
-        if (currentActivePost) {
-          openPostApplicantsView(currentActivePost.id || currentActivePost.title);
+    // Keyboard Escape listener for modals
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (docPreviewModalEl && docPreviewModalEl.classList.contains("active")) {
+          closeDocPreview();
+        } else if (confirmModalEl && confirmModalEl.classList.contains("active")) {
+          closeDecisionConfirmModal();
+        } else if (scholModalEl && scholModalEl.classList.contains("active")) {
+          closeScholModal();
+        } else if (reviewModalEl && reviewModalEl.classList.contains("active")) {
+          closeReviewModal();
         }
-      });
-    }
+      }
+    });
 
     // 2. Review Application Modal
     const closeReviewBtn = document.getElementById("close-review-modal");
@@ -1126,38 +1230,175 @@
   }
 
   function openScholarshipModal(schol, totalApps, limit) {
-    if (!scholModalEl) return;
+    if (!scholModalEl || !schol) return;
 
     const titleEl = document.getElementById("view-modal-title");
     const typeEl = document.getElementById("view-modal-type");
+    const statusEl = document.getElementById("view-modal-status");
     const providerEl = document.getElementById("view-modal-provider");
     const dateEl = document.getElementById("view-modal-date");
+    const postedEl = document.getElementById("view-modal-posted");
     const applicantsEl = document.getElementById("view-modal-applicants");
     const descEl = document.getElementById("view-modal-desc");
-    const reqsListEl = document.getElementById("view-modal-reqs-list");
+    const reqsEl = document.getElementById("view-modal-reqs");
+    const coverImg = document.getElementById("view-modal-cover-img");
+    const logoEl = document.getElementById("view-modal-schol-logo");
+    const manageBtn = document.getElementById("view-modal-manage-btn");
 
-    if (titleEl) titleEl.textContent = schol.title || "Untitled";
-    if (typeEl) typeEl.textContent = schol.type || schol.typeText || "General";
-    if (providerEl) providerEl.textContent = schol.providerName || "NEXO";
-    if (dateEl) dateEl.textContent = schol.formattedDate || schol.deadline || "No Deadline";
-    if (applicantsEl) applicantsEl.textContent = `${totalApps} / ${limit} Applicants`;
+    if (titleEl) titleEl.textContent = schol.title || "Scholarship Program";
+
+    const orgName =
+      schol.organization ||
+      schol.providerName ||
+      localStorage.getItem("nexo-provider-name") ||
+      "NEXO";
+    if (providerEl) providerEl.textContent = orgName;
+
+    // Type & Status
+    const formattedType = formatScholarshipType(schol);
+    if (typeEl) typeEl.textContent = formattedType;
+
+    const isClosed =
+      String(schol.status || "").toLowerCase().includes("closed") ||
+      String(schol.status || "").toLowerCase().includes("quota");
+    if (statusEl) {
+      statusEl.textContent = isClosed ? "Closed" : "Active";
+      statusEl.style.background = isClosed
+        ? "rgba(239, 68, 68, 0.12)"
+        : "rgba(16, 185, 129, 0.12)";
+      statusEl.style.color = isClosed ? "#ef4444" : "#10b981";
+    }
+
+    // Dates
+    const deadlineText = schol.formattedDate || schol.deadline || "No Deadline";
+    const postedDate = schol.formattedPostedDate || schol.postedDate || "Recently";
+    if (dateEl) dateEl.textContent = deadlineText;
+    if (postedEl) postedEl.textContent = postedDate;
+
+    // Live applicant count
+    const relatedApps = getPostApplications(schol);
+    const actualCount =
+      typeof totalApps === "number" ? totalApps : relatedApps.length;
+    const capacityLimit =
+      typeof limit === "number"
+        ? limit
+        : parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) ||
+          200;
+
+    if (applicantsEl) {
+      applicantsEl.textContent = `${actualCount} / ${capacityLimit} Applicants`;
+    }
+
+    // Description
     if (descEl) descEl.textContent = schol.desc || "No description provided.";
 
-    if (reqsListEl) {
-      reqsListEl.innerHTML = "";
-      const reqs = Array.isArray(schol.requirements) ? schol.requirements : [];
-      if (reqs.length === 0) {
-        reqsListEl.innerHTML = '<span style="font-size: 13px; color: var(--text-secondary); font-style: italic;">No specific requirements listed.</span>';
+    // Cover image banner
+    const bannerSrc = resolveProviderBanner(schol);
+    if (coverImg) {
+      if (bannerSrc && typeof bannerSrc === "string" && bannerSrc.trim()) {
+        coverImg.src = bannerSrc.trim();
+        coverImg.style.display = "block";
       } else {
-        reqs.forEach((r) => {
-          const item = document.createElement("div");
-          item.className = "details-checklist-item";
-          item.innerHTML = `
-            <strong style="color: var(--text-primary); font-size: 13.5px;">${escapeHtml(r.title || r.name || "Requirement")}</strong>
-            ${r.desc ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(r.desc)}</div>` : ""}
-          `;
-          reqsListEl.appendChild(item);
-        });
+        coverImg.src = "";
+        coverImg.style.display = "none";
+      }
+      coverImg.onerror = function () {
+        this.style.display = "none";
+        this.src = "";
+      };
+    }
+
+    // Provider Avatar / Logo
+    const logoSrc = resolveProviderLogo(schol);
+    if (logoEl) {
+      if (logoSrc && typeof logoSrc === "string" && logoSrc.trim()) {
+        logoEl.innerHTML = `<img src="${logoSrc.trim()}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
+      } else {
+        const inits = extractInitials(orgName);
+        logoEl.textContent = inits || "NX";
+      }
+    }
+
+    // Required Documents Checklist (Matches Student POV)
+    if (reqsEl) {
+      reqsEl.innerHTML = "";
+      const reqs =
+        Array.isArray(schol.requirements) && schol.requirements.length > 0
+          ? schol.requirements
+          : [
+              "Certificate of Registration (COR)",
+              "Certified True Copy of Grades (COG)",
+              "Valid School or Government Issued ID",
+            ];
+      reqs.forEach((r) => {
+        const rName =
+          typeof r === "string" ? r : r.name || r.title || "Required Document";
+        const rDesc =
+          typeof r === "object" && r !== null && r.desc
+            ? `<span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">${escapeHtml(r.desc)}</span>`
+            : "";
+        const rItem = document.createElement("div");
+        rItem.className = "details-checklist-item";
+        rItem.innerHTML = `
+          <span style="font-weight: 650; color: var(--text-primary); font-size: 13.5px;">${escapeHtml(rName)}</span>
+          ${rDesc}
+        `;
+        reqsEl.appendChild(rItem);
+      });
+    }
+
+    // Manage Applications Button Action
+    if (manageBtn) {
+      if (actualCount === 0) {
+        manageBtn.disabled = true;
+        manageBtn.setAttribute("disabled", "true");
+        manageBtn.setAttribute("aria-disabled", "true");
+        manageBtn.style.opacity = "0.55";
+        manageBtn.style.cursor = "not-allowed";
+        manageBtn.style.pointerEvents = "auto";
+        manageBtn.title = "No students have applied to this scholarship yet";
+        manageBtn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>No Applications Yet</span>
+        `;
+        manageBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+      } else {
+        manageBtn.disabled = false;
+        manageBtn.removeAttribute("disabled");
+        manageBtn.setAttribute("aria-disabled", "false");
+        manageBtn.style.opacity = "1";
+        manageBtn.style.cursor = "pointer";
+        manageBtn.style.pointerEvents = "auto";
+        manageBtn.title = `Manage ${actualCount} application${actualCount > 1 ? "s" : ""} for this post`;
+        manageBtn.innerHTML = `
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span id="view-modal-manage-text">Manage Applications for this post</span>
+        `;
+        manageBtn.onclick = () => {
+          if (typeof closeScholarshipModal === "function") {
+            closeScholarshipModal();
+          } else if (scholModalEl) {
+            scholModalEl.classList.remove("active");
+            scholModalEl.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "auto";
+          }
+          openPostApplicantsView(schol.id || schol.title);
+        };
       }
     }
 
