@@ -21,9 +21,26 @@
   <body class="dashboard-body">
     <!-- 1. GLOBAL UNIVERSAL HEADER -->
     <header class="global-header">
-      <!-- Profile Area -->
+      <!-- Universal NEXO Brand Logo & Name (Clicking navigates to About Us) -->
       <div class="logo-container">
-        <div class="avatar-btn" style="cursor: default">NX</div>
+        <a
+          href="provider-about.html"
+          class="nexo-brand-link"
+          style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;"
+          title="About Us"
+        >
+          <img
+            src="assets/logo.png"
+            alt="NEXO Logo"
+            class="nexo-brand-logo"
+            style="width: 34px; height: 34px; object-fit: contain;"
+          />
+          <span
+            class="nexo-brand-text"
+            style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; line-height: 1;"
+            >NEXO</span
+          >
+        </a>
       </div>
 
       <!-- Action buttons container -->
@@ -244,12 +261,11 @@
             <span id="welcome-avatar-initials">NX</span>
           </a>
 
-          <!-- Aligned Greeting & Title with Admin Pill -->
+          <!-- Aligned Greeting & Title -->
           <div class="dash-welcome-details">
             <p class="welcome-sub">Welcome back,</p>
             <div class="welcome-title-row">
               <h1 class="welcome-title" id="dash-welcome-title">NEXO</h1>
-              <span class="badge-verified">Admin</span>
             </div>
           </div>
         </div>
@@ -926,11 +942,20 @@
         <!-- Header -->
         <div
           class="creation-header"
-          style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px"
+          style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"
         >
           <h2 class="creation-title" style="margin-bottom: 0; font-size: 20px">
             Scholarship Details
           </h2>
+          <button
+            type="button"
+            class="close-modal-btn"
+            onclick="document.getElementById('view-details-modal').classList.remove('active'); document.body.style.overflow='auto';"
+            style="cursor: pointer;"
+            aria-label="Close Details"
+          >
+            &times;
+          </button>
         </div>
 
         <!-- Full Post Content -->

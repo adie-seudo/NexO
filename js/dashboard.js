@@ -671,9 +671,37 @@ function getCollectedRequirements() {
   return reqs;
 }
 
+function openScholarshipDetailsModal(schol, applicantCountDisplay) {
+  const titleEl = document.getElementById("view-modal-title");
+  const typeEl = document.getElementById("view-modal-type");
+  const dateEl = document.getElementById("view-modal-date");
+  const applicantsEl = document.getElementById("view-modal-applicants");
+  const descEl = document.getElementById("view-modal-desc");
+  const modalEl = document.getElementById("view-details-modal");
+  const manageBtn = document.getElementById("view-modal-manage-btn");
+
+  if (titleEl) titleEl.textContent = schol.title || "Scholarship Program";
+  if (typeEl) typeEl.textContent = schol.typeText || schol.type || "Scholarship";
+  if (dateEl) dateEl.textContent = schol.formattedDate || "No Deadline";
+  if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
+  if (descEl) descEl.textContent = schol.desc || "";
+  if (manageBtn) {
+    manageBtn.onclick = () => {
+      window.location.href = `provider-posts.html?postId=${encodeURIComponent(schol.id || schol.title)}`;
+    };
+  }
+  if (modalEl) {
+    modalEl.classList.add("active");
+    modalEl.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+}
+
 function createCompactCard(schol, allApplications = null) {
   const card = document.createElement("div");
-  card.className = "compact-post-card";
+  const coverUrl =
+    schol.coverPhoto || schol.coverImage || schol.cover || schol.banner || "";
+  card.className = `directory-card provider-recent-card${coverUrl ? " has-cover" : ""}`;
   card.dataset.id = schol.id || "";
 
   const limitNum =
@@ -710,58 +738,75 @@ function createCompactCard(schol, allApplications = null) {
   }
 
   const applicantCountDisplay = `${count} / ${limitNum} Applicants`;
+  const typeText = schol.typeText || schol.type || "Scholarship";
+  const deadlineText =
+    schol.formattedDate ||
+    (schol.deadline
+      ? new Date(schol.deadline).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "No Deadline");
+
+  const coverHtml = coverUrl
+    ? `
+      <div class="directory-card-cover">
+        <div class="directory-card-cover-img" style="background-image: url('${coverUrl}');"></div>
+        <div class="directory-card-cover-fade"></div>
+      </div>
+    `
+    : "";
 
   card.innerHTML = `
-    <div class="compact-post-header">
-      <h3 class="compact-post-title">${escapeHtml(schol.title)}</h3>
-      <span class="compact-post-type">${escapeHtml(schol.typeText || schol.type || "Scholarship")}</span>
+    ${coverHtml}
+    <div class="directory-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%; position: relative; z-index: 1;">
+      <h3 class="directory-card-title" style="margin: 0; font-size: 16px; font-weight: 750; color: var(--text-primary); line-height: 1.35; flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word;">${escapeHtml(schol.title || "Scholarship Program")}</h3>
+      <span class="directory-type-pill">${escapeHtml(typeText)}</span>
     </div>
-    <p class="compact-post-desc">${escapeHtml(schol.desc)}</p>
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-      <div class="compact-post-meta" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-        <span style="display: inline-flex; align-items: center; gap: 4px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-          Expires: ${escapeHtml(schol.formattedDate || "No Deadline")}
-        </span>
-        <span style="display: inline-flex; align-items: center; gap: 4px; color: #8b5cf6; font-weight: 600;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-          </svg>
-          ${escapeHtml(applicantCountDisplay)}
-        </span>
-      </div>
-      <button type="button" class="view-details-btn">View Details</button>
+
+    <p class="directory-card-desc" style="font-size: 13px; line-height: 1.55; color: var(--text-secondary); margin: 6px 0 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; overflow-wrap: anywhere; word-break: break-word; position: relative; z-index: 1;">${escapeHtml(schol.desc || "")}</p>
+
+    <div class="directory-card-meta-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin: 2px 0 12px 0; position: relative; z-index: 1;">
+      <span class="directory-deadline-tag" style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 500; color: var(--text-secondary);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        Expires: ${escapeHtml(deadlineText)}
+      </span>
+      <span class="directory-applicants-tag" style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #8b5cf6;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        ${escapeHtml(applicantCountDisplay)}
+      </span>
+    </div>
+
+    <div class="directory-card-footer" style="margin-top: 0; padding-top: 0; width: 100%; position: relative; z-index: 1;">
+      <button type="button" class="directory-view-details-btn view-details-btn" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 100px; font-size: 13px; font-weight: 600;">
+        View Details
+      </button>
     </div>
   `;
 
-  card.querySelector(".view-details-btn").addEventListener("click", () => {
-    const titleEl = document.getElementById("view-modal-title");
-    const typeEl = document.getElementById("view-modal-type");
-    const dateEl = document.getElementById("view-modal-date");
-    const applicantsEl = document.getElementById("view-modal-applicants");
-    const descEl = document.getElementById("view-modal-desc");
-    const modalEl = document.getElementById("view-details-modal");
-    const manageBtn = document.getElementById("view-modal-manage-btn");
+  // Attach view details click listener
+  const viewDetailsBtn = card.querySelector(".view-details-btn");
+  if (viewDetailsBtn) {
+    viewDetailsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openScholarshipDetailsModal(schol, applicantCountDisplay);
+    });
+  }
 
-    if (titleEl) titleEl.textContent = schol.title;
-    if (typeEl) typeEl.textContent = schol.typeText || schol.type || "";
-    if (dateEl) dateEl.textContent = schol.formattedDate || "No Deadline";
-    if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
-    if (descEl) descEl.textContent = schol.desc || "";
-    if (manageBtn) {
-      manageBtn.onclick = () => {
-        window.location.href = `provider-posts.html?scholarshipId=${encodeURIComponent(schol.id || schol.title)}`;
-      };
-    }
-    if (modalEl) modalEl.classList.add("active");
+  // Also make entire card clickable
+  card.addEventListener("click", () => {
+    openScholarshipDetailsModal(schol, applicantCountDisplay);
   });
 
   return card;
