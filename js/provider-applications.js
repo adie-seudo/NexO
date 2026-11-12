@@ -1178,8 +1178,10 @@
       }
     }
 
-    document.getElementById("modal-program-title").textContent =
-      app.scholarshipTitle || "Scholarship Program";
+    const progTitleEl = document.getElementById("modal-program-title");
+    if (progTitleEl) {
+      progTitleEl.textContent = app.scholarshipTitle || "Scholarship Program";
+    }
     document.getElementById("modal-app-date").textContent =
       app.formattedDate ||
       (app.submittedAt
@@ -1292,7 +1294,7 @@
       attachedHeader.innerHTML = `
         <span style="font-size: 11.5px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          Attached Verification Files (${attachedDocs.length})
+          Attached Documents (${attachedDocs.length})
         </span>
         <span style="font-size: 11px; color: var(--text-secondary);">Ready for Verification</span>
       `;

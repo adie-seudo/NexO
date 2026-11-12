@@ -496,10 +496,10 @@
       }
 
       .modal-info-card {
-        background: rgba(139, 92, 246, 0.03);
+        background: var(--bg-hover, rgba(139, 92, 246, 0.03));
         border: 1px solid var(--border-color, #e5e7eb);
         border-radius: 14px;
-        padding: 16px 18px;
+        padding: 18px 20px;
         margin: 16px 0;
       }
       .dark-theme .modal-info-card {
@@ -509,23 +509,34 @@
 
       .modal-info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 12px 16px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px 24px;
         font-size: 13.5px;
-        margin-top: 10px;
+        margin-top: 12px;
+      }
+      @media (max-width: 600px) {
+        .modal-info-grid {
+          grid-template-columns: 1fr;
+        }
       }
       .modal-info-cell {
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        border-radius: 10px;
-        padding: 10px 14px;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
       }
       .dark-theme .modal-info-cell {
-        background: rgba(255, 255, 255, 0.03);
-        border-color: rgba(255, 255, 255, 0.06);
+        background: transparent;
+        border-color: transparent;
       }
       .modal-info-cell.full-width {
         grid-column: 1 / -1;
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+      }
+      .dark-theme .modal-info-cell.full-width {
+        border-color: #2e384d;
       }
       .modal-info-label {
         color: var(--text-secondary, #6b7280);
@@ -533,7 +544,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-weight: 700;
-        margin-bottom: 3px;
+        margin-bottom: 2px;
       }
       .modal-info-value {
         color: var(--text-primary);
@@ -541,6 +552,74 @@
         font-weight: 600;
         word-break: break-word;
       }
+      .provider-decision-panel {
+        background: var(--bg-hover, rgba(139, 92, 246, 0.03));
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-top: 18px;
+      }
+      .dark-theme .provider-decision-panel {
+        background: #151b28;
+        border-color: #2e384d;
+      }
+      .decision-btn-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 500px) {
+        .decision-btn-group {
+          grid-template-columns: 1fr;
+        }
+      }
+      .decision-btn {
+        padding: 11px 16px;
+        border-radius: 9999px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      }
+      .decision-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+      .decision-approve {
+        background: #16a34a;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+      }
+      .decision-approve:hover:not(:disabled) {
+        background: #15803d;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+      }
+      .decision-review {
+        background: #8b5cf6;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
+      }
+      .decision-review:hover:not(:disabled) {
+        background: #7c3aed;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+      }
+      .decision-reject {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+      }
+      .decision-reject:hover:not(:disabled) {
+        background: #dc2626;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+      }
+      .decision-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed !important;
 
       .modal-doc-item {
         display: flex;
@@ -609,52 +688,7 @@
         color: #e0e7ff;
       }
 
-      .decision-btn-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-        margin: 16px 0;
-      }
-      .decision-btn {
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        transition: all 0.2s;
-      }
-      .decision-approve {
-        background: #16a34a;
-        color: #fff;
-      }
-      .decision-approve:hover {
-        background: #15803d;
-      }
-      .decision-review {
-        background: #8b5cf6;
-        color: #fff;
-      }
-      .decision-review:hover {
-        background: #7c3aed;
-      }
-      .decision-reject {
-        background: #ef4444;
-        color: #fff;
-      }
-      .decision-reject:hover {
-        background: #dc2626;
-      }
-      .decision-btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed !important;
-        filter: grayscale(40%);
-        pointer-events: none;
-      }
+
 
       .review-notes-textarea {
         width: 100%;
@@ -1241,9 +1275,9 @@
           <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
         </div>
 
-        <!-- Student Profile Details -->
+        <!-- Student Profile Details (Unified Single-Sheet Layout) -->
         <div class="modal-info-card">
-          <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 8px; color: #8b5cf6; display: flex; align-items: center; gap: 6px;">
+          <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 12px; color: #8b5cf6; display: flex; align-items: center; gap: 7px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             Student Profile Information &amp; Academic Credentials
           </div>
@@ -1274,29 +1308,27 @@
             </div>
             <div class="modal-info-cell full-width">
               <div class="modal-info-label">Bio / Applicant Summary</div>
-              <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary);">No applicant bio provided.</div>
+              <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary); line-height: 1.45;">No applicant bio provided.</div>
             </div>
           </div>
         </div>
 
-        <!-- Applied Scholarship Info -->
-        <div style="padding: 10px 14px; background: rgba(139, 92, 246, 0.08); border-radius: 10px; margin-bottom: 16px;">
-          <div style="font-size: 11.5px; font-weight: 700; text-transform: uppercase; color: #8b5cf6;">Applied Scholarship Program</div>
-          <div style="font-size: 14.5px; font-weight: 700; margin-top: 2px;" id="modal-program-title">Tech for Tomorrow Scholarship</div>
-        </div>
-
-        <!-- Submitted Documents Section -->
-        <div style="margin-bottom: 18px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px;">
-            Attached Verification Documents
+        <!-- Submitted Documents Section (Directly following profile, "verification" removed) -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 7px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #8b5cf6;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Attached Documents</span>
           </h4>
           <div id="modal-documents-list">
             <!-- Dynamic documents inserted here -->
           </div>
         </div>
 
-        <!-- Review Decision Actions -->
-        <div style="border-top: 1px solid var(--border-color, #e5e7eb); padding-top: 16px;">
+        <!-- Review Decision Actions (Refined Provider Decision panel with clean alignment) -->
+        <div class="provider-decision-panel">
           <!-- Live Feedback Success Notifier -->
           <div id="modal-feedback-success-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1319,14 +1351,23 @@
             </p>
           </div>
 
-          <h4 style="font-size: 14.5px; font-weight: 700; margin-bottom: 4px;">Provider Decision</h4>
-          <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 10px 0;">
-            Add remarks and choose a decision to notify the student.
-          </p>
+          <div style="margin-bottom: 14px;">
+            <div style="font-size: 14px; font-weight: 700; color: #8b5cf6; display: flex; align-items: center; gap: 7px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              <span>Provider Decision</span>
+            </div>
+            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 3px 0 0 0;">
+              Add remarks and select a decision to notify the student.
+            </p>
+          </div>
 
           <div>
-            <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary);">
-              Remarks
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-secondary);">
+              <span>Remarks</span>
+              <span style="font-size: 11px; text-transform: none; font-weight: 500; opacity: 0.8;">Optional</span>
             </label>
             <textarea
               id="modal-review-notes"
@@ -1354,17 +1395,17 @@
               </button>
             </div>
           </div>
+        </div>
 
-          <!-- Bottom Close Button for Convenient Exit -->
-          <div style="margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border-color); display: flex; justify-content: center;">
-            <button type="button" class="modal-bottom-close-btn" id="modal-btn-close-bottom">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-              <span>Close Application Review</span>
-            </button>
-          </div>
+        <!-- Bottom Close Button (Clean exit without cut/dashed line) -->
+        <div style="margin-top: 20px; display: flex; justify-content: center;">
+          <button type="button" class="modal-bottom-close-btn" id="modal-btn-close-bottom">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Close Application Review</span>
+          </button>
         </div>
       </div>
     </div>

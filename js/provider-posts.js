@@ -1720,8 +1720,10 @@
       }
     }
 
-    document.getElementById("modal-program-title").textContent =
-      app.scholarshipTitle || "Scholarship Program";
+    const progTitleEl = document.getElementById("modal-program-title");
+    if (progTitleEl) {
+      progTitleEl.textContent = app.scholarshipTitle || "Scholarship Program";
+    }
     document.getElementById("modal-app-date").textContent =
       app.formattedDate ||
       (app.submittedAt
@@ -1807,7 +1809,7 @@
     const rawDocs = app.documents || app.uploadedDocuments || [];
     if (rawDocs.length === 0) {
       docsContainer.innerHTML =
-        '<div style="text-align: center; padding: 18px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">No verification documents attached to this submission.</div>';
+        '<div style="text-align: center; padding: 18px; font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 8px;">No attached documents for this submission.</div>';
       return;
     }
 
