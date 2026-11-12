@@ -323,11 +323,69 @@
   // =============================================================
   // VIEW 1: POSTED SCHOLARSHIPS LIST LOGIC
   // =============================================================
+  function updatePostFilterUI(activeStatus) {
+    const filterBtn = document.getElementById("btn-posts-filter");
+    const filterMenu = document.getElementById("menu-posts-filter");
+    if (filterBtn) {
+      filterBtn.classList.toggle("is-filtered", activeStatus !== "all");
+      const statusMap = {
+        all: "Status",
+        open: "Active / Open",
+        closed: "Closed",
+      };
+      const titleStr = statusMap[activeStatus] || "Status";
+      filterBtn.title = activeStatus === "all" ? "Filter by status" : `Filter: ${titleStr}`;
+    }
+    if (filterMenu) {
+      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
+        item.classList.toggle("active", (item.dataset.filter || "all") === activeStatus);
+      });
+    }
+    const tabs = document.querySelectorAll(".posts-tab");
+    tabs.forEach((tab) => {
+      tab.classList.toggle("active", (tab.dataset.filter || "all") === activeStatus);
+    });
+  }
+
   function initPostsFilters() {
     if (postSearchInputEl) {
       postSearchInputEl.addEventListener("input", (e) => {
         postSearchQuery = e.target.value.trim().toLowerCase();
         renderPostsFeed();
+      });
+    }
+
+    const filterBtn = document.getElementById("btn-posts-filter");
+    const filterMenu = document.getElementById("menu-posts-filter");
+    const filterWrapper = document.getElementById("dropdown-wrapper-posts-filter");
+
+    if (filterBtn && filterMenu) {
+      filterBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = filterMenu.classList.contains("show");
+        filterMenu.classList.toggle("show", !isOpen);
+        filterBtn.setAttribute("aria-expanded", String(!isOpen));
+        if (filterWrapper) filterWrapper.classList.toggle("is-open", !isOpen);
+      });
+
+      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
+        item.addEventListener("click", function (e) {
+          e.stopPropagation();
+          postFilterTab = this.dataset.filter || "all";
+          updatePostFilterUI(postFilterTab);
+          filterMenu.classList.remove("show");
+          filterBtn.setAttribute("aria-expanded", "false");
+          if (filterWrapper) filterWrapper.classList.remove("is-open");
+          renderPostsFeed();
+        });
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
+          filterMenu.classList.remove("show");
+          filterBtn.setAttribute("aria-expanded", "false");
+          if (filterWrapper) filterWrapper.classList.remove("is-open");
+        }
       });
     }
 
@@ -337,9 +395,20 @@
         tabs.forEach((t) => t.classList.remove("active"));
         this.classList.add("active");
         postFilterTab = this.dataset.filter || "all";
+        updatePostFilterUI(postFilterTab);
         renderPostsFeed();
       });
     });
+
+    // Check URL parameter for initial filter
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlFilter = (urlParams.get("filter") || "").toLowerCase();
+      if (urlFilter === "open" || urlFilter === "closed" || urlFilter === "all") {
+        postFilterTab = urlFilter;
+        updatePostFilterUI(urlFilter);
+      }
+    } catch (_) {}
   }
 
   function updatePostTabCounters() {
@@ -353,6 +422,16 @@
       else openCount++;
     });
 
+    // Dropdown badges
+    const countAll = document.getElementById("filter-count-all");
+    const countOpen = document.getElementById("filter-count-open");
+    const countClosed = document.getElementById("filter-count-closed");
+
+    if (countAll) countAll.textContent = String(total);
+    if (countOpen) countOpen.textContent = String(openCount);
+    if (countClosed) countClosed.textContent = String(closedCount);
+
+    // Tab buttons if present
     const tabAll = document.getElementById("tab-posts-all");
     const tabOpen = document.getElementById("tab-posts-open");
     const tabClosed = document.getElementById("tab-posts-closed");
@@ -1078,16 +1157,10 @@
       } else {
         reqs.forEach((r) => {
           const item = document.createElement("div");
-          item.style.cssText =
-            "display: flex; align-items: flex-start; gap: 8px; font-size: 13.5px; padding: 6px 10px; background: rgba(139, 92, 246, 0.06); border-radius: 8px;";
+          item.className = "details-checklist-item";
           item.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5" style="margin-top: 2px; flex-shrink: 0;">
-              <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <div>
-              <strong style="color: var(--text-primary);">${escapeHtml(r.title || r.name || "Requirement")}</strong>
-              ${r.desc ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(r.desc)}</div>` : ""}
-            </div>
+            <strong style="color: var(--text-primary); font-size: 13.5px;">${escapeHtml(r.title || r.name || "Requirement")}</strong>
+            ${r.desc ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${escapeHtml(r.desc)}</div>` : ""}
           `;
           reqsListEl.appendChild(item);
         });

@@ -903,15 +903,14 @@
         class="header-actions"
         style="display: flex; align-items: center; gap: 8px"
       >
+        <!-- The Dark Mode Toggle -->
         <label class="theme-toggle-container">
           <input
+            id="theme-toggle"
+            class="theme-toggle"
             type="checkbox"
-            id="theme-toggle-cb"
-            aria-label="Toggle theme"
+            aria-label="Toggle Dark Mode"
           />
-          <div class="theme-track">
-            <div class="theme-thumb"></div>
-          </div>
         </label>
 
         <button class="icon-btn notification-btn" aria-label="Notifications">
@@ -1086,28 +1085,6 @@
     <main class="posts-container">
       <!-- 2A. POSTED SCHOLARSHIPS LIST VIEW -->
       <div id="posts-list-view">
-        <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-          <a
-            href="provider-dashboard.html"
-            class="btn-back-nav"
-            style="margin-bottom: 0;"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Back to Dashboard
-          </a>
-          <a
-            href="provider-dashboard.html#open-create"
-            class="btn btn-primary"
-            id="btn-create-new-schol"
-            style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 13.5px; border-radius: 8px; text-decoration: none;"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Post New Scholarship
-          </a>
-        </div>
-
         <div class="posts-header-row">
           <h1 class="posts-title">Posted Scholarships</h1>
         </div>
@@ -1115,29 +1092,52 @@
           Manage your published scholarship opportunities, monitor submissions, and review applicants.
         </p>
 
-        <!-- Search and Filter Toolbar -->
-        <div class="posts-controls-bar">
-          <div class="posts-search-wrapper">
-            <svg class="posts-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Search & Status Filter Section (Oblong search bar with filter button on right) -->
+        <div class="submissions-search-filter-row" style="margin-bottom: 22px;">
+          <!-- Search Bar (Oblong pill design matching student POV) -->
+          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
+            <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <input
               type="text"
-              class="posts-search-input"
               id="posts-search-input"
+              class="browse-search-input directory-search-input"
               placeholder="Search by scholarship title, type, or keyword..."
               aria-label="Search scholarships"
             />
           </div>
 
-          <div class="posts-tabs">
-            <button type="button" class="posts-tab active" data-filter="all" id="tab-posts-all">All (0)</button>
-            <button type="button" class="posts-tab" data-filter="open" id="tab-posts-open">Active / Open (0)</button>
-            <button type="button" class="posts-tab" data-filter="closed" id="tab-posts-closed">Closed (0)</button>
-            <span id="posts-count-label" style="margin-left: auto; font-size: 13px; color: var(--text-secondary, #6b7280);">
-              Showing 0 posts
-            </span>
+          <!-- Status Filter Dropdown on Right Side -->
+          <div class="directory-filter-dropdown" id="dropdown-wrapper-posts-filter">
+            <button
+              type="button"
+              class="directory-filter-icon-btn"
+              id="btn-posts-filter"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Filter posts by status"
+              title="Filter by status"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+            </button>
+            <div class="directory-dropdown-menu" id="menu-posts-filter" role="menu" style="min-width: 200px; right: 0; left: auto;">
+              <button type="button" class="directory-dropdown-item active" data-filter="all" role="menuitem">
+                <span>All Scholarships</span>
+                <span class="sub-filter-badge" id="filter-count-all">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="open" role="menuitem">
+                <span>Active / Open</span>
+                <span class="sub-filter-badge" id="filter-count-open">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="closed" role="menuitem">
+                <span>Closed</span>
+                <span class="sub-filter-badge" id="filter-count-closed">0</span>
+              </button>
+            </div>
           </div>
         </div>
 

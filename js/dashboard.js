@@ -910,14 +910,15 @@ function openScholarshipDetailsModal(schol, applicantCountDisplay, applicantCoun
     reqs.forEach((r) => {
       const rName =
         typeof r === "string" ? r : r.name || r.title || "Required Document";
+      const rDesc =
+        typeof r === "object" && r !== null && r.desc
+          ? `<span style="font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;">${escapeHtml(r.desc)}</span>`
+          : "";
       const rItem = document.createElement("div");
-      rItem.style.cssText =
-        "display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-canvas); border: 1px solid var(--border-color); border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--text-primary);";
+      rItem.className = "details-checklist-item";
       rItem.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span>${escapeHtml(rName)}</span>
+        <span style="font-weight: 650; color: var(--text-primary); font-size: 13.5px;">${escapeHtml(rName)}</span>
+        ${rDesc}
       `;
       reqsEl.appendChild(rItem);
     });
