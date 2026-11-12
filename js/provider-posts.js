@@ -718,7 +718,7 @@
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span>Expires: <strong style="color: var(--text-primary);">${escapeHtml(deadlineText)}</strong></span>
+            <span>Deadline: <strong style="color: var(--text-primary);">${escapeHtml(deadlineText)}</strong></span>
           </span>
         </div>
 
@@ -1076,54 +1076,46 @@
           }
         </div>
 
-        <div class="provider-app-details">
-          <div class="provider-app-header-line">
-            <h3 class="provider-app-student-name">${escapeHtml(studentName)}</h3>
+        <div class="provider-app-details" style="flex: 1; min-width: 0;">
+          <div class="provider-app-header-line" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h3 class="provider-app-student-name" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHtml(studentName)}</h3>
             <span class="provider-app-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
           </div>
 
-          <div class="provider-app-program">
-            ${escapeHtml([info.course, info.yearLevel].filter(Boolean).join(" • ") || "Degree Candidate")}
+          <!-- Hierarchy: Course prominently displayed -->
+          <div class="provider-app-course" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 2px 0 8px; line-height: 1.35;">
+            ${escapeHtml(info.course || "Degree Candidate")}
           </div>
-          <div class="provider-app-school">${escapeHtml(info.university || "Batangas State University")}</div>
 
-          <div class="provider-app-meta-row">
-            <div class="provider-app-meta-item" style="font-weight: 700; color: #8b5cf6;">
-              <span>Queue #${queueNumber}</span>
+          <!-- Clean aligned details with consistent icons and NO bullets -->
+          <div class="provider-app-meta-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 12.5px; color: var(--text-secondary);">
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+              </svg>
+              <span>Year: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(info.yearLevel || "Undergraduate")}</strong></span>
             </div>
-            <div class="provider-app-meta-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
+                <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path>
+              </svg>
+              <span>University: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(info.university || "Batangas State University")}</strong></span>
+            </div>
+
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>Applied: ${escapeHtml(formattedAppliedDate)}</span>
-            </div>
-            <div class="provider-app-meta-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-              <span>${escapeHtml(app.studentEmail || "No Email")}</span>
+              <span>Applied: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(formattedAppliedDate)}</strong></span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="provider-app-actions-row">
-        <span style="font-size: 12px; color: var(--text-secondary);">
-          ${(() => {
-            const rawDocs = app.documents || app.uploadedDocuments || [];
-            const actuallyAttached = rawDocs.filter((d) => {
-              if (typeof d === "string") return !d.includes("(To Follow Up)");
-              return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
-            });
-            const count = actuallyAttached.length;
-            if (count === 0) {
-              return '<span style="color: #d97706; font-weight: 500;">To follow up later</span>';
-            }
-            return `${count} attached ${count === 1 ? "document" : "documents"}`;
-          })()}
-        </span>
+      <div class="provider-app-actions-row" style="margin-top: 14px; width: 100%;">
         <button type="button" class="btn btn-primary btn-review-app">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

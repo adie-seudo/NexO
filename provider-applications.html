@@ -369,23 +369,32 @@
 
       .provider-app-actions-row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border-color, #e5e7eb);
+        padding-top: 0;
+        border-top: none;
+        width: 100%;
       }
       .dark-theme .provider-app-actions-row {
-        border-color: #374151;
+        border-top: none;
       }
 
       .btn-review-app {
+        width: 100%;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 7px 14px;
-        font-size: 13px;
-        border-radius: 8px;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 13.5px;
+        font-weight: 600;
+        border-radius: 9999px;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      }
+      .btn-review-app:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.28);
       }
 
       .provider-app-quick-btns {

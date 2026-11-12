@@ -709,49 +709,50 @@
       <div class="provider-app-main-row">
         ${avatarHtml}
 
-        <div class="provider-app-details">
-          <div class="provider-app-header-line">
-            <h3 class="provider-app-student-name">${escapeHtml(name)}</h3>
+        <div class="provider-app-details" style="flex: 1; min-width: 0;">
+          <div class="provider-app-header-line" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px;">
+            <h3 class="provider-app-student-name" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHtml(name)}</h3>
             <span class="provider-app-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
           </div>
 
-          <p class="provider-app-program">
+          <p class="provider-app-program" style="margin-bottom: 4px;">
             <span class="program-tag">${escapeHtml(app.scholarshipTitle || "Scholarship Program")}</span>
           </p>
 
-          <p class="provider-app-school">
-            ${escapeHtml([info.course, info.yearLevel].filter(Boolean).join(" • ") || "Degree Candidate")}
-            ${info.university ? `&bull; ${escapeHtml(info.university)}` : ""}
-          </p>
+          <!-- Hierarchy: Course prominently displayed -->
+          <div class="provider-app-course" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 2px 0 8px; line-height: 1.35;">
+            ${escapeHtml(info.course || "Degree Candidate")}
+          </div>
 
-          <div class="provider-app-meta-row">
-            <span class="provider-app-meta-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
+          <!-- Clean aligned details with consistent icons and NO bullets -->
+          <div class="provider-app-meta-row" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-size: 12.5px; color: var(--text-secondary);">
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
               </svg>
-              ${escapeHtml(dateFormatted)}
-            </span>
+              <span>Year: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(info.yearLevel || "Undergraduate")}</strong></span>
+            </div>
 
-            <span class="provider-app-meta-item doc-count-item">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
+                <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"></path>
               </svg>
-              ${docsCount} ${docsCount === 1 ? "File" : "Files"} Attached
-              ${
-                followUpDocs.length > 0
-                  ? ` &bull; <span style="color: #D97706; font-weight: 600; display: inline-flex; align-items: center; gap: 3px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${followUpDocs.length} To Follow Up</span>`
-                  : ""
-              }
-            </span>
+              <span>University: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(info.university || "Batangas State University")}</strong></span>
+            </div>
+
+            <div class="provider-app-meta-item" style="display: inline-flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.75; flex-shrink: 0;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Applied: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(dateFormatted)}</strong></span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="provider-app-actions-row">
+      <div class="provider-app-actions-row" style="margin-top: 14px; width: 100%;">
         <button type="button" class="btn btn-review-app btn-primary">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

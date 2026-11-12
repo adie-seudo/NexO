@@ -643,23 +643,31 @@
       }
       .provider-app-actions-row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
         margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border-color, #e5e7eb);
+        padding-top: 0;
+        border-top: none;
+        width: 100%;
       }
       .dark-theme .provider-app-actions-row {
-        border-color: #374151;
+        border-top: none;
       }
       .btn-review-app {
+        width: 100%;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 7px 14px;
-        font-size: 13px;
-        border-radius: 8px;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 13.5px;
+        font-weight: 600;
+        border-radius: 9999px;
         cursor: pointer;
+        transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      }
+      .btn-review-app:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.28);
       }
 
       /* Modal System (Review, Preview, Confirmation) */
@@ -1184,37 +1192,39 @@
       <!-- 2B. POST APPLICANTS MANAGEMENT VIEW (IN-PAGE VIEW FOR THAT SPECIFIC POST) -->
       <div id="post-applicants-view" style="display: none;">
         <!-- Header row: "Managing Applicants for" title on left, student-POV X button on right -->
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px;">
           <div style="flex: 1; min-width: 0;">
-            <span style="font-size: 13px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px;">
+            <span style="font-size: 13px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">
               Managing Applicants for
             </span>
-            <h1 class="posts-title" id="post-view-title" style="margin: 0; line-height: 1.25; font-size: 24px; word-break: break-word;">
+            <h1 class="posts-title" id="post-view-title" style="margin: 0 0 12px; line-height: 1.25; font-size: 24px; word-break: break-word;">
               Scholarship Title
             </h1>
             
-            <!-- Metadata: Open pill, Type pill, Deadline, Applicants count -->
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-              <span class="post-status-badge open" id="post-view-status-pill">Open</span>
-              <span class="directory-type-pill" id="post-view-type">Need-Based</span>
-              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-secondary);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <!-- Metadata: Open pill, Type pill, Deadline, Applicants count with clear hierarchy & breathing room -->
+            <div class="post-view-meta-row" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px 22px;">
+              <div style="display: inline-flex; align-items: center; gap: 8px;">
+                <span class="post-status-badge open" id="post-view-status-pill">Open</span>
+                <span class="directory-type-pill" id="post-view-type">Need-Based</span>
+              </div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.8; flex-shrink: 0;">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="16" y1="2" x2="16" y2="6"></line>
                   <line x1="8" y1="2" x2="8" y2="6"></line>
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
-                <span>Expires: <strong id="post-view-deadline" style="color: var(--text-primary);">No Deadline</strong></span>
-              </span>
-              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: #8b5cf6;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <span>Deadline: <strong id="post-view-deadline" style="color: var(--text-primary); font-weight: 600;">No Deadline</strong></span>
+              </div>
+              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #8b5cf6;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
                 <span id="post-view-applicants">0 / 200 Applicants</span>
-              </span>
+              </div>
             </div>
           </div>
 
@@ -1376,7 +1386,7 @@
             <span class="directory-date-dot">&bull;</span>
             <span class="directory-date-item">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>Expires: <strong id="view-modal-date" style="color: var(--text-primary);">No Deadline</strong></span>
+              <span>Deadline: <strong id="view-modal-date" style="color: var(--text-primary);">No Deadline</strong></span>
             </span>
           </div>
         </div>
