@@ -576,7 +576,7 @@
       }
       .decision-btn {
         padding: 11px 16px;
-        border-radius: 9999px;
+        border-radius: 20px;
         font-size: 13px;
         font-weight: 700;
         border: none;
@@ -1257,142 +1257,139 @@
     <!-- ========================================= -->
     <div class="nexo-modal-overlay" id="review-application-modal" role="dialog" aria-modal="true">
       <div class="nexo-modal-container">
-        <button type="button" class="modal-close-btn" id="close-review-modal" aria-label="Close modal">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <!-- Clean Circular X Close Button (Consistent with other modals) -->
+        <button
+          type="button"
+          class="modal-close-icon-btn"
+          id="close-review-modal"
+          aria-label="Close modal"
+          title="Close"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10;"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 28px; margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <div id="modal-student-avatar" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 700; font-size: 16px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+        <!-- Student Header: Avatar, Name, Email, and Status Badge placed cleanly under email -->
+        <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-right: 48px;">
+          <div id="modal-student-avatar" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 700; font-size: 16px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
+          <div style="flex: 1; min-width: 0;">
+            <h2 style="font-size: 19px; font-weight: 700; margin: 0 0 2px; line-height: 1.25; word-break: break-word;" id="modal-student-name">Student Name</h2>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; word-break: break-all;" id="modal-student-email">student@university.edu.ph</div>
             <div>
-              <h2 style="font-size: 19px; font-weight: 700; margin: 0 0 2px;" id="modal-student-name">Student Name</h2>
-              <span style="font-size: 13px; color: var(--text-secondary);" id="modal-student-email">student@university.edu.ph</span>
-            </div>
-          </div>
-          <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
-        </div>
-
-        <!-- Student Profile Details (Unified Single-Sheet Layout) -->
-        <div class="modal-info-card">
-          <div style="font-weight: 700; font-size: 13.5px; margin-bottom: 12px; color: #8b5cf6; display: flex; align-items: center; gap: 7px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            Student Profile Information &amp; Academic Credentials
-          </div>
-          <div class="modal-info-grid">
-            <div class="modal-info-cell">
-              <div class="modal-info-label">University / Institution</div>
-              <div class="modal-info-value" id="modal-student-school">Not Specified</div>
-            </div>
-            <div class="modal-info-cell">
-              <div class="modal-info-label">Course / Degree Program</div>
-              <div class="modal-info-value" id="modal-student-course">Not Specified</div>
-            </div>
-            <div class="modal-info-cell">
-              <div class="modal-info-label">Academic Year Level</div>
-              <div class="modal-info-value" id="modal-student-year">Not Specified</div>
-            </div>
-            <div class="modal-info-cell">
-              <div class="modal-info-label">Student ID Number</div>
-              <div class="modal-info-value" id="modal-student-id">Not Specified</div>
-            </div>
-            <div class="modal-info-cell">
-              <div class="modal-info-label">Contact Number</div>
-              <div class="modal-info-value" id="modal-student-contact">Not Specified</div>
-            </div>
-            <div class="modal-info-cell">
-              <div class="modal-info-label">Date Submitted</div>
-              <div class="modal-info-value" id="modal-app-date">Recently</div>
-            </div>
-            <div class="modal-info-cell full-width">
-              <div class="modal-info-label">Bio / Applicant Summary</div>
-              <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary); line-height: 1.45;">No applicant bio provided.</div>
+              <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
             </div>
           </div>
         </div>
 
-        <!-- Submitted Documents Section (Directly following profile, "verification" removed) -->
+        <!-- Section: Student Profile Details (Title outside the card, no icon) -->
         <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 7px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color: #8b5cf6;">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-            </svg>
-            <span>Attached Documents</span>
+          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--text-primary);">
+            Student Profile Information &amp; Academic Credentials
+          </h4>
+          <div class="modal-info-card" style="margin: 0;">
+            <div class="modal-info-grid">
+              <div class="modal-info-cell">
+                <div class="modal-info-label">University / Institution</div>
+                <div class="modal-info-value" id="modal-student-school">Not Specified</div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Course / Degree Program</div>
+                <div class="modal-info-value" id="modal-student-course">Not Specified</div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Academic Year Level</div>
+                <div class="modal-info-value" id="modal-student-year">Not Specified</div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Student ID Number</div>
+                <div class="modal-info-value" id="modal-student-id">Not Specified</div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Contact Number</div>
+                <div class="modal-info-value" id="modal-student-contact">Not Specified</div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Date Submitted</div>
+                <div class="modal-info-value" id="modal-app-date">Recently</div>
+              </div>
+              <div class="modal-info-cell full-width">
+                <div class="modal-info-label">Bio / Applicant Summary</div>
+                <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary); line-height: 1.45;">No applicant bio provided.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Attached Documents (Title outside, no icon) -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--text-primary);">
+            Attached Documents
           </h4>
           <div id="modal-documents-list">
             <!-- Dynamic documents inserted here -->
           </div>
         </div>
 
-        <!-- Review Decision Actions (Refined Provider Decision panel with clean alignment) -->
-        <div class="provider-decision-panel">
-          <!-- Live Feedback Success Notifier -->
-          <div id="modal-feedback-success-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <strong style="color: #10B981; font-size: 13px;">Decision &amp; Remarks Dispatched</strong>
+        <!-- Section: Provider Decision (Title outside the card, no icon) -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary);">
+            Provider Decision
+          </h4>
+          <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 10px 0;">
+            Add remarks and choose a decision to notify the student.
+          </p>
+
+          <div class="provider-decision-panel" style="margin-top: 0;">
+            <!-- Live Feedback Success Notifier (Shortened, check icon removed) -->
+            <div id="modal-feedback-success-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;">
+              <strong style="color: #10B981; font-size: 12.5px; display: block;">Decision Sent</strong>
+              <p id="modal-feedback-success-msg" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-primary);">
+                Saved and sent to student.
+              </p>
             </div>
-            <p id="modal-feedback-success-msg" style="margin: 4px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.45;">
-              Your decision and remarks were saved and sent directly to the student's portal.
-            </p>
-          </div>
 
-          <!-- Finalized Permanent Notice in Review Modal -->
-          <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-              <strong style="color: #10B981; font-size: 12.5px;">Decision Finalized</strong>
+            <!-- Finalized Permanent Notice in Review Modal -->
+            <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
+              <strong style="color: #10B981; font-size: 12.5px; display: block;">Decision Finalized</strong>
+              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
+                This application is permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong> and can no longer be modified.
+              </p>
             </div>
-            <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
-              This application is permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong> and can no longer be modified.
-            </p>
-          </div>
 
-          <div style="margin-bottom: 14px;">
-            <div style="font-size: 14px; font-weight: 700; color: #8b5cf6; display: flex; align-items: center; gap: 7px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M9 11l3 3L22 4"></path>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-              </svg>
-              <span>Provider Decision</span>
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-secondary);">
+                Remarks
+              </label>
+              <textarea
+                id="modal-review-notes"
+                class="review-notes-textarea"
+                placeholder="e.g. Congratulations! Please submit your registration receipt... (Leave blank to use official automated remark)"
+              ></textarea>
             </div>
-            <p style="font-size: 12.5px; color: var(--text-secondary); margin: 3px 0 0 0;">
-              Add remarks and select a decision to notify the student.
-            </p>
-          </div>
 
-          <div>
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-secondary);">
-              <span>Remarks</span>
-              <span style="font-size: 11px; text-transform: none; font-weight: 500; opacity: 0.8;">Optional</span>
-            </label>
-            <textarea
-              id="modal-review-notes"
-              class="review-notes-textarea"
-              placeholder="e.g. Congratulations! Please submit your registration receipt... (Leave blank to use official automated remark)"
-            ></textarea>
-          </div>
-
-          <div style="margin-top: 14px;">
-            <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
-              Submit Decision:
-            </label>
-            <div class="decision-btn-group" id="modal-decision-btn-group">
-              <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                Approve
-              </button>
-              <button type="button" class="decision-btn decision-review" id="modal-btn-review">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
-                Under Review
-              </button>
-              <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                Reject
-              </button>
+            <div style="margin-top: 14px;">
+              <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
+                Submit Decision:
+              </label>
+              <div class="decision-btn-group" id="modal-decision-btn-group">
+                <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Approve
+                </button>
+                <button type="button" class="decision-btn decision-review" id="modal-btn-review">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
+                  Under Review
+                </button>
+                <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Reject
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1412,15 +1409,23 @@
 
     <!-- On-Screen Decision & Remarks Confirmation Modal -->
     <div class="nexo-modal-overlay" id="decision-confirm-modal" role="dialog" aria-modal="true" style="z-index: 10500;">
-      <div class="nexo-modal-container" style="max-width: 520px; border-radius: 16px; padding: 24px;">
-        <button type="button" class="modal-close-btn" id="close-decision-confirm" aria-label="Close confirmation">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <div class="nexo-modal-container" style="max-width: 520px; border-radius: 16px; padding: 24px; position: relative;">
+        <!-- Clean Circular X Close Button (Consistent with other modals) -->
+        <button
+          type="button"
+          class="modal-close-icon-btn"
+          id="close-decision-confirm"
+          aria-label="Close confirmation"
+          title="Close"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10;"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
 
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-right: 40px;">
           <div id="confirm-status-icon" style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
             <!-- Dynamic icon -->
           </div>
@@ -1456,9 +1461,9 @@
         <div style="margin-bottom: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <label for="confirm-remarks-textarea" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">
-              Remarks <span style="color: #ef4444;">*</span>
+              Remarks
             </label>
-            <button type="button" class="btn-reset-remarks" id="btn-reset-default-remarks">
+            <button type="button" class="btn-reset-remarks" id="btn-reset-default-remarks" style="border-radius: 20px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <polyline points="1 4 1 10 7 10"></polyline>
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
@@ -1477,12 +1482,12 @@
           </div>
         </div>
 
-        <!-- Buttons -->
+        <!-- Buttons with 20px border radius -->
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" class="btn btn-secondary" id="btn-cancel-decision-confirm" style="padding: 10px 16px; font-size: 13px; font-weight: 600;">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-decision-confirm" style="padding: 10px 18px; font-size: 13px; font-weight: 600; border-radius: 20px;">
             Back to Review
           </button>
-          <button type="button" class="btn btn-primary" id="btn-submit-decision-confirm" style="padding: 10px 20px; font-size: 13px; font-weight: 700;">
+          <button type="button" class="btn btn-primary" id="btn-submit-decision-confirm" style="padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 20px;">
             Confirm &amp; Send Decision
           </button>
         </div>

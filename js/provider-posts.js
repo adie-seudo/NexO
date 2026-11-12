@@ -160,7 +160,11 @@
 
     // Check URL parameters for direct deep-linking to a post
     const urlParams = new URLSearchParams(window.location.search);
-    const targetId = urlParams.get("scholarshipId") || urlParams.get("scholId");
+    const targetId =
+      urlParams.get("scholarshipId") ||
+      urlParams.get("scholId") ||
+      urlParams.get("postId") ||
+      urlParams.get("id");
     if (targetId) {
       setTimeout(() => {
         openPostApplicantsView(targetId);
@@ -395,6 +399,21 @@
     }
 
     updatePostTabCounters();
+
+    // Check if deep-linking directly to a specific post via URL
+    if (!currentActivePost) {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const deepLinkId =
+          urlParams.get("scholarshipId") ||
+          urlParams.get("scholId") ||
+          urlParams.get("postId") ||
+          urlParams.get("id");
+        if (deepLinkId) {
+          openPostApplicantsView(deepLinkId);
+        }
+      } catch (_) {}
+    }
 
     if (currentActivePost && postApplicantsViewEl && postApplicantsViewEl.style.display !== "none") {
       renderActivePostHeader(currentActivePost);
@@ -854,10 +873,12 @@
   }
 
   function openPostApplicantsView(scholId) {
+    if (!scholId) return;
+    const cleanId = String(scholId).trim().toLowerCase();
     const target = allScholarships.find(
       (s) =>
-        String(s.id) === String(scholId) ||
-        String(s.title || "").toLowerCase() === String(scholId).toLowerCase(),
+        String(s.id || "").trim().toLowerCase() === cleanId ||
+        String(s.title || "").trim().toLowerCase() === cleanId,
     );
     if (!target) return;
 
@@ -1492,19 +1513,13 @@
       submitBtn.addEventListener("click", async () => {
         if (!currentActiveApp || !pendingDecision) return;
 
-        const remarks = textarea ? textarea.value.trim() : "";
+        let remarks = textarea ? textarea.value.trim() : "";
         const errEl = document.getElementById("confirm-remarks-error");
-
-        if (!remarks) {
-          if (errEl) {
-            errEl.textContent = "Remarks cannot be empty. Please provide feedback or instructions for the student.";
-            errEl.style.display = "block";
-          }
-          if (textarea) textarea.focus();
-          return;
-        }
-
         if (errEl) errEl.style.display = "none";
+
+        if (!remarks && pendingDecision) {
+          remarks = DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "Application status updated.";
+        }
 
         submitBtn.disabled = true;
         const targetStatus = pendingDecision.status;

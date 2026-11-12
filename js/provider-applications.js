@@ -927,20 +927,15 @@
       submitBtn.addEventListener("click", async () => {
         if (!currentActiveApp || !pendingDecision) return;
 
-        const remarks = textarea ? textarea.value.trim() : "";
+        let remarks = textarea ? textarea.value.trim() : "";
         const errEl = document.getElementById("confirm-remarks-error");
-
-        if (!remarks) {
-          if (errEl) {
-            errEl.textContent =
-              "Remarks cannot be empty. Please provide feedback or follow-up instructions for the student.";
-            errEl.style.display = "block";
-          }
-          if (textarea) textarea.focus();
-          return;
-        }
-
         if (errEl) errEl.style.display = "none";
+
+        if (!remarks && pendingDecision) {
+          remarks =
+            DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] ||
+            "Application status updated.";
+        }
 
         submitBtn.disabled = true;
         const targetStatus = pendingDecision.status;

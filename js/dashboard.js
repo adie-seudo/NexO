@@ -1005,7 +1005,8 @@ function openScholarshipDetailsModal(schol, applicantCountDisplay, applicantCoun
       `;
       manageBtn.onclick = () => {
         closeProviderDetailsModal();
-        window.location.href = `provider-posts.html?postId=${encodeURIComponent(schol.id || schol.title)}`;
+        const targetId = encodeURIComponent(schol.id || schol.title);
+        window.location.href = `provider-posts.html?scholarshipId=${targetId}&postId=${targetId}`;
       };
     }
   }
