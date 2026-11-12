@@ -671,30 +671,168 @@ function getCollectedRequirements() {
   return reqs;
 }
 
+function closeProviderDetailsModal() {
+  const modalEl = document.getElementById("view-details-modal");
+  if (modalEl) {
+    modalEl.classList.remove("active");
+    modalEl.setAttribute("aria-hidden", "true");
+  }
+  document.body.style.overflow = "auto";
+  document.removeEventListener("keydown", handleProviderDetailsEsc);
+}
+function handleProviderDetailsEsc(e) {
+  if (e.key === "Escape") closeProviderDetailsModal();
+}
+window.closeProviderDetailsModal = closeProviderDetailsModal;
+
 function openScholarshipDetailsModal(schol, applicantCountDisplay) {
+  const modalEl = document.getElementById("view-details-modal");
+  if (!modalEl) return;
+
   const titleEl = document.getElementById("view-modal-title");
+  const providerEl = document.getElementById("view-modal-provider");
   const typeEl = document.getElementById("view-modal-type");
+  const statusEl = document.getElementById("view-modal-status");
   const dateEl = document.getElementById("view-modal-date");
+  const postedEl = document.getElementById("view-modal-posted");
   const applicantsEl = document.getElementById("view-modal-applicants");
   const descEl = document.getElementById("view-modal-desc");
-  const modalEl = document.getElementById("view-details-modal");
+  const reqsEl = document.getElementById("view-modal-reqs");
+  const coverImg = document.getElementById("view-modal-cover-img");
+  const logoEl = document.getElementById("view-modal-schol-logo");
   const manageBtn = document.getElementById("view-modal-manage-btn");
 
   if (titleEl) titleEl.textContent = schol.title || "Scholarship Program";
+
+  // Provider Organization
+  const orgName =
+    schol.organization ||
+    schol.providerName ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
+  if (providerEl) providerEl.textContent = orgName;
+
+  // Type & Status
   if (typeEl) typeEl.textContent = schol.typeText || schol.type || "Scholarship";
-  if (dateEl) dateEl.textContent = schol.formattedDate || "No Deadline";
+  if (statusEl) {
+    const isClosed =
+      String(schol.status || "").toLowerCase().includes("closed") ||
+      String(schol.status || "").toLowerCase().includes("quota");
+    statusEl.textContent = isClosed ? "Closed" : "Active";
+    statusEl.style.background = isClosed
+      ? "rgba(239, 68, 68, 0.12)"
+      : "rgba(16, 185, 129, 0.12)";
+    statusEl.style.color = isClosed ? "#ef4444" : "#10b981";
+  }
+
+  // Dates
+  if (dateEl) {
+    dateEl.textContent =
+      schol.formattedDate ||
+      (schol.deadline
+        ? new Date(schol.deadline).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "No Deadline");
+  }
+  if (postedEl) {
+    postedEl.textContent = schol.createdAt
+      ? new Date(schol.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : schol.postedDate || "Recently";
+  }
+
+  // Applicants
   if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
-  if (descEl) descEl.textContent = schol.desc || "";
+
+  // Description
+  if (descEl) descEl.textContent = schol.desc || "No description provided.";
+
+  // Cover photo banner
+  const coverUrl =
+    schol.coverPhoto || schol.coverImage || schol.cover || schol.banner || "";
+  if (coverImg) {
+    if (coverUrl) {
+      coverImg.src = coverUrl;
+      coverImg.style.display = "block";
+    } else {
+      coverImg.src = "";
+      coverImg.style.display = "none";
+    }
+  }
+
+  // Provider Logo / Avatar
+  const providerLogo =
+    schol.logo ||
+    schol.providerLogo ||
+    localStorage.getItem("nexo-provider-logo") ||
+    "";
+  if (logoEl) {
+    if (providerLogo) {
+      logoEl.innerHTML = `<img src="${providerLogo}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    } else {
+      const inits =
+        orgName
+          .split(" ")
+          .slice(0, 2)
+          .map((w) => w[0] || "")
+          .join("")
+          .toUpperCase() || "NX";
+      logoEl.textContent = inits;
+    }
+  }
+
+  // Required Documents Checklist (Matches Student POV)
+  if (reqsEl) {
+    reqsEl.innerHTML = "";
+    const reqs =
+      Array.isArray(schol.requirements) && schol.requirements.length > 0
+        ? schol.requirements
+        : [
+            "Certificate of Registration (COR)",
+            "Certified True Copy of Grades (COG)",
+            "Valid School or Government Issued ID",
+          ];
+    reqs.forEach((r) => {
+      const rName =
+        typeof r === "string" ? r : r.name || r.title || "Required Document";
+      const rItem = document.createElement("div");
+      rItem.style.cssText =
+        "display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--bg-canvas); border: 1px solid var(--border-color); border-radius: 10px; font-size: 13px; font-weight: 500; color: var(--text-primary);";
+      rItem.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7F56D9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span>${escapeHtml(rName)}</span>
+      `;
+      reqsEl.appendChild(rItem);
+    });
+  }
+
+  // Manage Applications Button Action
   if (manageBtn) {
     manageBtn.onclick = () => {
+      closeProviderDetailsModal();
       window.location.href = `provider-posts.html?postId=${encodeURIComponent(schol.id || schol.title)}`;
     };
   }
-  if (modalEl) {
-    modalEl.classList.add("active");
-    modalEl.setAttribute("aria-hidden", "false");
-    document.body.style.overflow = "hidden";
-  }
+
+  // Backdrop click & Escape listener
+  modalEl.onclick = (e) => {
+    if (e.target === modalEl) closeProviderDetailsModal();
+  };
+  document.removeEventListener("keydown", handleProviderDetailsEsc);
+  document.addEventListener("keydown", handleProviderDetailsEsc);
+
+  // Open Full Screen Sheet
+  modalEl.classList.add("active");
+  modalEl.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
 }
 
 function createCompactCard(schol, allApplications = null) {

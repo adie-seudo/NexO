@@ -2435,8 +2435,8 @@ body.dark-theme .notif-item-icon {
 .dash-hero-cover-container {
   position: relative;
   width: 100%;
-  height: 145px;
-  margin-top: 72px; /* Starts right below the 72px fixed global header */
+  height: 110px;
+  margin-top: 60px; /* Seamlessly starts right below the 60px fixed glass header */
   background: linear-gradient(135deg, #7f56d9 0%, #53389e 50%, #301e67 100%);
   overflow: hidden;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, rgba(0,0,0,0.85) 65%, transparent 100%);
@@ -2605,6 +2605,30 @@ body.dark-theme .dash-avatar-wrapper {
 body.dark-theme .badge-verified {
   background-color: rgba(16, 185, 129, 0.12);
   border-color: rgba(52, 211, 153, 0.35);
+}
+
+/* Provider Stats Cards Grid (Matching Student POV Card System) */
+.provider-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 520px) {
+  .provider-stats-grid {
+    gap: 8px;
+  }
+  .provider-stats-grid .student-stat-card {
+    padding: 12px 10px;
+    min-height: 72px;
+  }
+  .provider-stats-grid .student-stat-label {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .provider-stats-grid .student-stat-value {
+    font-size: 20px;
+  }
 }
 
 .dash-stats-container {

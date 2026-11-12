@@ -271,26 +271,39 @@
         </div>
       </section>
 
-      <!-- Statistics Container -->
-      <section class="dash-stats-container">
-        <div class="stat-item">
-          <h2 id="stat-total">0</h2>
-          <p>Total<br />Scholarships</p>
-        </div>
-        <div class="stat-divider"></div>
+      <!-- Statistics Cards Grid (Matching Student POV Card Style) -->
+      <section class="provider-stats-grid">
+        <!-- Metric 1: Total Scholarships -->
         <div
-          class="stat-item"
-          style="cursor: pointer"
-          onclick="window.location.href = 'provider-applications.html'"
-          title="View Applications"
+          class="student-stat-card is-clickable"
+          id="card-stat-total"
+          onclick="window.location.href = 'provider-posts.html'"
+          title="View Posted Scholarships"
         >
-          <h2 id="stat-applicants">0</h2>
-          <p>Total<br />Applicants</p>
+          <p class="student-stat-label">Total Scholarships</p>
+          <h2 class="student-stat-value" id="stat-total">0</h2>
         </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <h2 id="stat-ongoing">0</h2>
-          <p>Ongoing</p>
+
+        <!-- Metric 2: Total Applicants -->
+        <div
+          class="student-stat-card is-clickable"
+          id="card-stat-applicants"
+          onclick="window.location.href = 'provider-applications.html'"
+          title="View All Applications"
+        >
+          <p class="student-stat-label">Total Applicants</p>
+          <h2 class="student-stat-value" id="stat-applicants">0</h2>
+        </div>
+
+        <!-- Metric 3: Ongoing -->
+        <div
+          class="student-stat-card is-clickable"
+          id="card-stat-ongoing"
+          onclick="window.location.href = 'provider-posts.html?filter=open'"
+          title="View Ongoing Scholarships"
+        >
+          <p class="student-stat-label">Ongoing</p>
+          <h2 class="student-stat-value" id="stat-ongoing">0</h2>
         </div>
       </section>
 
@@ -926,166 +939,102 @@
     </div>
 
     <!-- ========================================= -->
-    <!-- VIEW FULL DETAILS MODAL                   -->
+    <!-- VIEW FULL DETAILS MODAL (Student POV Match) -->
     <!-- ========================================= -->
-    <div id="view-details-modal" class="creation-modal" aria-hidden="true">
-      <div
-        class="creation-modal-content"
-        style="
-          max-width: 500px;
-          min-height: auto;
-          margin-top: 60px;
-          border-radius: 16px;
-          padding-bottom: 24px;
-        "
-      >
-        <!-- Header -->
-        <div
-          class="creation-header"
-          style="border-bottom: none; padding-bottom: 0; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;"
-        >
-          <h2 class="creation-title" style="margin-bottom: 0; font-size: 20px">
-            Scholarship Details
-          </h2>
+    <div id="view-details-modal" class="schol-modal-overlay" aria-hidden="true">
+      <div class="schol-modal-sheet" id="view-details-sheet">
+        
+        <!-- Modal Top Bar: Clean X Close Button -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
           <button
             type="button"
-            class="close-modal-btn"
-            onclick="document.getElementById('view-details-modal').classList.remove('active'); document.body.style.overflow='auto';"
-            style="cursor: pointer;"
-            aria-label="Close Details"
+            id="close-view-details-btn"
+            class="modal-close-icon-btn"
+            aria-label="Close details"
+            title="Close"
+            onclick="closeProviderDetailsModal()"
           >
-            &times;
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
-        <!-- Full Post Content -->
-        <div
-          class="review-card"
-          style="
-            margin-bottom: 24px;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-            padding: 24px;
-          "
-        >
-          <div class="review-content" style="margin-bottom: 20px">
-            <div class="review-logo-placeholder">
-              <img
-                src="assets/logo.png"
-                alt="Logo"
-                style="width: 100%; height: 100%; object-fit: contain"
-              />
-            </div>
-            <div class="review-details">
-              <h4 id="view-modal-title" style="font-size: 18px">
-                Scholarship Title
-              </h4>
-              <div style="display: flex; gap: 8px; margin-bottom: 8px">
-                <span class="review-pill" id="view-modal-type">Type</span>
-              </div>
-              <p
-                class="review-deadline"
-                style="display: flex; align-items: center"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#6b7280"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  style="margin-right: 6px"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="16" y1="2" x2="16" y2="6"></line>
-                  <line x1="8" y1="2" x2="8" y2="6"></line>
-                  <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-                <strong style="margin-right: 4px">Deadline:</strong>
-                <span id="view-modal-date">Date</span>
-              </p>
-              <p
-                class="review-limit"
-                style="
-                  display: flex;
-                  align-items: center;
-                  margin-top: 6px;
-                  color: #8b5cf6;
-                  font-weight: 600;
-                  font-size: 13px;
-                "
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  style="margin-right: 6px"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="9" cy="7" r="4"></circle>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <strong style="margin-right: 4px">Applicants:</strong>
-                <span id="view-modal-applicants">0 / 200 Applicants</span>
-              </p>
-            </div>
+        <!-- Hero Cover Banner & Overlapping Logo -->
+        <div class="details-cover-wrap" id="view-modal-cover-wrap">
+          <div class="details-cover-inner">
+            <img src="" alt="Cover" class="details-cover-img" id="view-modal-cover-img" style="display: none;">
           </div>
-          <div
-            style="
-              border-top: 1px solid var(--border-strong);
-              padding-top: 16px;
-            "
-          >
-            <h4
-              style="
-                font-size: 14px;
-                font-weight: 700;
-                color: var(--text-primary);
-                margin-bottom: 8px;
-              "
-            >
-              Description
-            </h4>
-            <p class="review-desc" id="view-modal-desc">
-              Full description goes here...
-            </p>
+          <div class="details-provider-avatar" id="view-modal-schol-logo">
+            NX
           </div>
         </div>
 
-        <!-- Actions -->
-        <div class="modal-actions-column">
-          <!-- The New Manage Applications Button -->
+        <!-- 1. Scholarship Title -->
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;" id="view-modal-title">
+          Scholarship Program
+        </h2>
+
+        <!-- 2. Scholarship Provider Name under the Scholarship Title -->
+        <p style="font-size: 14.5px; font-weight: 600; color: var(--text-secondary); margin: 0 0 10px 0;" id="view-modal-provider">
+          NEXO
+        </p>
+
+        <!-- 3. Followed by Scholarship Type and Status -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+          <span class="modal-type-badge" id="view-modal-type">Merit-Based</span>
+          <span id="view-modal-status" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+            Active
+          </span>
+        </div>
+
+        <!-- Scholarship Key Metadata (Applicants, Posted Date, Deadline / Expiration) -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <!-- Row 1: Applicants -->
+          <div>
+            <span id="view-modal-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span id="view-modal-applicants">0 / 200 Applicants</span>
+            </span>
+          </div>
+
+          <!-- Row 2: Posted & Expires Together -->
+          <div class="directory-dates-row" style="font-size: 12.5px;">
+            <span class="directory-date-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <span>Posted: <strong id="view-modal-posted" style="color: var(--text-primary);">Recently</strong></span>
+            </span>
+            <span class="directory-date-dot">&bull;</span>
+            <span class="directory-date-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Expires: <strong id="view-modal-date" style="color: var(--text-primary);">No Deadline</strong></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- About the Scholarship -->
+        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">About the Scholarship</h4>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 20px; white-space: pre-line;" id="view-modal-desc">
+          Scholarship description...
+        </p>
+
+        <!-- Required Documents Checklist -->
+        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0;">Required Documents</h4>
+        <div id="view-modal-reqs" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px;">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Actions: Provider Controls -->
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 8px;">
           <button
             type="button"
             class="btn btn-primary"
             id="view-modal-manage-btn"
-            onclick="window.location.href = 'provider-posts.html'"
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 8px;
-            "
+            style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path
-                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-              ></path>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
@@ -1096,15 +1045,14 @@
           <button
             type="button"
             class="btn btn-secondary"
-            onclick="
-              document
-                .getElementById('view-details-modal')
-                .classList.remove('active')
-            "
+            id="view-modal-close-action-btn"
+            onclick="closeProviderDetailsModal()"
+            style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 600; border-radius: 12px;"
           >
             Close Details
           </button>
         </div>
+
       </div>
     </div>
 
