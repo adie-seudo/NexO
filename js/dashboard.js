@@ -685,7 +685,91 @@ function handleProviderDetailsEsc(e) {
 }
 window.closeProviderDetailsModal = closeProviderDetailsModal;
 
-function openScholarshipDetailsModal(schol, applicantCountDisplay) {
+// Banner & Logo resolvers matching Student POV (student-browse.js)
+function resolveProviderBanner(schol) {
+  if (!schol) return "";
+  if (schol.providerBanner && String(schol.providerBanner).trim()) {
+    return String(schol.providerBanner).trim();
+  }
+  if (schol.bannerImage && String(schol.bannerImage).trim()) {
+    return String(schol.bannerImage).trim();
+  }
+  if (schol.banner && String(schol.banner).trim()) {
+    return String(schol.banner).trim();
+  }
+  if (schol.coverPhoto && String(schol.coverPhoto).trim()) {
+    return String(schol.coverPhoto).trim();
+  }
+  if (schol.coverImage && String(schol.coverImage).trim()) {
+    return String(schol.coverImage).trim();
+  }
+  if (schol.cover && String(schol.cover).trim()) {
+    return String(schol.cover).trim();
+  }
+
+  // Fallback to provider settings or localStorage
+  let settings = window._activeProviderSettings;
+  if (!settings) {
+    try {
+      const cached = localStorage.getItem("nexo_provider_settings");
+      if (cached) settings = JSON.parse(cached);
+    } catch (_) {}
+  }
+  const activeOrgName =
+    (settings && settings.orgName) ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
+  const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
+  if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+    const settingsBanner =
+      (settings && settings.bannerImage) ||
+      localStorage.getItem("nexo-provider-banner") ||
+      localStorage.getItem("provider-banner-preview") ||
+      "";
+    if (settingsBanner && String(settingsBanner).trim()) {
+      return String(settingsBanner).trim();
+    }
+  }
+  return "";
+}
+
+function resolveProviderLogo(schol) {
+  if (!schol) return "";
+  if (schol.providerLogo && String(schol.providerLogo).trim()) {
+    return String(schol.providerLogo).trim();
+  }
+  if (schol.logoImage && String(schol.logoImage).trim()) {
+    return String(schol.logoImage).trim();
+  }
+  if (schol.logo && String(schol.logo).trim()) {
+    return String(schol.logo).trim();
+  }
+
+  let settings = window._activeProviderSettings;
+  if (!settings) {
+    try {
+      const cached = localStorage.getItem("nexo_provider_settings");
+      if (cached) settings = JSON.parse(cached);
+    } catch (_) {}
+  }
+  const activeOrgName =
+    (settings && settings.orgName) ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
+  const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
+  if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+    const settingsLogo =
+      (settings && settings.logoImage) ||
+      localStorage.getItem("nexo-provider-logo") ||
+      "";
+    if (settingsLogo && String(settingsLogo).trim()) {
+      return String(settingsLogo).trim();
+    }
+  }
+  return "";
+}
+
+function openScholarshipDetailsModal(schol, applicantCountDisplay, applicantCount) {
   const modalEl = document.getElementById("view-details-modal");
   if (!modalEl) return;
 
@@ -747,43 +831,68 @@ function openScholarshipDetailsModal(schol, applicantCountDisplay) {
       : schol.postedDate || "Recently";
   }
 
-  // Applicants
-  if (applicantsEl) applicantsEl.textContent = applicantCountDisplay;
+  // Calculate live applicant count
+  let actualCount = 0;
+  if (typeof applicantCount === "number") {
+    actualCount = applicantCount;
+  } else {
+    try {
+      const apps = Array.isArray(window._allApplicationsCache)
+        ? window._allApplicationsCache
+        : JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+      if (Array.isArray(apps) && apps.length > 0) {
+        actualCount = apps.filter((a) => {
+          if (a.scholarshipId && schol.id && String(a.scholarshipId) === String(schol.id)) return true;
+          if (schol.title && (a.scholarshipTitle === schol.title || a.title === schol.title)) return true;
+          return false;
+        }).length;
+      } else if (schol.applicantTotal !== undefined) {
+        actualCount = parseInt(schol.applicantTotal, 10) || 0;
+      }
+    } catch (_) {
+      if (schol.applicantTotal !== undefined) {
+        actualCount = parseInt(schol.applicantTotal, 10) || 0;
+      }
+    }
+  }
+
+  // Applicants display
+  if (applicantsEl) {
+    if (applicantCountDisplay) {
+      applicantsEl.textContent = applicantCountDisplay;
+    } else {
+      const limit = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+      applicantsEl.textContent = `${actualCount} / ${limit} Applicants`;
+    }
+  }
 
   // Description
   if (descEl) descEl.textContent = schol.desc || "No description provided.";
 
-  // Cover photo banner
-  const coverUrl =
-    schol.coverPhoto || schol.coverImage || schol.cover || schol.banner || "";
+  // Cover photo banner (Exact match to student browse resolution)
+  const bannerSrc = resolveProviderBanner(schol);
   if (coverImg) {
-    if (coverUrl) {
-      coverImg.src = coverUrl;
+    if (bannerSrc && typeof bannerSrc === "string" && bannerSrc.trim()) {
+      coverImg.src = bannerSrc.trim();
       coverImg.style.display = "block";
     } else {
       coverImg.src = "";
       coverImg.style.display = "none";
     }
+    coverImg.onerror = function () {
+      this.style.display = "none";
+      this.src = "";
+    };
   }
 
   // Provider Logo / Avatar
-  const providerLogo =
-    schol.logo ||
-    schol.providerLogo ||
-    localStorage.getItem("nexo-provider-logo") ||
-    "";
+  const logoSrc = resolveProviderLogo(schol);
   if (logoEl) {
-    if (providerLogo) {
-      logoEl.innerHTML = `<img src="${providerLogo}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    if (logoSrc && typeof logoSrc === "string" && logoSrc.trim()) {
+      logoEl.innerHTML = `<img src="${logoSrc.trim()}" alt="Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
     } else {
-      const inits =
-        orgName
-          .split(" ")
-          .slice(0, 2)
-          .map((w) => w[0] || "")
-          .join("")
-          .toUpperCase() || "NX";
-      logoEl.textContent = inits;
+      const inits = typeof extractInitials === "function" ? extractInitials(orgName) : "NX";
+      logoEl.textContent = inits || "NX";
     }
   }
 
@@ -814,12 +923,53 @@ function openScholarshipDetailsModal(schol, applicantCountDisplay) {
     });
   }
 
-  // Manage Applications Button Action
+  // Manage Applications Button Action: Unusable when no applications
   if (manageBtn) {
-    manageBtn.onclick = () => {
-      closeProviderDetailsModal();
-      window.location.href = `provider-posts.html?postId=${encodeURIComponent(schol.id || schol.title)}`;
-    };
+    if (actualCount === 0) {
+      manageBtn.disabled = true;
+      manageBtn.setAttribute("disabled", "true");
+      manageBtn.setAttribute("aria-disabled", "true");
+      manageBtn.style.opacity = "0.55";
+      manageBtn.style.cursor = "not-allowed";
+      manageBtn.style.pointerEvents = "auto";
+      manageBtn.title = "No students have applied to this scholarship yet";
+      manageBtn.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>No Applications Yet</span>
+      `;
+      manageBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      };
+    } else {
+      manageBtn.disabled = false;
+      manageBtn.removeAttribute("disabled");
+      manageBtn.setAttribute("aria-disabled", "false");
+      manageBtn.style.opacity = "1";
+      manageBtn.style.cursor = "pointer";
+      manageBtn.style.pointerEvents = "auto";
+      manageBtn.title = `Manage ${actualCount} application${actualCount > 1 ? "s" : ""}`;
+      manageBtn.innerHTML = `
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>Manage Applications</span>
+      `;
+      manageBtn.onclick = () => {
+        closeProviderDetailsModal();
+        window.location.href = `provider-posts.html?postId=${encodeURIComponent(schol.id || schol.title)}`;
+      };
+    }
   }
 
   // Backdrop click & Escape listener
@@ -837,9 +987,8 @@ function openScholarshipDetailsModal(schol, applicantCountDisplay) {
 
 function createCompactCard(schol, allApplications = null) {
   const card = document.createElement("div");
-  const coverUrl =
-    schol.coverPhoto || schol.coverImage || schol.cover || schol.banner || "";
-  card.className = `directory-card provider-recent-card${coverUrl ? " has-cover" : ""}`;
+  // The card is clean without cover photo/picture, matching user requirement
+  card.className = "directory-card provider-recent-card";
   card.dataset.id = schol.id || "";
 
   const limitNum =
@@ -887,17 +1036,7 @@ function createCompactCard(schol, allApplications = null) {
         })
       : "No Deadline");
 
-  const coverHtml = coverUrl
-    ? `
-      <div class="directory-card-cover">
-        <div class="directory-card-cover-img" style="background-image: url('${coverUrl}');"></div>
-        <div class="directory-card-cover-fade"></div>
-      </div>
-    `
-    : "";
-
   card.innerHTML = `
-    ${coverHtml}
     <div class="directory-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%; position: relative; z-index: 1;">
       <h3 class="directory-card-title" style="margin: 0; font-size: 16px; font-weight: 750; color: var(--text-primary); line-height: 1.35; flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word;">${escapeHtml(schol.title || "Scholarship Program")}</h3>
       <span class="directory-type-pill">${escapeHtml(typeText)}</span>
@@ -938,13 +1077,13 @@ function createCompactCard(schol, allApplications = null) {
   if (viewDetailsBtn) {
     viewDetailsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      openScholarshipDetailsModal(schol, applicantCountDisplay);
+      openScholarshipDetailsModal(schol, applicantCountDisplay, count);
     });
   }
 
   // Also make entire card clickable
   card.addEventListener("click", () => {
-    openScholarshipDetailsModal(schol, applicantCountDisplay);
+    openScholarshipDetailsModal(schol, applicantCountDisplay, count);
   });
 
   return card;
@@ -1610,6 +1749,8 @@ async function syncProviderProfile(incomingSettings = null) {
       }
     } catch (_) {}
   }
+
+  window._activeProviderSettings = settings;
 
   const orgName =
     (settings && settings.orgName) ||
