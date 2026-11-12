@@ -2908,6 +2908,7 @@ body.dark-theme .creation-form select:focus {
   font-weight: 600;
   display: flex;
   justify-content: center;
+  border-radius: 20px;
 }
 
 /* Custom Dropdown UI */
@@ -3329,6 +3330,7 @@ body.dark-theme .review-pill {
   flex: 1;
   padding: 12px;
   font-size: 14px;
+  border-radius: 20px;
 }
 body.confirm-active .creation-modal {
   pointer-events: none;
@@ -3370,45 +3372,88 @@ body.confirm-active .creation-modal {
    15. DRAFTS SECTION 
    ========================================= */
 .draft-card {
-  background-color: transparent;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 16px;
   padding: 20px;
-  border-radius: 12px;
-  border: 2px dashed var(--border-strong);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   position: relative;
 }
-.draft-card h3 {
-  color: var(--text-primary) !important;
-  margin: 0 0 8px 0;
-  font-size: 18px;
+
+.draft-card:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.08);
 }
-.draft-card p {
-  color: var(--text-secondary) !important;
+
+.dark-theme .draft-card {
+  background: #181d27;
+  border-color: #272f3d;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
-.draft-badge-tag {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-weight: 500;
+
+.dark-theme .draft-card:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
+
+.draft-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .continue-edit-btn {
-  margin-top: 16px;
   background-color: var(--btn-primary-bg);
   color: #ffffff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
 }
+
 .continue-edit-btn:hover {
   background-color: var(--btn-primary-hover);
+}
+
+.delete-draft-btn {
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-draft-btn:hover {
+  background: rgba(239, 68, 68, 0.16) !important;
+  border-color: #ef4444 !important;
 }
 
 /* Drafts Text Dark Mode Overrides */

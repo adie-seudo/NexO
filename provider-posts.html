@@ -326,7 +326,7 @@
         font-size: 13.5px;
         font-weight: 600;
         padding: 9px 18px;
-        border-radius: 100px;
+        border-radius: 20px;
         text-decoration: none !important;
         border: none;
         cursor: pointer;
@@ -889,19 +889,46 @@
       }
       .review-notes-textarea {
         width: 100%;
-        min-height: 80px;
-        padding: 10px 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color, #e5e7eb);
-        background: var(--card-bg, #ffffff);
-        color: var(--text-primary);
+        min-height: 96px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--border-color, #e2e8f0);
+        background: #f8fafc;
+        color: var(--text-primary, #0f172a);
         font-size: 13.5px;
+        line-height: 1.5;
+        font-family: inherit;
         resize: vertical;
         box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
       }
+      .review-notes-textarea:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+      .review-notes-textarea::placeholder {
+        color: #94a3b8;
+      }
+      html.dark-theme .review-notes-textarea,
+      body.dark-theme .review-notes-textarea,
       .dark-theme .review-notes-textarea {
-        background: #111827;
-        border-color: #374151;
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+      }
+      html.dark-theme .review-notes-textarea:focus,
+      body.dark-theme .review-notes-textarea:focus,
+      .dark-theme .review-notes-textarea:focus {
+        background: #0f172a !important;
+        border-color: #a78bfa !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3) !important;
+      }
+      html.dark-theme .review-notes-textarea::placeholder,
+      body.dark-theme .review-notes-textarea::placeholder,
+      .dark-theme .review-notes-textarea::placeholder {
+        color: #64748b !important;
       }
 
       /* Empty State */
@@ -1445,7 +1472,7 @@
             type="button"
             class="btn btn-primary"
             id="view-modal-manage-btn"
-            style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+            style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1461,7 +1488,7 @@
             class="btn btn-secondary"
             id="view-modal-close-action-btn"
             onclick="closeScholarshipModal()"
-            style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 600; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+            style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 600; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -1698,7 +1725,6 @@
           <textarea
             id="confirm-remarks-textarea"
             class="review-notes-textarea"
-            style="min-height: 85px; font-size: 13px;"
             placeholder="Enter feedback or follow-up instructions for the student..."
           ></textarea>
           <div id="confirm-remarks-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">

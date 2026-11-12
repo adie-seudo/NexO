@@ -20,14 +20,52 @@
       /* ========================================= */
       .apps-container {
         padding: 72px 20px 40px;
-        max-width: 600px;
+        max-width: 680px;
         margin: 0 auto;
         color: var(--text-primary);
       }
       .apps-title {
         font-size: 24px;
-        font-weight: 700;
+        font-weight: 800;
         margin-bottom: 20px;
+        letter-spacing: -0.3px;
+      }
+
+      /* Prominent Scholarship Tag for Application Card in Unified View (Full readable title, mobile-first) */
+      .provider-app-scholarship-tag {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 13px;
+        border-radius: 9px;
+        background: rgba(139, 92, 246, 0.09);
+        border: 1px solid rgba(139, 92, 246, 0.22);
+        color: #7c3aed;
+        font-size: 13.5px;
+        font-weight: 700;
+        margin: 10px 0 14px;
+        width: 100%;
+        box-sizing: border-box;
+        line-height: 1.45;
+      }
+      .provider-app-scholarship-tag svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #8b5cf6;
+      }
+      .provider-app-scholarship-tag span {
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
+        flex: 1;
+      }
+      body.dark-theme .provider-app-scholarship-tag {
+        background: rgba(139, 92, 246, 0.22);
+        border-color: rgba(139, 92, 246, 0.45);
+        color: #c4b5fd;
+      }
+      body.dark-theme .provider-app-scholarship-tag svg {
+        color: #c4b5fd;
       }
 
       /* Filter Tabs */
@@ -620,6 +658,9 @@
       .decision-btn:disabled {
         opacity: 0.45;
         cursor: not-allowed !important;
+        filter: grayscale(40%);
+        pointer-events: none;
+      }
 
       .modal-doc-item {
         display: flex;
@@ -688,23 +729,48 @@
         color: #e0e7ff;
       }
 
-
-
       .review-notes-textarea {
         width: 100%;
-        min-height: 80px;
-        padding: 10px 12px;
-        border-radius: 8px;
-        border: 1px solid var(--border-color, #e5e7eb);
-        background: var(--card-bg, #ffffff);
-        color: var(--text-primary);
+        min-height: 96px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--border-color, #e2e8f0);
+        background: #f8fafc;
+        color: var(--text-primary, #0f172a);
         font-size: 13.5px;
+        line-height: 1.5;
+        font-family: inherit;
         resize: vertical;
         box-sizing: border-box;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
       }
+      .review-notes-textarea:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+      .review-notes-textarea::placeholder {
+        color: #94a3b8;
+      }
+      html.dark-theme .review-notes-textarea,
+      body.dark-theme .review-notes-textarea,
       .dark-theme .review-notes-textarea {
-        background: #111827;
-        border-color: #374151;
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+      }
+      html.dark-theme .review-notes-textarea:focus,
+      body.dark-theme .review-notes-textarea:focus,
+      .dark-theme .review-notes-textarea:focus {
+        background: #0f172a !important;
+        border-color: #a78bfa !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3) !important;
+      }
+      html.dark-theme .review-notes-textarea::placeholder,
+      body.dark-theme .review-notes-textarea::placeholder,
+      .dark-theme .review-notes-textarea::placeholder {
+        color: #64748b !important;
       }
 
       /* Scoped Scholarship Filter Banner */
@@ -1011,191 +1077,108 @@
     <!-- 2. APPLICATIONS CONTENT                   -->
     <!-- ========================================= -->
     <main class="apps-container">
-      <div style="margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
-        <a
-          href="provider-dashboard.html"
-          class="btn-back-nav"
-          id="back-link"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          Back to Dashboard
-        </a>
-      </div>
-
       <div id="scoped-scholarship-banner" style="display: none;"></div>
 
-      <h1 class="apps-title" id="apps-page-title">Applications</h1>
-
-      <!-- Filter Tabs -->
-      <div class="filter-tabs">
-        <button class="filter-tab active" id="tab-all" data-filter="all">All (0)</button>
-        <button class="filter-tab" id="tab-pending" data-filter="pending">Pending (0)</button>
-        <button class="filter-tab" id="tab-reviewed" data-filter="reviewed">Under Review (0)</button>
-        <button class="filter-tab" id="tab-approved" data-filter="approved">Approved (0)</button>
-        <button class="filter-tab" id="tab-rejected" data-filter="rejected">Rejected (0)</button>
+      <div class="apps-header-row" style="margin-bottom: 20px;">
+        <h1 class="apps-title" id="apps-page-title" style="margin-bottom: 0;">Applications</h1>
       </div>
 
-      <!-- Search Bar -->
-      <div class="search-bar-container">
-        <div class="search-input-wrapper">
-          <svg
-            class="search-icon"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
+      <!-- Search & Filter Section (Oblong search bar with filter button on right) -->
+      <div class="submissions-search-filter-row" style="margin-bottom: 22px;">
+        <!-- Search Bar (Oblong pill design matching student POV) -->
+        <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
+          <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
           <input
             type="text"
-            class="search-input"
-            placeholder="Search applicants by name, email, course..."
+            id="applicant-search-input"
+            class="browse-search-input directory-search-input search-input"
+            placeholder="Search applicants by student name, email, course, or scholarship..."
+            aria-label="Search applications"
           />
         </div>
 
-        <!-- Filter Button & Dropdown Wrapper -->
-        <div style="position: relative" id="filter-wrapper">
-          <!-- Filter Toggle Button -->
+        <!-- Filter Dropdown on Right Side -->
+        <div class="directory-filter-dropdown" id="dropdown-wrapper-apps-filter">
           <button
-            class="filter-icon-btn"
-            id="filter-toggle-btn"
-            onclick="
-              document
-                .getElementById('filter-dropdown')
-                .classList.toggle('show');
-              event.stopPropagation();
-            "
+            type="button"
+            class="directory-filter-icon-btn"
+            id="btn-apps-filter"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="Filter applications"
+            title="Filter applications"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polygon
-                points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
-              ></polygon>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
           </button>
-          <!-- The Floating Filter Menu -->
+
+          <!-- Floating Filter Menu -->
           <div
-            class="filter-dropdown"
-            id="filter-dropdown"
+            class="filter-dropdown directory-dropdown-menu"
+            id="menu-apps-filter"
+            role="menu"
+            style="min-width: 290px; max-width: 330px; right: 0; left: auto; padding: 16px; border-radius: 14px;"
             onclick="event.stopPropagation()"
           >
-            <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 700">
-              Filter & Sort
-            </h4>
-
-            <!-- 1. Sort By -->
-            <div class="filter-group">
-              <label>Sort By</label>
-              <div
-                class="nexo-dropdown"
-                onclick="
-                  this.classList.toggle('active');
-                  event.stopPropagation();
-                "
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color, #e5e7eb);">
+              <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Filter Applications</h4>
+              <button
+                type="button"
+                id="btn-reset-filters"
+                style="background: none; border: none; font-size: 12px; font-weight: 600; color: #8b5cf6; cursor: pointer; padding: 2px 4px;"
               >
+                Reset All
+              </button>
+            </div>
+
+            <!-- 1. Application Status -->
+            <div class="filter-group" style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Status</label>
+              <div class="nexo-dropdown" id="dropdown-status-filter">
                 <div class="nexo-dropdown-trigger">
-                  <span class="nexo-dropdown-value">Newest Applied</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M6 9l6 6 6-6"></path>
-                  </svg>
+                  <span class="nexo-dropdown-value" id="status-filter-label">All Statuses</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
                 </div>
                 <div class="nexo-dropdown-list">
-                  <div class="nexo-dropdown-item" data-sort-value="newest">
-                    Newest Applied
-                  </div>
-                  <div class="nexo-dropdown-item" data-sort-value="oldest">
-                    Oldest Applied
-                  </div>
-                  <div class="nexo-dropdown-item" data-sort-value="name">
-                    Student Name (A-Z)
-                  </div>
+                  <div class="nexo-dropdown-item selected" data-status-filter="all">All Statuses</div>
+                  <div class="nexo-dropdown-item" data-status-filter="pending">Pending</div>
+                  <div class="nexo-dropdown-item" data-status-filter="reviewed">Under Review</div>
+                  <div class="nexo-dropdown-item" data-status-filter="approved">Approved</div>
+                  <div class="nexo-dropdown-item" data-status-filter="rejected">Rejected</div>
                 </div>
               </div>
             </div>
 
             <!-- 2. Dynamic Scholarship Filter -->
-            <div class="filter-group">
-              <label>Scholarship</label>
-              <div
-                class="nexo-dropdown"
-                onclick="
-                  this.classList.toggle('active');
-                  event.stopPropagation();
-                "
-              >
+            <div class="filter-group" style="margin-bottom: 12px;">
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Scholarship Post</label>
+              <div class="nexo-dropdown" id="dropdown-program-filter">
                 <div class="nexo-dropdown-trigger">
-                  <span class="nexo-dropdown-value">All Scholarships</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M6 9l6 6 6-6"></path>
-                  </svg>
+                  <span class="nexo-dropdown-value" id="scholarship-filter-label">All Scholarships</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
                 </div>
                 <div class="nexo-dropdown-list" id="filter-scholarships-list">
-                  <div class="nexo-dropdown-item" data-program="all">
-                    All Scholarships
-                  </div>
+                  <div class="nexo-dropdown-item selected" data-program="all">All Scholarships</div>
                 </div>
               </div>
             </div>
 
-            <!-- 3. Documents -->
-            <div class="filter-group">
-              <label>Documents</label>
-              <div
-                class="nexo-dropdown"
-                onclick="
-                  this.classList.toggle('active');
-                  event.stopPropagation();
-                "
-              >
+            <!-- 3. Documents / Attachments -->
+            <div class="filter-group" style="margin-bottom: 14px;">
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Attachments</label>
+              <div class="nexo-dropdown" id="dropdown-doc-filter">
                 <div class="nexo-dropdown-trigger">
-                  <span class="nexo-dropdown-value">All Applications</span>
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path d="M6 9l6 6 6-6"></path>
-                  </svg>
+                  <span class="nexo-dropdown-value" id="doc-filter-label">All Applications</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
                 </div>
                 <div class="nexo-dropdown-list">
-                  <div class="nexo-dropdown-item" data-doc-filter="all">
-                    All Applications
-                  </div>
-                  <div class="nexo-dropdown-item" data-doc-filter="complete">
-                    100% Complete
-                  </div>
-                  <div class="nexo-dropdown-item" data-doc-filter="missing">
-                    Missing Files
-                  </div>
+                  <div class="nexo-dropdown-item selected" data-doc-filter="all">All Applications</div>
+                  <div class="nexo-dropdown-item" data-doc-filter="complete">100% Complete</div>
+                  <div class="nexo-dropdown-item" data-doc-filter="missing">Missing / Incomplete</div>
                 </div>
               </div>
             </div>
@@ -1204,17 +1187,7 @@
               type="button"
               class="btn btn-primary"
               id="apply-filters-btn"
-              style="
-                width: 100%;
-                padding: 8px;
-                font-size: 14px;
-                margin-top: 8px;
-              "
-              onclick="
-                document
-                  .getElementById('filter-dropdown')
-                  .classList.remove('show')
-              "
+              style="width: 100%; padding: 10px; font-size: 13.5px; font-weight: 700; border-radius: 20px;"
             >
               Apply Filters
             </button>
@@ -1474,7 +1447,6 @@
           <textarea
             id="confirm-remarks-textarea"
             class="review-notes-textarea"
-            style="min-height: 85px; font-size: 13px;"
             placeholder="Enter feedback or follow-up instructions for the student..."
           ></textarea>
           <div id="confirm-remarks-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">

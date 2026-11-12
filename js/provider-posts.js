@@ -766,7 +766,7 @@
           data-id="${escapeHtml(schol.id || schol.title)}"
           title="View and manage applicants specifically for this post"
         >
-          <span>View Applications (${totalApps})</span>
+          <span>View Applications</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
@@ -1828,6 +1828,9 @@
       return;
     }
 
+    const attachedDocs = [];
+    const followUpDocs = [];
+
     rawDocs.forEach((doc, idx) => {
       let docName = "Document #" + (idx + 1);
       let docUrl = "";
@@ -1841,7 +1844,7 @@
           docUrl = doc;
         }
       } else if (doc && typeof doc === "object") {
-        docName = doc.name || doc.title || doc.filename || docName;
+        docName = doc.requirement || doc.title || doc.name || doc.filename || docName;
         docUrl = doc.data || doc.url || doc.fileUrl || doc.dataUrl || "";
         docSize = doc.size ? formatFileSize(doc.size) : "";
         isFollowUp = Boolean(
@@ -1853,30 +1856,33 @@
       }
 
       const cleanDocName = docName.replace(/\s*\(To Follow Up\)/gi, "").trim();
-      const docItem = document.createElement("div");
-      docItem.className = "modal-doc-item";
+      const itemData = { doc, cleanDocName, docUrl, docSize, isFollowUp };
 
       if (isFollowUp) {
-        docItem.style.border = "1px dashed rgba(245, 158, 11, 0.45)";
-        docItem.style.background = "rgba(245, 158, 11, 0.05)";
-        docItem.innerHTML = `
-          <div class="modal-doc-info">
-            <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <div>
-              <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">${escapeHtml(cleanDocName)}</h5>
-              <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">To follow up later &bull; Pending student submission</span>
-            </div>
-          </div>
-          <span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
-            To Follow Up
-          </span>
-        `;
+        followUpDocs.push(itemData);
       } else {
+        attachedDocs.push(itemData);
+      }
+    });
+
+    // 1. Attached Documents Section (All completed requirements placed together)
+    if (attachedDocs.length > 0) {
+      const attachedHeader = document.createElement("div");
+      attachedHeader.style.cssText =
+        "display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; margin-top: 4px;";
+      attachedHeader.innerHTML = `
+        <span style="font-size: 11.5px; font-weight: 700; color: #10B981; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Attached Documents (${attachedDocs.length})
+        </span>
+        <span style="font-size: 11px; color: var(--text-secondary);">Ready for Verification</span>
+      `;
+      docsContainer.appendChild(attachedHeader);
+
+      attachedDocs.forEach(({ cleanDocName, docUrl, docSize }) => {
+        const docItem = document.createElement("div");
+        docItem.className = "modal-doc-item";
+
         const isPdf =
           cleanDocName.toLowerCase().endsWith(".pdf") ||
           (typeof docUrl === "string" && docUrl.startsWith("data:application/pdf"));
@@ -1908,9 +1914,47 @@
             openDocPreview(docUrl, cleanDocName);
           });
         }
-      }
-      docsContainer.appendChild(docItem);
-    });
+        docsContainer.appendChild(docItem);
+      });
+    }
+
+    // 2. Requirements To Follow Up Section (All incomplete follow-up requirements placed together)
+    if (followUpDocs.length > 0) {
+      const followUpHeader = document.createElement("div");
+      followUpHeader.style.cssText =
+        "margin-top: 14px; margin-bottom: 8px; padding-top: 10px; border-top: 1px dashed var(--border-color);";
+      followUpHeader.innerHTML = `
+        <span style="font-size: 11.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; display: block;">
+          Requirements To Follow Up
+        </span>
+      `;
+      docsContainer.appendChild(followUpHeader);
+
+      followUpDocs.forEach(({ cleanDocName }) => {
+        const itemEl = document.createElement("div");
+        itemEl.className = "modal-doc-item";
+        itemEl.style.cssText =
+          "background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.35);";
+        itemEl.innerHTML = `
+          <div class="modal-doc-info" style="min-width: 0;">
+            <div style="min-width: 0;">
+              <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">
+                ${escapeHtml(cleanDocName)}
+              </h5>
+              <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">
+                Pending student submission
+              </span>
+            </div>
+          </div>
+          <div class="modal-doc-actions">
+            <span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
+              To Follow Up
+            </span>
+          </div>
+        `;
+        docsContainer.appendChild(itemEl);
+      });
+    }
   }
 
   function formatFileSize(bytes) {

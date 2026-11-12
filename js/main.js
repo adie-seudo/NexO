@@ -674,7 +674,55 @@ function hydrateRoleAwareHeader() {
       }
     });
   }
+
+  // Global Drafts Badge Sync
+  syncGlobalDraftBadge();
 }
+
+function syncGlobalDraftBadge() {
+  const draftBadges = document.querySelectorAll("#draft-badge");
+  if (!draftBadges || draftBadges.length === 0) return;
+
+  const currentProviderEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase();
+
+  let count = 0;
+  try {
+    const raw = localStorage.getItem("nexo_drafts");
+    if (raw) {
+      const drafts = JSON.parse(raw);
+      if (Array.isArray(drafts)) {
+        const myDrafts = currentProviderEmail
+          ? drafts.filter(
+              (d) =>
+                !d.providerEmail ||
+                d.providerEmail.toLowerCase() === currentProviderEmail,
+            )
+          : drafts;
+        count = myDrafts.length;
+      }
+    }
+  } catch (_) {
+    count = 0;
+  }
+
+  draftBadges.forEach((badge) => {
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "inline-block" : "none";
+  });
+}
+window.syncGlobalDraftBadge = syncGlobalDraftBadge;
+
+window.addEventListener("DOMContentLoaded", syncGlobalDraftBadge);
+window.addEventListener("nexo_drafts_updated", syncGlobalDraftBadge);
+window.addEventListener("storage", (e) => {
+  if (e.key === "nexo_drafts") {
+    syncGlobalDraftBadge();
+  }
+});
 
 function initHeaderInjection() {
   const headerPlaceholder = document.getElementById("header-placeholder");

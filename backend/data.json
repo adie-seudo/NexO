@@ -36,7 +36,30 @@
       "status": "Open"
     }
   ],
-  "drafts": [],
+  "drafts": [
+    {
+      "id": "draft_1794482405471_57f68b",
+      "title": "Test Draft",
+      "desc": "This is a test draft",
+      "type": "athletic",
+      "typeText": "athletic",
+      "date": "12/05/2026",
+      "applicantLimit": 300,
+      "requirements": [
+        {
+          "title": "Valid School ID",
+          "desc": "Upload a clear photo of your student ID. (Max 5MB)"
+        },
+        {
+          "title": "Latest Grades/Transcript",
+          "desc": "Upload your latest grades or official transcript."
+        }
+      ],
+      "providerName": "NEXO",
+      "providerEmail": "admin@admin",
+      "updatedAt": "2026-11-12T11:20:05.471Z"
+    }
+  ],
   "applications": [
     {
       "id": "app_1794360837793_9d1509",
@@ -99,13 +122,24 @@
       ],
       "uploadedDocuments": [],
       "notes": "Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.",
-      "reviewedAt": "2026-11-12T08:58:25.449Z",
+      "reviewedAt": "2026-11-12T10:37:12.749Z",
       "feedback": "Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.",
       "remarks": "Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.",
-      "updatedAt": "2026-11-12T08:58:25.449Z"
+      "updatedAt": "2026-11-12T10:37:12.749Z"
     }
   ],
   "notifications": [
+    {
+      "id": "notif_1794479831793_b470e8",
+      "recipient": "student",
+      "recipientEmail": "",
+      "title": "Application Status: Under Review",
+      "message": "Your application for \"BatStateU Academic Excellence Scholarship – 2026\" has been updated to \"Under Review\". Provider remarks: \"Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.\"",
+      "timestamp": "2026-11-12T10:37:11.795Z",
+      "formattedTime": "Just now",
+      "read": false,
+      "link": "student-submissions.html"
+    },
     {
       "id": "notif_1794360841481_9da17d",
       "recipient": "provider",

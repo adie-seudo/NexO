@@ -601,7 +601,6 @@ function initViewSwitching() {
   const navDrafts = document.getElementById("nav-drafts");
   const dashCoverBanner = document.getElementById("dash-cover-banner");
   const dashWelcome = document.querySelector(".dash-welcome");
-  const dashStats = document.querySelector(".dash-stats-container");
   const dashRecent = document.querySelector(".dash-recent");
   const dashActions = document.querySelector(".dash-actions");
   const dashDraftsSection = document.getElementById("dash-drafts-section");
@@ -612,10 +611,15 @@ function initViewSwitching() {
   const viewAllBtn = document.getElementById("view-all-btn");
   const backToDashBtn = document.getElementById("back-to-dash-btn");
 
+  function getStatsElement() {
+    return document.querySelector(".provider-stats-grid, .dash-stats-container");
+  }
+
   function showHome() {
+    const statsEl = getStatsElement();
     if (dashCoverBanner) dashCoverBanner.style.display = "block";
     if (dashWelcome) dashWelcome.style.display = "block";
-    if (dashStats) dashStats.style.display = "flex";
+    if (statsEl) statsEl.style.display = "";
     if (dashRecent) dashRecent.style.display = "block";
     if (dashActions) dashActions.style.display = "block";
     if (dashDraftsSection) dashDraftsSection.style.display = "none";
@@ -629,9 +633,10 @@ function initViewSwitching() {
   }
 
   function showDrafts() {
+    const statsEl = getStatsElement();
     if (dashCoverBanner) dashCoverBanner.style.display = "none";
     if (dashWelcome) dashWelcome.style.display = "none";
-    if (dashStats) dashStats.style.display = "none";
+    if (statsEl) statsEl.style.display = "none";
     if (dashRecent) dashRecent.style.display = "none";
     if (dashActions) dashActions.style.display = "none";
     if (dashDraftsSection) dashDraftsSection.style.display = "block";
@@ -1130,19 +1135,37 @@ function createCompactCard(schol, allApplications = null) {
 
 function createDraftCard(draft) {
   const newDraft = document.createElement("div");
-  newDraft.className = "draft-card";
+  newDraft.className = "post-card draft-card";
   newDraft.dataset.id = draft.id || "";
+
+  const typeText = draft.typeText || draft.type || "";
+
   newDraft.innerHTML = `
-    <span class="draft-badge-tag">Draft</span>
-    <h3 style="margin-top: 12px; margin-bottom: 8px;">${escapeHtml(draft.title || "Untitled Scholarship")}</h3>
-    <p style="font-size: 14px; margin-bottom: 12px; opacity: 0.9;">${escapeHtml(draft.desc || "No description provided yet...")}</p>
-    
-    <div style="display: flex; gap: 8px; margin-top: 16px; align-items: center;">
-      <button type="button" class="btn btn-primary continue-edit-btn" style="flex: 1; border-radius: 20px; padding: 10px 16px; margin: 0;">
-        Continue Editing
+    <div class="draft-card-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <span class="draft-badge-pill">Draft</span>
+      ${typeText ? `<span class="directory-type-pill" style="font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: rgba(139, 92, 246, 0.08); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.2);">${escapeHtml(typeText)}</span>` : ""}
+    </div>
+
+    <h3 class="post-title-text" style="font-size: 17px; font-weight: 700; margin: 2px 0 0; color: var(--text-primary); line-height: 1.35; overflow-wrap: anywhere; word-break: break-word;">${escapeHtml(draft.title || "Untitled Scholarship")}</h3>
+
+    <p class="post-desc" style="font-size: 13.5px; line-height: 1.55; color: var(--text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;">${escapeHtml(draft.desc || "No description provided yet...")}</p>
+
+    <div class="draft-actions-row" style="display: flex; gap: 10px; align-items: center; margin-top: 4px; width: 100%;">
+      <button type="button" class="btn btn-primary continue-edit-btn" style="flex: 1; border-radius: 20px; padding: 10px 18px; font-size: 13.5px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin: 0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
+        <span>Continue Editing</span>
       </button>
-      <button type="button" class="delete-draft-btn" style="width: 40px; height: 40px; margin: 0; padding: 0; border: none; color: #ef4444; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;" aria-label="Delete Draft">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: block;"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+      <button type="button" class="delete-draft-btn" data-id="${escapeHtml(draft.id || "")}" aria-label="Delete Draft" title="Delete Draft" style="border-radius: 20px; padding: 10px 18px; font-size: 13.5px; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; margin: 0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        <span>Delete</span>
       </button>
     </div>
   `;
@@ -1486,6 +1509,7 @@ function initPublishAndDraft() {
           }
           currentEditingDraftCard = null;
           currentEditingDraftId = null;
+          window.dispatchEvent(new Event("nexo_drafts_updated"));
         }
 
         // Hide main home feed empty state
@@ -1619,6 +1643,7 @@ function initPublishAndDraft() {
           draftCount = Math.max(0, draftCount - 1);
           currentEditingDraftCard = null;
           currentEditingDraftId = null;
+          window.dispatchEvent(new Event("nexo_drafts_updated"));
         }
 
         // Hide empty drafts state card
@@ -1639,6 +1664,7 @@ function initPublishAndDraft() {
           draftBadge.textContent = draftCount;
           draftBadge.style.display = "inline-block";
         }
+        window.dispatchEvent(new Event("nexo_drafts_updated"));
 
         // Close modal and reset
         if (DOM.creationModal) DOM.creationModal.classList.remove("active");
@@ -1939,6 +1965,86 @@ function initDraftEditing() {
   const draftsFeed = document.getElementById("drafts-feed");
   if (!draftsFeed) return;
 
+  let pendingDeleteDraftCard = null;
+  let pendingDeleteDraftId = null;
+
+  const deleteDraftModal = document.getElementById("delete-draft-confirm-modal");
+  const cancelDeleteBtn = document.getElementById("cancel-delete-draft-btn");
+  const confirmDeleteBtn = document.getElementById("confirm-delete-draft-btn");
+
+  function closeDeleteDraftModal() {
+    if (deleteDraftModal) deleteDraftModal.classList.remove("active");
+    pendingDeleteDraftCard = null;
+    pendingDeleteDraftId = null;
+  }
+
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeDeleteDraftModal();
+    });
+  }
+
+  if (deleteDraftModal) {
+    deleteDraftModal.addEventListener("click", (e) => {
+      if (e.target === deleteDraftModal) {
+        closeDeleteDraftModal();
+      }
+    });
+  }
+
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      const draftId = pendingDeleteDraftId;
+      const card = pendingDeleteDraftCard;
+      closeDeleteDraftModal();
+
+      if (draftId) {
+        fetch(`${API_BASE}/api/drafts/${draftId}`, {
+          method: "DELETE",
+        }).catch(console.error);
+        try {
+          const cachedDrafts = JSON.parse(
+            localStorage.getItem("nexo_drafts") || "[]",
+          );
+          const filtered = cachedDrafts.filter(
+            (d) => String(d.id) !== String(draftId),
+          );
+          localStorage.setItem("nexo_drafts", JSON.stringify(filtered));
+          window.dispatchEvent(new Event("nexo_drafts_updated"));
+        } catch (_) {}
+      }
+
+      if (card) {
+        card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+        card.style.opacity = "0";
+        card.style.transform = "scale(0.95)";
+
+        setTimeout(() => {
+          card.remove();
+          draftCount = Math.max(0, draftCount - 1);
+          window._lastDraftsSig = null;
+
+          const draftBadge = document.getElementById("draft-badge");
+          if (draftBadge) {
+            draftBadge.textContent = draftCount;
+            draftBadge.style.display = draftCount > 0 ? "inline-block" : "none";
+          }
+          if (draftCount <= 0) {
+            // Bring the empty state card back when there are 0 drafts
+            const emptyDraftsCard =
+              document.getElementById("empty-drafts-card");
+            if (emptyDraftsCard) {
+              emptyDraftsCard.removeAttribute("style");
+            }
+          }
+          window.dispatchEvent(new Event("nexo_drafts_updated"));
+        }, 300);
+      }
+    });
+  }
+
   draftsFeed.addEventListener("click", (e) => {
     // --- 1. HANDLE "CONTINUE EDITING" ---
     const continueBtn = e.target.closest(".continue-edit-btn");
@@ -2016,52 +2122,27 @@ function initDraftEditing() {
       }
     }
 
-    // --- 2. HANDLE "DELETE DRAFT" (TRASH ICON) ---
+    // --- 2. HANDLE "DELETE DRAFT" (WITH CONFIRMATION MODAL) ---
     const deleteBtn = e.target.closest(".delete-draft-btn");
     if (deleteBtn) {
+      e.preventDefault();
+      e.stopPropagation();
       const card = deleteBtn.closest(".draft-card");
       if (card) {
         const editBtn = card.querySelector(".continue-edit-btn");
-        const draftId = (editBtn && editBtn.dataset.id) || card.dataset.id;
+        pendingDeleteDraftId =
+          (editBtn && editBtn.dataset.id) ||
+          card.dataset.id ||
+          deleteBtn.dataset.id;
+        pendingDeleteDraftCard = card;
 
-        if (draftId) {
-          fetch(`${API_BASE}/api/drafts/${draftId}`, {
-            method: "DELETE",
-          }).catch(console.error);
-          try {
-            const cachedDrafts = JSON.parse(
-              localStorage.getItem("nexo_drafts") || "[]",
-            );
-            const filtered = cachedDrafts.filter(
-              (d) => String(d.id) !== String(draftId),
-            );
-            localStorage.setItem("nexo_drafts", JSON.stringify(filtered));
-          } catch (_) {}
+        if (deleteDraftModal) {
+          deleteDraftModal.classList.add("active");
+        } else if (
+          confirm("Are you sure you want to delete this scholarship draft?")
+        ) {
+          if (confirmDeleteBtn) confirmDeleteBtn.click();
         }
-
-        card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-        card.style.opacity = "0";
-        card.style.transform = "scale(0.95)";
-
-        setTimeout(() => {
-          card.remove();
-          draftCount = Math.max(0, draftCount - 1);
-          window._lastDraftsSig = null;
-
-          const draftBadge = document.getElementById("draft-badge");
-          if (draftBadge) {
-            draftBadge.textContent = draftCount;
-            if (draftCount <= 0) {
-              draftBadge.style.display = "none";
-              // Bring the empty state card back when there are 0 drafts
-              const emptyDraftsCard =
-                document.getElementById("empty-drafts-card");
-              if (emptyDraftsCard) {
-                emptyDraftsCard.removeAttribute("style");
-              }
-            }
-          }
-        }, 300);
       }
     }
   });

@@ -149,7 +149,9 @@
   function initDOMElements() {
     appsFeedEl = document.getElementById("applications-feed");
     emptyStateEl = document.getElementById("apps-empty-state");
-    searchInputEl = document.querySelector(".search-input");
+    searchInputEl =
+      document.getElementById("applicant-search-input") ||
+      document.querySelector(".search-input");
     filterTabsEls = document.querySelectorAll(".filter-tab");
     reviewModalEl = document.getElementById("review-application-modal");
     docPreviewModalEl = document.getElementById("doc-preview-modal");
@@ -384,20 +386,25 @@
   }
 
   function initFilterTabs() {
-    const tabs = document.querySelectorAll(".filter-tab");
-    tabs.forEach((tab) => {
-      tab.addEventListener("click", function () {
-        tabs.forEach((t) => t.classList.remove("active"));
-        this.classList.add("active");
-        activeFilterTab = this.dataset.filter || "all";
-        renderApplicationsList();
-      });
-    });
+    // Filter tabs at top have been merged into the unified filter dropdown
   }
 
   // -------------------------------------------------------------
-  // 3. SEARCH, SORT & DROPDOWN FILTERS
+  // 3. SEARCH, DROPDOWN FILTERS & INDICATOR
   // -------------------------------------------------------------
+  function updateFilterIndicator() {
+    const filterBtn = document.getElementById("btn-apps-filter");
+    if (!filterBtn) return;
+    const isFiltered =
+      activeFilterTab !== "all" ||
+      activeProgramFilter !== "all" ||
+      activeDocFilter !== "all";
+    filterBtn.classList.toggle("is-filtered", isFiltered);
+    if (!document.getElementById("menu-apps-filter")?.classList.contains("show")) {
+      filterBtn.classList.toggle("active", isFiltered);
+    }
+  }
+
   function initSearchAndSort() {
     if (searchInputEl) {
       searchInputEl.addEventListener("input", (e) => {
@@ -406,41 +413,106 @@
       });
     }
 
-    // Sort items
-    const sortItems = document.querySelectorAll("[data-sort-value]");
-    sortItems.forEach((item) => {
-      item.addEventListener("click", function () {
-        activeSortOption = this.dataset.sortValue;
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
-          ".nexo-dropdown-value",
-        );
+    // Filter button toggle
+    const filterBtn = document.getElementById("btn-apps-filter");
+    const filterMenu = document.getElementById("menu-apps-filter");
+    if (filterBtn && filterMenu) {
+      filterBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = filterMenu.classList.toggle("show");
+        filterBtn.classList.toggle("active", isOpen || filterBtn.classList.contains("is-filtered"));
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest("#dropdown-wrapper-apps-filter")) {
+          filterMenu.classList.remove("show");
+          if (!filterBtn.classList.contains("is-filtered")) {
+            filterBtn.classList.remove("active");
+          }
+        }
+      });
+    }
+
+    // Status filter items (formerly top tab buttons)
+    const statusItems = document.querySelectorAll("[data-status-filter]");
+    statusItems.forEach((item) => {
+      item.addEventListener("click", function (e) {
+        e.stopPropagation();
+        activeFilterTab = this.dataset.statusFilter || "all";
+        const triggerLabel = document.getElementById("status-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
+        statusItems.forEach((si) => si.classList.remove("selected"));
+        this.classList.add("selected");
         this.closest(".nexo-dropdown")?.classList.remove("active");
+        updateFilterIndicator();
         renderApplicationsList();
       });
     });
 
-    // Document status items
+    // Document status items (Complete vs Incomplete attachments)
     const docItems = document.querySelectorAll("[data-doc-filter]");
     docItems.forEach((item) => {
-      item.addEventListener("click", function () {
-        activeDocFilter = this.dataset.docFilter;
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
-          ".nexo-dropdown-value",
-        );
+      item.addEventListener("click", function (e) {
+        e.stopPropagation();
+        activeDocFilter = this.dataset.docFilter || "all";
+        const triggerLabel = document.getElementById("doc-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
+        docItems.forEach((di) => di.classList.remove("selected"));
+        this.classList.add("selected");
         this.closest(".nexo-dropdown")?.classList.remove("active");
+        updateFilterIndicator();
         renderApplicationsList();
       });
     });
 
-    // Close other dropdowns on click & close on outside click
-    document.querySelectorAll(".nexo-dropdown").forEach((dropdown) => {
-      dropdown.addEventListener("click", (e) => {
-        document.querySelectorAll(".nexo-dropdown").forEach((other) => {
-          if (other !== dropdown) other.classList.remove("active");
+    // Reset All filters button
+    const resetBtn = document.getElementById("btn-reset-filters");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        activeFilterTab = "all";
+        activeProgramFilter = "all";
+        activeDocFilter = "all";
+        activeSearchQuery = "";
+        if (searchInputEl) searchInputEl.value = "";
+
+        const statusLabel = document.getElementById("status-filter-label");
+        if (statusLabel) statusLabel.textContent = "All Statuses";
+        const scholLabel = document.getElementById("scholarship-filter-label");
+        if (scholLabel) scholLabel.textContent = "All Scholarships";
+        const docLabel = document.getElementById("doc-filter-label");
+        if (docLabel) docLabel.textContent = "All Applications";
+
+        document.querySelectorAll(".nexo-dropdown-item").forEach((item) => {
+          if (
+            item.dataset.statusFilter === "all" ||
+            item.dataset.program === "all" ||
+            item.dataset.docFilter === "all"
+          ) {
+            item.classList.add("selected");
+          } else {
+            item.classList.remove("selected");
+          }
         });
+
+        updateFilterIndicator();
+        renderApplicationsList();
       });
+    }
+
+    // Toggle dropdown triggers inside the filter panel
+    document.querySelectorAll(".nexo-dropdown").forEach((dropdown) => {
+      const trigger = dropdown.querySelector(".nexo-dropdown-trigger");
+      if (trigger) {
+        trigger.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const isActive = dropdown.classList.contains("active");
+          document.querySelectorAll(".nexo-dropdown").forEach((other) => {
+            other.classList.remove("active");
+          });
+          if (!isActive) dropdown.classList.add("active");
+        });
+      }
     });
 
     document.addEventListener("click", (e) => {
@@ -454,7 +526,10 @@
     // Apply Filters button
     const applyBtn = document.getElementById("apply-filters-btn");
     if (applyBtn) {
-      applyBtn.addEventListener("click", () => {
+      applyBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (filterMenu) filterMenu.classList.remove("show");
+        updateFilterIndicator();
         renderApplicationsList();
       });
     }
@@ -464,14 +539,15 @@
     const listEl = document.getElementById("filter-scholarships-list");
     if (!listEl) return;
 
+    // Collect all unique scholarship titles from provider's posts and applications
     const titles = Array.from(
       new Set(
         allApplications
-          .map((a) => a.scholarshipTitle)
+          .map((a) => a.scholarshipTitle || a.title)
           .concat(allScholarships.map((s) => s.title))
           .filter(Boolean),
       ),
-    );
+    ).sort((a, b) => a.localeCompare(b));
 
     let html = `
       <div class="nexo-dropdown-item ${activeProgramFilter === "all" ? "selected" : ""}" data-program="all">
@@ -481,7 +557,7 @@
 
     titles.forEach((title) => {
       html += `
-        <div class="nexo-dropdown-item ${activeProgramFilter === title ? "selected" : ""}" data-program="${escapeAttr(title)}">
+        <div class="nexo-dropdown-item ${activeProgramFilter === title ? "selected" : ""}" data-program="${escapeAttr(title)}" title="${escapeAttr(title)}">
           ${escapeHtml(title)}
         </div>
       `;
@@ -490,13 +566,15 @@
     listEl.innerHTML = html;
 
     listEl.querySelectorAll(".nexo-dropdown-item").forEach((item) => {
-      item.addEventListener("click", function () {
+      item.addEventListener("click", function (e) {
+        e.stopPropagation();
         activeProgramFilter = this.dataset.program || "all";
-        const triggerLabel = this.closest(".nexo-dropdown")?.querySelector(
-          ".nexo-dropdown-value",
-        );
+        const triggerLabel = document.getElementById("scholarship-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
+        listEl.querySelectorAll(".nexo-dropdown-item").forEach((it) => it.classList.remove("selected"));
+        this.classList.add("selected");
         this.closest(".nexo-dropdown")?.classList.remove("active");
+        updateFilterIndicator();
         renderApplicationsList();
       });
     });
@@ -511,7 +589,7 @@
     renderScopedBanner();
     const baseApps = getBaseApplications();
 
-    // Filter by tab
+    // 1. Filter by Status (formerly top tabs, now in filter menu)
     let filtered = baseApps.filter((app) => {
       const status = (app.status || "Submitted").toLowerCase();
       if (activeFilterTab === "all") return true;
@@ -534,16 +612,16 @@
       return true;
     });
 
-    // Filter by Program
+    // 2. Filter by Scholarship Post Title
     if (activeProgramFilter !== "all") {
       filtered = filtered.filter(
         (app) =>
-          String(app.scholarshipTitle || "").toLowerCase() ===
+          String(app.scholarshipTitle || app.title || "").toLowerCase() ===
           activeProgramFilter.toLowerCase(),
       );
     }
 
-    // Filter by Search Query
+    // 3. Filter by Search Query
     if (activeSearchQuery) {
       filtered = filtered.filter((app) => {
         const studentName = String(app.studentName || "").toLowerCase();
@@ -551,7 +629,7 @@
         const studentId = String(app.studentId || "").toLowerCase();
         const course = String(app.course || "").toLowerCase();
         const scholarshipTitle = String(
-          app.scholarshipTitle || "",
+          app.scholarshipTitle || app.title || "",
         ).toLowerCase();
 
         return (
@@ -564,7 +642,7 @@
       });
     }
 
-    // Filter by Document Status
+    // 4. Filter by Document Status (Complete vs Missing)
     if (activeDocFilter === "complete") {
       filtered = filtered.filter((app) => {
         const rawDocs = app.documents || app.uploadedDocuments || [];
@@ -593,20 +671,10 @@
       });
     }
 
-    // Sort
-    if (activeSortOption === "newest") {
-      filtered.sort(
-        (a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0),
-      );
-    } else if (activeSortOption === "oldest") {
-      filtered.sort(
-        (a, b) => new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0),
-      );
-    } else if (activeSortOption === "name") {
-      filtered.sort((a, b) =>
-        (a.studentName || "").localeCompare(b.studentName || ""),
-      );
-    }
+    // 5. Default First-Come, First-Served Ordering (earliest applied first)
+    filtered.sort(
+      (a, b) => new Date(a.submittedAt || 0) - new Date(b.submittedAt || 0),
+    );
 
     // Empty state handling
     if (filtered.length === 0) {
@@ -645,12 +713,12 @@
   }
 
   // -------------------------------------------------------------
-  // 5. APPLICATION CARD COMPONENT
+  // 5. APPLICATION CARD COMPONENT (Consistent with individual post)
   // -------------------------------------------------------------
   function createApplicationCard(app) {
     const card = document.createElement("div");
     card.className = "provider-app-card";
-    card.dataset.id = app.id;
+    card.dataset.id = app.id || "";
 
     // Status Pill
     const rawStatus = (app.status || "Submitted").toLowerCase();
@@ -669,55 +737,53 @@
     }
 
     const info = resolveStudentInfo(app);
-    const name = info.fullName;
+    const studentName = info.fullName;
     const initials =
-      name
+      studentName
         .split(/\s+/)
         .slice(0, 2)
         .map((w) => w[0] || "")
         .join("")
         .toUpperCase() || "ST";
 
-    const rawDocs = app.documents || app.uploadedDocuments || [];
-    const attachedDocs = rawDocs.filter((d) => {
-      if (typeof d === "string") return !d.includes("(To Follow Up)");
-      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
-    });
-    const followUpDocs = rawDocs.filter((d) => {
-      if (typeof d === "string") return d.includes("(To Follow Up)");
-      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
-    });
-    const docsCount = attachedDocs.length;
-    const dateFormatted =
+    const formattedAppliedDate =
       app.formattedDate ||
       (app.submittedAt
         ? new Date(app.submittedAt).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
           })
-        : "Recently");
+        : "Recently Applied");
 
     const avatar = info.profilePicture;
 
-    let avatarHtml = `<div class="provider-app-avatar">${escapeHtml(initials)}</div>`;
-    if (avatar) {
-      avatarHtml = `<img src="${avatar}" alt="${escapeHtml(name)}" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />`;
-    }
-
     card.innerHTML = `
       <div class="provider-app-main-row">
-        ${avatarHtml}
+        <div class="provider-app-avatar">
+          ${
+            avatar
+              ? `<img src="${avatar}" alt="${escapeHtml(studentName)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+              : escapeHtml(initials)
+          }
+        </div>
 
         <div class="provider-app-details" style="flex: 1; min-width: 0;">
           <div class="provider-app-header-line" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px;">
-            <h3 class="provider-app-student-name" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHtml(name)}</h3>
+            <h3 class="provider-app-student-name" style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">${escapeHtml(studentName)}</h3>
             <span class="provider-app-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
           </div>
 
-          <p class="provider-app-program" style="margin-bottom: 4px;">
-            <span class="program-tag">${escapeHtml(app.scholarshipTitle || "Scholarship Program")}</span>
-          </p>
+          <!-- Prominent Scholarship Post Title Tag for instant readability -->
+          <div class="provider-app-scholarship-tag">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>${escapeHtml(app.scholarshipTitle || app.title || "Scholarship Program")}</span>
+          </div>
 
           <!-- Hierarchy: Course prominently displayed -->
           <div class="provider-app-course" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 2px 0 8px; line-height: 1.35;">
@@ -746,14 +812,14 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
-              <span>Applied: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(dateFormatted)}</strong></span>
+              <span>Applied: <strong style="color: var(--text-primary); font-weight: 600;">${escapeHtml(formattedAppliedDate)}</strong></span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="provider-app-actions-row" style="margin-top: 14px; width: 100%;">
-        <button type="button" class="btn btn-review-app btn-primary">
+        <button type="button" class="btn btn-primary btn-review-app">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -1356,17 +1422,15 @@
       });
     }
 
-    // 2. Requirements To Follow Up Section
+    // 2. Requirements To Follow Up Section (All incomplete follow-up requirements grouped together)
     if (followUpDocs.length > 0) {
       const followUpHeader = document.createElement("div");
       followUpHeader.style.cssText =
-        "display: flex; align-items: center; justify-content: space-between; margin-top: 14px; margin-bottom: 8px; padding-top: 10px; border-top: 1px dashed var(--border-color);";
+        "margin-top: 14px; margin-bottom: 8px; padding-top: 10px; border-top: 1px dashed var(--border-color);";
       followUpHeader.innerHTML = `
-        <span style="font-size: 11.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 4px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          Requirements To Follow Up (${followUpDocs.length})
+        <span style="font-size: 11.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; display: block;">
+          Requirements To Follow Up
         </span>
-        <span style="font-size: 11px; color: #D97706; font-weight: 600;">Student Opted to Submit Later</span>
       `;
       docsContainer.appendChild(followUpHeader);
 
@@ -1383,18 +1447,12 @@
 
         itemEl.innerHTML = `
           <div class="modal-doc-info" style="min-width: 0;">
-            <div class="modal-doc-icon" style="background: rgba(245, 158, 11, 0.15); color: #D97706;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
             <div style="min-width: 0;">
               <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">
                 ${escapeHtml(reqTitle)}
               </h5>
               <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">
-                To follow up later &bull; Pending student submission
+                Pending student submission
               </span>
             </div>
           </div>
