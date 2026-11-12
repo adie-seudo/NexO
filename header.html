@@ -21,7 +21,13 @@
     <!-- We wrap both the button and the menu together so hovering over either keeps the drawer open -->
     <div class="nav-wrapper" id="nav-wrapper">
       <!-- Hamburger Button -->
-      <button class="hamburger-btn" aria-label="Open Menu">
+      <button
+        class="hamburger-btn"
+        id="avatar-menu-btn"
+        type="button"
+        aria-label="Open Menu"
+        onclick="handleMenuToggle(event)"
+      >
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>

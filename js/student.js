@@ -809,7 +809,7 @@ async function loadStudentData() {
   // Update UI Metric Numbers (for Student Dashboard)
   if (statMyApps) statMyApps.textContent = totalCount;
   if (statApproved) statApproved.textContent = approvedCount;
-  if (statReview) statReview.textContent = reviewCount + submittedCount;
+  if (statReview) statReview.textContent = reviewCount;
   if (statRejected) statRejected.textContent = rejectedCount;
 
   // Setup dynamic card navigation (clickable only if count >= 1)
@@ -850,9 +850,8 @@ async function loadStudentData() {
     }
   }
 
-  const reviewAndSubmittedCount = reviewCount + submittedCount;
   if (cardReview) {
-    if (reviewAndSubmittedCount >= 1) {
+    if (reviewCount >= 1) {
       cardReview.classList.add("is-clickable");
       cardReview.classList.remove("is-disabled");
       cardReview.title = "View applications under review";

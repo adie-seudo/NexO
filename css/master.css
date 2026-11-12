@@ -610,6 +610,7 @@ body.dark-theme .global-header {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   z-index: 1000;
   box-sizing: border-box;
 
@@ -662,6 +663,7 @@ body.dark-theme .nav-menu.open {
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.35s ease, visibility 0.35s ease;
+  touch-action: none;
 }
 
 .nav-overlay.active {
@@ -673,6 +675,7 @@ body.dark-theme .nav-menu.open {
 /* Prevent body scroll when side menu is open */
 body.menu-open {
   overflow: hidden;
+  overscroll-behavior-y: none;
 }
 body.menu-open .global-header {
   transform: translateY(0) !important;
@@ -3657,7 +3660,8 @@ body.dark-theme .student-greeting-time {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.student-motto {
+.student-motto,
+.settings-subtitle {
   font-size: 13.5px;
   color: var(--text-secondary);
   line-height: 1.65;

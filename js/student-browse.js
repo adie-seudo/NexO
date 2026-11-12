@@ -2005,7 +2005,7 @@ document.addEventListener("DOMContentLoaded", () => {
           Application Submitted!
         `;
         showToast(
-          "Application submitted successfully! Your submission is now Under Review.",
+          "Application submitted successfully! Track your submission status anytime.",
         );
 
         setTimeout(() => {

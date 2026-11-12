@@ -493,7 +493,13 @@ const DEFAULT_HEADER_HTML = `
       <input id="theme-toggle" class="theme-toggle" type="checkbox" aria-label="Toggle Dark Mode" />
     </label>
     <div class="nav-wrapper" id="nav-wrapper">
-      <button class="hamburger-btn" aria-label="Open Menu">
+      <button
+        class="hamburger-btn"
+        id="avatar-menu-btn"
+        type="button"
+        aria-label="Open Menu"
+        onclick="handleMenuToggle(event)"
+      >
         <span class="bar"></span>
         <span class="bar"></span>
         <span class="bar"></span>
@@ -700,23 +706,68 @@ function initHeaderInjection() {
 // ==========================================
 // 4. HEADER LOGIC & SCROLL EVENTS
 // ==========================================
-function initializeHeaderFunctions() {
-  const navMenu = document.querySelector(".nav-menu");
-  const hamburgerBtn = document.querySelector(".hamburger-btn");
-  const globalHeader = document.querySelector(".global-header");
-
-  // Helper to cleanly close mobile nav menu and remove backdrop overlay & blur
-  function closeMobileNav() {
-    if (navMenu) navMenu.classList.remove("open");
-    if (hamburgerBtn) hamburgerBtn.classList.remove("open");
-    const overlay = document.querySelector(".nav-overlay");
-    if (overlay) overlay.classList.remove("active");
-    document.body.classList.remove("menu-open");
-    const popover = document.getElementById("header-notif-popover");
-    const notifBtn = document.querySelector(".notification-btn");
-    if (popover) popover.classList.remove("open");
-    if (notifBtn) notifBtn.setAttribute("aria-expanded", "false");
+// Helper for backdrop overlay
+function getOrCreateNavOverlay() {
+  let overlay = document.querySelector(".nav-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.className = "nav-overlay";
+    document.body.appendChild(overlay);
+    overlay.addEventListener("click", () => {
+      closeMobileNav();
+    });
   }
+  return overlay;
+}
+
+// Global Clean Mobile Nav Closer
+function closeMobileNav() {
+  const navMenu =
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+  const hamburgerBtn =
+    document.getElementById("avatar-menu-btn") ||
+    document.querySelector(".hamburger-btn");
+  if (navMenu) navMenu.classList.remove("open");
+  if (hamburgerBtn) hamburgerBtn.classList.remove("open");
+  const overlay = document.querySelector(".nav-overlay");
+  if (overlay) overlay.classList.remove("active");
+  document.body.classList.remove("menu-open");
+  const popover = document.getElementById("header-notif-popover");
+  const notifBtn = document.querySelector(".notification-btn");
+  if (popover) popover.classList.remove("open");
+  if (notifBtn) notifBtn.setAttribute("aria-expanded", "false");
+}
+window.closeMobileNav = closeMobileNav;
+
+// Global Side Menu Handler (Consistent with student.js & provider.js)
+window.handleMenuToggle = function (e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const btn =
+    document.getElementById("avatar-menu-btn") ||
+    document.querySelector(".hamburger-btn");
+  const menu =
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+  const overlay = getOrCreateNavOverlay();
+
+  if (btn && menu) {
+    const willOpen = !menu.classList.contains("open");
+    btn.classList.toggle("open", willOpen);
+    menu.classList.toggle("open", willOpen);
+    if (overlay) overlay.classList.toggle("active", willOpen);
+    document.body.classList.toggle("menu-open", willOpen);
+  }
+};
+
+function initializeHeaderFunctions() {
+  const navMenu =
+    document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+  const hamburgerBtn =
+    document.getElementById("avatar-menu-btn") ||
+    document.querySelector(".hamburger-btn");
+  const globalHeader = document.querySelector(".global-header");
 
   // --- A. Dynamic Active Link Highlight & Scroll ---
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
@@ -737,46 +788,45 @@ function initializeHeaderFunctions() {
     });
   });
 
-  // Helper for backdrop overlay
-  function getOrCreateNavOverlay() {
-    let overlay = document.querySelector(".nav-overlay");
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.className = "nav-overlay";
-      document.body.appendChild(overlay);
-      overlay.addEventListener("click", () => {
-        closeMobileNav();
-      });
+  // --- B. Hamburger Menu (For Mobile Header / Public pages) ---
+  const overlay = getOrCreateNavOverlay();
+
+  if (hamburgerBtn) {
+    if (!hamburgerBtn.id) hamburgerBtn.id = "avatar-menu-btn";
+    if (!hamburgerBtn.hasAttribute("type")) hamburgerBtn.type = "button";
+    if (!hamburgerBtn.hasAttribute("onclick")) {
+      hamburgerBtn.onclick = function (e) {
+        window.handleMenuToggle(e);
+      };
     }
-    return overlay;
   }
 
-  // --- B. Hamburger Menu (For Mobile Header / Public pages) ---
-  if (hamburgerBtn && navMenu) {
-    const overlay = getOrCreateNavOverlay();
-
-    if (!hamburgerBtn.hasAttribute("onclick")) {
-      hamburgerBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willOpen = !navMenu.classList.contains("open");
-        hamburgerBtn.classList.toggle("open", willOpen);
-        navMenu.classList.toggle("open", willOpen);
-        if (overlay) overlay.classList.toggle("active", willOpen);
-        document.body.classList.toggle("menu-open", willOpen);
-      });
-    }
-
-    // Close menu when clicking anywhere else on the page
-    document.addEventListener("click", (e) => {
+  // Delegated click handler on navMenu for links to cleanly close drawer on navigation
+  if (navMenu) {
+    navMenu.addEventListener("click", (e) => {
+      const link = e.target.closest("a, .btn");
       if (
-        navMenu.classList.contains("open") &&
-        !navMenu.contains(e.target) &&
-        !hamburgerBtn.contains(e.target)
+        link &&
+        !link.classList.contains("theme-toggle") &&
+        !link.closest(".theme-toggle-container")
       ) {
         closeMobileNav();
       }
     });
   }
+
+  // Close menu when clicking anywhere else on the page
+  document.addEventListener("click", (e) => {
+    if (
+      navMenu &&
+      navMenu.classList.contains("open") &&
+      !navMenu.contains(e.target) &&
+      !hamburgerBtn.contains(e.target) &&
+      (!e.target.closest || !e.target.closest("#avatar-menu-btn, .hamburger-btn"))
+    ) {
+      closeMobileNav();
+    }
+  });
 
   // --- C. Dark Mode Toggle Binding ---
   const themeToggle = document.querySelector(".theme-toggle");
@@ -807,18 +857,10 @@ function initializeHeaderFunctions() {
     });
   }
 
-  // --- D. UNIFIED SCROLL LISTENER (Header & Drawer) ---
-  let lastScrollY = window.scrollY;
+  // --- D. UNIFIED SCROLL LISTENER (Header Bar) ---
   window.addEventListener(
     "scroll",
     () => {
-      if (navMenu && navMenu.classList.contains("open")) {
-        if (hamburgerBtn) hamburgerBtn.classList.remove("open");
-        navMenu.classList.remove("open");
-        const overlay = document.querySelector(".nav-overlay");
-        if (overlay) overlay.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      }
       if (globalHeader) {
         // Sticky glass top bar stays permanently visible on all pages even when scrolling
         globalHeader.classList.remove("scroll-down");
@@ -935,42 +977,13 @@ function initAvatarMenu() {
   const navMenu = document.getElementById("nav-menu");
 
   if (avatarBtn && navMenu) {
-    let overlay = document.querySelector(".nav-overlay");
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.className = "nav-overlay";
-      document.body.appendChild(overlay);
-      overlay.addEventListener("click", () => {
-        avatarBtn.classList.remove("open");
-        navMenu.classList.remove("open");
-        overlay.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      });
-    }
+    getOrCreateNavOverlay();
 
     if (!avatarBtn.hasAttribute("onclick")) {
-      avatarBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const willOpen = !navMenu.classList.contains("open");
-        avatarBtn.classList.toggle("open", willOpen);
-        navMenu.classList.toggle("open", willOpen);
-        if (overlay) overlay.classList.toggle("active", willOpen);
-        document.body.classList.toggle("menu-open", willOpen);
-      });
+      avatarBtn.onclick = function (e) {
+        window.handleMenuToggle(e);
+      };
     }
-
-    document.addEventListener("click", (e) => {
-      if (
-        navMenu.classList.contains("open") &&
-        !navMenu.contains(e.target) &&
-        !avatarBtn.contains(e.target)
-      ) {
-        avatarBtn.classList.remove("open");
-        navMenu.classList.remove("open");
-        if (overlay) overlay.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      }
-    });
   }
 }
 
