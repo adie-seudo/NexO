@@ -521,9 +521,27 @@ const DEFAULT_HEADER_HTML = `
 `;
 
 function hydrateRoleAwareHeader() {
-  const role =
-    sessionStorage.getItem("nexo-logged-in") ||
-    localStorage.getItem("nexo-logged-in");
+  const rawPage = window.location.pathname.split("/").pop() || "index.html";
+  const currentPage = rawPage === "" ? "index.html" : rawPage;
+  const isLoginLanding =
+    currentPage === "index.html" ||
+    currentPage === "register.html" ||
+    currentPage === "verify.html" ||
+    currentPage === "provider-setup.html" ||
+    Boolean(document.getElementById("auth-screen"));
+
+  // Security & Auth Guard: Opening the login/registration screen starts in a clean unauthenticated state
+  if (isLoginLanding) {
+    try {
+      sessionStorage.removeItem("nexo-logged-in");
+      localStorage.removeItem("nexo-logged-in");
+    } catch (_) {}
+  }
+
+  const role = isLoginLanding
+    ? null
+    : sessionStorage.getItem("nexo-logged-in") ||
+      localStorage.getItem("nexo-logged-in");
   const navMenu =
     document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const logoContainer = document.querySelector(".logo-container");
@@ -533,8 +551,8 @@ function hydrateRoleAwareHeader() {
   if (role === "provider") dashboardUrl = "provider-dashboard.html";
   else if (role === "student") dashboardUrl = "student-dashboard.html";
 
-  // 1. Update logo behavior so clicking logo leads to user dashboard
-  if (logoContainer && role) {
+  // 1. Update logo behavior so clicking logo leads to user dashboard (or index.html when logged out)
+  if (logoContainer) {
     logoContainer.style.cursor = "pointer";
     logoContainer.onclick = () => {
       window.location.href = dashboardUrl;
@@ -555,7 +573,7 @@ function hydrateRoleAwareHeader() {
     };
   });
 
-  // 3. Hydrate side navigation menu if user is authenticated
+  // 3. Hydrate side navigation menu if user is authenticated (never on login/landing page)
   if (navMenu && role === "provider") {
     navMenu.innerHTML = `
       <a href="provider-dashboard.html" class="nav-link" id="nav-home">
@@ -661,13 +679,23 @@ function hydrateRoleAwareHeader() {
   }
 
   // Active link highlight
-  const currentPage = window.location.pathname.split("/").pop() || "index.html";
   if (navMenu) {
     navMenu.querySelectorAll(".nav-link").forEach((link) => {
-      if (link.getAttribute("href") === currentPage) {
+      const href = link.getAttribute("href");
+      if (
+        href === currentPage ||
+        (currentPage === "index.html" && (href === "index.html" || href === "./index.html" || href === "/"))
+      ) {
         link.classList.add("active");
+      } else {
+        link.classList.remove("active");
       }
     });
+  }
+
+  // Sync tooltips for desktop rail
+  if (typeof syncMenuTooltips === "function") {
+    syncMenuTooltips();
   }
 
   // Global Drafts Badge Sync

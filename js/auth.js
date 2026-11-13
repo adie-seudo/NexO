@@ -131,19 +131,57 @@ function initLoginToggleAndSubmit() {
           ? ""
           : "http://localhost:3000";
 
+      let fetchedFromApi = false;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
         const res = await fetch(`${API_BASE}/api/users`, {
           cache: "no-store",
+          signal: controller.signal,
         }).catch(() => null);
+        clearTimeout(timeoutId);
         if (res && res.ok) {
           userList = await res.json();
-          localStorage.setItem("nexo_users", JSON.stringify(userList));
+          fetchedFromApi = true;
+          try {
+            localStorage.setItem("nexo_users", JSON.stringify(userList));
+          } catch (_) {}
         }
       } catch (_) {}
 
-      const matchedUser = userList.find(
-        (u) => (u.email || "").toLowerCase() === emailValue,
-      );
+      // Fallback to local data.json when running on Live Server or static host without Node backend
+      if (!fetchedFromApi) {
+        try {
+          const fallbackRes = await fetch("data.json", {
+            cache: "no-store",
+          }).catch(() => null);
+          if (fallbackRes && fallbackRes.ok) {
+            const fullData = await fallbackRes.json();
+            if (fullData && Array.isArray(fullData.users)) {
+              // Merge any locally registered accounts in userList with data.json users
+              const byEmail = new Map();
+              fullData.users.forEach((u) => {
+                if (u && u.email) byEmail.set(u.email.toLowerCase(), u);
+              });
+              if (Array.isArray(userList)) {
+                userList.forEach((u) => {
+                  if (u && u.email && !byEmail.has(u.email.toLowerCase())) {
+                    byEmail.set(u.email.toLowerCase(), u);
+                  }
+                });
+              }
+              userList = Array.from(byEmail.values());
+              try {
+                localStorage.setItem("nexo_users", JSON.stringify(userList));
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
+      }
+
+      const matchedUser = Array.isArray(userList)
+        ? userList.find((u) => (u.email || "").toLowerCase() === emailValue)
+        : null;
 
       // 1. Account existence validation
       if (!matchedUser) {
@@ -205,39 +243,58 @@ function initLoginToggleAndSubmit() {
 
       // 5. Successful Login Execution
       if (matchedUser.role === "provider") {
-        localStorage.removeItem("nexo-provider-banner");
-        localStorage.removeItem("provider-banner-preview");
-        sessionStorage.setItem("nexo-logged-in", "provider");
-        sessionStorage.setItem(
-          "nexo-provider-name",
-          matchedUser.name || matchedUser.orgName || "NEXO",
-        );
-        sessionStorage.setItem("nexo-provider-email", matchedUser.email);
-        localStorage.setItem("nexo-logged-in", "provider");
-        localStorage.setItem(
-          "nexo-provider-name",
-          matchedUser.name || matchedUser.orgName || "NEXO",
-        );
-        localStorage.setItem("nexo-provider-email", matchedUser.email);
+        try {
+          localStorage.removeItem("nexo-provider-banner");
+          localStorage.removeItem("provider-banner-preview");
+          sessionStorage.setItem("nexo-logged-in", "provider");
+          sessionStorage.setItem(
+            "nexo-provider-name",
+            matchedUser.name || matchedUser.orgName || "NEXO",
+          );
+          sessionStorage.setItem("nexo-provider-email", matchedUser.email);
+          localStorage.setItem("nexo-logged-in", "provider");
+          localStorage.setItem(
+            "nexo-provider-name",
+            matchedUser.name || matchedUser.orgName || "NEXO",
+          );
+          localStorage.setItem("nexo-provider-email", matchedUser.email);
+        } catch (_) {}
         window.location.href = "provider-dashboard.html";
         return;
       } else {
         const emailLower = (matchedUser.email || "").toLowerCase().trim();
-        const lastStudentEmail = localStorage.getItem("nexo-student-email");
-        if (lastStudentEmail && lastStudentEmail.toLowerCase() !== emailLower) {
-          // Different student account logging in - clear stale cached settings & avatar
-          localStorage.removeItem("nexo_student_settings");
-          localStorage.removeItem("nexo-student-avatar");
-          sessionStorage.removeItem("nexo-student-avatar");
-        }
+        try {
+          const lastStudentEmail = localStorage.getItem("nexo-student-email");
+          if (lastStudentEmail && lastStudentEmail.toLowerCase() !== emailLower) {
+            // Different student account logging in - clear stale cached settings & avatar
+            localStorage.removeItem("nexo_student_settings");
+            localStorage.removeItem("nexo-student-avatar");
+            sessionStorage.removeItem("nexo-student-avatar");
+          }
+        } catch (_) {}
+
+        // Set essential auth flags FIRST before storing large avatar strings so quota errors never block login
+        try {
+          sessionStorage.setItem("nexo-logged-in", "student");
+          sessionStorage.setItem("nexo-student-name", matchedUser.name || "");
+          sessionStorage.setItem("nexo-student-email", matchedUser.email);
+          sessionStorage.setItem("nexo-student-intro-played", "true");
+        } catch (_) {}
+        try {
+          localStorage.setItem("nexo-logged-in", "student");
+          localStorage.setItem("nexo-student-name", matchedUser.name || "");
+          localStorage.setItem("nexo-student-email", matchedUser.email);
+        } catch (_) {}
 
         // Restore avatar if this student has one
         let userAvatar = matchedUser.profilePicture || "";
         if (!userAvatar && emailLower) {
-          userAvatar =
-            localStorage.getItem("nexo_avatar_" + emailLower) ||
-            localStorage.getItem("nexo-student-avatar-" + emailLower) ||
-            "";
+          try {
+            userAvatar =
+              localStorage.getItem("nexo_avatar_" + emailLower) ||
+              localStorage.getItem("nexo-student-avatar-" + emailLower) ||
+              "";
+          } catch (_) {}
         }
         if (!userAvatar && emailLower) {
           try {
@@ -256,11 +313,17 @@ function initLoginToggleAndSubmit() {
           } catch (_) {}
         }
         if (userAvatar) {
-          sessionStorage.setItem("nexo-student-avatar", userAvatar);
-          localStorage.setItem("nexo-student-avatar", userAvatar);
+          try {
+            sessionStorage.setItem("nexo-student-avatar", userAvatar);
+          } catch (_) {}
+          try {
+            localStorage.setItem("nexo-student-avatar", userAvatar);
+          } catch (_) {}
           if (emailLower) {
-            localStorage.setItem("nexo_avatar_" + emailLower, userAvatar);
-            localStorage.setItem("nexo-student-avatar-" + emailLower, userAvatar);
+            try {
+              localStorage.setItem("nexo_avatar_" + emailLower, userAvatar);
+              localStorage.setItem("nexo-student-avatar-" + emailLower, userAvatar);
+            } catch (_) {}
           }
         }
 
@@ -274,19 +337,6 @@ function initLoginToggleAndSubmit() {
           } catch (_) {}
         }
 
-        sessionStorage.setItem("nexo-logged-in", "student");
-        sessionStorage.setItem(
-          "nexo-student-name",
-          matchedUser.name || "",
-        );
-        sessionStorage.setItem("nexo-student-email", matchedUser.email);
-        sessionStorage.setItem("nexo-student-intro-played", "true");
-        localStorage.setItem("nexo-logged-in", "student");
-        localStorage.setItem(
-          "nexo-student-name",
-          matchedUser.name || "",
-        );
-        localStorage.setItem("nexo-student-email", matchedUser.email);
         window.location.href = "student-dashboard.html";
         return;
       }

@@ -6709,30 +6709,416 @@ body.dark-theme .skeleton-bone {
     padding: 0 24px !important;
   }
 
-  /* Container width & alignment for actual desktop environment */
+  /* -------------------------------------------------------------
+     1. DESKTOP LOGIN SCREEN RESOLUTION & SIZING
+     Fits entirely on screen, centered, balanced logo & compact inputs,
+     with zero card peaking from below
+     ------------------------------------------------------------- */
+  .auth-container {
+    min-height: 100vh !important;
+    height: 100vh !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
+    padding: 68px 20px 24px 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .auth-logo-container {
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .auth-logo {
+    width: 175px !important;
+    height: 175px !important;
+    margin-bottom: 0 !important;
+    object-fit: contain !important;
+  }
+
+  .tagline {
+    font-size: 13.5px !important;
+    margin-top: -10px !important;
+    margin-bottom: 18px !important;
+    color: var(--text-muted) !important;
+    text-align: center !important;
+  }
+
+  #login-view {
+    width: 100% !important;
+    max-width: 320px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+  }
+
+  .role-toggle {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto 14px auto !important;
+    padding: 3px !important;
+    border-radius: 20px !important;
+    box-sizing: border-box !important;
+  }
+
+  .toggle-btn {
+    padding: 6px 12px !important;
+    font-size: 12.5px !important;
+    border-radius: 20px !important;
+  }
+
+  #login-form {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto !important;
+    gap: 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .input-group {
+    padding: 6px 12px !important;
+    gap: 8px !important;
+    border-radius: 10px !important;
+    border: 1px solid var(--border-strong) !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 320px !important;
+  }
+
+  .input-icon {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .input-field {
+    margin-left: 6px !important;
+  }
+
+  .input-field label {
+    font-size: 10.5px !important;
+    font-weight: 600 !important;
+    margin-bottom: 1px !important;
+    line-height: 1.2 !important;
+  }
+
+  .input-field input {
+    font-size: 12.5px !important;
+    height: 18px !important;
+    line-height: 18px !important;
+    padding: 0 !important;
+  }
+
+  .animated-eye-icon {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  .error-text {
+    font-size: 11px !important;
+    margin-top: -4px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .auth-submit {
+    padding: 9px 16px !important;
+    font-size: 13.5px !important;
+    margin-top: 4px !important;
+    border-radius: 20px !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .auth-links {
+    margin-top: 12px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+  }
+
+  .forgot-pass {
+    margin-bottom: 4px !important;
+    font-size: 12px !important;
+  }
+
+  .auth-links p {
+    margin: 0 !important;
+    font-size: 12px !important;
+  }
+
+  .register-link {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+  }
+
+  /* -------------------------------------------------------------
+     2. CARD FIT & PERFECT SPACING BEFORE PRE-OPEN SIDE MENU
+     Every page container and card across the website stretches
+     to fit cleanly with a 24px gap before the 68px right rail
+     ------------------------------------------------------------- */
+  .landing-page {
+    padding: 16px 24px 48px 24px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    gap: 32px !important;
+  }
+
+  .about-page {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 84px 24px 48px 24px !important;
+    box-sizing: border-box !important;
+    gap: 28px !important;
+  }
+
+  .doc-page {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 84px 24px 48px 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .doc-hero,
+  .doc-card,
+  .doc-actions-card,
+  .doc-institution-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Portal containers fit desktop screen with same clean spacing before rail */
   .dash-main,
   .student-dash-main,
   .browse-page-main,
   .posts-container,
   .apps-container,
-  .settings-page-main,
-  .about-page,
-  .doc-page {
-    max-width: 1040px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
+  .settings-page-main {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
     padding-left: 24px !important;
     padding-right: 24px !important;
     box-sizing: border-box !important;
   }
 
-  .auth-container {
-    max-width: 540px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-    padding-left: 24px !important;
-    padding-right: 24px !important;
+  /* Ensure inner sections and cards inside Provider & Student accounts stretch full width */
+  #dash-drafts-section,
+  #dash-all-scholarships-section,
+  #dash-overview-section,
+  .dash-overview-section,
+  .dash-feed-section,
+  .student-apps-section,
+  .student-greeting-section,
+  .submissions-search-filter-section,
+  .settings-header,
+  .settings-tabs-wrapper,
+  .settings-tab-panel,
+  .settings-category-group,
+  .settings-card,
+  .scholarship-card,
+  .draft-card,
+  .directory-card,
+  .student-app-card,
+  .student-welcome-card,
+  .empty-state-card,
+  .student-empty-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
     box-sizing: border-box !important;
+  }
+
+  /* -------------------------------------------------------------
+     3. DESKTOP GRID LAYOUTS & CARD SIZING
+     ------------------------------------------------------------- */
+  /* Landing Hero Section Card */
+  .hero-section {
+    padding: 34px 34px !important;
+    border-radius: 18px !important;
+    margin-top: 24px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .hero-section h1 {
+    font-size: 30px !important;
+    font-weight: 800 !important;
+    line-height: 1.25 !important;
+    margin: 6px 0 10px 0 !important;
+  }
+
+  .hero-description {
+    font-size: 14.5px !important;
+    line-height: 1.6 !important;
+    max-width: 760px !important;
+    margin-bottom: 18px !important;
+  }
+
+  #get-started-btn {
+    padding: 10px 26px !important;
+    font-size: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  /* Feature cards in 3-column desktop grid */
+  .feature-cards {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .feature-card {
+    padding: 22px 24px !important;
+    border-radius: 16px !important;
+    gap: 14px !important;
+  }
+
+  .feature-icon {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .feature-icon img {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .feature-text h3 {
+    font-size: 16px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .feature-text p {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+    margin: 0 !important;
+  }
+
+  /* Audience cards in 2-column desktop grid */
+  .audience-cards {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .audience-card {
+    padding: 24px 26px !important;
+    border-radius: 16px !important;
+    gap: 12px !important;
+  }
+
+  .audience-card h3 {
+    font-size: 17px !important;
+    margin-top: 4px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .audience-card p {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+    margin: 0 !important;
+  }
+
+  /* CTA Section */
+  .cta-section {
+    padding: 32px 34px !important;
+    border-radius: 18px !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .cta-section h2 {
+    font-size: 24px !important;
+    margin: 0 !important;
+  }
+
+  .cta-btn {
+    padding: 10px 26px !important;
+    font-size: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  /* About Us Page Cards - Stretches with same right-margin as Hero Card */
+  .about-card.mission-card {
+    padding: 28px 34px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .about-card.mission-card h1 {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .about-card.mission-card h3 {
+    font-size: 16px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .about-card.mission-card p {
+    font-size: 14.5px !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Problem Cards in 3-column desktop grid */
+  .card-list {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .about-card.inner-card {
+    padding: 20px 22px !important;
+    border-radius: 16px !important;
+    gap: 8px !important;
+  }
+
+  .about-card.inner-card h4 {
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    margin: 0 0 4px 0 !important;
+  }
+
+  .about-card.inner-card p {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+    margin: 0 !important;
+  }
+
+  .partner-wrapper .partner-card {
+    padding: 28px 34px !important;
+    border-radius: 18px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .partner-wrapper .full-width-btn {
+    max-width: 260px !important;
+    padding: 11px 22px !important;
+    font-size: 14px !important;
+    border-radius: 20px !important;
+    margin-top: 14px !important;
   }
 
   /* Metrics grids on Desktop */
