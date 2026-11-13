@@ -6431,6 +6431,56 @@ body.dark-theme .skeleton-bone {
   margin-top: 6px;
 }
 
+/* Student Application Skeleton Card (Matches updated Student App Card on Mobile & Desktop) */
+.skeleton-student-app-card {
+  border-radius: 16px;
+  padding: 15px 16px;
+  gap: 10px;
+}
+
+.skeleton-app-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.skeleton-avatar-circle {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-app-titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.skeleton-app-action-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+  width: 100%;
+}
+
+.skeleton-btn-action {
+  width: 142px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+@media (max-width: 480px) {
+  .skeleton-btn-action {
+    width: 100%;
+    height: 36px;
+  }
+}
+
 /* ========================================= */
 /* DESKTOP SIDE MENU (ICON RAIL & EXPANDED)  */
 /* ========================================= */
@@ -6698,9 +6748,6 @@ body.dark-theme .skeleton-bone {
   }
 
   /* DESKTOP RESOLUTION ADJUSTMENTS */
-  body {
-    padding-right: 68px; /* Offset for docked rail so content is never covered */
-    box-sizing: border-box;
   body,
   body.dashboard-body,
   body.auth-body {
@@ -7171,10 +7218,235 @@ body.dark-theme .skeleton-bone {
     gap: 18px !important;
   }
 
+  /* -------------------------------------------------------------
+     4. STUDENT ACCOUNT DESKTOP REDESIGN
+     - Top overview: Greeting card on the left, 2x2 metrics grid on the right
+     - My Scholarship Applications: 3-column grid (up to 3x3 = 9 cards max before View All)
+     - Skeleton loading screen: Matches 3-column desktop card layout & sizing
+     - Scaled-up typography, avatars, pills, and buttons for desktop resolution
+     ------------------------------------------------------------- */
+  .student-top-overview-row {
+    display: grid !important;
+    grid-template-columns: 1.25fr 1fr !important;
+    gap: 20px !important;
+    align-items: stretch !important;
+    margin-bottom: 32px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .student-top-overview-row .student-welcome-card {
+    margin-bottom: 0 !important;
+    height: 100% !important;
+    padding: 28px 30px !important;
+    border-radius: 20px !important;
+    gap: 22px !important;
+    align-items: center !important;
+  }
+
+  .student-welcome-avatar,
+  .student-welcome-card .student-avatar-box {
+    width: 84px !important;
+    height: 84px !important;
+    border-radius: 20px !important;
+    font-size: 28px !important;
+  }
+
+  .student-welcome-avatar svg {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .student-welcome-avatar img,
+  .student-welcome-card .student-avatar-box img {
+    border-radius: 18px !important;
+  }
+
+  .student-greeting-time {
+    font-size: 16.5px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .student-name-title {
+    font-size: 26px !important;
+    line-height: 1.25 !important;
+  }
+
+  .student-motto {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    margin-top: 8px !important;
+  }
+
   .student-stats-grid {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 16px !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-rows: repeat(2, 1fr) !important;
+    gap: 14px !important;
+    margin-bottom: 0 !important;
+    height: 100% !important;
+  }
+
+  .student-stat-card {
+    padding: 18px 22px !important;
+    border-radius: 18px !important;
+    min-height: 92px !important;
+    justify-content: space-between !important;
+  }
+
+  .student-stat-label {
+    font-size: 14px !important;
+    font-weight: 650 !important;
+  }
+
+  .student-stat-value {
+    font-size: 28px !important;
+    margin-top: 8px !important;
+  }
+
+  /* My Scholarship Applications Header on Desktop */
+  .student-section-header {
+    margin-bottom: 20px !important;
+  }
+
+  .student-section-title {
+    font-size: 22px !important;
+  }
+
+  .student-view-all-link,
+  .student-view-all-btn {
+    font-size: 13.5px !important;
+    padding: 7px 16px !important;
+  }
+
+  /* 3-Column Application Cards Grid on Desktop (up to 3x3 = 9 cards) */
+  .student-apps-feed {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .student-app-card {
+    padding: 20px 22px !important;
+    border-radius: 18px !important;
+    gap: 14px !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .student-app-header-row {
+    gap: 14px !important;
+    align-items: center !important;
+  }
+
+  .student-app-logo {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    max-width: 52px !important;
+    max-height: 52px !important;
+    font-size: 16px !important;
+  }
+
+  .student-app-logo img,
+  img.student-app-logo {
+    max-width: 52px !important;
+    max-height: 52px !important;
+  }
+
+  .student-app-title {
+    font-size: 16.5px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .student-app-org {
+    font-size: 13.5px !important;
+  }
+
+  .student-app-pills-row {
+    gap: 8px !important;
+  }
+
+  .student-meta-pill {
+    font-size: 12px !important;
+    padding: 5px 12px !important;
+    gap: 5.5px !important;
+  }
+
+  .student-app-action-row {
+    margin-top: auto !important;
+    padding-top: 6px !important;
+  }
+
+  .view-sub-details-btn {
+    font-size: 13.5px !important;
+    padding: 9px 18px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Empty State Card on Desktop */
+  .student-empty-card {
+    padding: 56px 28px !important;
+    border-radius: 20px !important;
+  }
+
+  .student-empty-icon {
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .student-empty-title {
+    font-size: 18.5px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .student-empty-desc {
+    font-size: 14.5px !important;
+    max-width: 420px !important;
+    margin-bottom: 22px !important;
+  }
+
+  /* Desktop Skeleton Screen Adjustments for Student Application Cards */
+  .skeleton-student-app-card {
+    padding: 20px 22px !important;
+    border-radius: 18px !important;
+    gap: 14px !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .skeleton-student-app-card .skeleton-app-header {
+    gap: 14px !important;
+  }
+
+  .skeleton-student-app-card .skeleton-avatar-circle {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+  }
+
+  .skeleton-student-app-card .skeleton-title {
+    height: 22px !important;
+  }
+
+  .skeleton-student-app-card .skeleton-line {
+    height: 15px !important;
+  }
+
+  .skeleton-student-app-card .skeleton-chip {
+    height: 28px !important;
+  }
+
+  .skeleton-student-app-card .skeleton-btn-action {
+    width: 156px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
   }
 
   /* Search & Filter row on Desktop */
