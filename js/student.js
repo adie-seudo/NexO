@@ -1009,6 +1009,61 @@ function renderFilteredSubmissions() {
       appsFeed.innerHTML = "";
       return;
     }
+
+    const totalMatchingSub = listToRender.length;
+    const isDesktopSub = window.innerWidth >= 1024;
+    const maxInitialSubCards = isDesktopSub ? 9 : 3;
+
+    if (totalMatchingSub > maxInitialSubCards && !window._submissionsShowAllApps) {
+      listToRender = listToRender.slice(0, maxInitialSubCards);
+    }
+
+    if (filterEmptyCard) filterEmptyCard.style.display = "none";
+    appsFeed.style.display = "";
+    renderApplicationCards(listToRender, appsFeed);
+
+    if (totalMatchingSub > maxInitialSubCards) {
+      const toggleContainer = document.createElement("div");
+      toggleContainer.className = "submissions-view-all-container";
+      toggleContainer.style.cssText =
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
+      toggleContainer.innerHTML = `
+        <button type="button" id="btn-toggle-submissions-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+          ${
+            window._submissionsShowAllApps
+              ? `<span>Show Less</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+              : `<span>View All Applications (${totalMatchingSub})</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+          }
+        </button>
+      `;
+      appsFeed.appendChild(toggleContainer);
+
+      const toggleBtn = toggleContainer.querySelector("#btn-toggle-submissions-all");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          window._submissionsShowAllApps = !window._submissionsShowAllApps;
+          renderFilteredSubmissions();
+          if (!window._submissionsShowAllApps) {
+            appsFeed.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+    }
+
+    if (!window._hasStudentResizeGridListener) {
+      window._hasStudentResizeGridListener = true;
+      let lastDesktopState = window.innerWidth >= 1024;
+      window.addEventListener("resize", () => {
+        const nowDesktop = window.innerWidth >= 1024;
+        if (nowDesktop !== lastDesktopState) {
+          lastDesktopState = nowDesktop;
+          renderFilteredSubmissions();
+        }
+      });
+    }
+    return;
   } else {
     // On Dashboard / Home Page:
     // Mobile (< 1024px): 3 applications max listed then View All option occurs.
@@ -2049,6 +2104,7 @@ function initSubmissionsFiltering() {
           e.stopPropagation();
           const selectedStatus = item.dataset.filter || "all";
           currentSubmissionsFilter = selectedStatus;
+          window._submissionsShowAllApps = false;
           updateDropdownUI(selectedStatus);
 
           filterDropdownMenu.classList.remove("show");
@@ -2078,6 +2134,7 @@ function initSubmissionsFiltering() {
       tab.addEventListener("click", () => {
         const filterVal = tab.dataset.filter || "all";
         currentSubmissionsFilter = filterVal;
+        window._submissionsShowAllApps = false;
         updateDropdownUI(filterVal);
         renderFilteredSubmissions();
       });
@@ -2088,6 +2145,7 @@ function initSubmissionsFiltering() {
   if (searchInput) {
     searchInput.addEventListener("input", (e) => {
       currentSubmissionsSearch = e.target.value;
+      window._submissionsShowAllApps = false;
       renderFilteredSubmissions();
     });
   }
@@ -2097,6 +2155,7 @@ function initSubmissionsFiltering() {
     resetBtn.addEventListener("click", () => {
       currentSubmissionsFilter = "all";
       currentSubmissionsSearch = "";
+      window._submissionsShowAllApps = false;
       if (searchInput) searchInput.value = "";
       updateDropdownUI("all");
       renderFilteredSubmissions();

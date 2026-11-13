@@ -191,11 +191,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. FETCH REAL-TIME SCHOLARSHIPS FROM BACKEND & DATA.JSON ONLY
   // (No fake seed scholarships - only synchronized provider posts)
   // -------------------------------------------------------------
+  let hasCompletedInitialLoad = false;
+
   async function fetchLiveScholarships() {
     const browseFeed = document.getElementById("browse-scholarships-feed");
-    if (typeof window.renderSkeletonCards === "function" && browseFeed && browseFeed.children.length === 0) {
+    const emptyEl = document.getElementById("browse-empty-state");
+    const skeletonStartTime = Date.now();
+    const isFirstLoad = !hasCompletedInitialLoad;
+
+    if (
+      isFirstLoad &&
+      typeof window.renderSkeletonCards === "function" &&
+      browseFeed
+    ) {
+      if (emptyEl) emptyEl.style.display = "none";
       window.renderSkeletonCards(browseFeed, 3);
-      browseFeed.style.display = "flex";
+      browseFeed.style.display = "";
     }
 
     let combined = [];
@@ -249,7 +260,27 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("Could not fetch /api/data:", e);
     }
 
-    // Only fallback to localStorage if server was unreachable
+    // Fallback to static data.json if server was unreachable (e.g. Live Server)
+    if (!serverOk) {
+      try {
+        const staticRes = await fetch("data.json");
+        if (staticRes.ok) {
+          serverOk = true;
+          const staticData = await staticRes.json();
+          if (Array.isArray(staticData.scholarships)) {
+            combined = staticData.scholarships;
+          }
+          if (staticData.settings) {
+            providerSettings = staticData.settings;
+          }
+          if (Array.isArray(staticData.applications)) {
+            studentApplications = staticData.applications;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Fallback to localStorage if both server and static data.json were unreachable
     if (!serverOk) {
       try {
         combined = JSON.parse(
@@ -259,6 +290,15 @@ document.addEventListener("DOMContentLoaded", () => {
           localStorage.getItem("nexo_applications") || "[]",
         );
       } catch (_) {}
+    }
+
+    // Ensure skeleton screen is smoothly visible on initial page load
+    if (isFirstLoad) {
+      hasCompletedInitialLoad = true;
+      const elapsed = Date.now() - skeletonStartTime;
+      if (elapsed < 340) {
+        await new Promise((r) => setTimeout(r, 340 - elapsed));
+      }
     }
 
     const FAKE_SCHOL_IDS = new Set([
@@ -626,8 +666,24 @@ document.addEventListener("DOMContentLoaded", () => {
     feedContainer.innerHTML = "";
 
     const totalMatching = filtered.length;
+    const isDesktop = window.innerWidth >= 1024;
+    const maxInitialCards = isDesktop ? 9 : 3;
     const displayedItems =
-      totalMatching > 3 && !isBrowseExpanded ? filtered.slice(0, 3) : filtered;
+      totalMatching > maxInitialCards && !isBrowseExpanded
+        ? filtered.slice(0, maxInitialCards)
+        : filtered;
+
+    if (!window._hasBrowseResizeGridListener) {
+      window._hasBrowseResizeGridListener = true;
+      let lastDesktopState = window.innerWidth >= 1024;
+      window.addEventListener("resize", () => {
+        const nowDesktop = window.innerWidth >= 1024;
+        if (nowDesktop !== lastDesktopState) {
+          lastDesktopState = nowDesktop;
+          renderFeed();
+        }
+      });
+    }
 
     displayedItems.forEach((item) => {
       const card = document.createElement("div");
@@ -809,10 +865,11 @@ document.addEventListener("DOMContentLoaded", () => {
       feedContainer.appendChild(card);
     });
 
-    if (totalMatching > 3) {
+    if (totalMatching > maxInitialCards) {
       const toggleContainer = document.createElement("div");
+      toggleContainer.className = "browse-view-all-container";
       toggleContainer.style.cssText =
-        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%;";
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
       toggleContainer.innerHTML = `
         <button type="button" id="btn-toggle-browse-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
           ${

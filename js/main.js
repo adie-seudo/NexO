@@ -803,6 +803,10 @@ window.renderSkeletonCards = function (containerOrId, count = 3) {
     el.id === "student-apps-feed" ||
     (el.classList && el.classList.contains("student-apps-feed"));
 
+  const isDirectoryFeed =
+    el.id === "browse-scholarships-feed" ||
+    (el.classList && el.classList.contains("browse-feed"));
+
   let html = "";
   for (let i = 0; i < count; i++) {
     if (isStudentAppFeed) {
@@ -822,6 +826,34 @@ window.renderSkeletonCards = function (containerOrId, count = 3) {
           </div>
           <div class="skeleton-app-action-row">
             <div class="skeleton-bone skeleton-btn-action"></div>
+          </div>
+        </div>
+      `;
+    } else if (isDirectoryFeed) {
+      html += `
+        <div class="skeleton-card skeleton-directory-card" aria-hidden="true" data-skeleton="true">
+          <div class="skeleton-app-header" style="align-items: flex-start;">
+            <div class="skeleton-bone skeleton-avatar-circle"></div>
+            <div class="skeleton-app-titles">
+              <div class="skeleton-bone skeleton-title" style="width: 82%; margin-top: 0;"></div>
+              <div class="skeleton-bone skeleton-line" style="width: 48%; margin-top: 6px;"></div>
+              <div style="display: flex; gap: 6px; margin-top: 8px;">
+                <div class="skeleton-bone skeleton-chip" style="width: 78px; height: 22px; border-radius: 9999px;"></div>
+                <div class="skeleton-bone skeleton-chip" style="width: 56px; height: 22px; border-radius: 9999px;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="skeleton-directory-meta">
+            <div class="skeleton-bone skeleton-line" style="width: 44%; height: 14px;"></div>
+            <div class="skeleton-bone skeleton-line" style="width: 72%; height: 13px; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-directory-desc">
+            <div class="skeleton-bone skeleton-line" style="width: 96%;"></div>
+            <div class="skeleton-bone skeleton-line" style="width: 74%; margin-top: 6px;"></div>
+          </div>
+          <div class="skeleton-directory-footer">
+            <div class="skeleton-bone skeleton-btn-pill"></div>
+            <div class="skeleton-bone skeleton-btn-pill"></div>
           </div>
         </div>
       `;

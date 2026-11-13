@@ -6481,6 +6481,43 @@ body.dark-theme .skeleton-bone {
   }
 }
 
+/* Scholarship Directory Skeleton Card (Matches Directory Card on Mobile & Desktop) */
+.skeleton-directory-card {
+  border-radius: 20px;
+  padding: 20px 22px;
+  gap: 14px;
+}
+
+.skeleton-directory-meta {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 4px 0 2px 0;
+}
+
+.skeleton-directory-desc {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 2px 0 4px 0;
+}
+
+.skeleton-directory-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  padding-top: 2px;
+  width: 100%;
+}
+
+.skeleton-btn-pill {
+  flex: 1;
+  height: 36px;
+  border-radius: 100px;
+}
+
 /* ========================================= */
 /* DESKTOP SIDE MENU (ICON RAIL & EXPANDED)  */
 /* ========================================= */
@@ -7449,10 +7486,101 @@ body.dark-theme .skeleton-bone {
     border-radius: 10px !important;
   }
 
-  /* Search & Filter row on Desktop */
+  /* Search & Filter row on Desktop (Reduced vertical gap before cards) */
+  .submissions-search-filter-section,
+  #submissions-filter-section {
+    margin-bottom: 10px !important;
+  }
+
   .submissions-search-filter-row {
     max-width: 100% !important;
-    margin-bottom: 24px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .student-apps-section {
+    margin-top: 4px !important;
+  }
+
+  /* 3-Column Scholarship Directory Grid on Desktop (up to 3x3 = 9 cards) */
+  .browse-feed,
+  #browse-scholarships-feed {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .directory-card {
+    padding: 20px 22px !important;
+    border-radius: 20px !important;
+    gap: 14px !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .directory-card-logo {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    font-size: 16px !important;
+  }
+
+  .directory-card-title {
+    font-size: 16.5px !important;
+    margin-bottom: 3px !important;
+  }
+
+  .directory-card-provider {
+    font-size: 13.5px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .directory-card-desc {
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+  }
+
+  .directory-card-footer {
+    margin-top: auto !important;
+    padding-top: 6px !important;
+    gap: 10px !important;
+  }
+
+  .directory-view-details-btn,
+  .directory-apply-btn {
+    font-size: 13px !important;
+    padding: 9px 16px !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Desktop Skeleton Screen Adjustments for Scholarship Directory Cards */
+  .skeleton-directory-card {
+    padding: 20px 22px !important;
+    border-radius: 20px !important;
+    gap: 14px !important;
+    height: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .skeleton-directory-card .skeleton-avatar-circle {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+  }
+
+  .skeleton-directory-card .skeleton-title {
+    height: 22px !important;
+  }
+
+  .skeleton-directory-card .skeleton-btn-pill {
+    height: 38px !important;
+    border-radius: 100px !important;
   }
 
   /* Section header title alignment */
