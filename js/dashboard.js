@@ -1207,6 +1207,21 @@ function updateStatsUI(total, ongoing, drafts, applicants = 0) {
 }
 
 async function loadPersistedData() {
+  const feed = document.getElementById("scholarships-feed");
+  const draftsFeed = document.getElementById("drafts-feed");
+  const emptyState = document.getElementById("empty-state-card");
+  const emptyDraftsCard = document.getElementById("empty-drafts-card");
+  if (typeof window.renderSkeletonCards === "function") {
+    if (feed && feed.children.length === 0) {
+      if (emptyState) emptyState.style.display = "none";
+      window.renderSkeletonCards(feed, 3);
+    }
+    if (draftsFeed && draftsFeed.children.length === 0) {
+      if (emptyDraftsCard) emptyDraftsCard.style.display = "none";
+      window.renderSkeletonCards(draftsFeed, 3);
+    }
+  }
+
   let scholarships = [];
   let drafts = [];
   let applications = [];

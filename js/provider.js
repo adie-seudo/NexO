@@ -12,7 +12,8 @@ function getNavOverlay() {
   return overlay;
 }
 
-function closeSideMenu() {
+function closeSideMenu(force = false) {
+  if (!force && window.innerWidth >= 1024) return;
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
@@ -53,8 +54,9 @@ window.handleMenuToggle = function (e) {
     const willOpen = !menu.classList.contains("open");
     btn.classList.toggle("open", willOpen);
     menu.classList.toggle("open", willOpen);
-    if (overlay) overlay.classList.toggle("active", willOpen);
-    document.body.classList.toggle("menu-open", willOpen);
+    const isDesktop = window.innerWidth >= 1024;
+    if (overlay && !isDesktop) overlay.classList.toggle("active", willOpen);
+    if (!isDesktop) document.body.classList.toggle("menu-open", willOpen);
   }
 };
 
@@ -120,10 +122,14 @@ document.addEventListener("DOMContentLoaded", function () {
       window.location.href = href;
     }, 360);
   });
+  if (typeof window.syncMenuTooltips === "function") {
+    window.syncMenuTooltips();
+  }
 });
 
-// Safe document listener to close it when clicking elsewhere
+// Safe document listener to close it when clicking elsewhere (mobile only; desktop stays open unless hamburger is clicked)
 document.addEventListener("click", function (e) {
+  if (window.innerWidth >= 1024) return;
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");

@@ -349,6 +349,11 @@
   // DATA FETCHING & LIVE SYNC
   // -------------------------------------------------------------
   async function loadData(isBackground = false) {
+    const postsFeed = document.getElementById("posts-feed");
+    if (!isBackground && typeof window.renderSkeletonCards === "function" && postsFeed && postsFeed.children.length === 0) {
+      window.renderSkeletonCards(postsFeed, 3);
+    }
+
     let scholarships = [];
     let applications = [];
 

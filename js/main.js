@@ -506,7 +506,6 @@ const DEFAULT_HEADER_HTML = `
         <span class="bar"></span>
       </button>
       <nav class="nav-menu" id="nav-menu">
-        <span class="nav-label">MENU</span>
         <a href="index.html" class="nav-link"><img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Home</span></a>
         <a href="about.html" class="nav-link"><img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">About Us</span></a>
         <a href="policy.html" class="nav-link"><img src="assets/policy-icon.png" alt="Policy" class="nav-icon" onerror="this.style.display='none'" /><span class="nav-text">Policy</span></a>
@@ -559,8 +558,6 @@ function hydrateRoleAwareHeader() {
   // 3. Hydrate side navigation menu if user is authenticated
   if (navMenu && role === "provider") {
     navMenu.innerHTML = `
-      <span class="nav-label">MENU</span>
-
       <a href="provider-dashboard.html" class="nav-link" id="nav-home">
         <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Home</span>
@@ -615,8 +612,6 @@ function hydrateRoleAwareHeader() {
     `;
   } else if (navMenu && role === "student") {
     navMenu.innerHTML = `
-      <span class="nav-label">MENU</span>
-
       <a href="student-dashboard.html" class="nav-link">
         <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display='none'" />
         <span class="nav-text">Home</span>
@@ -768,8 +763,67 @@ function getOrCreateNavOverlay() {
   return overlay;
 }
 
+// Global Skeleton Screen Loader for Data Fetching
+window.renderSkeletonCards = function (containerOrId, count = 3) {
+  const el =
+    typeof containerOrId === "string"
+      ? document.getElementById(containerOrId)
+      : containerOrId;
+  if (!el) return;
+
+  let html = "";
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="skeleton-card" aria-hidden="true" data-skeleton="true">
+        <div class="skeleton-header-row">
+          <div class="skeleton-bone skeleton-pill"></div>
+          <div class="skeleton-bone skeleton-badge"></div>
+        </div>
+        <div class="skeleton-bone skeleton-title"></div>
+        <div class="skeleton-bone skeleton-line" style="width: 88%;"></div>
+        <div class="skeleton-bone skeleton-line" style="width: 60%;"></div>
+        <div class="skeleton-meta-row">
+          <div class="skeleton-bone skeleton-chip" style="width: 105px;"></div>
+          <div class="skeleton-bone skeleton-chip" style="width: 80px;"></div>
+          <div class="skeleton-bone skeleton-chip" style="width: 90px;"></div>
+        </div>
+        <div class="skeleton-bone skeleton-btn"></div>
+      </div>
+    `;
+  }
+  el.innerHTML = html;
+  el.style.display = "flex";
+  el.style.flexDirection = "column";
+  el.style.gap = "16px";
+};
+
+window.clearSkeleton = function (containerOrId) {
+  const el =
+    typeof containerOrId === "string"
+      ? document.getElementById(containerOrId)
+      : containerOrId;
+  if (!el) return;
+  const items = el.querySelectorAll('[data-skeleton="true"], .skeleton-card');
+  items.forEach((item) => item.remove());
+};
+
+function syncMenuTooltips() {
+  document
+    .querySelectorAll(".nav-menu .nav-link, .nav-menu .nav-buttons .btn")
+    .forEach((el) => {
+      const textEl = el.querySelector(".nav-text");
+      if (textEl && textEl.textContent.trim()) {
+        const txt = textEl.textContent.trim();
+        el.setAttribute("data-tooltip", txt);
+        if (!el.getAttribute("title")) el.setAttribute("title", txt);
+      }
+    });
+}
+window.syncMenuTooltips = syncMenuTooltips;
+
 // Global Clean Mobile Nav Closer
-function closeMobileNav() {
+function closeMobileNav(force = false) {
+  if (!force && window.innerWidth >= 1024) return;
   const navMenu =
     document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const hamburgerBtn =
@@ -804,8 +858,9 @@ window.handleMenuToggle = function (e) {
     const willOpen = !menu.classList.contains("open");
     btn.classList.toggle("open", willOpen);
     menu.classList.toggle("open", willOpen);
-    if (overlay) overlay.classList.toggle("active", willOpen);
-    document.body.classList.toggle("menu-open", willOpen);
+    const isDesktop = window.innerWidth >= 1024;
+    if (overlay && !isDesktop) overlay.classList.toggle("active", willOpen);
+    if (!isDesktop) document.body.classList.toggle("menu-open", willOpen);
   }
 };
 
@@ -863,8 +918,9 @@ function initializeHeaderFunctions() {
     });
   }
 
-  // Close menu when clicking anywhere else on the page
+  // Close menu when clicking anywhere else on the page (mobile only; desktop stays open unless hamburger is clicked)
   document.addEventListener("click", (e) => {
+    if (window.innerWidth >= 1024) return;
     if (
       navMenu &&
       navMenu.classList.contains("open") &&
@@ -876,6 +932,9 @@ function initializeHeaderFunctions() {
     }
   });
 
+  // Sync tooltips for desktop rail
+  syncMenuTooltips();
+
   // --- C. Dark Mode Toggle Binding ---
   const themeToggle = document.querySelector(".theme-toggle");
   const themeContainer = document.querySelector(".theme-toggle-container");
@@ -885,7 +944,7 @@ function initializeHeaderFunctions() {
 
     // 2. Toggle listener: Apply the exact theme based on the checkbox state
     themeToggle.addEventListener("change", (e) => {
-      closeMobileNav();
+      if (window.innerWidth < 1024) closeMobileNav();
       if (e.target.checked) {
         // Checked = Light Mode (Sun)
         localStorage.setItem("nexo-theme", "light");
@@ -901,7 +960,7 @@ function initializeHeaderFunctions() {
   }
   if (themeContainer) {
     themeContainer.addEventListener("click", () => {
-      closeMobileNav();
+      if (window.innerWidth < 1024) closeMobileNav();
     });
   }
 

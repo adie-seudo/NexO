@@ -185,6 +185,14 @@
   // 1. FETCH LIVE APPLICATIONS & SCHOLARSHIPS
   // -------------------------------------------------------------
   async function loadApplicationsData(isBackground = false) {
+    const appsFeed = document.getElementById("applications-feed");
+    const emptyState = document.getElementById("apps-empty-state");
+    if (!isBackground && typeof window.renderSkeletonCards === "function" && appsFeed && appsFeed.children.length === 0) {
+      if (emptyState) emptyState.style.display = "none";
+      window.renderSkeletonCards(appsFeed, 3);
+      appsFeed.style.display = "flex";
+    }
+
     let serverApps = null;
     let serverSchols = null;
 

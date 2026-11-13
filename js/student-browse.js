@@ -192,6 +192,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // (No fake seed scholarships - only synchronized provider posts)
   // -------------------------------------------------------------
   async function fetchLiveScholarships() {
+    const browseFeed = document.getElementById("browse-scholarships-feed");
+    if (typeof window.renderSkeletonCards === "function" && browseFeed && browseFeed.children.length === 0) {
+      window.renderSkeletonCards(browseFeed, 3);
+      browseFeed.style.display = "flex";
+    }
+
     let combined = [];
     let serverOk = false;
 

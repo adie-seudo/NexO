@@ -577,14 +577,7 @@ body.dark-theme .global-header {
 }
 
 .nav-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  padding: 0 10px 8px 10px;
-  margin: 0;
+  display: none !important;
 }
 
 .nav-menu {
@@ -6323,4 +6316,450 @@ body.dark-theme .nav-alert-dot {
   overflow-wrap: anywhere !important;
   word-break: break-word !important;
 }
+
+/* ========================================= */
+/* SKELETON SCREEN LOADING (PULSE / SHIMMER) */
+/* ========================================= */
+@keyframes nexoShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-feed-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.skeleton-card {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+body.dark-theme .skeleton-card {
+  background: var(--bg-surface);
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.skeleton-bone {
+  background: linear-gradient(
+    90deg,
+    rgba(226, 232, 240, 0.65) 25%,
+    rgba(241, 245, 249, 0.95) 50%,
+    rgba(226, 232, 240, 0.65) 75%
+  );
+  background-size: 200% 100%;
+  animation: nexoShimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+body.dark-theme .skeleton-bone {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 75%
+  );
+  background-size: 200% 100%;
+}
+
+.skeleton-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.skeleton-pill {
+  width: 74px;
+  height: 24px;
+  border-radius: 9999px;
+}
+
+.skeleton-badge {
+  width: 58px;
+  height: 22px;
+  border-radius: 8px;
+}
+
+.skeleton-title {
+  width: 68%;
+  height: 20px;
+  border-radius: 6px;
+  margin-top: 4px;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeleton-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skeleton-chip {
+  width: 90px;
+  height: 24px;
+  border-radius: 8px;
+}
+
+.skeleton-btn {
+  width: 100%;
+  height: 42px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+
+/* ========================================= */
+/* DESKTOP SIDE MENU (ICON RAIL & EXPANDED)  */
+/* ========================================= */
+@media (min-width: 1024px) {
+  .nav-wrapper {
+    position: static;
+  }
+
+  .nav-menu {
+    position: fixed !important;
+    top: 60px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 68px !important;
+    max-width: none !important;
+    height: calc(100vh - 60px) !important;
+    height: calc(100dvh - 60px) !important;
+    background-color: var(--bg-surface) !important;
+    border-left: 1px solid var(--border-color) !important;
+    border-top: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.04) !important;
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 16px 8px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 995 !important;
+    transition: width 0.28s cubic-bezier(0.2, 0.9, 0.4, 1),
+                box-shadow 0.28s ease,
+                padding 0.28s ease !important;
+  }
+
+  body.dark-theme .nav-menu {
+    background-color: var(--bg-surface) !important;
+    border-left-color: var(--border-strong) !important;
+    box-shadow: -4px 0 18px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  /* Pre-open (collapsed) icon-only rail */
+  .nav-menu:not(.open) {
+    width: 68px !important;
+    align-items: center !important;
+    padding: 16px 8px !important;
+  }
+
+  .nav-menu:not(.open) .nav-label,
+  .nav-menu:not(.open) .nav-text {
+    display: none !important;
+  }
+
+  .nav-menu:not(.open) .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    margin: 4px auto !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    transition: background-color 0.2s ease, transform 0.15s ease !important;
+  }
+
+  .nav-menu:not(.open) .nav-link:hover {
+    transform: scale(1.05);
+  }
+
+  .nav-menu:not(.open) .nav-icon {
+    margin: 0 !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .nav-menu:not(.open) #draft-badge {
+    position: absolute !important;
+    top: 3px !important;
+    right: 3px !important;
+    font-size: 10px !important;
+    padding: 1px 5px !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+  }
+
+  .nav-menu:not(.open) .nav-spacer {
+    width: 36px !important;
+    height: 1px !important;
+    margin: 8px auto !important;
+    background: var(--border-subtle, rgba(0,0,0,0.08)) !important;
+  }
+
+  .nav-menu:not(.open) .nav-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 12px 0 0 0 !important;
+    margin-top: auto !important;
+    gap: 8px !important;
+    border-top: 1px solid var(--border-subtle, rgba(0,0,0,0.08)) !important;
+  }
+
+  .nav-menu:not(.open) .nav-buttons .btn {
+    width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
+    margin: 0 auto !important;
+  }
+
+  .nav-menu:not(.open) .nav-buttons .btn .nav-icon {
+    margin: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .nav-menu:not(.open) .nav-buttons .btn .nav-text {
+    display: none !important;
+  }
+
+  /* Full Open State on Desktop: Click hamburger button to expand */
+  .nav-wrapper .nav-menu.open,
+  .nav-menu.open {
+    width: 260px !important;
+    padding: 16px 14px !important;
+    align-items: stretch !important;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.16) !important;
+  }
+
+  body.dark-theme .nav-wrapper .nav-menu.open,
+  body.dark-theme .nav-menu.open {
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.65) !important;
+  }
+
+  .nav-menu.open .nav-text {
+    display: inline-block !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    opacity: 1 !important;
+  }
+
+  .nav-menu.open .nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    width: 100% !important;
+    min-height: 42px !important;
+    padding: 10px 14px !important;
+    margin: 2px 0 !important;
+    border-radius: 10px !important;
+  }
+
+  .nav-menu.open .nav-icon {
+    margin-right: 12px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .nav-menu.open #draft-badge {
+    position: static !important;
+    margin-left: auto !important;
+    font-size: 12px !important;
+    padding: 2px 8px !important;
+  }
+
+  .nav-menu.open .nav-spacer {
+    width: 100% !important;
+    margin: 8px 0 !important;
+  }
+
+  .nav-menu.open .nav-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    padding: 12px 0 0 0 !important;
+    margin-top: auto !important;
+    gap: 8px !important;
+  }
+
+  .nav-menu.open .nav-buttons .btn {
+    width: 100% !important;
+    min-height: 42px !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    border-radius: 10px !important;
+  }
+
+  .nav-menu.open .nav-buttons .btn .nav-icon {
+    margin-right: 12px !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .nav-menu.open .nav-buttons .btn .nav-text {
+    display: inline !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  /* Desktop Tooltip for Rail Icons */
+  .nav-menu:not(.open) .nav-link[data-tooltip],
+  .nav-menu:not(.open) .nav-buttons .btn[data-tooltip] {
+    position: relative !important;
+  }
+
+  .nav-menu:not(.open) .nav-link[data-tooltip]:hover::after,
+  .nav-menu:not(.open) .nav-buttons .btn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    pointer-events: none;
+    z-index: 1020;
+    animation: fadeInTooltip 0.18s ease;
+  }
+
+  body.dark-theme .nav-menu:not(.open) .nav-link[data-tooltip]:hover::after,
+  body.dark-theme .nav-menu:not(.open) .nav-buttons .btn[data-tooltip]:hover::after {
+    background: #1e293b;
+    border: 1px solid var(--border-strong);
+    color: #f8fafc;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+  }
+
+  @keyframes fadeInTooltip {
+    from { opacity: 0; transform: translateY(-50%) translateX(6px); }
+    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+  }
+
+  /* NO OVERLAY, NO BLUR, NO SCROLL LOCK ON DESKTOP */
+  .nav-overlay {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body.menu-open {
+    overflow: auto !important;
+    overscroll-behavior-y: auto !important;
+  }
+
+  /* DESKTOP RESOLUTION ADJUSTMENTS */
+  body {
+    padding-right: 68px; /* Offset for docked rail so content is never covered */
+    box-sizing: border-box;
+  }
+
+  /* Global Top Hero Header: unchanged hero bar */
+  .global-header {
+    height: 60px !important;
+    padding: 0 24px !important;
+  }
+
+  /* Container width & alignment for actual desktop environment */
+  .dash-main,
+  .student-dash-main,
+  .browse-page-main,
+  .posts-container,
+  .apps-container,
+  .settings-page-main,
+  .about-page,
+  .doc-page {
+    max-width: 1040px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  .auth-container {
+    max-width: 540px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Metrics grids on Desktop */
+  .dash-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 18px !important;
+  }
+
+  .student-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  /* Search & Filter row on Desktop */
+  .submissions-search-filter-row {
+    max-width: 100% !important;
+    margin-bottom: 24px !important;
+  }
+
+  /* Section header title alignment */
+  .dash-section-header,
+  .student-section-header,
+  .posts-header-row {
+    margin-bottom: 16px !important;
+  }
+}
+
 

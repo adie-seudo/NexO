@@ -17,7 +17,8 @@ function getNavOverlay() {
   return overlay;
 }
 
-function closeSideMenu() {
+function closeSideMenu(force = false) {
+  if (!force && window.innerWidth >= 1024) return;
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
@@ -58,8 +59,9 @@ window.handleMenuToggle = function (e) {
     const willOpen = !menu.classList.contains("open");
     btn.classList.toggle("open", willOpen);
     menu.classList.toggle("open", willOpen);
-    if (overlay) overlay.classList.toggle("active", willOpen);
-    document.body.classList.toggle("menu-open", willOpen);
+    const isDesktop = window.innerWidth >= 1024;
+    if (overlay && !isDesktop) overlay.classList.toggle("active", willOpen);
+    if (!isDesktop) document.body.classList.toggle("menu-open", willOpen);
   }
 };
 
@@ -661,6 +663,14 @@ let currentSubmissionsSearch = "";
 let lastStudentAppsHash = "";
 
 async function loadStudentData() {
+  const studentAppsFeed = document.getElementById("student-apps-feed");
+  const emptyAppsCard = document.getElementById("student-empty-apps");
+  if (typeof window.renderSkeletonCards === "function" && studentAppsFeed && studentAppsFeed.children.length === 0) {
+    if (emptyAppsCard) emptyAppsCard.style.display = "none";
+    window.renderSkeletonCards(studentAppsFeed, 3);
+    studentAppsFeed.style.display = "flex";
+  }
+
   const statMyApps = document.getElementById("stat-my-apps");
   const statApproved = document.getElementById("stat-approved");
   const statReview = document.getElementById("stat-review");
@@ -2139,7 +2149,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const popover = document.getElementById("header-notif-popover");
     const notifBtn = document.querySelector(".notification-btn");
 
-    if (menuEl && menuEl.classList.contains("open")) {
+    if (window.innerWidth < 1024 && menuEl && menuEl.classList.contains("open")) {
       if (btn && !btn.contains(e.target) && !menuEl.contains(e.target)) {
         closeSideMenu();
       }
@@ -2155,6 +2165,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  if (typeof window.syncMenuTooltips === "function") {
+    window.syncMenuTooltips();
+  }
 
   // 7. ESC key closes both side menu and notifications
   document.addEventListener("keydown", (e) => {

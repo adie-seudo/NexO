@@ -107,17 +107,6 @@
   ],
   "notifications": [
     {
-      "id": "notif_1794479831793_b470e8",
-      "recipient": "student",
-      "recipientEmail": "",
-      "title": "Application Status: Under Review",
-      "message": "Your application for \"BatStateU Academic Excellence Scholarship – 2026\" has been updated to \"Under Review\". Provider remarks: \"Your application and submitted documents are currently UNDER REVIEW by the scholarship committee. You will be notified of any required follow-ups.\"",
-      "timestamp": "2026-11-12T10:37:11.795Z",
-      "formattedTime": "Just now",
-      "read": false,
-      "link": "student-submissions.html"
-    },
-    {
       "id": "notif_1794360841481_9da17d",
       "recipient": "provider",
       "recipientEmail": "",
