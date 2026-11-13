@@ -1,7 +1,7 @@
 /* ==========================================
    1. FONT IMPORTS & CSS RESET
    ========================================== */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap");
 
 * {
   margin: 0;
@@ -53,13 +53,43 @@ html {
 
   /* --- Typography System Definitions --- */
   --font-heading: "Manrope", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --radius-sm: 8px;
-  --radius-md: 20px;
+  --font-body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-xs: 8px;
+  --radius-sm: 12px; /* inputs, small controls */
+  --radius-md: 20px; /* buttons, medium cards */
+  --radius-lg: 24px; /* large cards, modals */
   --radius-full: 9999px;
+
+  /* --- Elevation (Flat 2.0) --- */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-sm: 0 2px 8px rgba(16, 24, 40, 0.05);
+  --shadow-md: 0 4px 20px rgba(16, 24, 40, 0.06);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.1);
+  --shadow-brand: 0 6px 18px rgba(105, 65, 198, 0.28);
+  --shadow-brand-hover: 0 10px 26px rgba(105, 65, 198, 0.38);
+  --ring-focus: 0 0 0 4px rgba(127, 86, 217, 0.16);
+
+  /* --- Motion --- */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: all 0.2s ease-in-out;
+
+  /* --- Primary Gradient --- */
+  --gradient-primary: linear-gradient(
+    135deg,
+    #8b5cf6 0%,
+    #6941c6 55%,
+    #53389e 100%
+  );
+  --gradient-primary-hover: linear-gradient(
+    135deg,
+    #9e77ed 0%,
+    #7f56d9 55%,
+    #6941c6 100%
+  );
 
   /* --- SEMANTIC THEME TOKENS (Light Mode) --- */
   --bg-canvas: var(--neutral-50);
+  --bg-canvas: #f6f7fb; /* slightly darker than cards for contrast */
   --bg-surface: #ffffff;
   --bg-card: var(--purple-200);
   --bg-cta: var(--purple-700);
@@ -69,6 +99,9 @@ html {
   --text-primary: var(--neutral-1000);
   --text-secondary: var(--neutral-800);
   --text-muted: var(--neutral-600);
+  --text-primary: #1f2937; /* softened from near-black */
+  --text-secondary: #475467;
+  --text-muted: #667085;
   --text-inverse: #ffffff;
   --text-brand: var(--purple-700);
   --text-summary-card: var(--purple-800);
@@ -76,6 +109,13 @@ html {
   --border-subtle: transparent;
   --border-strong: var(--neutral-300);
   --border-color: var(--border-strong);
+  --border-strong: #eaecf0;
+  --border-color: rgba(
+    16,
+    24,
+    40,
+    0.06
+  ); /* hairline, replaces harsh solid borders */
   --card-bg: var(--bg-surface);
   --text-tertiary: var(--text-muted);
   --border-summary-card: var(--purple-800);
@@ -83,6 +123,7 @@ html {
 
   --shadow-drawer: 0 4px 16px rgba(0, 0, 0, 0.1);
   --shadow-card: none;
+  --shadow-card: var(--shadow-md);
 
   --badge-bg: var(--purple-300);
   --badge-text: var(--purple-700);
@@ -156,8 +197,14 @@ body.dark-theme {
   --text-tertiary: var(--text-muted);
   --border-summary-card: var(--purple-400);
 
+  --border-color: rgba(255, 255, 255, 0.07);
+  --text-primary: #f3f4f6;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.55);
   --shadow-drawer: 0 12px 32px rgba(0, 0, 0, 0.6);
   --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-card: var(--shadow-md);
 
   --badge-bg: rgba(214, 187, 251, 0.15);
   --badge-text: var(--purple-400);
@@ -207,6 +254,7 @@ body {
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 24px;
+  line-height: 1.6;
   font-weight: 400;
   color: var(--text-secondary);
   background-color: var(--bg-canvas);
@@ -465,7 +513,9 @@ button:disabled,
   width: 100%;
   z-index: 1000;
   transform: none !important;
-  transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    backdrop-filter 0.25s ease;
 }
 .global-header.scroll-down {
   transform: none !important;
@@ -614,9 +664,10 @@ body.dark-theme .global-header {
   opacity: 1;
 
   /* Smooth GPU-accelerated slide animation: right to left on open, left to right on close */
-  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
-              visibility 0.35s ease,
-              box-shadow 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+    visibility 0.35s ease,
+    box-shadow 0.35s ease;
   will-change: transform;
 }
 
@@ -655,7 +706,9 @@ body.dark-theme .nav-menu.open {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
+  transition:
+    opacity 0.35s ease,
+    visibility 0.35s ease;
   touch-action: none;
 }
 
@@ -805,7 +858,9 @@ a.btn {
   border: 2px solid var(--purple-600);
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
   flex-shrink: 0;
   user-select: none;
 }
@@ -1274,7 +1329,6 @@ body.dark-theme .theme-toggle {
 .animated-eye-icon.show-active .eye-shut {
   opacity: 0;
 }
-
 
 /* =========================================
    9. SPLASH SCREEN
@@ -2240,7 +2294,9 @@ section:has(> #login-form),
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.18s, background-color 0.18s;
+  transition:
+    color 0.18s,
+    background-color 0.18s;
 }
 .notif-trash-btn:hover {
   color: #ef4444 !important;
@@ -2432,8 +2488,20 @@ body.dark-theme .notif-item-icon {
   margin-top: 60px; /* Seamlessly starts right below the 60px fixed glass header */
   background: linear-gradient(135deg, #7f56d9 0%, #53389e 50%, #301e67 100%);
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, rgba(0,0,0,0.85) 65%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 0%, #000 35%, rgba(0,0,0,0.85) 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 35%,
+    rgba(0, 0, 0, 0.85) 65%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 35%,
+    rgba(0, 0, 0, 0.85) 65%,
+    transparent 100%
+  );
 }
 
 .dash-hero-cover-img {
@@ -2510,7 +2578,9 @@ body.dark-theme .dash-hero-cover-fade {
   box-sizing: border-box;
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
 }
 
 .dash-avatar-wrapper:hover {
@@ -2715,8 +2785,6 @@ body.dark-theme .view-all {
 #dash-all-scholarships-section {
   padding-top: 88px;
 }
-
-
 
 /* =========================================
    14. CREATE SCHOLARSHIP FULL-SCREEN MODAL
@@ -3015,7 +3083,9 @@ body.dark-theme .custom-dropdown.active .dropdown-selected {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-strong);
   border-radius: 12px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -3087,7 +3157,9 @@ body.dark-theme .custom-dropdown.active .dropdown-selected {
   margin-left: auto;
   flex-shrink: 0;
   border-radius: 6px;
-  transition: color 0.2s, background-color 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
 }
 .remove-req-btn:hover {
   color: var(--status-error);
@@ -3370,7 +3442,10 @@ body.confirm-active .creation-modal {
   border-radius: 16px;
   padding: 20px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -3649,7 +3724,9 @@ body.dark-theme .view-details-btn:hover {
   gap: 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   box-sizing: border-box;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 body.dark-theme .student-welcome-card {
   background: var(--bg-surface);
@@ -3664,7 +3741,11 @@ body.dark-theme .student-welcome-card {
   height: 62px;
   border-radius: 16px;
   border: 1.5px solid rgba(139, 92, 246, 0.25);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(99, 102, 241, 0.16));
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.12),
+    rgba(99, 102, 241, 0.16)
+  );
   color: #7c3aed;
   display: flex;
   align-items: center;
@@ -3677,7 +3758,9 @@ body.dark-theme .student-welcome-card {
   user-select: none;
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
   box-sizing: border-box;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 .student-welcome-avatar img,
 .student-welcome-card .student-avatar-box img {
@@ -3690,7 +3773,11 @@ body.dark-theme .student-welcome-card {
 body.dark-theme .student-welcome-avatar,
 body.dark-theme .student-welcome-card .student-avatar-box {
   border-color: rgba(167, 139, 250, 0.3);
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.25));
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.2),
+    rgba(99, 102, 241, 0.25)
+  );
   color: #c084fc;
 }
 
@@ -3755,7 +3842,10 @@ body.dark-theme .student-greeting-time {
   min-height: 74px;
   box-sizing: border-box;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   user-select: none;
 }
 .student-stat-card.is-clickable {
@@ -3937,7 +4027,10 @@ body.dark-theme .student-empty-icon {
   flex-direction: column;
   gap: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -4256,8 +4349,12 @@ body.dark-theme .browse-search-input {
   }
 }
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 body.dark-theme .schol-modal-sheet {
   background-color: #131722;
@@ -4270,8 +4367,8 @@ body.dark-theme .schol-modal-sheet {
 
 /* Student Header Avatar Light Purple */
 #student-header-avatar {
-  background-color: #D6BBFB !important;
-  color: #53389E !important;
+  background-color: #d6bbfb !important;
+  color: #53389e !important;
   font-weight: 700;
 }
 #student-header-avatar.has-img,
@@ -4283,12 +4380,12 @@ body.dark-theme .schol-modal-sheet {
 .directory-search-input {
   border-radius: 100px !important;
   padding: 12px 18px 12px 44px !important;
-  border: 1.5px solid var(--border-color, #E4E7EC) !important;
+  border: 1.5px solid var(--border-color, #e4e7ec) !important;
   font-size: 13.5px !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .directory-search-input:focus {
-  border-color: #7F56D9 !important;
+  border-color: #7f56d9 !important;
   box-shadow: 0 0 0 3px rgba(127, 86, 217, 0.12) !important;
 }
 
@@ -4320,7 +4417,7 @@ body.dark-theme .schol-modal-sheet {
   font-size: 13.5px;
   font-weight: 600;
   background-color: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #D0D5DD);
+  border: 1.5px solid var(--border-color, #d0d5dd);
   color: var(--text-secondary, #344054);
   cursor: pointer;
   white-space: nowrap;
@@ -4329,32 +4426,32 @@ body.dark-theme .schol-modal-sheet {
   touch-action: manipulation;
 }
 .directory-pill-btn:hover {
-  border-color: #7F56D9;
-  color: #6941C6;
+  border-color: #7f56d9;
+  color: #6941c6;
 }
 .directory-pill-btn.active,
 .directory-pill-btn.is-filtered {
-  background-color: #F4EBFF;
-  border-color: #7F56D9;
-  color: #6941C6;
+  background-color: #f4ebff;
+  border-color: #7f56d9;
+  color: #6941c6;
 }
 body.dark-theme .directory-pill-btn {
-  background-color: #1A1F2C;
+  background-color: #1a1f2c;
   border-color: #374151;
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 body.dark-theme .directory-pill-btn.active,
 body.dark-theme .directory-pill-btn.is-filtered {
-  background-color: #2E1B4E;
-  border-color: #8B5CF6;
-  color: #D6BBFB;
+  background-color: #2e1b4e;
+  border-color: #8b5cf6;
+  color: #d6bbfb;
 }
 .directory-dropdown-menu {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
   background: var(--bg-surface, #ffffff);
-  border: 1px solid var(--border-color, #EAECF0);
+  border: 1px solid var(--border-color, #eaecf0);
   border-radius: 14px;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.22);
   min-width: 185px;
@@ -4368,7 +4465,7 @@ body.dark-theme .directory-pill-btn.is-filtered {
   display: flex !important;
 }
 body.dark-theme .directory-dropdown-menu {
-  background-color: #1A1F2C;
+  background-color: #1a1f2c;
   border-color: #374151;
   box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
 }
@@ -4391,14 +4488,14 @@ body.dark-theme .directory-dropdown-menu {
 }
 .directory-dropdown-item:hover,
 .directory-dropdown-item.active {
-  background-color: #F4EBFF;
-  color: #6941C6;
+  background-color: #f4ebff;
+  color: #6941c6;
   font-weight: 700;
 }
 body.dark-theme .directory-dropdown-item:hover,
 body.dark-theme .directory-dropdown-item.active {
-  background-color: #2E1B4E;
-  color: #D6BBFB;
+  background-color: #2e1b4e;
+  color: #d6bbfb;
 }
 
 /* Live Meta Count Row */
@@ -4425,12 +4522,15 @@ body.dark-theme .directory-dropdown-item.active {
 .directory-card {
   position: relative;
   background-color: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #D0D5DD);
+  border: 1.5px solid var(--border-color, #d0d5dd);
   border-radius: 20px;
   padding: 20px 22px;
   box-shadow: 0 9px 14px rgba(0, 0, 0, 0.08);
   margin-bottom: 0;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -4547,9 +4647,9 @@ body.dark-theme .directory-card.has-cover .directory-card-title {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  border: 1.5px solid var(--border-color, #EAECF0);
-  background-color: #F4EBFF;
-  color: #6941C6;
+  border: 1.5px solid var(--border-color, #eaecf0);
+  background-color: #f4ebff;
+  color: #6941c6;
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.14);
   display: flex;
   align-items: center;
@@ -4608,20 +4708,20 @@ body.dark-theme .directory-card.has-cover .directory-card-title {
   flex-shrink: 0;
 }
 .directory-status-pill.open {
-  background-color: #AEFFB9;
+  background-color: #aeffb9;
   color: #008013;
 }
 .directory-status-pill.closed {
-  background-color: #E9EAEB;
-  color: #A4A7AE;
+  background-color: #e9eaeb;
+  color: #a4a7ae;
 }
 body.dark-theme .directory-status-pill.open {
   background-color: rgba(174, 255, 185, 0.2);
-  color: #34D399;
+  color: #34d399;
 }
 body.dark-theme .directory-status-pill.closed {
-  background-color: #2A3142;
-  color: #9CA3AF;
+  background-color: #2a3142;
+  color: #9ca3af;
 }
 
 /* Scholarship Type Pill (Provider Recent & Directory Cards) */
@@ -4631,8 +4731,8 @@ body.dark-theme .directory-status-pill.closed {
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
-  background-color: #F4EBFF;
-  color: #6941C6;
+  background-color: #f4ebff;
+  color: #6941c6;
   border: 1px solid rgba(105, 65, 198, 0.2);
   display: inline-flex;
   align-items: center;
@@ -4640,7 +4740,7 @@ body.dark-theme .directory-status-pill.closed {
 }
 body.dark-theme .directory-type-pill {
   background-color: rgba(139, 92, 246, 0.18);
-  color: #D6BBFB;
+  color: #d6bbfb;
   border-color: rgba(139, 92, 246, 0.35);
 }
 
@@ -4740,7 +4840,7 @@ body.dark-theme .directory-type-pill {
 }
 .directory-view-details-btn {
   background: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #D0D5DD);
+  border: 1.5px solid var(--border-color, #d0d5dd);
   color: var(--text-secondary, #344054);
   font-size: 13px;
   font-weight: 600;
@@ -4757,16 +4857,16 @@ body.dark-theme .directory-type-pill {
   box-sizing: border-box;
 }
 .directory-view-details-btn:hover {
-  background-color: var(--bg-canvas, #F9FAFB);
-  border-color: #98A2B3;
+  background-color: var(--bg-canvas, #f9fafb);
+  border-color: #98a2b3;
   color: var(--text-primary);
   text-decoration: none !important;
   transform: translateY(-1px);
 }
 body.dark-theme .directory-view-details-btn {
-  background: var(--bg-surface, #1E1B2E);
+  background: var(--bg-surface, #1e1b2e);
   border-color: rgba(255, 255, 255, 0.15);
-  color: var(--text-primary, #F3F4F6);
+  color: var(--text-primary, #f3f4f6);
 }
 body.dark-theme .directory-view-details-btn:hover {
   background: rgba(255, 255, 255, 0.08);
@@ -4781,8 +4881,8 @@ body.dark-theme .directory-view-details-btn:hover {
   border-radius: 100px;
   font-size: 11.5px;
   font-weight: 700;
-  background: #F4EBFF;
-  color: #6941C6;
+  background: #f4ebff;
+  color: #6941c6;
   border: 1px solid rgba(105, 65, 198, 0.2);
   white-space: nowrap;
 }
@@ -4800,8 +4900,8 @@ body.dark-theme .directory-type-badge {
   border-radius: 100px;
   font-size: 12.5px;
   font-weight: 700;
-  background: #F4EBFF;
-  color: #6941C6;
+  background: #f4ebff;
+  color: #6941c6;
   border: 1px solid rgba(105, 65, 198, 0.25);
 }
 body.dark-theme .modal-type-badge {
@@ -4865,7 +4965,7 @@ body.dark-theme .directory-app-status-badge.status-rejected {
 /* Modal Close Icon Button */
 .modal-close-icon-btn {
   background: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #E5E7EB);
+  border: 1.5px solid var(--border-color, #e5e7eb);
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -4873,23 +4973,23 @@ body.dark-theme .directory-app-status-badge.status-rejected {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-secondary, #6B7280);
+  color: var(--text-secondary, #6b7280);
   transition: all 0.2s ease;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 .modal-close-icon-btn:hover {
-  background-color: var(--bg-canvas, #F3F4F6);
+  background-color: var(--bg-canvas, #f3f4f6);
   color: var(--text-primary, #111827);
   transform: scale(1.06);
 }
 body.dark-theme .modal-close-icon-btn {
   background: #252136;
   border-color: rgba(255, 255, 255, 0.15);
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 body.dark-theme .modal-close-icon-btn:hover {
   background: #322d4a;
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
 /* Submission Modal Bottom Actions (Two-Button Layout: View Post Details & Close Details) */
@@ -4906,7 +5006,7 @@ body.dark-theme .modal-close-icon-btn:hover {
 }
 .btn-sub-modal-view-post {
   flex: 1;
-  background-color: #6941C6;
+  background-color: #6941c6;
   color: #ffffff !important;
   border: none;
   border-radius: 100px;
@@ -4925,15 +5025,15 @@ body.dark-theme .modal-close-icon-btn:hover {
   width: 100%;
 }
 .btn-sub-modal-view-post:hover {
-  background-color: #53389E;
+  background-color: #53389e;
   box-shadow: 0 4px 12px rgba(105, 65, 198, 0.45);
   transform: translateY(-1px);
 }
 body.dark-theme .btn-sub-modal-view-post {
-  background-color: #7F56D9;
+  background-color: #7f56d9;
 }
 body.dark-theme .btn-sub-modal-view-post:hover {
-  background-color: #6941C6;
+  background-color: #6941c6;
 }
 
 .btn-sub-modal-close-secondary {
@@ -4972,7 +5072,7 @@ body.dark-theme .btn-sub-modal-close-secondary:hover {
 
 /* Submission Modal Primary Close Button (Consistent with View My Submission pill design) */
 .btn-sub-modal-close {
-  background-color: #6941C6;
+  background-color: #6941c6;
   color: #ffffff;
   border: none;
   border-radius: 100px;
@@ -4990,20 +5090,20 @@ body.dark-theme .btn-sub-modal-close-secondary:hover {
   box-sizing: border-box;
 }
 .btn-sub-modal-close:hover {
-  background-color: #53389E;
+  background-color: #53389e;
   box-shadow: 0 4px 12px rgba(105, 65, 198, 0.45);
   transform: translateY(-1px);
 }
 body.dark-theme .btn-sub-modal-close {
-  background-color: #7F56D9;
+  background-color: #7f56d9;
 }
 body.dark-theme .btn-sub-modal-close:hover {
-  background-color: #6941C6;
+  background-color: #6941c6;
 }
 
 /* Follow-Up Document Inline Upload Pill Button */
 .btn-fu-upload {
-  background-color: #D97706;
+  background-color: #d97706;
   color: #ffffff;
   border: none;
   border-radius: 100px;
@@ -5019,7 +5119,7 @@ body.dark-theme .btn-sub-modal-close:hover {
   transition: all 0.2s ease;
 }
 .btn-fu-upload:hover {
-  background-color: #B45309;
+  background-color: #b45309;
   box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
   transform: translateY(-1px);
 }
@@ -5085,20 +5185,22 @@ body.dark-theme .btn-sub-modal-close:hover {
   transform: scale(1);
 }
 .directory-apply-btn {
-  background-color: #6941C6;
-  color: #FFFFFF;
+  background-color: #6941c6;
+  color: #ffffff;
   border: none;
   border-radius: 100px;
   padding: 8px 22px;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
   white-space: nowrap;
 }
 .directory-apply-btn.already-applied-btn,
 .directory-apply-btn.view-submission-btn {
-  background: linear-gradient(135deg, #7F56D9 0%, #6941C6 100%) !important;
+  background: linear-gradient(135deg, #7f56d9 0%, #6941c6 100%) !important;
   color: #ffffff !important;
   padding: 8px 18px;
   font-size: 12.5px;
@@ -5106,32 +5208,32 @@ body.dark-theme .btn-sub-modal-close:hover {
   box-shadow: 0 2px 6px rgba(105, 65, 198, 0.35);
 }
 .directory-apply-btn.view-submission-btn:hover {
-  background: linear-gradient(135deg, #9333EA 0%, #7F56D9 100%) !important;
+  background: linear-gradient(135deg, #9333ea 0%, #7f56d9 100%) !important;
   box-shadow: 0 4px 10px rgba(105, 65, 198, 0.5);
   transform: translateY(-1px);
 }
 .directory-apply-btn:hover:not(:disabled) {
-  background-color: #7F56D9;
+  background-color: #7f56d9;
   transform: translateY(-1px);
 }
 .directory-apply-btn.disabled,
 .directory-apply-btn:disabled {
-  background-color: #E9EAEB !important;
-  color: #A4A7AE !important;
+  background-color: #e9eaeb !important;
+  color: #a4a7ae !important;
   cursor: not-allowed;
   transform: none !important;
 }
 body.dark-theme .directory-apply-btn.disabled,
 body.dark-theme .directory-apply-btn:disabled {
-  background-color: #2A3142 !important;
-  color: #6B7280 !important;
+  background-color: #2a3142 !important;
+  color: #6b7280 !important;
 }
 
 /* Footer Section */
 .directory-footer {
   text-align: center;
   padding: 36px 16px 24px;
-  color: var(--text-muted, #98A2B3);
+  color: var(--text-muted, #98a2b3);
   font-size: 12px;
 }
 .directory-footer-copy {
@@ -5158,7 +5260,7 @@ body.dark-theme .directory-apply-btn:disabled {
   height: 140px;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(135deg, #4A154B 0%, #6941C6 50%, #004AAD 100%);
+  background: linear-gradient(135deg, #4a154b 0%, #6941c6 50%, #004aad 100%);
 }
 .details-cover-img {
   width: 100%;
@@ -5172,15 +5274,15 @@ body.dark-theme .directory-apply-btn:disabled {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  border: 3.5px solid var(--bg-surface, #FFFFFF);
-  background: #F4EBFF;
+  border: 3.5px solid var(--bg-surface, #ffffff);
+  background: #f4ebff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   object-fit: cover;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  color: #6941C6;
+  color: #6941c6;
   font-size: 18px;
   z-index: 5;
   overflow: hidden;
@@ -5193,18 +5295,18 @@ body.dark-theme .directory-apply-btn:disabled {
   display: block;
 }
 body.dark-theme .details-provider-avatar {
-  border-color: var(--bg-surface, #1E1B2E);
-  background: #2E1B4E;
-  color: #D6BBFB;
+  border-color: var(--bg-surface, #1e1b2e);
+  background: #2e1b4e;
+  color: #d6bbfb;
 }
 body.dark-theme .directory-card-logo {
   border-color: rgba(255, 255, 255, 0.1);
-  background-color: #2E1B4E;
-  color: #D6BBFB;
+  background-color: #2e1b4e;
+  color: #d6bbfb;
 }
 .details-verified-pill {
-  background-color: #F4EBFF;
-  color: #6941C6;
+  background-color: #f4ebff;
+  color: #6941c6;
   font-size: 11px;
   font-weight: 700;
   border-radius: 100px;
@@ -5214,8 +5316,8 @@ body.dark-theme .directory-card-logo {
   gap: 4px;
 }
 body.dark-theme .details-verified-pill {
-  background-color: #2E1B4E;
-  color: #D6BBFB;
+  background-color: #2e1b4e;
+  color: #d6bbfb;
 }
 .details-checklist-item {
   display: flex;
@@ -5225,8 +5327,8 @@ body.dark-theme .details-verified-pill {
   color: var(--text-primary);
   font-weight: 500;
   padding: 10px 14px;
-  background: var(--bg-canvas, #F9FAFB);
-  border: 1px solid var(--border-color, #EAECF0);
+  background: var(--bg-canvas, #f9fafb);
+  border: 1px solid var(--border-color, #eaecf0);
   border-radius: 10px;
 }
 body.dark-theme .details-checklist-item {
@@ -5236,19 +5338,19 @@ body.dark-theme .details-checklist-item {
 
 /* Digital Drop-Box Screen / Step (Matching Images 2 & 3) */
 .dropbox-step-card {
-  background: #F9F5FF;
-  border: 1px solid #E9D7FE;
+  background: #f9f5ff;
+  border: 1px solid #e9d7fe;
   border-radius: 18px;
   padding: 18px 20px;
   margin-bottom: 22px;
 }
 body.dark-theme .dropbox-step-card {
-  background: #1F1633;
-  border-color: #42307D;
+  background: #1f1633;
+  border-color: #42307d;
 }
 .dropbox-schol-pill {
-  background: #E9D7FE;
-  color: #6941C6;
+  background: #e9d7fe;
+  color: #6941c6;
   font-size: 11px;
   font-weight: 700;
   border-radius: 6px;
@@ -5258,12 +5360,12 @@ body.dark-theme .dropbox-step-card {
   letter-spacing: 0.5px;
 }
 body.dark-theme .dropbox-schol-pill {
-  background: #42307D;
-  color: #D6BBFB;
+  background: #42307d;
+  color: #d6bbfb;
 }
 .dropbox-slot-card {
   background: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #EAECF0);
+  border: 1.5px solid var(--border-color, #eaecf0);
   border-radius: 18px;
   padding: 18px 20px;
   display: flex;
@@ -5274,35 +5376,35 @@ body.dark-theme .dropbox-schol-pill {
   position: relative;
 }
 .dropbox-slot-card.slot-error {
-  border-color: #EF4444 !important;
+  border-color: #ef4444 !important;
   background-color: rgba(239, 68, 68, 0.06) !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
 body.dark-theme .dropbox-slot-card.slot-error {
-  border-color: #EF4444 !important;
+  border-color: #ef4444 !important;
   background-color: rgba(239, 68, 68, 0.12) !important;
 }
 .dropbox-slot-card:hover {
-  border-color: #7F56D9;
+  border-color: #7f56d9;
 }
 .dropbox-slot-card.has-file {
-  border-color: #10B981;
+  border-color: #10b981;
   background-color: rgba(16, 185, 129, 0.05);
 }
 .dropbox-slot-card.is-follow-up {
-  border-color: #F59E0B;
+  border-color: #f59e0b;
   background-color: rgba(245, 158, 11, 0.06);
 }
 body.dark-theme .dropbox-slot-card {
-  background-color: #1A1F2C;
+  background-color: #1a1f2c;
   border-color: #374151;
 }
 body.dark-theme .dropbox-slot-card.is-follow-up {
-  border-color: #D97706;
+  border-color: #d97706;
   background-color: rgba(245, 158, 11, 0.1);
 }
 body.dark-theme .dropbox-slot-card.has-file {
-  border-color: #10B981;
+  border-color: #10b981;
   background-color: rgba(16, 185, 129, 0.08);
 }
 .dropbox-slot-header {
@@ -5345,7 +5447,7 @@ body.dark-theme .dropbox-slot-card.has-file {
   border-radius: 10px;
   font-size: 13.5px;
   font-weight: 700;
-  background-color: #7F56D9;
+  background-color: #7f56d9;
   color: #ffffff;
   border: none;
   cursor: pointer;
@@ -5353,7 +5455,7 @@ body.dark-theme .dropbox-slot-card.has-file {
   touch-action: manipulation;
 }
 .btn-slot-upload:hover {
-  background-color: #6941C6;
+  background-color: #6941c6;
 }
 .btn-followup-toggle {
   display: inline-flex;
@@ -5365,8 +5467,8 @@ body.dark-theme .dropbox-slot-card.has-file {
   border-radius: 10px;
   font-size: 13px;
   font-weight: 700;
-  background: var(--bg-canvas, #F9FAFB);
-  border: 1.5px solid var(--border-color, #D0D5DD);
+  background: var(--bg-canvas, #f9fafb);
+  border: 1.5px solid var(--border-color, #d0d5dd);
   color: var(--text-secondary, #344054);
   cursor: pointer;
   transition: all 0.18s ease;
@@ -5374,29 +5476,29 @@ body.dark-theme .dropbox-slot-card.has-file {
   white-space: nowrap;
 }
 .btn-followup-toggle:hover {
-  border-color: #F59E0B;
-  color: #D97706;
+  border-color: #f59e0b;
+  color: #d97706;
   background: rgba(245, 158, 11, 0.08);
 }
 .btn-followup-toggle.active {
   background: rgba(245, 158, 11, 0.15);
-  border-color: #F59E0B;
-  color: #D97706;
+  border-color: #f59e0b;
+  color: #d97706;
 }
 body.dark-theme .btn-followup-toggle {
-  background: #242A38;
+  background: #242a38;
   border-color: #374151;
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 body.dark-theme .btn-followup-toggle:hover,
 body.dark-theme .btn-followup-toggle.active {
   background: rgba(245, 158, 11, 0.2);
-  border-color: #F59E0B;
-  color: #FCD34D;
+  border-color: #f59e0b;
+  color: #fcd34d;
 }
 .btn-slot-remove {
   background: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
+  color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.25);
   min-height: 40px;
   padding: 0 14px;
@@ -5415,7 +5517,7 @@ body.dark-theme .btn-followup-toggle.active {
 .dropbox-error-box {
   background: rgba(239, 68, 68, 0.1);
   border: 1.5px solid rgba(239, 68, 68, 0.35);
-  color: #EF4444;
+  color: #ef4444;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 13px;
@@ -5428,34 +5530,35 @@ body.dark-theme .btn-followup-toggle.active {
 }
 body.dark-theme .dropbox-error-box {
   background: rgba(239, 68, 68, 0.15);
-  color: #FCA5A5;
+  color: #fca5a5;
   border-color: rgba(239, 68, 68, 0.45);
 }
 .dropbox-slot-icon-box {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #F4EBFF;
-  color: #6941C6;
+  background: #f4ebff;
+  color: #6941c6;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 .dropbox-slot-card.has-file .dropbox-slot-icon-box {
-  background: #E6F9ED;
+  background: #e6f9ed;
   color: #008013;
 }
 .dropbox-slot-card.is-follow-up .dropbox-slot-icon-box {
   background: rgba(245, 158, 11, 0.15);
-  color: #D97706;
+  color: #d97706;
 }
-.settings-toast, #student-browse-toast {
+.settings-toast,
+#student-browse-toast {
   z-index: 20000 !important;
 }
 .dropbox-info-banner {
-  background-color: #F8F9FA;
-  border: 1px solid #EAECF0;
+  background-color: #f8f9fa;
+  border: 1px solid #eaecf0;
   border-radius: 12px;
   padding: 10px 14px;
   display: flex;
@@ -5467,10 +5570,9 @@ body.dark-theme .dropbox-error-box {
   margin-bottom: 20px;
 }
 body.dark-theme .dropbox-info-banner {
-  background-color: #1A1F2C;
+  background-color: #1a1f2c;
   border-color: #374151;
 }
-
 
 /* ==========================================
    26. DOCUMENTATION & LEGAL PAGES (Credits, Privacy, Terms)
@@ -5599,9 +5701,18 @@ body.dark-theme .doc-academic-tag {
 }
 
 @keyframes pulse-green {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 185, 19, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 185, 19, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 185, 19, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 185, 19, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(0, 185, 19, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 185, 19, 0);
+  }
 }
 
 .doc-title {
@@ -5752,7 +5863,8 @@ body.dark-theme .doc-section-num {
   margin: 0;
 }
 
-.doc-card-body ul, .doc-card-body ol {
+.doc-card-body ul,
+.doc-card-body ol {
   padding-left: 20px;
   display: flex;
   flex-direction: column;
@@ -5800,7 +5912,9 @@ body.dark-theme .doc-section-num {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .team-card:hover {
@@ -5943,7 +6057,7 @@ body.dark-theme .doc-callout svg {
   padding: 0;
   border-radius: 50%;
   background-color: var(--bg-surface, #ffffff);
-  border: 1.5px solid var(--border-color, #D0D5DD);
+  border: 1.5px solid var(--border-color, #d0d5dd);
   color: var(--text-secondary, #344054);
   cursor: pointer;
   white-space: nowrap;
@@ -5954,15 +6068,15 @@ body.dark-theme .doc-callout svg {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .directory-filter-icon-btn:hover {
-  border-color: #7F56D9;
-  color: #6941C6;
-  background-color: #F9F5FF;
+  border-color: #7f56d9;
+  color: #6941c6;
+  background-color: #f9f5ff;
 }
 .directory-filter-icon-btn.is-filtered,
 .directory-filter-icon-btn.active {
-  background-color: #F4EBFF !important;
-  border-color: #7F56D9 !important;
-  color: #6941C6 !important;
+  background-color: #f4ebff !important;
+  border-color: #7f56d9 !important;
+  color: #6941c6 !important;
   box-shadow: 0 0 0 3px rgba(127, 86, 217, 0.16) !important;
 }
 .directory-filter-icon-btn.is-filtered::after {
@@ -5973,29 +6087,29 @@ body.dark-theme .doc-callout svg {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #7F56D9;
+  background-color: #7f56d9;
   border: 2px solid var(--bg-surface, #ffffff);
 }
 body.dark-theme .directory-filter-icon-btn {
-  background-color: #1A1F2C;
+  background-color: #1a1f2c;
   border-color: #374151;
-  color: #D1D5DB;
+  color: #d1d5db;
 }
 body.dark-theme .directory-filter-icon-btn:hover {
-  border-color: #8B5CF6;
-  color: #D6BBFB;
-  background-color: #241A3D;
+  border-color: #8b5cf6;
+  color: #d6bbfb;
+  background-color: #241a3d;
 }
 body.dark-theme .directory-filter-icon-btn.is-filtered,
 body.dark-theme .directory-filter-icon-btn.active {
-  background-color: #2E1B4E !important;
-  border-color: #8B5CF6 !important;
-  color: #D6BBFB !important;
+  background-color: #2e1b4e !important;
+  border-color: #8b5cf6 !important;
+  color: #d6bbfb !important;
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.26) !important;
 }
 body.dark-theme .directory-filter-icon-btn.is-filtered::after {
-  background-color: #A78BFA;
-  border-color: #1A1F2C;
+  background-color: #a78bfa;
+  border-color: #1a1f2c;
 }
 .sub-filter-badge {
   margin-left: auto;
@@ -6004,7 +6118,7 @@ body.dark-theme .directory-filter-icon-btn.is-filtered::after {
   padding: 2px 7px;
   border-radius: 10px;
   background: rgba(105, 65, 198, 0.12);
-  color: #6941C6;
+  color: #6941c6;
   min-width: 18px;
   text-align: center;
 }
@@ -6075,7 +6189,10 @@ body.dark-theme .filter-tab.active {
 .student-app-card {
   position: relative;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .student-app-card:hover {
@@ -6298,9 +6415,18 @@ body.dark-theme .nav-alert-dot {
 }
 
 @keyframes pulse-dot {
-  0% { transform: scale(0.95); opacity: 0.9; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.95); opacity: 0.9; }
+  0% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
 }
 
 /* Scholarship Description Word Wrap & Break */
@@ -6551,9 +6677,10 @@ body.dark-theme .skeleton-bone {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     z-index: 995 !important;
-    transition: width 0.28s cubic-bezier(0.2, 0.9, 0.4, 1),
-                box-shadow 0.28s ease,
-                padding 0.28s ease !important;
+    transition:
+      width 0.28s cubic-bezier(0.2, 0.9, 0.4, 1),
+      box-shadow 0.28s ease,
+      padding 0.28s ease !important;
   }
 
   body.dark-theme .nav-menu {
@@ -6585,7 +6712,9 @@ body.dark-theme .skeleton-bone {
     margin: 4px auto !important;
     border-radius: 12px !important;
     position: relative !important;
-    transition: background-color 0.2s ease, transform 0.15s ease !important;
+    transition:
+      background-color 0.2s ease,
+      transform 0.15s ease !important;
   }
 
   .nav-menu:not(.open) .nav-link:hover {
@@ -6612,7 +6741,7 @@ body.dark-theme .skeleton-bone {
     width: 36px !important;
     height: 1px !important;
     margin: 8px auto !important;
-    background: var(--border-subtle, rgba(0,0,0,0.08)) !important;
+    background: var(--border-subtle, rgba(0, 0, 0, 0.08)) !important;
   }
 
   .nav-menu:not(.open) .nav-buttons {
@@ -6623,7 +6752,7 @@ body.dark-theme .skeleton-bone {
     padding: 12px 0 0 0 !important;
     margin-top: auto !important;
     gap: 8px !important;
-    border-top: 1px solid var(--border-subtle, rgba(0,0,0,0.08)) !important;
+    border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08)) !important;
   }
 
   .nav-menu:not(.open) .nav-buttons .btn {
@@ -6757,7 +6886,10 @@ body.dark-theme .skeleton-bone {
   }
 
   body.dark-theme .nav-menu:not(.open) .nav-link[data-tooltip]:hover::after,
-  body.dark-theme .nav-menu:not(.open) .nav-buttons .btn[data-tooltip]:hover::after {
+  body.dark-theme
+    .nav-menu:not(.open)
+    .nav-buttons
+    .btn[data-tooltip]:hover::after {
     background: #1e293b;
     border: 1px solid var(--border-strong);
     color: #f8fafc;
@@ -6765,8 +6897,14 @@ body.dark-theme .skeleton-bone {
   }
 
   @keyframes fadeInTooltip {
-    from { opacity: 0; transform: translateY(-50%) translateX(6px); }
-    to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-50%) translateX(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
   }
 
   /* NO OVERLAY, NO BLUR, NO SCROLL LOCK ON DESKTOP */
@@ -7591,4 +7729,412 @@ body.dark-theme .skeleton-bone {
   }
 }
 
+/* =====================================================================
+   NEXO "FLAT 2.0" PREMIUM LAYER
+   Visual-only overrides: elevation, squircle radii, Manrope everywhere,
+   breathable spacing, micro-interactions, gradient primary actions.
+   ===================================================================== */
 
+/* ---------- 1. Manrope everywhere ---------- */
+html,
+body,
+button,
+input,
+select,
+textarea,
+optgroup,
+.btn,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+label,
+li,
+td,
+th {
+  font-family: var(--font-body) !important;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+p {
+  line-height: 1.6;
+}
+
+/* ---------- 2. Cards: borderless, floating ---------- */
+.card,
+.hero-section,
+.feature-card,
+.audience-card,
+.about-card,
+.doc-hero,
+.doc-card,
+.doc-actions-card,
+.team-card,
+.directory-card,
+.student-app-card,
+.student-welcome-card,
+.student-stat-card,
+.student-empty-card,
+.draft-card,
+.compact-post-card,
+.review-card,
+.req-card,
+.dropbox-slot-card,
+.settings-card,
+.settings-category-group,
+.dash-stats-container,
+.empty-state-card,
+.skeleton-card,
+.provider-recent-card {
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow-md) !important;
+  transition: var(--transition-base);
+}
+
+.card,
+.directory-card,
+.student-welcome-card,
+.draft-card,
+.doc-card,
+.doc-hero,
+.settings-category-group,
+.about-card,
+.hero-section,
+.feature-card,
+.audience-card {
+  border-radius: var(--radius-lg) !important;
+}
+
+.student-app-card,
+.student-stat-card,
+.compact-post-card,
+.review-card,
+.dropbox-slot-card,
+.team-card,
+.settings-card {
+  border-radius: 20px !important;
+}
+
+/* Dashed empty states keep a soft dashed outline for affordance */
+.student-empty-card,
+.empty-state-card {
+  border: 1.5px dashed rgba(127, 86, 217, 0.22) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Lift on hover (cards that are interactive) */
+.card:hover,
+.directory-card:hover,
+.student-app-card:hover,
+.student-stat-card.is-clickable:hover,
+.draft-card:hover,
+.compact-post-card:hover,
+.team-card:hover,
+.provider-recent-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg) !important;
+  border-color: rgba(127, 86, 217, 0.18) !important;
+}
+
+/* Modals & popovers: deeper elevation, larger radius */
+.schol-modal-sheet,
+.fu-modal-sheet,
+.confirm-modal-box,
+.role-modal-card,
+.notification-popover,
+.directory-dropdown-menu,
+.filter-dropdown,
+.org-dropdown-menu,
+.dropdown-options {
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+.confirm-modal-box,
+.role-modal-card,
+.fu-modal-sheet {
+  border-radius: var(--radius-lg) !important;
+}
+@media (min-width: 641px) {
+  .schol-modal-sheet {
+    border-radius: var(--radius-lg) !important;
+  }
+}
+
+/* ---------- 3. Buttons ---------- */
+button,
+.btn,
+a.btn {
+  transition: var(--transition-base);
+}
+
+.btn {
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Primary actions: subtle gradient + brand glow */
+.btn-primary,
+.auth-submit,
+.cta-btn,
+.continue-edit-btn,
+.directory-apply-btn:not(.disabled):not(:disabled),
+.btn-slot-upload,
+.btn-sub-modal-view-post,
+.toggle-btn.active,
+.settings-tab-btn.active,
+.doc-tab-pill.active,
+.filter-tab.active {
+  background: var(--gradient-primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: var(--shadow-brand);
+}
+
+.btn-primary:hover:not(:disabled),
+.auth-submit:hover,
+.cta-btn:hover,
+.continue-edit-btn:hover,
+.directory-apply-btn:hover:not(:disabled):not(.disabled),
+.btn-slot-upload:hover,
+.btn-sub-modal-view-post:hover {
+  background: var(--gradient-primary-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-brand-hover);
+}
+
+.btn-primary:active:not(:disabled),
+.auth-submit:active,
+.cta-btn:active,
+.directory-apply-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Secondary / outline buttons: soft surface + lift */
+.btn-secondary,
+.btn-outline,
+.directory-view-details-btn,
+.view-sub-details-btn,
+.btn-sub-modal-close-secondary,
+.modal-bottom-close-btn,
+.btn-followup-toggle,
+.directory-pill-btn,
+.directory-filter-icon-btn,
+.student-view-all-link,
+.student-view-all-btn {
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-outline:hover,
+.directory-view-details-btn:hover,
+.view-sub-details-btn:hover,
+.btn-sub-modal-close-secondary:hover,
+.modal-bottom-close-btn:hover,
+.directory-pill-btn:hover,
+.directory-filter-icon-btn:hover,
+.student-view-all-link:hover,
+.student-view-all-btn:hover,
+.btn-destructive:hover:not(:disabled),
+.delete-draft-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Never lift disabled controls */
+button:disabled,
+.btn:disabled,
+.directory-apply-btn.disabled {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep the side-rail nav and header controls flat (no lift jitter) */
+.nav-link,
+.nav-buttons .btn,
+.hamburger-btn,
+.theme-toggle,
+.logout-btn {
+  transform: none;
+}
+.logout-btn,
+.logout-btn:hover {
+  box-shadow: none !important;
+}
+
+/* Accessible focus ring */
+button:focus-visible,
+.btn:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus) !important;
+}
+
+/* ---------- 4. Inputs ---------- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+select,
+textarea,
+.settings-input,
+.org-input,
+.org-dropdown-trigger,
+.dropdown-selected,
+.custom-req-input,
+.creation-form input,
+.creation-form textarea,
+.creation-form select,
+.browse-search-input {
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 13px 16px;
+  line-height: 1.5;
+  box-shadow: var(--shadow-xs);
+  transition: var(--transition-base);
+}
+
+input:hover:not(:focus):not(:disabled),
+select:hover:not(:focus),
+textarea:hover:not(:focus),
+.settings-input:hover:not(:focus) {
+  border-color: #d0d5dd;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.settings-input:focus,
+.org-input:focus,
+.creation-form input:focus,
+.creation-form textarea:focus,
+.creation-form select:focus,
+.browse-search-input:focus {
+  outline: none;
+  border-color: var(--purple-700) !important;
+  box-shadow: var(--ring-focus) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #98a2b3;
+}
+
+/* Search pills keep their pill shape + icon padding */
+.directory-search-input {
+  border-radius: var(--radius-full) !important;
+  padding: 13px 20px 13px 46px !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* Login composite input (icon + floating label wrapper) */
+.input-group {
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-surface);
+  box-shadow: var(--shadow-xs);
+  transition: var(--transition-base);
+}
+.input-group:focus-within {
+  border-color: var(--purple-700);
+  box-shadow: var(--ring-focus);
+}
+.input-group .input-field input,
+.input-field input {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 16px 0 0;
+  background: transparent !important;
+  border-radius: 0;
+}
+.input-group .input-field input:focus {
+  box-shadow: none !important;
+}
+
+/* OTP & checkboxes/radios/file/range excluded from generic padding */
+.otp-input {
+  border-radius: 14px;
+  box-shadow: var(--shadow-xs);
+  padding: 0;
+}
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="range"],
+.theme-toggle,
+.nexo-switch input,
+.confirm-checkbox-container input {
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: revert;
+}
+
+/* ---------- 5. Dark mode refinements ---------- */
+body.dark-theme .directory-card,
+body.dark-theme .student-app-card,
+body.dark-theme .student-welcome-card,
+body.dark-theme .student-stat-card,
+body.dark-theme .draft-card,
+body.dark-theme .settings-category-group,
+body.dark-theme .doc-card,
+body.dark-theme .doc-hero,
+body.dark-theme .skeleton-card {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+body.dark-theme input[type="text"],
+body.dark-theme input[type="email"],
+body.dark-theme input[type="password"],
+body.dark-theme input[type="number"],
+body.dark-theme input[type="search"],
+body.dark-theme select,
+body.dark-theme textarea,
+body.dark-theme .settings-input,
+body.dark-theme .browse-search-input,
+body.dark-theme .input-group {
+  background-color: #111827;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+  color: #6b7280;
+}
+
+/* ---------- 6. Respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+  .card:hover,
+  .directory-card:hover,
+  .student-app-card:hover,
+  .btn:hover {
+    transform: none !important;
+  }
+}

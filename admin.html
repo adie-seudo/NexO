@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -41,7 +41,7 @@
         min-height: 100vh;
         background-color: var(--bg-canvas);
         color: var(--text-primary);
-        font-family: var(--font-body, "Inter", sans-serif);
+        font-family: var(--font-body, "Manrope", sans-serif);
         -webkit-font-smoothing: antialiased;
       }
 
@@ -57,7 +57,9 @@
         z-index: 100;
         backdrop-filter: blur(20px) saturate(180%) !important;
         -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-        transition: background-color 0.25s ease, backdrop-filter 0.25s ease;
+        transition:
+          background-color 0.25s ease,
+          backdrop-filter 0.25s ease;
       }
       body.dark-theme .admin-top-header {
         background: rgba(10, 13, 18, 0.38) !important;
@@ -429,7 +431,9 @@
         gap: 12px;
         box-sizing: border-box;
         width: 100%;
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
       }
       .admin-account-card.is-banned {
         border-color: rgba(239, 68, 68, 0.3);
@@ -756,11 +760,7 @@
       <div class="admin-header-inner">
         <!-- 1. NEXO logo & name on the left -->
         <a href="index.html" class="admin-brand-link">
-          <img
-            src="assets/logo.png"
-            alt="NEXO"
-            class="admin-brand-logo"
-          />
+          <img src="assets/logo.png" alt="NEXO" class="admin-brand-logo" />
           <span class="admin-brand-name">NEXO</span>
         </a>
 
@@ -784,9 +784,7 @@
               <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
             </svg>
           </button>
-          <a href="index.html" class="admin-exit-btn">
-            Exit Admin &rarr;
-          </a>
+          <a href="index.html" class="admin-exit-btn"> Exit Admin &rarr; </a>
         </div>
       </div>
     </header>
@@ -812,7 +810,7 @@
         <span
           class="admin-live-sync"
           id="live-sync-indicator"
-          style="display: none;"
+          style="display: none"
         >
           <span class="admin-pulse-dot"></span>
           JSON Synced
@@ -829,7 +827,8 @@
             Administrator &amp; Developer Console
           </h1>
           <p class="admin-welcome-desc">
-            File-handling engine and database sanitizer for NEXO. Manage accounts, ban/delete users, and clean crowded JSON data.
+            File-handling engine and database sanitizer for NEXO. Manage
+            accounts, ban/delete users, and clean crowded JSON data.
           </p>
         </div>
 
@@ -990,10 +989,7 @@
             />
           </div>
 
-          <select
-            id="filter-student-status"
-            class="admin-filter-select"
-          >
+          <select id="filter-student-status" class="admin-filter-select">
             <option value="all">All Statuses</option>
             <option value="active">Active Only</option>
             <option value="banned">Banned Only</option>
@@ -1037,10 +1033,7 @@
             />
           </div>
 
-          <select
-            id="filter-provider-status"
-            class="admin-filter-select"
-          >
+          <select id="filter-provider-status" class="admin-filter-select">
             <option value="all">All Statuses</option>
             <option value="active">Active Only</option>
             <option value="banned">Banned Only</option>
@@ -1102,7 +1095,9 @@
               line-height: 1.5;
             "
           >
-            Quick tools to clean crowded JSON files from test submissions, remove test scholarships without manual JSON editing, or reset back to clean defaults.
+            Quick tools to clean crowded JSON files from test submissions,
+            remove test scholarships without manual JSON editing, or reset back
+            to clean defaults.
           </p>
         </div>
 
@@ -1113,7 +1108,8 @@
             <h4>Purge All Student Applications</h4>
             <p>
               Removes all submitted student applications from
-              <code>data.json</code> and resets scholarship applicant counters to 0.
+              <code>data.json</code> and resets scholarship applicant counters
+              to 0.
             </p>
             <button
               type="button"
@@ -1180,7 +1176,8 @@
           <div class="admin-clean-card">
             <h4>Reset to Factory Default State</h4>
             <p>
-              Resets <code>data.json</code> back to clean state: default admin accounts, clean scholarships, 0 test applications.
+              Resets <code>data.json</code> back to clean state: default admin
+              accounts, clean scholarships, 0 test applications.
             </p>
             <button
               type="button"
@@ -1462,7 +1459,8 @@
                 margin-top: 4px;
               "
             >
-              Simple password used for login (shown in table below for quick recall).
+              Simple password used for login (shown in table below for quick
+              recall).
             </small>
           </div>
 
@@ -1494,7 +1492,9 @@
               "
             >
               <option value="active">Active (Can log in immediately)</option>
-              <option value="banned">Banned / Suspended (Login restricted)</option>
+              <option value="banned">
+                Banned / Suspended (Login restricted)
+              </option>
             </select>
           </div>
 
@@ -1504,7 +1504,14 @@
               type="button"
               class="btn btn-secondary"
               id="btn-cancel-create"
-              style="flex: 1; min-height: 46px; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px;"
+              style="
+                flex: 1;
+                min-height: 46px;
+                padding: 12px;
+                font-size: 14px;
+                font-weight: 700;
+                border-radius: 12px;
+              "
             >
               Cancel
             </button>
@@ -1512,7 +1519,14 @@
               type="submit"
               class="btn btn-primary"
               id="btn-submit-create"
-              style="flex: 1; min-height: 46px; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px;"
+              style="
+                flex: 1;
+                min-height: 46px;
+                padding: 12px;
+                font-size: 14px;
+                font-weight: 700;
+                border-radius: 12px;
+              "
             >
               Save to Database
             </button>
@@ -1575,7 +1589,8 @@
             "
             id="confirm-modal-desc"
           >
-            Are you sure? This will remove the account and all associated posts/applications from the local JSON file.
+            Are you sure? This will remove the account and all associated
+            posts/applications from the local JSON file.
           </p>
         </div>
 
@@ -1584,7 +1599,14 @@
             type="button"
             class="btn btn-secondary"
             id="btn-cancel-confirm"
-            style="flex: 1; min-height: 46px; padding: 12px; font-size: 14px; font-weight: 700; border-radius: 12px;"
+            style="
+              flex: 1;
+              min-height: 46px;
+              padding: 12px;
+              font-size: 14px;
+              font-weight: 700;
+              border-radius: 12px;
+            "
           >
             Cancel
           </button>
