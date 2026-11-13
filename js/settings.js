@@ -15,7 +15,7 @@ let logoBase64 = null;
 let isDirty = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-  initSettingsTabs();
+  initSettingsCategories();
   initImageUploads();
   initPasswordToggles();
   initSettingsFormActions();
@@ -24,44 +24,44 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ==========================================
-// 1. TAB NAVIGATION CONTROLLER
+// 1. ACCORDION CATEGORIES CONTROLLER (Matching Student Settings)
 // ==========================================
-function initSettingsTabs() {
-  const tabBtns = document.querySelectorAll(".settings-tab-btn");
-  const panels = document.querySelectorAll(".settings-panel");
-
-  tabBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-tab");
-
-      tabBtns.forEach((b) => b.classList.remove("active"));
-      panels.forEach((p) => p.classList.remove("active"));
-
-      btn.classList.add("active");
-      const targetPanel = document.getElementById(targetId);
-      if (targetPanel) {
-        targetPanel.classList.add("active");
-      }
-
-      // Smooth scroll the clicked button into view on mobile
-      btn.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
+function initSettingsCategories() {
+  const categoryBars = document.querySelectorAll(".settings-category-bar");
+  categoryBars.forEach((bar) => {
+    bar.addEventListener("click", (e) => {
+      e.preventDefault();
+      const group = bar.closest(".settings-category-group");
+      if (!group) return;
+      const isOpen = group.classList.contains("is-open");
+      group.classList.toggle("is-open", !isOpen);
+      bar.setAttribute("aria-expanded", String(!isOpen));
     });
   });
 
-  // Check URL query parameters or hash to automatically activate requested tab
+  // Check URL query parameters or hash to automatically activate requested category
   const urlParams = new URLSearchParams(window.location.search);
-  const requestedTab =
-    urlParams.get("tab") || window.location.hash.replace("#", "");
-  if (requestedTab) {
-    const targetBtn = document.querySelector(
-      `.settings-tab-btn[data-tab="${requestedTab}"]`,
-    );
-    if (targetBtn) {
-      targetBtn.click();
+  const targetCategory =
+    urlParams.get("category") ||
+    urlParams.get("tab") ||
+    window.location.hash.replace("#", "");
+
+  if (targetCategory) {
+    const cleanName = targetCategory
+      .replace("panel-provider-", "")
+      .replace("category-provider-", "")
+      .replace("panel-", "")
+      .replace("category-", "");
+    const match =
+      document.getElementById(`category-provider-${cleanName}`) ||
+      document.getElementById(`category-${cleanName}`);
+    if (match) {
+      document
+        .querySelectorAll(".settings-category-group")
+        .forEach((g) => g.classList.remove("is-open"));
+      match.classList.add("is-open");
+      const barBtn = match.querySelector(".settings-category-bar");
+      if (barBtn) barBtn.setAttribute("aria-expanded", "true");
     }
   }
 }
@@ -247,11 +247,16 @@ function applySettingsToUI(s) {
     contactNumberInput.value = s.contactNumber;
   if (contactEmailInput && s.email) contactEmailInput.value = s.email;
 
-  // Current Email Display in Security tab
+  // Current Email & Active Session Display in Security tab
   const currentAccountEmail = document.getElementById("current-account-email");
-  if (currentAccountEmail) {
-    currentAccountEmail.textContent = s.email || "provider@nexo.edu.ph";
-  }
+  const sessionActiveEmail = document.getElementById("session-active-email");
+  const activeEmail =
+    s.email ||
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    "provider@nexo.edu.ph";
+  if (currentAccountEmail) currentAccountEmail.textContent = activeEmail;
+  if (sessionActiveEmail) sessionActiveEmail.textContent = activeEmail;
 
   // Banner Preview
   const bannerPreview = document.getElementById("banner-preview");
@@ -345,8 +350,12 @@ function extractInitials(name) {
 // 4. SAVE SETTINGS ACTION (Backend fetch POST)
 // ==========================================
 function initSettingsFormActions() {
-  const saveBtn = document.getElementById("btn-save-settings");
-  const discardBtn = document.getElementById("btn-discard-settings");
+  const saveBtns = document.querySelectorAll(
+    "#btn-save-settings, .btn-save-settings",
+  );
+  const discardBtns = document.querySelectorAll(
+    "#btn-discard-settings, .btn-discard-settings",
+  );
 
   // Track any form input changes to flag unsaved state
   const inputs = document.querySelectorAll(
@@ -357,20 +366,31 @@ function initSettingsFormActions() {
     input.addEventListener("change", () => markDirty(true));
   });
 
-  if (saveBtn) {
-    saveBtn.addEventListener("click", async () => {
-      await saveAllSettings(saveBtn);
+  saveBtns.forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      await saveAllSettings(btn);
     });
-  }
+  });
 
-  if (discardBtn) {
-    discardBtn.addEventListener("click", () => {
+  discardBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
       bannerBase64 = null;
       logoBase64 = null;
       loadSettings();
       markDirty(false);
+      showToast("Changes discarded");
     });
-  }
+  });
+
+  // Real-time auto-saving on notification switches & 2FA toggle
+  const autoSaveToggles = document.querySelectorAll(
+    "#notif-new-apps, #notif-email-alerts, #notif-weekly-digest, #notif-system-updates, #pref-2fa",
+  );
+  autoSaveToggles.forEach((t) => {
+    t.addEventListener("change", () => {
+      saveAllSettings();
+    });
+  });
 
   // Real-time Provider Dark Mode Toggle
   const providerDarkToggle = document.getElementById(
@@ -411,16 +431,19 @@ function initSettingsFormActions() {
   }
 }
 
-async function saveAllSettings(saveBtn) {
-  const originalText = saveBtn.innerHTML;
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = `
-    <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 0.8s linear infinite;">
-      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-      <path d="M12 2a10 10 0 0 1 10 10"></path>
-    </svg>
-    Saving...
-  `;
+async function saveAllSettings(saveBtn = null) {
+  let originalText = "";
+  if (saveBtn) {
+    originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `
+      <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 0.8s linear infinite;">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10"></path>
+      </svg>
+      Saving...
+    `;
+  }
 
   const orgNameVal =
     document.getElementById("org-name")?.value.trim() || "NEXO";
@@ -547,19 +570,21 @@ async function saveAllSettings(saveBtn) {
   logoBase64 = null;
   markDirty(false);
 
-  saveBtn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-      <path d="M20 6L9 17l-5-5"></path>
-    </svg>
-    Saved!
-  `;
+  if (saveBtn) {
+    saveBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M20 6L9 17l-5-5"></path>
+      </svg>
+      Saved!
+    `;
+
+    setTimeout(() => {
+      saveBtn.innerHTML = originalText;
+      saveBtn.disabled = false;
+    }, 1200);
+  }
 
   showToast("Customization saved");
-
-  setTimeout(() => {
-    saveBtn.innerHTML = originalText;
-    saveBtn.disabled = false;
-  }, 1200);
 }
 
 // ==========================================

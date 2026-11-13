@@ -36,30 +36,7 @@
       "status": "Open"
     }
   ],
-  "drafts": [
-    {
-      "id": "draft_1794482405471_57f68b",
-      "title": "Test Draft",
-      "desc": "This is a test draft",
-      "type": "athletic",
-      "typeText": "athletic",
-      "date": "12/05/2026",
-      "applicantLimit": 300,
-      "requirements": [
-        {
-          "title": "Valid School ID",
-          "desc": "Upload a clear photo of your student ID. (Max 5MB)"
-        },
-        {
-          "title": "Latest Grades/Transcript",
-          "desc": "Upload your latest grades or official transcript."
-        }
-      ],
-      "providerName": "NEXO",
-      "providerEmail": "admin@admin",
-      "updatedAt": "2026-11-12T11:20:05.471Z"
-    }
-  ],
+  "drafts": [],
   "applications": [
     {
       "id": "app_1794360837793_9d1509",

@@ -21,6 +21,49 @@
     </script>
 
     <style>
+      /* Provider specific adjustments with generous mobile spacing matching Student Settings */
+      .settings-page-main {
+        padding: 20px 18px 140px 18px;
+        padding-top: 72px !important;
+      }
+      .settings-header {
+        margin-bottom: 24px;
+      }
+      .settings-card {
+        padding: 24px 20px !important;
+        margin-bottom: 24px !important;
+        border-radius: 18px !important;
+      }
+      .settings-card-title {
+        font-size: 17px !important;
+        margin-bottom: 6px !important;
+      }
+      .settings-card-desc {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        margin-bottom: 20px !important;
+      }
+      .settings-form-group {
+        margin-bottom: 22px !important;
+      }
+      .settings-label {
+        font-size: 13.5px !important;
+        margin-bottom: 8px !important;
+      }
+      .settings-input {
+        padding: 13px 14px !important;
+        font-size: 14.5px !important;
+        border-radius: 11px !important;
+      }
+      .settings-hint {
+        margin-top: 7px !important;
+        font-size: 12px !important;
+        line-height: 1.4 !important;
+      }
+      .settings-toggle-row {
+        padding: 18px 0 !important;
+        gap: 16px !important;
+      }
       #nav-menu {
         pointer-events: none;
       }
@@ -41,7 +84,7 @@
     </style>
   </head>
 
-  <body class="dashboard-body">
+  <body class="dashboard-body" style="min-height: 100vh; min-height: 100dvh; display: flex !important; flex-direction: column;">
     <!-- ========================================= -->
     <!-- 1. HARDCODED PROVIDER GLOBAL HEADER       -->
     <!-- ========================================= -->
@@ -154,12 +197,8 @@
               <span class="nav-text">Applications</span>
             </a>
 
-            <!-- Provider Drafts -->
-            <a
-              href="provider-dashboard.html?view=drafts"
-              class="nav-link"
-              id="nav-drafts"
-            >
+            <!-- Drafts -->
+            <a href="provider-dashboard.html?view=drafts" class="nav-link" id="nav-drafts">
               <img
                 src="assets/draft-icon.png"
                 alt="Drafts"
@@ -169,23 +208,14 @@
               <span class="nav-text">Drafts</span>
               <span
                 id="draft-badge"
-                style="
-                  display: none;
-                  background-color: #8b5cf6;
-                  color: white;
-                  font-size: 12px;
-                  font-weight: 700;
-                  padding: 2px 8px;
-                  border-radius: 99px;
-                  margin-left: auto;
-                "
+                class="badge-counter"
+                style="display: none"
                 >0</span
               >
             </a>
 
             <div class="nav-spacer"></div>
 
-            <!-- Provider About Us -->
             <a href="provider-about.html" class="nav-link">
               <img
                 src="assets/about-icon.png"
@@ -262,679 +292,639 @@
     <!-- ========================================= -->
     <!-- 2. MAIN SETTINGS VIEWPORT                 -->
     <!-- ========================================= -->
-    <main class="settings-page-main">
-      <!-- Back to Dashboard button & Title -->
-      <div class="settings-header">
-        <a href="provider-dashboard.html" class="settings-back-link btn-back-nav">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          Back to Dashboard
-        </a>
-        <h1 class="settings-title">Organization Settings</h1>
+    <main class="settings-page-main" style="flex: 1; display: flex; flex-direction: column; padding-top: 72px !important; padding-bottom: 30px;">
+      <!-- Header Area (Clean, no back button, identical to Student Settings) -->
+      <div class="settings-header" style="margin-top: 0; margin-bottom: 12px;">
+        <h1 class="settings-title" style="margin-top: 0; margin-bottom: 4px;">Organization Settings</h1>
         <p class="settings-subtitle">
-          Customize your brand profile, contact details, and account security.
+          Customize your brand profile, contact details, and account preferences.
         </p>
       </div>
 
       <!-- ========================================= -->
-      <!-- 3. HORIZONTAL SUB-NAVIGATION TABS         -->
+      <!-- 3. EXPANDABLE SETTINGS CATEGORY BARS      -->
       <!-- ========================================= -->
-      <div class="settings-tabs-wrapper">
-        <div class="settings-tabs-nav" role="tablist">
+      <div class="settings-categories-container">
+        <!-- ============================================================= -->
+        <!-- CATEGORY 1: BRAND & PROFILE                                   -->
+        <!-- ============================================================= -->
+        <div class="settings-category-group" id="category-provider-brand">
           <button
             type="button"
-            class="settings-tab-btn active"
-            data-tab="panel-brand"
-            role="tab"
+            class="settings-category-bar"
+            aria-expanded="false"
+            aria-controls="content-provider-brand"
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M12 20h9"></path>
-              <path
-                d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-              ></path>
-            </svg>
-            Brand & Profile
-          </button>
-
-          <button
-            type="button"
-            class="settings-tab-btn"
-            data-tab="panel-contact"
-            role="tab"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-              ></path>
-            </svg>
-            Contact Info
-          </button>
-
-          <button
-            type="button"
-            class="settings-tab-btn"
-            data-tab="panel-security"
-            role="tab"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            Account & Security
-          </button>
-
-          <button
-            type="button"
-            class="settings-tab-btn"
-            data-tab="panel-preferences"
-            role="tab"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            Preferences
-          </button>
-        </div>
-      </div>
-
-      <!-- ========================================= -->
-      <!-- TAB 1: BRAND PROFILE PANEL                -->
-      <!-- ========================================= -->
-      <section id="panel-brand" class="settings-panel active">
-        <!-- Brand Visual Assets Card -->
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Brand Appearance</h2>
-            <p class="settings-card-desc">
-              Upload your organization's banner cover photo and profile logo.
-            </p>
-          </div>
-
-          <!-- Cover Banner Area -->
-          <div class="brand-cover-container">
-            <img
-              id="banner-preview"
-              src=""
-              alt="Organization Banner"
-              class="banner-img-preview"
-            />
-            <div class="banner-controls">
-              <button
-                type="button"
-                class="banner-remove-btn"
-                id="btn-remove-banner"
-              >
-                Remove
-              </button>
-              <label for="banner-input" class="banner-upload-btn">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                  ></path>
-                  <circle cx="12" cy="13" r="4"></circle>
+            <div class="settings-category-bar-left">
+              <div class="settings-category-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                 </svg>
-                Change Banner
-              </label>
-              <input
-                type="file"
-                id="banner-input"
-                accept="image/png, image/jpeg, image/webp"
-                style="display: none"
-              />
+              </div>
+              <div class="settings-category-title-wrap">
+                <h3 class="settings-category-title">Brand &amp; Profile</h3>
+                <p class="settings-category-desc">Banner photo, organization logo, and identity</p>
+              </div>
+            </div>
+            <svg class="settings-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div class="settings-category-content" id="content-provider-brand">
+            <!-- Brand Visual Assets Card -->
+            <div class="settings-card" style="margin-top: 14px;">
+              <h3 class="settings-card-title">Brand Appearance</h3>
+              <p class="settings-card-desc">
+                Upload your organization's banner cover photo and profile logo.
+              </p>
+
+              <!-- Cover Banner Area -->
+              <div class="brand-cover-container">
+                <img
+                  id="banner-preview"
+                  src=""
+                  alt="Organization Banner"
+                  class="banner-img-preview"
+                />
+                <div class="banner-controls">
+                  <button
+                    type="button"
+                    class="banner-remove-btn"
+                    id="btn-remove-banner"
+                  >
+                    Remove
+                  </button>
+                  <label for="banner-input" class="banner-upload-btn">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                      ></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    Change Banner
+                  </label>
+                  <input
+                    type="file"
+                    id="banner-input"
+                    accept="image/png, image/jpeg, image/webp"
+                    style="display: none"
+                  />
+                </div>
+              </div>
+
+              <!-- Overlapping Logo Row -->
+              <div class="brand-logo-row">
+                <div class="brand-logo-wrapper has-fallback">
+                  <img
+                    id="logo-preview"
+                    src=""
+                    alt="Logo"
+                    class="logo-img-preview"
+                  />
+                  <span id="logo-initials-fallback" class="logo-initials-fallback">
+                    NX
+                  </span>
+
+                  <!-- Camera Badge to Upload Logo -->
+                  <label
+                    for="logo-input"
+                    class="logo-upload-badge"
+                    title="Change Logo"
+                    aria-label="Upload Organization Logo"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                      ></path>
+                      <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                  </label>
+                  <input
+                    type="file"
+                    id="logo-input"
+                    accept="image/png, image/jpeg, image/webp"
+                    style="display: none"
+                  />
+                </div>
+
+                <div class="logo-action-buttons">
+                  <button
+                    type="button"
+                    id="btn-remove-logo"
+                    class="logo-remove-btn"
+                  >
+                    Remove Logo
+                  </button>
+                </div>
+              </div>
+
+              <p class="brand-specs-hint">
+                <strong>Recommended:</strong> Banner at 1200 &times; 400px. Square
+                Logo at 400 &times; 400px. Supported: JPG, PNG, WEBP.
+              </p>
+            </div>
+
+            <!-- Basic Information Card -->
+            <div class="settings-card">
+              <h3 class="settings-card-title">Organization Identity</h3>
+              <p class="settings-card-desc">
+                Your public organization identity visible on published scholarships.
+              </p>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="org-name">Organization Name</label>
+                <input
+                  type="text"
+                  id="org-name"
+                  class="settings-input"
+                  placeholder="e.g. Ayala Foundation / Batangas Provincial Gov"
+                  value="NEXO"
+                />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="org-location">Location / Address</label>
+                <input
+                  type="text"
+                  id="org-location"
+                  class="settings-input"
+                  placeholder="e.g. Batangas City, Philippines"
+                  value="Batangas City, Philippines"
+                />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="org-bio">
+                  Organization Mission &amp; Bio
+                </label>
+                <textarea
+                  id="org-bio"
+                  class="settings-input"
+                  placeholder="Briefly describe your scholarship mission..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Action buttons inside Brand & Profile -->
+            <div class="profile-action-buttons">
+              <button
+                type="button"
+                class="btn btn-secondary btn-discard-settings"
+                style="padding: 9px 16px; font-size: 13.5px; border-radius: 20px;"
+              >
+                Discard
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary settings-btn-save btn-save-settings"
+                style="padding: 9px 20px; font-size: 13.5px; border-radius: 20px;"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
+        </div>
 
-          <!-- Overlapping Logo Row -->
-          <div class="brand-logo-row">
-            <div class="brand-logo-wrapper has-fallback">
-              <img
-                id="logo-preview"
-                src=""
-                alt="Logo"
-                class="logo-img-preview"
-              />
-              <span id="logo-initials-fallback" class="logo-initials-fallback">
-                NX
-              </span>
-
-              <!-- Camera Badge to Upload Logo -->
-              <label
-                for="logo-input"
-                class="logo-upload-badge"
-                title="Change Logo"
-                aria-label="Upload Organization Logo"
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                  ></path>
-                  <circle cx="12" cy="13" r="4"></circle>
+        <!-- ============================================================= -->
+        <!-- CATEGORY 2: CONTACT DETAILS                                   -->
+        <!-- ============================================================= -->
+        <div class="settings-category-group" id="category-provider-contact">
+          <button
+            type="button"
+            class="settings-category-bar"
+            aria-expanded="false"
+            aria-controls="content-provider-contact"
+          >
+            <div class="settings-category-bar-left">
+              <div class="settings-category-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
-              </label>
-              <input
-                type="file"
-                id="logo-input"
-                accept="image/png, image/jpeg, image/webp"
-                style="display: none"
-              />
+              </div>
+              <div class="settings-category-title-wrap">
+                <h3 class="settings-category-title">Contact Information</h3>
+                <p class="settings-category-desc">Official email, telephone, and coordinator details</p>
+              </div>
+            </div>
+            <svg class="settings-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div class="settings-category-content" id="content-provider-contact">
+            <div class="settings-card" style="margin-top: 14px;">
+              <h3 class="settings-card-title">Contact &amp; Communication</h3>
+              <p class="settings-card-desc">
+                Student applicants will use this info for scholarship inquiries and follow-ups.
+              </p>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="contact-person">Primary Contact Person</label>
+                <input
+                  type="text"
+                  id="contact-person"
+                  class="settings-input"
+                  placeholder="e.g. Maria Santos (Scholarship Coordinator)"
+                />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="contact-number">Contact Phone Number</label>
+                <input
+                  type="tel"
+                  id="contact-number"
+                  class="settings-input"
+                  placeholder="e.g. +63 912 345 6789 or (043) 723-1234"
+                />
+                <span class="settings-hint">Include country and area codes for clarity.</span>
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="contact-email">Public Inquiry Email</label>
+                <input
+                  type="email"
+                  id="contact-email"
+                  class="settings-input"
+                  placeholder="e.g. scholarships@organization.org"
+                />
+              </div>
             </div>
 
-            <div class="logo-action-buttons">
+            <!-- Action buttons inside Contact Info -->
+            <div class="profile-action-buttons">
               <button
                 type="button"
-                id="btn-remove-logo"
-                class="logo-remove-btn"
+                class="btn btn-secondary btn-discard-settings"
+                style="padding: 9px 16px; font-size: 13.5px; border-radius: 20px;"
               >
-                Remove Logo
+                Discard
               </button>
-            </div>
-          </div>
-
-          <p class="brand-specs-hint">
-            <strong>Recommended:</strong> Banner at 1200 &times; 400px. Square
-            Logo at 400 &times; 400px. Supported: JPG, PNG, WEBP.
-          </p>
-        </div>
-
-        <!-- Basic Information Card -->
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Basic Information</h2>
-            <p class="settings-card-desc">
-              Your public organization identity visible on published
-              scholarships.
-            </p>
-          </div>
-
-          <div class="settings-form-grid">
-            <div class="settings-input-group">
-              <label for="org-name">Organization Name</label>
-              <input
-                type="text"
-                id="org-name"
-                class="settings-input"
-                placeholder="e.g. Ayala Foundation / Batangas Provincial Gov"
-                value="NEXO"
-              />
-            </div>
-
-            <div class="settings-input-group">
-              <label for="org-location">Location / Address</label>
-              <input
-                type="text"
-                id="org-location"
-                class="settings-input"
-                placeholder="e.g. Batangas City, Philippines"
-                value="Batangas City, Philippines"
-              />
-            </div>
-
-            <div class="settings-input-group">
-              <label for="org-bio">
-                Organization Bio
-                <span class="label-optional">Optional</span>
-              </label>
-              <textarea
-                id="org-bio"
-                class="settings-input"
-                placeholder="Briefly describe your scholarship mission..."
-              ></textarea>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================= -->
-      <!-- TAB 2: CONTACT DETAILS PANEL              -->
-      <!-- ========================================= -->
-      <section id="panel-contact" class="settings-panel">
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Contact & Communication</h2>
-            <p class="settings-card-desc">
-              Student applicants will use this info for scholarship inquiries.
-            </p>
-          </div>
-
-          <div class="settings-form-grid">
-            <div class="settings-input-group">
-              <label for="contact-person">Primary Contact Person</label>
-              <input
-                type="text"
-                id="contact-person"
-                class="settings-input"
-                placeholder="e.g. Maria Santos (Scholarship Coordinator)"
-              />
-            </div>
-
-            <div class="settings-input-group">
-              <label for="contact-number">Contact Phone Number</label>
-              <input
-                type="tel"
-                id="contact-number"
-                class="settings-input"
-                placeholder="e.g. +63 912 345 6789 or (043) 723-1234"
-              />
-              <span class="input-hint"
-                >Include country and area codes for clarity.</span
-              >
-            </div>
-
-            <div class="settings-input-group">
-              <label for="contact-email">Public Inquiry Email</label>
-              <input
-                type="email"
-                id="contact-email"
-                class="settings-input"
-                placeholder="e.g. scholarships@organization.org"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================= -->
-      <!-- TAB 3: ACCOUNT & SECURITY PANEL           -->
-      <!-- ========================================= -->
-      <section id="panel-security" class="settings-panel">
-        <!-- Change Password Card -->
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Change Password</h2>
-            <p class="settings-card-desc">
-              Ensure your account uses a strong, unique password.
-            </p>
-          </div>
-
-          <div class="settings-form-grid">
-            <div class="settings-input-group">
-              <label for="current-password">Current Password</label>
-              <div class="password-input-wrapper">
-                <input
-                  type="password"
-                  id="current-password"
-                  class="settings-input"
-                  placeholder="Enter current password"
-                />
-                <button
-                  type="button"
-                  class="password-toggle-btn"
-                  data-target="current-password"
-                  aria-label="Toggle password visibility"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="settings-input-group">
-              <label for="new-password">New Password</label>
-              <div class="password-input-wrapper">
-                <input
-                  type="password"
-                  id="new-password"
-                  class="settings-input"
-                  placeholder="Minimum 8 characters"
-                />
-                <button
-                  type="button"
-                  class="password-toggle-btn"
-                  data-target="new-password"
-                  aria-label="Toggle password visibility"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="settings-input-group">
-              <label for="confirm-password">Confirm New Password</label>
-              <div class="password-input-wrapper">
-                <input
-                  type="password"
-                  id="confirm-password"
-                  class="settings-input"
-                  placeholder="Re-type new password"
-                />
-                <button
-                  type="button"
-                  class="password-toggle-btn"
-                  data-target="confirm-password"
-                  aria-label="Toggle password visibility"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                    ></path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <div>
               <button
                 type="button"
-                id="btn-update-password"
-                class="btn btn-secondary"
-                style="margin-top: 4px"
+                class="btn btn-primary settings-btn-save btn-save-settings"
+                style="padding: 9px 20px; font-size: 13.5px; border-radius: 20px;"
               >
-                Update Password
+                Save Changes
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Request Email Change Card -->
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Account Email Address</h2>
-            <p class="settings-card-desc">
-              Your primary login email address. Changes require administrative
-              approval.
-            </p>
-          </div>
+        <!-- ============================================================= -->
+        <!-- CATEGORY 3: PREFERENCES & NOTIFICATIONS                       -->
+        <!-- ============================================================= -->
+        <div class="settings-category-group" id="category-provider-preferences">
+          <button
+            type="button"
+            class="settings-category-bar"
+            aria-expanded="false"
+            aria-controls="content-provider-preferences"
+          >
+            <div class="settings-category-bar-left">
+              <div class="settings-category-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="4" y1="21" x2="4" y2="14"></line>
+                  <line x1="4" y1="10" x2="4" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12" y2="3"></line>
+                  <line x1="20" y1="21" x2="20" y2="16"></line>
+                  <line x1="20" y1="12" x2="20" y2="3"></line>
+                  <line x1="1" y1="14" x2="7" y2="14"></line>
+                  <line x1="9" y1="8" x2="15" y2="8"></line>
+                  <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+              </div>
+              <div class="settings-category-title-wrap">
+                <h3 class="settings-category-title">Preferences</h3>
+                <p class="settings-category-desc">Theme appearance and scholarship notification alerts</p>
+              </div>
+            </div>
+            <svg class="settings-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
 
-          <div class="settings-form-grid">
-            <div class="settings-input-group">
-              <label>Current Registered Email</label>
-              <div style="display: flex; align-items: center; gap: 8px">
-                <span
-                  id="current-account-email"
-                  style="font-weight: 600; font-size: 14px"
-                >
-                  provider@nexo.edu.ph
-                </span>
-                <span class="status-pill">
-                  <svg
-                    width="10"
-                    height="10"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="3"
-                  >
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Verified
-                </span>
+          <div class="settings-category-content" id="content-provider-preferences">
+            <!-- Theme & Appearance Card -->
+            <div class="settings-card" style="margin-top: 14px;">
+              <h3 class="settings-card-title">Theme &amp; Appearance</h3>
+              <p class="settings-card-desc">
+                Customize how NEXO looks on your device.
+              </p>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">Dark Mode Theme</span>
+                  <span class="settings-toggle-desc">Enable high-contrast dark theme mode across all provider workspace consoles</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle dark mode theme">
+                  <input type="checkbox" id="pref-provider-dark-mode" />
+                  <span class="nexo-slider"></span>
+                </label>
               </div>
             </div>
 
-            <div class="settings-input-group">
-              <label for="new-account-email">Requested New Email</label>
-              <input
-                type="email"
-                id="new-account-email"
-                class="settings-input"
-                placeholder="new-email@organization.org"
-              />
+            <!-- Notification Alerts Card -->
+            <div class="settings-card">
+              <h3 class="settings-card-title">Notification Alerts</h3>
+              <p class="settings-card-desc">
+                Choose which events and updates send alerts to your team.
+              </p>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">New Applicant Notifications</span>
+                  <span class="settings-toggle-desc">Receive real-time alerts whenever a student scholar applies to your posted grants</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle applicant alerts">
+                  <input type="checkbox" id="notif-new-apps" checked />
+                  <span class="nexo-slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">Email Activity Alerts</span>
+                  <span class="settings-toggle-desc">Send notification emails to your primary contact address when applications need review</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle email alerts">
+                  <input type="checkbox" id="notif-email-alerts" checked />
+                  <span class="nexo-slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">Weekly Scholarship Digest</span>
+                  <span class="settings-toggle-desc">A weekly summary of total views, applicants, and remaining days before deadlines</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle weekly digest">
+                  <input type="checkbox" id="notif-weekly-digest" />
+                  <span class="nexo-slider"></span>
+                </label>
+              </div>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">System &amp; Security Notices</span>
+                  <span class="settings-toggle-desc">Important platform updates, scheduled maintenance windows, and policy revisions</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle system notices">
+                  <input type="checkbox" id="notif-system-updates" checked />
+                  <span class="nexo-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- CATEGORY 4: SECURITY & ACCESS                                 -->
+        <!-- ============================================================= -->
+        <div class="settings-category-group" id="category-provider-security">
+          <button
+            type="button"
+            class="settings-category-bar"
+            aria-expanded="false"
+            aria-controls="content-provider-security"
+          >
+            <div class="settings-category-bar-left">
+              <div class="settings-category-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <div class="settings-category-title-wrap">
+                <h3 class="settings-category-title">Security</h3>
+                <p class="settings-category-desc">Password management, two-factor authentication, and active session</p>
+              </div>
+            </div>
+            <svg class="settings-category-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <div class="settings-category-content" id="content-provider-security">
+            <!-- Change Password Card -->
+            <div class="settings-card" style="margin-top: 14px;">
+              <h3 class="settings-card-title">Change Password</h3>
+              <p class="settings-card-desc">
+                Ensure your account uses a strong, unique password of at least 8 characters.
+              </p>
+
+              <form id="provider-password-form" onsubmit="return false;">
+                <div class="settings-form-group">
+                  <label class="settings-label" for="current-password">Current Password</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      type="password"
+                      id="current-password"
+                      class="settings-input"
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      data-target="current-password"
+                      aria-label="Toggle password visibility"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="settings-form-group">
+                  <label class="settings-label" for="new-password">New Password</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      type="password"
+                      id="new-password"
+                      class="settings-input"
+                      placeholder="Minimum 8 characters"
+                    />
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      data-target="new-password"
+                      aria-label="Toggle password visibility"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="settings-form-group">
+                  <label class="settings-label" for="confirm-password">Confirm New Password</label>
+                  <div class="password-input-wrapper">
+                    <input
+                      type="password"
+                      id="confirm-password"
+                      class="settings-input"
+                      placeholder="Re-type new password"
+                    />
+                    <button
+                      type="button"
+                      class="password-toggle-btn"
+                      data-target="confirm-password"
+                      aria-label="Toggle password visibility"
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="btn-update-password"
+                  class="btn btn-secondary"
+                  style="width: 100%; margin-top: 6px; padding: 11px; border-radius: 20px;"
+                >
+                  Update Password
+                </button>
+              </form>
             </div>
 
-            <div class="settings-input-group">
-              <label for="email-change-reason">
-                Reason for Change
-                <span class="label-optional">Optional</span>
-              </label>
-              <textarea
-                id="email-change-reason"
-                class="settings-input"
-                placeholder="e.g. Department reorganization, institutional domain update..."
-                style="min-height: 60px"
-              ></textarea>
-            </div>
+            <!-- Account Email Address Card -->
+            <div class="settings-card">
+              <h3 class="settings-card-title">Account Email Address</h3>
+              <p class="settings-card-desc">
+                Your primary login email address. Changes require administrative approval.
+              </p>
 
-            <div>
+              <div class="settings-form-group">
+                <label class="settings-label">Current Registered Email</label>
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span
+                    id="current-account-email"
+                    style="font-weight: 600; font-size: 14px; color: var(--text-primary);"
+                  >
+                    provider@nexo.edu.ph
+                  </span>
+                  <span class="status-pill">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="3"
+                    >
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Verified
+                  </span>
+                </div>
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="new-account-email">Requested New Email</label>
+                <input
+                  type="email"
+                  id="new-account-email"
+                  class="settings-input"
+                  placeholder="new-email@organization.org"
+                />
+              </div>
+
+              <div class="settings-form-group">
+                <label class="settings-label" for="email-change-reason">Reason for Change</label>
+                <textarea
+                  id="email-change-reason"
+                  class="settings-input"
+                  placeholder="e.g. Department reorganization, institutional domain update..."
+                  style="min-height: 70px"
+                ></textarea>
+              </div>
+
               <button
                 type="button"
                 id="btn-request-email"
                 class="btn btn-secondary"
+                style="width: 100%; padding: 11px; border-radius: 20px;"
               >
                 Submit Email Change Request
               </button>
             </div>
+
+            <!-- Two-Factor Authentication Card -->
+            <div class="settings-card">
+              <h3 class="settings-card-title">Two-Factor Authentication (2FA)</h3>
+              <p class="settings-card-desc">
+                Add an additional layer of login protection for organization accounts.
+              </p>
+
+              <div class="settings-toggle-row">
+                <div class="settings-toggle-info">
+                  <span class="settings-toggle-title">Require 2FA at Login</span>
+                  <span class="settings-toggle-desc">Prompts for an authenticator code or SMS OTP when signing into this provider portal</span>
+                </div>
+                <label class="nexo-switch" aria-label="Toggle 2FA">
+                  <input type="checkbox" id="pref-2fa" />
+                  <span class="nexo-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Session Information Card (Identical to student settings) -->
+            <div class="settings-card">
+              <h3 class="settings-card-title">Session Information</h3>
+              <p class="settings-card-desc">
+                You are currently logged in with your verified provider organization session.
+              </p>
+              <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                <div><strong>Active Account:</strong> <span id="session-active-email">-</span></div>
+                <div><strong>Role:</strong> Scholarship Provider (Verified Provider)</div>
+                <div><strong>Status:</strong> <span style="color: #10b981; font-weight: 600;">Active Now</span></div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Two-Factor Authentication Toggle Card -->
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Two-Factor Authentication (2FA)</h2>
-            <p class="settings-card-desc">
-              Add an additional layer of login protection for organization
-              accounts.
-            </p>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">Require 2FA at Login</h4>
-              <p class="settings-toggle-desc">
-                Prompts for an authenticator code or SMS OTP when signing into
-                this provider portal.
-              </p>
-            </div>
-            <label class="nexo-switch" aria-label="Toggle 2FA">
-              <input type="checkbox" id="pref-2fa" />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================= -->
-      <!-- TAB 4: PREFERENCES & NOTIFICATIONS PANEL  -->
-      <!-- ========================================= -->
-      <section id="panel-preferences" class="settings-panel">
-        <div class="settings-card">
-          <div class="settings-card-header">
-            <h2 class="settings-card-title">Notification Preferences</h2>
-            <p class="settings-card-desc">
-              Choose which events and updates send alerts to your team.
-            </p>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">New Student Applications</h4>
-              <p class="settings-toggle-desc">
-                Receive instant in-app alerts whenever a student completes and
-                submits a scholarship application.
-              </p>
-            </div>
-            <label
-              class="nexo-switch"
-              aria-label="Toggle new application alerts"
-            >
-              <input type="checkbox" id="notif-new-apps" checked />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">Email Activity Alerts</h4>
-              <p class="settings-toggle-desc">
-                Send notification emails to your primary contact address when
-                applications need review.
-              </p>
-            </div>
-            <label class="nexo-switch" aria-label="Toggle email alerts">
-              <input type="checkbox" id="notif-email-alerts" checked />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">Weekly Scholarship Digest</h4>
-              <p class="settings-toggle-desc">
-                A weekly summary of total views, applicants, and remaining days
-                before application deadlines.
-              </p>
-            </div>
-            <label class="nexo-switch" aria-label="Toggle weekly digest">
-              <input type="checkbox" id="notif-weekly-digest" />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">System & Security Notices</h4>
-              <p class="settings-toggle-desc">
-                Important platform updates, scheduled maintenance windows, and
-                policy revisions.
-              </p>
-            </div>
-            <label class="nexo-switch" aria-label="Toggle system notices">
-              <input type="checkbox" id="notif-system-updates" checked />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-toggle-row">
-            <div class="settings-toggle-info">
-              <h4 class="settings-toggle-title">Dark Mode Theme</h4>
-              <p class="settings-toggle-desc">
-                Enable high-contrast dark theme mode across all provider workspace consoles.
-              </p>
-            </div>
-            <label class="nexo-switch" aria-label="Toggle dark mode theme">
-              <input type="checkbox" id="pref-provider-dark-mode" />
-              <span class="nexo-slider"></span>
-            </label>
-          </div>
-        </div>
-      </section>
+      <!-- Toast Notification Container -->
+      <div id="settings-toast" class="settings-toast">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+        >
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="toast-message">Customization saved</span>
+      </div>
     </main>
 
-    <!-- ========================================= -->
-    <!-- 4. BOTTOM STICKY ACTION BAR               -->
-    <!-- ========================================= -->
-    <div class="settings-action-bar">
-      <div class="settings-action-buttons">
-        <button
-          type="button"
-          id="btn-discard-settings"
-          class="btn btn-secondary"
-          style="padding: 10px 18px; font-size: 13px"
-        >
-          Discard
-        </button>
-
-        <button
-          type="button"
-          id="btn-save-settings"
-          class="btn btn-primary settings-btn-save"
-          style="padding: 10px 22px; font-size: 13px"
-        >
-          Save Changes
-        </button>
-      </div>
-    </div>
-
-    <!-- Toast Notification Container -->
-    <div id="settings-toast" class="settings-toast">
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-      >
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      <span>Customization saved</span>
-    </div>
-
-    <!-- Global Footer -->
-    <footer class="global-footer">
+    <!-- Global Footer (Pushed to bottom of viewport) -->
+    <footer class="global-footer" style="margin-top: auto; padding-bottom: 36px;">
       <p>
         Copyright 2026 Batangas State University &bull; Alangilan Campus &bull;
         CICS
