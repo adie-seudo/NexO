@@ -849,4 +849,22 @@ body.dark-theme .profile-action-buttons {
   border-top-color: #2D3748;
 }
 
+/* Desktop Mode: Fit cleanly before the 68px pre-opened right side menu */
+@media (min-width: 1024px) {
+  body,
+  body.dashboard-body {
+    padding-right: 68px !important;
+    box-sizing: border-box !important;
+  }
+
+  .settings-page-main {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    box-sizing: border-box !important;
+  }
+}
+
 

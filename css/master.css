@@ -6701,6 +6701,32 @@ body.dark-theme .skeleton-bone {
   body {
     padding-right: 68px; /* Offset for docked rail so content is never covered */
     box-sizing: border-box;
+  body,
+  body.dashboard-body,
+  body.auth-body {
+    padding-right: 68px !important; /* Offset for docked rail so content is never covered */
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Ensure global footer also stops cleanly before the 68px pre-opened side menu */
+  .global-footer {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+
+  /* Guarantee the pre-opened side menu rail and all its links are always clickable on desktop */
+  #nav-menu,
+  .nav-menu,
+  #nav-menu:not(.open),
+  .nav-menu:not(.open),
+  .nav-menu .nav-link,
+  .nav-menu .nav-buttons,
+  .nav-menu .nav-buttons .btn {
+    pointer-events: auto !important;
   }
 
   /* Global Top Hero Header: unchanged hero bar */
@@ -6913,14 +6939,30 @@ body.dark-theme .skeleton-bone {
   }
 
   /* Ensure inner sections and cards inside Provider & Student accounts stretch full width */
+  /* Ensure inner sections, search bars, filter rows, and cards inside Public, Provider & Student accounts fit cleanly */
   #dash-drafts-section,
   #dash-all-scholarships-section,
   #dash-overview-section,
   .dash-overview-section,
   .dash-feed-section,
   .student-apps-section,
+  .student-apps-feed,
   .student-greeting-section,
   .submissions-search-filter-section,
+  .submissions-search-filter-row,
+  .browse-search-wrapper,
+  .browse-search-input,
+  .directory-search-input,
+  .directory-filter-row,
+  .browse-meta-row,
+  .browse-feed,
+  .posts-controls-bar,
+  .posts-search-wrapper,
+  .posts-search-input,
+  .posts-feed,
+  .apps-search-filter-row,
+  .apps-search-wrapper,
+  .apps-feed,
   .settings-header,
   .settings-tabs-wrapper,
   .settings-tab-panel,
@@ -6931,6 +6973,7 @@ body.dark-theme .skeleton-bone {
   .directory-card,
   .student-app-card,
   .student-welcome-card,
+  .provider-app-card,
   .empty-state-card,
   .student-empty-card {
     max-width: 100% !important;

@@ -7,15 +7,17 @@
     <link rel="stylesheet" href="css/master.css" />
 
     <style>
-      /* 1. Ghost mode by default (No phantom hovers) */
-      #nav-menu {
-        pointer-events: none;
-      }
+      @media (max-width: 1023px) {
+        /* 1. Ghost mode by default on mobile (No phantom hovers) */
+        #nav-menu {
+          pointer-events: none;
+        }
 
-      /* 2. Solid mode when actively hovering the wrapper or clicked open */
-      .nav-wrapper:hover #nav-menu,
-      #nav-menu.open {
-        pointer-events: auto !important;
+        /* 2. Solid mode when actively hovering the wrapper or clicked open */
+        .nav-wrapper:hover #nav-menu,
+        #nav-menu.open {
+          pointer-events: auto !important;
+        }
       }
 
       /* 3. THE TRUE BRIDGE (Placed BEHIND the menu so you can click links) */

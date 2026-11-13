@@ -194,54 +194,57 @@
     <!-- 2. MAIN STUDENT DASHBOARD CONTENT         -->
     <!-- ========================================= -->
     <main class="student-dash-main">
-      <!-- A. STUDENT WELCOME RECTANGULAR HERO CARD -->
-      <section class="student-welcome-card" id="student-welcome-card">
-        <!-- Squircle Avatar Container -->
-        <div class="student-welcome-avatar" id="student-card-avatar" title="View Account Settings">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-            <circle cx="12" cy="7" r="4"></circle>
-          </svg>
-        </div>
-
-        <!-- Student Dynamic Greetings, Name, and Tagline -->
-        <div class="student-welcome-content">
-          <div class="student-greeting-row">
-            <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
+      <!-- TOP ROW: GREETING HERO (LEFT ON DESKTOP) + 2x2 METRICS GRID (RIGHT ON DESKTOP) -->
+      <div class="student-top-overview-row">
+        <!-- A. STUDENT WELCOME RECTANGULAR HERO CARD -->
+        <section class="student-welcome-card" id="student-welcome-card">
+          <!-- Squircle Avatar Container -->
+          <div class="student-welcome-avatar" id="student-card-avatar" title="View Account Settings">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </div>
-          <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
-          <p class="student-motto" id="student-motto">
-            Keep going! Your education journey opens more opportunities.
-          </p>
-        </div>
-      </section>
 
-      <!-- B. 2x2 METRIC CARDS GRID -->
-      <section class="student-stats-grid">
-        <!-- Metric 1: My Applications -->
-        <div class="student-stat-card is-disabled" id="card-stat-my-apps">
-          <p class="student-stat-label">My Applications</p>
-          <h2 class="student-stat-value" id="stat-my-apps">0</h2>
-        </div>
+          <!-- Student Dynamic Greetings, Name, and Tagline -->
+          <div class="student-welcome-content">
+            <div class="student-greeting-row">
+              <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
+            </div>
+            <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
+            <p class="student-motto" id="student-motto">
+              Keep going! Your education journey opens more opportunities.
+            </p>
+          </div>
+        </section>
 
-        <!-- Metric 2: Approved -->
-        <div class="student-stat-card is-disabled" id="card-stat-approved">
-          <p class="student-stat-label">Approved</p>
-          <h2 class="student-stat-value" id="stat-approved">0</h2>
-        </div>
+        <!-- B. 2x2 METRIC CARDS GRID -->
+        <section class="student-stats-grid">
+          <!-- Metric 1: My Applications -->
+          <div class="student-stat-card is-disabled" id="card-stat-my-apps">
+            <p class="student-stat-label">My Applications</p>
+            <h2 class="student-stat-value" id="stat-my-apps">0</h2>
+          </div>
 
-        <!-- Metric 3: Under Review -->
-        <div class="student-stat-card is-disabled" id="card-stat-review">
-          <p class="student-stat-label">Under Review</p>
-          <h2 class="student-stat-value" id="stat-review">0</h2>
-        </div>
+          <!-- Metric 2: Approved -->
+          <div class="student-stat-card is-disabled" id="card-stat-approved">
+            <p class="student-stat-label">Approved</p>
+            <h2 class="student-stat-value" id="stat-approved">0</h2>
+          </div>
 
-        <!-- Metric 4: Rejected -->
-        <div class="student-stat-card is-disabled" id="card-stat-rejected">
-          <p class="student-stat-label">Rejected</p>
-          <h2 class="student-stat-value" id="stat-rejected">0</h2>
-        </div>
-      </section>
+          <!-- Metric 3: Under Review -->
+          <div class="student-stat-card is-disabled" id="card-stat-review">
+            <p class="student-stat-label">Under Review</p>
+            <h2 class="student-stat-value" id="stat-review">0</h2>
+          </div>
+
+          <!-- Metric 4: Rejected -->
+          <div class="student-stat-card is-disabled" id="card-stat-rejected">
+            <p class="student-stat-label">Rejected</p>
+            <h2 class="student-stat-value" id="stat-rejected">0</h2>
+          </div>
+        </section>
+      </div>
 
       <!-- C. MY SCHOLARSHIP APPLICATIONS -->
       <section class="student-apps-section">

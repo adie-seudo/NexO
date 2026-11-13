@@ -6,10 +6,12 @@
     <title>About Us - Student</title>
     <link rel="stylesheet" href="css/master.css" />
 
-    <!-- FIX: Destroy the invisible phantom hover box of the closed menu -->
+    <!-- FIX: Destroy the invisible phantom hover box of the closed menu on mobile only -->
     <style>
-      #nav-menu:not(.open) {
-        pointer-events: none !important;
+      @media (max-width: 1023px) {
+        #nav-menu:not(.open) {
+          pointer-events: none !important;
+        }
       }
     </style>
   </head>

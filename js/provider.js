@@ -12,8 +12,7 @@ function getNavOverlay() {
   return overlay;
 }
 
-function closeSideMenu(force = false) {
-  if (!force && window.innerWidth >= 1024) return;
+function closeSideMenu() {
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
@@ -127,9 +126,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// Safe document listener to close it when clicking elsewhere (mobile only; desktop stays open unless hamburger is clicked)
+// Safe document listener to close expanded menu when clicking elsewhere (both mobile & desktop)
 document.addEventListener("click", function (e) {
-  if (window.innerWidth >= 1024) return;
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
@@ -137,11 +135,24 @@ document.addEventListener("click", function (e) {
     document.getElementById("nav-menu") || document.querySelector(".nav-menu");
 
   if (menu && menu.classList.contains("open")) {
-    if (btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    if ((!btn || !btn.contains(e.target)) && !menu.contains(e.target)) {
       closeSideMenu();
     }
   }
 });
+
+// Auto-close expanded side menu on page scroll
+window.addEventListener(
+  "scroll",
+  function () {
+    const menu =
+      document.getElementById("nav-menu") || document.querySelector(".nav-menu");
+    if (menu && menu.classList.contains("open")) {
+      closeSideMenu();
+    }
+  },
+  { passive: true },
+);
 
 // Close menu with ESC key
 document.addEventListener("keydown", function (e) {

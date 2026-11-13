@@ -26,6 +26,16 @@
         padding: 20px 18px 140px 18px;
         padding-top: 72px !important;
       }
+      @media (min-width: 1024px) {
+        .settings-page-main {
+          max-width: 100% !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+          box-sizing: border-box !important;
+        }
+      }
       .settings-header {
         margin-bottom: 24px;
       }
@@ -64,12 +74,14 @@
         padding: 18px 0 !important;
         gap: 16px !important;
       }
-      #nav-menu {
-        pointer-events: none;
-      }
-      .nav-wrapper:hover #nav-menu,
-      #nav-menu.open {
-        pointer-events: auto !important;
+      @media (max-width: 1023px) {
+        #nav-menu {
+          pointer-events: none;
+        }
+        .nav-wrapper:hover #nav-menu,
+        #nav-menu.open {
+          pointer-events: auto !important;
+        }
       }
       .nav-wrapper::after {
         content: "";

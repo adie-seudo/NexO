@@ -17,8 +17,7 @@ function getNavOverlay() {
   return overlay;
 }
 
-function closeSideMenu(force = false) {
-  if (!force && window.innerWidth >= 1024) return;
+function closeSideMenu() {
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");
@@ -668,7 +667,7 @@ async function loadStudentData() {
   if (typeof window.renderSkeletonCards === "function" && studentAppsFeed && studentAppsFeed.children.length === 0) {
     if (emptyAppsCard) emptyAppsCard.style.display = "none";
     window.renderSkeletonCards(studentAppsFeed, 3);
-    studentAppsFeed.style.display = "flex";
+    studentAppsFeed.style.display = "";
   }
 
   const statMyApps = document.getElementById("stat-my-apps");
@@ -1012,12 +1011,14 @@ function renderFilteredSubmissions() {
     }
   } else {
     // On Dashboard / Home Page:
-    // Only top three latest applications by default.
-    // If more than 3 applications, show View All button which expands in-place on home page.
-    // If 3 or fewer applications, View All button will not occur.
+    // Mobile (< 1024px): 3 applications max listed then View All option occurs.
+    // Desktop (>= 1024px): 3x3 grid (9 applications max listed) then View All option occurs.
     const totalApps = allStudentApplications.length;
+    const isDesktop = window.innerWidth >= 1024;
+    const maxInitialCards = isDesktop ? 9 : 3;
+
     if (viewAllBtn) {
-      if (totalApps > 3) {
+      if (totalApps > maxInitialCards) {
         viewAllBtn.style.display = "inline-flex";
         const textEl =
           document.getElementById("student-view-all-text") || viewAllBtn;
@@ -1029,7 +1030,7 @@ function renderFilteredSubmissions() {
         } else {
           textEl.textContent = `View All (${totalApps})`;
           if (iconEl) iconEl.style.transform = "rotate(0deg)";
-          listToRender = allStudentApplications.slice(0, 3);
+          listToRender = allStudentApplications.slice(0, maxInitialCards);
         }
 
         if (!viewAllBtn._hasViewAllListener) {
@@ -1042,13 +1043,27 @@ function renderFilteredSubmissions() {
         }
       } else {
         viewAllBtn.style.display = "none";
-        listToRender = allStudentApplications;
+        listToRender = allStudentApplications.slice(0, maxInitialCards);
       }
+    } else {
+      listToRender = allStudentApplications.slice(0, maxInitialCards);
+    }
+
+    if (!window._hasStudentResizeGridListener) {
+      window._hasStudentResizeGridListener = true;
+      let lastDesktopState = window.innerWidth >= 1024;
+      window.addEventListener("resize", () => {
+        const nowDesktop = window.innerWidth >= 1024;
+        if (nowDesktop !== lastDesktopState) {
+          lastDesktopState = nowDesktop;
+          renderFilteredSubmissions();
+        }
+      });
     }
   }
 
   if (filterEmptyCard) filterEmptyCard.style.display = "none";
-  appsFeed.style.display = "flex";
+  appsFeed.style.display = "";
   renderApplicationCards(listToRender, appsFeed);
 
   // Deep-linking: scroll to and highlight target submission from notification click (only once)
@@ -1114,7 +1129,7 @@ function renderApplicationCards(applications, container) {
     const resolvedLogo = resolveAppProviderLogo(app);
     const logoHtml =
       resolvedLogo
-        ? `<div class="student-app-logo" style="padding: 0; overflow: hidden; width: 44px; height: 44px; min-width: 44px; min-height: 44px; max-width: 44px; max-height: 44px; flex-shrink: 0;"><img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;" /></div>`
+        ? `<div class="student-app-logo" style="padding: 0; overflow: hidden; flex-shrink: 0;"><img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;" /></div>`
         : `<div class="student-app-logo">${initials || "NX"}</div>`;
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
@@ -1132,7 +1147,15 @@ function renderApplicationCards(applications, container) {
     });
     const hasFeedback = Boolean(app.feedback || app.notes);
 
-    // 1. Attached Files Pill (Clearly identified pill, not mere text)
+    // 0. Unified Status Pill (Consistent shape & palette inside pills row; top-right badge removed)
+    const statusPillHtml = `
+      <span class="student-meta-pill pill-app-status ${badgeClass}">
+        <span class="pill-status-dot"></span>
+        ${escapeHtml(statusLabel)}
+      </span>
+    `;
+
+    // 1. Attached Files Pill
     let docsPillHtml = "";
     if (attachedDocs.length > 0) {
       docsPillHtml = `
@@ -1155,7 +1178,7 @@ function renderApplicationCards(applications, container) {
       followUpDocs.length > 0
         ? `
         <span class="student-meta-pill pill-follow-up">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
           ${followUpDocs.length} To Follow Up
         </span>
       `
@@ -1178,12 +1201,10 @@ function renderApplicationCards(applications, container) {
           <h4 class="student-app-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
           <p class="student-app-org">${escapeHtml(orgName)} &bull; ${escapeHtml(date)}</p>
         </div>
-        <div class="student-app-status-col">
-          <span class="student-app-status-badge ${badgeClass}">${escapeHtml(statusLabel)}</span>
-        </div>
       </div>
 
       <div class="student-app-pills-row">
+        ${statusPillHtml}
         ${docsPillHtml}
         ${followUpPillHtml}
         ${remarksPillHtml}
@@ -2138,7 +2159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 6. Global document clicks to close Side Menu & Notifications
+  // 6. Global document clicks & scroll to close Side Menu & Notifications
   document.addEventListener("click", (e) => {
     const btn =
       document.getElementById("avatar-menu-btn") ||
@@ -2149,8 +2170,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const popover = document.getElementById("header-notif-popover");
     const notifBtn = document.querySelector(".notification-btn");
 
-    if (window.innerWidth < 1024 && menuEl && menuEl.classList.contains("open")) {
-      if (btn && !btn.contains(e.target) && !menuEl.contains(e.target)) {
+    if (menuEl && menuEl.classList.contains("open")) {
+      if ((!btn || !btn.contains(e.target)) && !menuEl.contains(e.target)) {
         closeSideMenu();
       }
     }
@@ -2165,6 +2186,23 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      const menuEl =
+        document.getElementById("nav-menu") ||
+        document.querySelector(".nav-menu");
+      if (menuEl && menuEl.classList.contains("open")) {
+        closeSideMenu();
+      }
+      const popover = document.getElementById("header-notif-popover");
+      if (popover && popover.classList.contains("open")) {
+        closeNotifications();
+      }
+    },
+    { passive: true },
+  );
 
   if (typeof window.syncMenuTooltips === "function") {
     window.syncMenuTooltips();

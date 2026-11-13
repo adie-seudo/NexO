@@ -799,30 +799,54 @@ window.renderSkeletonCards = function (containerOrId, count = 3) {
       : containerOrId;
   if (!el) return;
 
+  const isStudentAppFeed =
+    el.id === "student-apps-feed" ||
+    (el.classList && el.classList.contains("student-apps-feed"));
+
   let html = "";
   for (let i = 0; i < count; i++) {
-    html += `
-      <div class="skeleton-card" aria-hidden="true" data-skeleton="true">
-        <div class="skeleton-header-row">
-          <div class="skeleton-bone skeleton-pill"></div>
-          <div class="skeleton-bone skeleton-badge"></div>
+    if (isStudentAppFeed) {
+      html += `
+        <div class="skeleton-card skeleton-student-app-card" aria-hidden="true" data-skeleton="true">
+          <div class="skeleton-app-header">
+            <div class="skeleton-bone skeleton-avatar-circle"></div>
+            <div class="skeleton-app-titles">
+              <div class="skeleton-bone skeleton-title" style="width: 74%; margin-top: 0;"></div>
+              <div class="skeleton-bone skeleton-line" style="width: 52%; margin-top: 6px;"></div>
+            </div>
+          </div>
+          <div class="skeleton-meta-row">
+            <div class="skeleton-bone skeleton-chip" style="width: 98px; border-radius: 9999px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 112px; border-radius: 9999px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 118px; border-radius: 9999px;"></div>
+          </div>
+          <div class="skeleton-app-action-row">
+            <div class="skeleton-bone skeleton-btn-action"></div>
+          </div>
         </div>
-        <div class="skeleton-bone skeleton-title"></div>
-        <div class="skeleton-bone skeleton-line" style="width: 88%;"></div>
-        <div class="skeleton-bone skeleton-line" style="width: 60%;"></div>
-        <div class="skeleton-meta-row">
-          <div class="skeleton-bone skeleton-chip" style="width: 105px;"></div>
-          <div class="skeleton-bone skeleton-chip" style="width: 80px;"></div>
-          <div class="skeleton-bone skeleton-chip" style="width: 90px;"></div>
+      `;
+    } else {
+      html += `
+        <div class="skeleton-card" aria-hidden="true" data-skeleton="true">
+          <div class="skeleton-header-row">
+            <div class="skeleton-bone skeleton-pill"></div>
+            <div class="skeleton-bone skeleton-badge"></div>
+          </div>
+          <div class="skeleton-bone skeleton-title"></div>
+          <div class="skeleton-bone skeleton-line" style="width: 88%;"></div>
+          <div class="skeleton-bone skeleton-line" style="width: 60%;"></div>
+          <div class="skeleton-meta-row">
+            <div class="skeleton-bone skeleton-chip" style="width: 105px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 80px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 90px;"></div>
+          </div>
+          <div class="skeleton-bone skeleton-btn"></div>
         </div>
-        <div class="skeleton-bone skeleton-btn"></div>
-      </div>
-    `;
+      `;
+    }
   }
   el.innerHTML = html;
-  el.style.display = "flex";
-  el.style.flexDirection = "column";
-  el.style.gap = "16px";
+  el.style.display = "";
 };
 
 window.clearSkeleton = function (containerOrId) {
@@ -849,9 +873,8 @@ function syncMenuTooltips() {
 }
 window.syncMenuTooltips = syncMenuTooltips;
 
-// Global Clean Mobile Nav Closer
-function closeMobileNav(force = false) {
-  if (!force && window.innerWidth >= 1024) return;
+// Global Clean Nav Closer (Closes expanded menu on both mobile & desktop; on desktop reverts to pre-open icon rail)
+function closeMobileNav() {
   const navMenu =
     document.getElementById("nav-menu") || document.querySelector(".nav-menu");
   const hamburgerBtn =
@@ -946,14 +969,13 @@ function initializeHeaderFunctions() {
     });
   }
 
-  // Close menu when clicking anywhere else on the page (mobile only; desktop stays open unless hamburger is clicked)
+  // Close menu when clicking anywhere else on the page (both mobile and desktop)
   document.addEventListener("click", (e) => {
-    if (window.innerWidth >= 1024) return;
     if (
       navMenu &&
       navMenu.classList.contains("open") &&
       !navMenu.contains(e.target) &&
-      !hamburgerBtn.contains(e.target) &&
+      (!hamburgerBtn || !hamburgerBtn.contains(e.target)) &&
       (!e.target.closest || !e.target.closest("#avatar-menu-btn, .hamburger-btn"))
     ) {
       closeMobileNav();
@@ -972,7 +994,7 @@ function initializeHeaderFunctions() {
 
     // 2. Toggle listener: Apply the exact theme based on the checkbox state
     themeToggle.addEventListener("change", (e) => {
-      if (window.innerWidth < 1024) closeMobileNav();
+      closeMobileNav();
       if (e.target.checked) {
         // Checked = Light Mode (Sun)
         localStorage.setItem("nexo-theme", "light");
@@ -988,17 +1010,20 @@ function initializeHeaderFunctions() {
   }
   if (themeContainer) {
     themeContainer.addEventListener("click", () => {
-      if (window.innerWidth < 1024) closeMobileNav();
+      closeMobileNav();
     });
   }
 
-  // --- D. UNIFIED SCROLL LISTENER (Header Bar) ---
+  // --- D. UNIFIED SCROLL LISTENER (Header Bar & Auto-Close Expanded Side Menu) ---
   window.addEventListener(
     "scroll",
     () => {
       if (globalHeader) {
         // Sticky glass top bar stays permanently visible on all pages even when scrolling
         globalHeader.classList.remove("scroll-down");
+      }
+      if (navMenu && navMenu.classList.contains("open")) {
+        closeMobileNav();
       }
     },
     { passive: true },
