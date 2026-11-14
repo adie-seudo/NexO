@@ -9311,3 +9311,101 @@ body.dark-theme .opp-applied-badge {
   margin: 2px 0 0 0;
 }
 
+/* =====================================================================
+   29. MOBILE OPTIMIZATION: REMOVE HOVER STATES ON TOUCH/MOBILE DEVICES
+   Prevents sticky tap-state bugs and unwanted hover styles on mobile screens
+   while preserving rich cursor interactions on desktop pointers.
+   ===================================================================== */
+@media (hover: none), (max-width: 1023px) {
+  .btn:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-outline:hover,
+  .card:hover,
+  .student-stat-card:hover,
+  .student-app-card:hover,
+  .directory-card:hover,
+  .opportunity-mini-card:hover,
+  .next-step-item:hover,
+  .deadline-item:hover,
+  .activity-timeline-item:hover,
+  .admin-stat-card:hover,
+  .admin-table-row:hover,
+  .nav-link:hover,
+  .subtle-link:hover,
+  .student-subtle-link:hover,
+  .filter-pill:hover,
+  .filter-tag:hover,
+  .search-pill-btn:hover,
+  .notif-item:hover,
+  .header-icon-btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* =====================================================================
+   30. EXPANDING CIRCULAR "NUKE" SHOCKWAVE THEME TRANSITION
+   Provides a circular color change animation radiating outwards from
+   the toggle switch across the viewport.
+   ===================================================================== */
+/* View Transitions API: Disable default cross-fade and set stacking context */
+::view-transition-group(root) {
+  animation: none !important;
+}
+
+::view-transition-image-pair(root) {
+  isolation: isolate !important;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+  display: block !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+::view-transition-old(root) {
+  z-index: 1 !important;
+}
+
+::view-transition-new(root) {
+  z-index: 999999 !important;
+}
+
+/* Fallback Ripple Element (when View Transitions API is not supported) */
+.theme-nuke-ripple {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999999;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  will-change: transform, opacity;
+  box-shadow: 0 0 50px rgba(127, 86, 217, 0.4);
+}
+
+.theme-nuke-ripple.to-dark {
+  background: #0f1117;
+  border: 2px solid rgba(139, 92, 246, 0.6);
+}
+
+.theme-nuke-ripple.to-light {
+  background: #f8f9fa;
+  border: 2px solid rgba(127, 86, 217, 0.4);
+}
+
+.theme-nuke-ripple.expanding {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.theme-nuke-ripple.fading {
+  opacity: 0;
+}
+
+
+

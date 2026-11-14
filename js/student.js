@@ -617,12 +617,22 @@ function updateStudentDashboardProfileOverview(profile, activeEmail) {
   const completionData = calculateStudentProfileCompletion(profile, activeEmail);
   const p = profile || {};
 
+  const wrapEl = document.getElementById("student-profile-completion-wrap");
   const completionLabel = document.getElementById("student-profile-completion-label");
   const progressFill = document.getElementById("student-profile-progress-fill");
   const actionLink = document.getElementById("student-profile-action-link");
   const chipUni = document.getElementById("student-chip-uni");
   const chipCourse = document.getElementById("student-chip-course");
   const chipYear = document.getElementById("student-chip-year");
+
+  // Requirement 1: Remove/hide profile percentage complete bar once it's already 100%
+  if (wrapEl) {
+    if (completionData.percent >= 100) {
+      wrapEl.style.display = "none";
+    } else {
+      wrapEl.style.display = "block";
+    }
+  }
 
   if (completionLabel) {
     completionLabel.textContent = `Profile ${completionData.percent}% Complete`;
@@ -1158,7 +1168,8 @@ async function loadStudentData() {
   const emptyAppsCard = document.getElementById("student-empty-apps");
   if (typeof window.renderSkeletonCards === "function" && studentAppsFeed && studentAppsFeed.children.length === 0) {
     if (emptyAppsCard) emptyAppsCard.style.display = "none";
-    window.renderSkeletonCards(studentAppsFeed, 3);
+    const isDesktopApp = window.innerWidth >= 1024;
+    window.renderSkeletonCards(studentAppsFeed, isDesktopApp ? 9 : 3);
     studentAppsFeed.style.display = "";
   }
 

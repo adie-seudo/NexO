@@ -205,7 +205,8 @@ document.addEventListener("DOMContentLoaded", () => {
       browseFeed
     ) {
       if (emptyEl) emptyEl.style.display = "none";
-      window.renderSkeletonCards(browseFeed, 3);
+      const isDesktopBrowse = window.innerWidth >= 1024;
+      window.renderSkeletonCards(browseFeed, isDesktopBrowse ? 9 : 3);
       browseFeed.style.display = "";
     }
 

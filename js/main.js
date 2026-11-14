@@ -812,7 +812,7 @@ function getOrCreateNavOverlay() {
 }
 
 // Global Skeleton Screen Loader for Data Fetching
-window.renderSkeletonCards = function (containerOrId, count = 3) {
+window.renderSkeletonCards = function (containerOrId, count = null) {
   const el =
     typeof containerOrId === "string"
       ? document.getElementById(containerOrId)
@@ -827,6 +827,11 @@ window.renderSkeletonCards = function (containerOrId, count = 3) {
     el.id === "browse-scholarships-feed" ||
     (el.classList && el.classList.contains("browse-feed"));
 
+  if (count === null || count === undefined) {
+    const isDesktop = window.innerWidth >= 1024;
+    count = (isStudentAppFeed || isDirectoryFeed) && isDesktop ? 9 : 3;
+  }
+
   let html = "";
   for (let i = 0; i < count; i++) {
     if (isStudentAppFeed) {
@@ -839,12 +844,14 @@ window.renderSkeletonCards = function (containerOrId, count = 3) {
               <div class="skeleton-bone skeleton-line" style="width: 52%; margin-top: 6px;"></div>
             </div>
           </div>
+          <div class="skeleton-bone skeleton-line" style="width: 90%; height: 13px; margin: 4px 0 2px 0; border-radius: 4px;"></div>
           <div class="skeleton-meta-row">
-            <div class="skeleton-bone skeleton-chip" style="width: 98px; border-radius: 9999px;"></div>
-            <div class="skeleton-bone skeleton-chip" style="width: 112px; border-radius: 9999px;"></div>
-            <div class="skeleton-bone skeleton-chip" style="width: 118px; border-radius: 9999px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 92px; border-radius: 9999px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 104px; border-radius: 9999px;"></div>
+            <div class="skeleton-bone skeleton-chip" style="width: 110px; border-radius: 9999px;"></div>
           </div>
-          <div class="skeleton-app-action-row">
+          <div class="skeleton-app-action-row" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div class="skeleton-bone skeleton-line" style="width: 80px; height: 12px; border-radius: 4px;"></div>
             <div class="skeleton-bone skeleton-btn-action"></div>
           </div>
         </div>
@@ -1037,9 +1044,116 @@ function initializeHeaderFunctions() {
   // Sync tooltips for desktop rail
   syncMenuTooltips();
 
-  // --- C. Dark Mode Toggle Binding ---
+  // --- C. Dark Mode Toggle Binding (with Circular "Nuke" Shockwave Transition) ---
   const themeToggle = document.querySelector(".theme-toggle");
   const themeContainer = document.querySelector(".theme-toggle-container");
+  let isThemeTransitioning = false;
+
+  function triggerNukeThemeTransition(isLightMode, triggerEl) {
+    if (isThemeTransitioning) return;
+    isThemeTransitioning = true;
+
+    const rect = triggerEl
+      ? triggerEl.getBoundingClientRect()
+      : { left: window.innerWidth / 2, top: 40, width: 36, height: 36 };
+    const originX = Math.round(rect.left + rect.width / 2);
+    const originY = Math.round(rect.top + rect.height / 2);
+
+    const maxDist = Math.hypot(
+      Math.max(originX, window.innerWidth - originX),
+      Math.max(originY, window.innerHeight - originY)
+    );
+    const radius = Math.ceil(maxDist * 1.05);
+
+    const applyThemeChange = () => {
+      if (isLightMode) {
+        localStorage.setItem("nexo-theme", "light");
+        document.body.classList.remove("dark-theme");
+        document.documentElement.classList.remove("dark-theme");
+      } else {
+        localStorage.setItem("nexo-theme", "dark");
+        document.body.classList.add("dark-theme");
+        document.documentElement.classList.add("dark-theme");
+      }
+    };
+
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Modern Native View Transitions API with circular clip-path expansion
+    if (document.startViewTransition && !prefersReducedMotion) {
+      let transition;
+      try {
+        transition = document.startViewTransition(() => {
+          applyThemeChange();
+        });
+      } catch (_) {
+        applyThemeChange();
+        isThemeTransitioning = false;
+        return;
+      }
+
+      transition.ready
+        .then(() => {
+          const keyframes = [
+            { clipPath: `circle(0px at ${originX}px ${originY}px)` },
+            { clipPath: `circle(${radius}px at ${originX}px ${originY}px)` }
+          ];
+          const anim = document.documentElement.animate(keyframes, {
+            duration: 650,
+            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+            pseudoElement: "::view-transition-new(root)"
+          });
+          anim.finished
+            .catch(() => {})
+            .finally(() => {
+              isThemeTransitioning = false;
+            });
+        })
+        .catch(() => {
+          applyThemeChange();
+          isThemeTransitioning = false;
+        });
+      return;
+    }
+
+    if (prefersReducedMotion) {
+      applyThemeChange();
+      isThemeTransitioning = false;
+      return;
+    }
+
+    // High-performance fallback: Expanding shockwave overlay element
+    const ripple = document.createElement("div");
+    ripple.className = `theme-nuke-ripple ${isLightMode ? "to-light" : "to-dark"}`;
+    const diameter = radius * 2;
+    ripple.style.width = `${diameter}px`;
+    ripple.style.height = `${diameter}px`;
+    ripple.style.left = `${originX}px`;
+    ripple.style.top = `${originY}px`;
+
+    document.body.appendChild(ripple);
+
+    // Force layout flush so the scale(0) registers
+    void ripple.offsetWidth;
+
+    ripple.classList.add("expanding");
+
+    // Change theme halfway through the blast wave
+    setTimeout(() => {
+      applyThemeChange();
+    }, 280);
+
+    // Fade out and clean up
+    setTimeout(() => {
+      ripple.classList.add("fading");
+      setTimeout(() => {
+        ripple.remove();
+        isThemeTransitioning = false;
+      }, 260);
+    }, 620);
+  }
+
   if (themeToggle) {
     // 1. Initial sync: Checkbox is TRUE (Sun) when it is NOT Dark Theme
     themeToggle.checked = !document.body.classList.contains("dark-theme");
@@ -1047,17 +1161,8 @@ function initializeHeaderFunctions() {
     // 2. Toggle listener: Apply the exact theme based on the checkbox state
     themeToggle.addEventListener("change", (e) => {
       closeMobileNav();
-      if (e.target.checked) {
-        // Checked = Light Mode (Sun)
-        localStorage.setItem("nexo-theme", "light");
-        document.body.classList.remove("dark-theme");
-        document.documentElement.classList.remove("dark-theme");
-      } else {
-        // Unchecked = Dark Mode (Moon)
-        localStorage.setItem("nexo-theme", "dark");
-        document.body.classList.add("dark-theme");
-        document.documentElement.classList.add("dark-theme");
-      }
+      const isLight = Boolean(e.target.checked);
+      triggerNukeThemeTransition(isLight, themeContainer || themeToggle);
     });
   }
   if (themeContainer) {
