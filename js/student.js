@@ -141,7 +141,14 @@ function getStudentNotificationsFromStorage() {
   } catch (_) {}
   if (!Array.isArray(dismissed)) dismissed = [];
 
-  const currentEmail = (localStorage.getItem("nexo_student_email") || "").toLowerCase().trim();
+  const currentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo_student_email") ||
+    ""
+  )
+    .toLowerCase()
+    .trim();
 
   return all.filter((n) => {
     if (dismissed.includes(String(n.id))) return false;
@@ -360,7 +367,14 @@ function initNotificationBell() {
   }
 
   async function clearAllStudentNotifications() {
-    const currentEmail = (localStorage.getItem("nexo_student_email") || "").toLowerCase().trim();
+    const currentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo_student_email") ||
+    ""
+  )
+    .toLowerCase()
+    .trim();
     try {
       let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
       cached = cached.filter((n) => {
@@ -561,6 +575,481 @@ function initNotificationBell() {
 // =========================================
 // 3. STUDENT IDENTITY & DYNAMIC GREETING
 // =========================================
+// Helper: Short date formatting for student workspace
+function formatStudentShortDate(dateVal) {
+  if (!dateVal) return "Recently";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return String(dateVal);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// 3.1 Calculate and render profile completion and academic chips
+function calculateStudentProfileCompletion(profile, activeEmail) {
+  const p = profile || {};
+  const fields = [
+    Boolean(p.fullName && p.fullName.trim()),
+    Boolean((p.email || activeEmail) && (p.email || activeEmail).trim()),
+    Boolean(p.university && p.university.trim()),
+    Boolean(p.course && p.course.trim()),
+    Boolean(p.yearLevel && p.yearLevel.trim()),
+    Boolean(p.studentId && p.studentId.trim()),
+    Boolean(p.contactNumber && p.contactNumber.trim()),
+    Boolean(p.bio && p.bio.trim()),
+  ];
+  const filledCount = fields.filter(Boolean).length;
+  let percent = Math.round((filledCount / fields.length) * 100);
+  if (p.isProfileConfirmed && percent > 0) {
+    percent = Math.max(percent, 100);
+  }
+  return {
+    percent: Math.min(100, Math.max(0, percent)),
+    filledCount,
+    totalCount: fields.length,
+    isConfirmed: Boolean(p.isProfileConfirmed),
+  };
+}
+
+function updateStudentDashboardProfileOverview(profile, activeEmail) {
+  const completionData = calculateStudentProfileCompletion(profile, activeEmail);
+  const p = profile || {};
+
+  const completionLabel = document.getElementById("student-profile-completion-label");
+  const progressFill = document.getElementById("student-profile-progress-fill");
+  const actionLink = document.getElementById("student-profile-action-link");
+  const chipUni = document.getElementById("student-chip-uni");
+  const chipCourse = document.getElementById("student-chip-course");
+  const chipYear = document.getElementById("student-chip-year");
+
+  if (completionLabel) {
+    completionLabel.textContent = `Profile ${completionData.percent}% Complete`;
+  }
+  if (progressFill) {
+    progressFill.style.width = `${completionData.percent}%`;
+  }
+  if (actionLink) {
+    if (completionData.percent < 100) {
+      actionLink.textContent = "Complete Profile \u2192";
+    } else {
+      actionLink.textContent = "Edit Profile \u2192";
+    }
+  }
+
+  if (chipUni) {
+    chipUni.textContent = p.university || "Batangas State University";
+  }
+  if (chipCourse) {
+    chipCourse.textContent = p.course || "Undergraduate Scholar";
+  }
+  if (chipYear) {
+    chipYear.textContent = p.yearLevel || "Enrolled Student";
+  }
+}
+
+// 3.2 Synchronize Next Steps, Deadlines, Opportunities, and Activity on Student Dashboard
+function syncStudentWorkspaceSections(myApplications, profile, activeEmail) {
+  // Only execute on dashboard
+  if (!document.getElementById("student-next-steps-list")) return;
+
+  renderStudentNextSteps(profile, myApplications, activeEmail);
+  renderStudentUpcomingDeadlines(window.cachedScholarships || [], myApplications);
+  renderStudentRecommendedOpportunities(window.cachedScholarships || [], myApplications, profile);
+  renderStudentRecentActivity(myApplications, profile, activeEmail);
+}
+
+// SECTION 1: YOUR NEXT STEPS
+function renderStudentNextSteps(profile, myApplications, activeEmail) {
+  const container = document.getElementById("student-next-steps-list");
+  const badge = document.getElementById("next-steps-count-badge");
+  if (!container) return;
+
+  const items = [];
+  const completion = calculateStudentProfileCompletion(profile, activeEmail);
+
+  // 1. Incomplete Profile
+  if (completion.percent < 100 || !(profile && profile.isProfileConfirmed)) {
+    items.push({
+      id: "step-profile",
+      badgeClass: "badge-step-profile",
+      badgeText: "Profile",
+      title: "Complete your academic student profile",
+      desc: `Your profile is ${completion.percent}% complete. Complete all fields to enhance scholarship eligibility.`,
+      actionText: "Update Settings \u2192",
+      onClick: () => {
+        window.location.href = "student-settings.html";
+      },
+    });
+  }
+
+  // 2. Pending Follow-up Documents
+  (myApplications || []).forEach((app) => {
+    const rawDocs = app.documents || app.uploadedDocuments || [];
+    const followUpDocs = rawDocs.filter((d) => {
+      if (typeof d === "string") return d.includes("(To Follow Up)");
+      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+    });
+
+    if (followUpDocs.length > 0) {
+      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Application";
+      items.push({
+        id: `step-doc-${app.id}`,
+        badgeClass: "badge-step-action",
+        badgeText: "Action Required",
+        title: `Submit requested documents (${followUpDocs.length} pending)`,
+        desc: `${scholTitle} has requested verification documents for evaluation.`,
+        actionText: "Upload Documents \u2192",
+        onClick: () => {
+          openSubmissionDetailsModal(app);
+        },
+      });
+    }
+  });
+
+  // 3. Provider Feedback / Remarks to review
+  (myApplications || []).forEach((app) => {
+    const remarks = (app.remarks || app.feedback || app.notes || "").trim();
+    if (remarks) {
+      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Application";
+      items.push({
+        id: `step-remark-${app.id}`,
+        badgeClass: "badge-step-review",
+        badgeText: "Remarks",
+        title: `Review provider remarks for ${scholTitle}`,
+        desc: "The scholarship evaluation committee has left a message on your record.",
+        actionText: "View Remarks \u2192",
+        onClick: () => {
+          openSubmissionDetailsModal(app);
+        },
+      });
+    }
+  });
+
+  // 4. Status decision ready (Approved / Rejected)
+  (myApplications || []).forEach((app) => {
+    const rawStatus = (app.status || "").toLowerCase();
+    if (rawStatus.includes("approved")) {
+      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Grant";
+      items.push({
+        id: `step-appr-${app.id}`,
+        badgeClass: "badge-step-approved",
+        badgeText: "Approved",
+        title: `Congratulations! ${scholTitle} Approved`,
+        desc: "Review provider instructions and disbursement onboarding requirements.",
+        actionText: "View Grant \u2192",
+        onClick: () => {
+          openSubmissionDetailsModal(app);
+        },
+      });
+    }
+  });
+
+  if (badge) {
+    badge.textContent = items.length;
+    badge.style.display = items.length > 0 ? "inline-flex" : "none";
+  }
+
+  container.innerHTML = "";
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="next-steps-empty">
+        <div class="next-steps-empty-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h4 class="next-steps-empty-title">You're all caught up!</h4>
+        <p class="next-steps-empty-desc">No urgent tasks or missing documents required. We will alert you when a provider reviews your files.</p>
+      </div>
+    `;
+    return;
+  }
+
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "next-step-item";
+    row.innerHTML = `
+      <div class="next-step-header">
+        <span class="next-step-badge ${item.badgeClass}">${item.badgeText}</span>
+        <span class="next-step-action-hint">${item.actionText}</span>
+      </div>
+      <h4 class="next-step-title">${escapeHtml(item.title)}</h4>
+      <p class="next-step-desc">${escapeHtml(item.desc)}</p>
+    `;
+    row.addEventListener("click", item.onClick);
+    container.appendChild(row);
+  });
+}
+
+// SECTION 2: UPCOMING DEADLINES
+function renderStudentUpcomingDeadlines(scholarships, myApplications) {
+  const container = document.getElementById("student-deadlines-list");
+  if (!container) return;
+
+  const now = new Date();
+  const deadlineEntries = [];
+
+  // Parse scholarships
+  (scholarships || []).forEach((s) => {
+    if (!s.deadline) return;
+    const parts = String(s.deadline).split("/");
+    let d = null;
+    if (parts.length === 3) {
+      d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10), 23, 59, 59);
+    } else {
+      d = new Date(s.deadline);
+    }
+    if (isNaN(d.getTime())) return;
+
+    const diffTime = d.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return; // Expired
+
+    const hasApplied = (myApplications || []).some(
+      (a) => String(a.scholarshipId) === String(s.id) || String(a.id) === String(s.id)
+    );
+
+    deadlineEntries.push({
+      dateObj: d,
+      diffDays,
+      title: s.title || "Scholarship Opportunity",
+      type: hasApplied ? "Application Submitted" : "Application Deadline",
+      statusClass: diffDays <= 5 ? "badge-deadline-urgent" : "badge-deadline-open",
+      statusLabel: diffDays === 0 ? "Closing Today" : `Closes in ${diffDays}d`,
+      scholId: s.id,
+    });
+  });
+
+  // Sort by nearest deadline first
+  deadlineEntries.sort((a, b) => a.dateObj.getTime() - b.dateObj.getTime());
+
+  container.innerHTML = "";
+
+  if (deadlineEntries.length === 0) {
+    container.innerHTML = `
+      <div class="deadlines-empty">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary); margin-bottom: 6px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary);">No upcoming scholarship deadlines found.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Display up to 4 nearest deadlines
+  deadlineEntries.slice(0, 4).forEach((item) => {
+    const month = item.dateObj.toLocaleString("en-US", { month: "short" }).toUpperCase();
+    const day = item.dateObj.getDate();
+
+    const row = document.createElement("div");
+    row.className = "deadline-item";
+    row.innerHTML = `
+      <div class="deadline-date-box">
+        <span class="deadline-month">${month}</span>
+        <span class="deadline-day">${day}</span>
+      </div>
+      <div class="deadline-info">
+        <h4 class="deadline-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</h4>
+        <div class="deadline-meta-row">
+          <span class="deadline-type">${escapeHtml(item.type)}</span>
+          <span class="deadline-status-pill ${item.statusClass}">${escapeHtml(item.statusLabel)}</span>
+        </div>
+      </div>
+    `;
+    row.addEventListener("click", () => {
+      window.location.href = `student-browse.html?scholId=${encodeURIComponent(item.scholId)}`;
+    });
+    container.appendChild(row);
+  });
+}
+
+// SECTION 3: RECOMMENDED OPPORTUNITIES
+function renderStudentRecommendedOpportunities(scholarships, myApplications, profile) {
+  const container = document.getElementById("student-opportunities-feed");
+  if (!container) return;
+
+  const appliedIds = new Set((myApplications || []).map((a) => String(a.scholarshipId || a.id)));
+  const p = profile || {};
+  const studentYear = (p.yearLevel || "").toLowerCase();
+  const studentUni = (p.university || "").toLowerCase();
+
+  const openList = (scholarships || []).filter((s) => {
+    const isOpen = (s.status || "Open").toLowerCase() === "open";
+    const isApplied = appliedIds.has(String(s.id));
+    return isOpen && !isApplied;
+  });
+
+  container.innerHTML = "";
+
+  if (openList.length === 0) {
+    container.innerHTML = `
+      <div class="opportunities-empty">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary);">No open scholarship opportunities at the moment. Check back soon!</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Display top 2-3 opportunities
+  openList.slice(0, 3).forEach((schol) => {
+    const isApplied = appliedIds.has(String(schol.id));
+    const org = schol.providerName || schol.organization || "NEXO";
+    const title = schol.title || "Scholarship Program";
+    const typeLabel = schol.typeText || (schol.type === "need" ? "Need-Based" : "Merit-Based");
+    const deadline = schol.formattedDate || schol.deadline || "Open";
+    const applicants = schol.applicantCount || `${schol.applicantTotal || 1} / ${schol.applicantLimit || 500} Applicants`;
+
+    const desc = (schol.desc || schol.description || "").toLowerCase();
+    const hasEligibilityMatch =
+      (studentYear && desc.includes(studentYear)) ||
+      (studentUni && desc.includes("batangas state university"));
+
+    const card = document.createElement("div");
+    card.className = "opportunity-mini-card";
+    card.innerHTML = `
+      <div class="opportunity-mini-header">
+        <div class="opportunity-mini-titles">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap;">
+            <span class="opp-type-badge">${escapeHtml(typeLabel)}</span>
+            ${hasEligibilityMatch ? `<span class="opp-match-badge">&#10003; Matches Profile</span>` : ""}
+            ${isApplied ? `<span class="opp-applied-badge">Applied</span>` : ""}
+          </div>
+          <h4 class="opportunity-mini-title">${escapeHtml(title)}</h4>
+          <p class="opportunity-mini-org">${escapeHtml(org)} &bull; Closes ${escapeHtml(deadline)}</p>
+        </div>
+      </div>
+      <div class="opportunity-mini-footer">
+        <span class="opportunity-mini-capacity">${escapeHtml(applicants)}</span>
+        <button type="button" class="btn btn-secondary btn-view-opp" data-id="${schol.id}">
+          ${isApplied ? "View Details" : "View Opportunity &rarr;"}
+        </button>
+      </div>
+    `;
+
+    card.addEventListener("click", () => {
+      window.location.href = `student-browse.html?scholId=${encodeURIComponent(schol.id)}`;
+    });
+
+    const btn = card.querySelector(".btn-view-opp");
+    if (btn) {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.location.href = `student-browse.html?scholId=${encodeURIComponent(schol.id)}`;
+      });
+    }
+
+    container.appendChild(card);
+  });
+}
+
+// SECTION 4: RECENT ACTIVITY
+function renderStudentRecentActivity(myApplications, profile, activeEmail) {
+  const container = document.getElementById("student-activity-list");
+  if (!container) return;
+
+  const activities = [];
+
+  (myApplications || []).forEach((app) => {
+    const scholTitle = app.scholarshipTitle || app.title || "Scholarship Program";
+
+    // 1. Status review / update event
+    if (app.reviewedAt || app.updatedAt) {
+      activities.push({
+        time: new Date(app.reviewedAt || app.updatedAt).getTime() || 0,
+        dateFormatted: formatStudentShortDate(app.reviewedAt || app.updatedAt),
+        title: `Application status updated to ${app.status || "Under Review"}`,
+        sub: scholTitle,
+        type: "status",
+        app,
+      });
+    }
+
+    // 2. Remarks added event
+    if (app.remarks || app.feedback) {
+      activities.push({
+        time: (new Date(app.reviewedAt || app.updatedAt).getTime() || 0) + 1,
+        dateFormatted: formatStudentShortDate(app.reviewedAt || app.updatedAt || app.submittedAt),
+        title: "Provider feedback & remarks posted",
+        sub: scholTitle,
+        type: "remark",
+        app,
+      });
+    }
+
+    // 3. Submitted event
+    if (app.submittedAt || app.appliedDate || app.date) {
+      activities.push({
+        time: new Date(app.submittedAt || app.appliedDate || app.date).getTime() || 0,
+        dateFormatted: formatStudentShortDate(app.submittedAt || app.appliedDate || app.date),
+        title: "Application submitted for committee evaluation",
+        sub: scholTitle,
+        type: "submission",
+        app,
+      });
+    }
+  });
+
+  // Profile confirmed event
+  if (profile && profile.isProfileConfirmed && profile.updatedAt) {
+    activities.push({
+      time: new Date(profile.updatedAt).getTime() || 0,
+      dateFormatted: formatStudentShortDate(profile.updatedAt),
+      title: "Academic student profile confirmed",
+      sub: `${profile.university || "BatSU"} \u2022 ${profile.course || "Degree program"}`,
+      type: "profile",
+      url: "student-settings.html",
+    });
+  }
+
+  // Sort activities newest first
+  activities.sort((a, b) => b.time - a.time);
+
+  container.innerHTML = "";
+
+  if (activities.length === 0) {
+    container.innerHTML = `
+      <div class="activity-empty">
+        <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary);">No recent activity recorded yet.</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Render up to 5 events
+  activities.slice(0, 5).forEach((item) => {
+    const el = document.createElement("div");
+    el.className = "activity-timeline-item";
+    el.innerHTML = `
+      <div class="activity-dot-col">
+        <span class="activity-timeline-dot dot-${item.type}"></span>
+        <span class="activity-timeline-line"></span>
+      </div>
+      <div class="activity-content">
+        <div class="activity-header-line">
+          <span class="activity-title">${escapeHtml(item.title)}</span>
+          <span class="activity-date">${escapeHtml(item.dateFormatted)}</span>
+        </div>
+        <p class="activity-sub">${escapeHtml(item.sub)}</p>
+      </div>
+    `;
+
+    el.addEventListener("click", () => {
+      if (item.app) {
+        openSubmissionDetailsModal(item.app);
+      } else if (item.url) {
+        window.location.href = item.url;
+      }
+    });
+
+    container.appendChild(el);
+  });
+}
+
 function getDynamicGreeting() {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) {
@@ -624,6 +1113,9 @@ function initStudentGreeting() {
   if (nameTitle) {
     nameTitle.textContent = savedName || "Welcome, Student Scholar";
   }
+
+  // Update profile completion and academic chips on welcome card
+  updateStudentDashboardProfileOverview(studentSettings, currentStudentEmail);
 
   // Set header initials or avatar photo dynamically
   if (typeof window.syncGlobalStudentIdentity === "function") {
@@ -725,6 +1217,14 @@ async function loadStudentData() {
           "nexo_student_settings",
           JSON.stringify(serverProfile),
         );
+        if (serverProfile.fullName) {
+          sessionStorage.setItem("nexo-student-name", serverProfile.fullName);
+          localStorage.setItem("nexo-student-name", serverProfile.fullName);
+        }
+        const nameTitleEl = document.getElementById("student-name-title");
+        if (nameTitleEl && serverProfile.fullName) {
+          nameTitleEl.textContent = serverProfile.fullName;
+        }
         if (activeStudentEmail) {
           localStorage.setItem(
             `nexo_student_settings_${activeStudentEmail}`,
@@ -765,9 +1265,52 @@ async function loadStudentData() {
     } catch (_) {}
   } catch (err) {
     try {
-      const cached = localStorage.getItem("nexo_applications");
-      if (cached) applications = JSON.parse(cached);
+      // Fallback to static data.json if API is unreachable (e.g., Live Server)
+      const staticRes = await fetch("data.json").catch(() => null);
+      if (staticRes && staticRes.ok) {
+        const staticData = await staticRes.json();
+        applications = Array.isArray(staticData.applications) ? staticData.applications : [];
+        if (Array.isArray(staticData.scholarships)) window.cachedScholarships = staticData.scholarships;
+        if (staticData.settings) window.cachedProviderSettings = staticData.settings;
+
+        if (activeStudentEmail && staticData.studentProfiles && staticData.studentProfiles[activeStudentEmail]) {
+          serverProfile = staticData.studentProfiles[activeStudentEmail];
+        } else if (
+          staticData.studentSettings &&
+          staticData.studentSettings.email &&
+          activeStudentEmail &&
+          staticData.studentSettings.email.toLowerCase() === activeStudentEmail
+        ) {
+          serverProfile = staticData.studentSettings;
+        } else if (activeStudentEmail && Array.isArray(staticData.users)) {
+          const u = staticData.users.find((x) => (x.email || "").toLowerCase() === activeStudentEmail);
+          if (u) {
+            serverProfile = {
+              email: u.email,
+              fullName: u.name,
+              profilePicture: u.profilePicture || "",
+              course: u.course || "",
+              yearLevel: u.yearLevel || "",
+              university: u.university || "",
+              isProfileConfirmed: Boolean(u.isProfileConfirmed),
+            };
+          }
+        }
+      }
     } catch (_) {}
+
+    if (!applications || applications.length === 0) {
+      try {
+        const cached = localStorage.getItem("nexo_applications");
+        if (cached) applications = JSON.parse(cached);
+      } catch (_) {}
+    }
+    if (!window.cachedScholarships || window.cachedScholarships.length === 0) {
+      try {
+        const cachedSchols = localStorage.getItem("nexo_scholarships");
+        if (cachedSchols) window.cachedScholarships = JSON.parse(cachedSchols);
+      } catch (_) {}
+    }
   }
 
   // Filter applications specifically belonging to currently logged-in student
@@ -827,69 +1370,49 @@ async function loadStudentData() {
   const cardReview = document.getElementById("card-stat-review");
   const cardRejected = document.getElementById("card-stat-rejected");
 
-  if (cardMyApps) {
-    if (totalCount >= 1) {
-      cardMyApps.classList.add("is-clickable");
-      cardMyApps.classList.remove("is-disabled");
-      cardMyApps.title = "View all submitted applications";
-      cardMyApps.onclick = () => {
-        window.location.href = "student-submissions.html";
+  const wireStatCard = (cardEl, count, filterParam, titleText) => {
+    if (!cardEl) return;
+    if (count >= 1) {
+      cardEl.classList.add("is-clickable");
+      cardEl.classList.remove("is-disabled");
+      cardEl.title = titleText;
+      cardEl.setAttribute("aria-disabled", "false");
+      const targetUrl = filterParam
+        ? `student-submissions.html?filter=${filterParam}`
+        : "student-submissions.html";
+      cardEl.onclick = () => {
+        window.location.href = targetUrl;
+      };
+      cardEl.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          window.location.href = targetUrl;
+        }
       };
     } else {
-      cardMyApps.classList.remove("is-clickable");
-      cardMyApps.classList.add("is-disabled");
-      cardMyApps.removeAttribute("title");
-      cardMyApps.onclick = null;
+      cardEl.classList.remove("is-clickable");
+      cardEl.classList.add("is-disabled");
+      cardEl.removeAttribute("title");
+      cardEl.setAttribute("aria-disabled", "true");
+      cardEl.onclick = null;
+      cardEl.onkeydown = null;
     }
-  }
+  };
 
-  if (cardApproved) {
-    if (approvedCount >= 1) {
-      cardApproved.classList.add("is-clickable");
-      cardApproved.classList.remove("is-disabled");
-      cardApproved.title = "View approved scholarship grants";
-      cardApproved.onclick = () => {
-        window.location.href = "student-submissions.html?filter=approved";
-      };
-    } else {
-      cardApproved.classList.remove("is-clickable");
-      cardApproved.classList.add("is-disabled");
-      cardApproved.removeAttribute("title");
-      cardApproved.onclick = null;
-    }
-  }
+  wireStatCard(cardMyApps, totalCount, "", "View all submitted applications");
+  wireStatCard(cardApproved, approvedCount, "approved", "View approved scholarship grants");
+  wireStatCard(cardReview, reviewCount, "review", "View applications under review");
+  wireStatCard(cardRejected, rejectedCount, "rejected", "View rejected applications");
 
-  if (cardReview) {
-    if (reviewCount >= 1) {
-      cardReview.classList.add("is-clickable");
-      cardReview.classList.remove("is-disabled");
-      cardReview.title = "View applications under review";
-      cardReview.onclick = () => {
-        window.location.href = "student-submissions.html?filter=review";
-      };
-    } else {
-      cardReview.classList.remove("is-clickable");
-      cardReview.classList.add("is-disabled");
-      cardReview.removeAttribute("title");
-      cardReview.onclick = null;
-    }
+  // Ensure name and profile overview reflect serverProfile
+  if (serverProfile && serverProfile.fullName) {
+    const nameTitleEl = document.getElementById("student-name-title");
+    if (nameTitleEl) nameTitleEl.textContent = serverProfile.fullName;
   }
+  updateStudentDashboardProfileOverview(serverProfile, activeStudentEmail);
 
-  if (cardRejected) {
-    if (rejectedCount >= 1) {
-      cardRejected.classList.add("is-clickable");
-      cardRejected.classList.remove("is-disabled");
-      cardRejected.title = "View rejected applications";
-      cardRejected.onclick = () => {
-        window.location.href = "student-submissions.html?filter=rejected";
-      };
-    } else {
-      cardRejected.classList.remove("is-clickable");
-      cardRejected.classList.add("is-disabled");
-      cardRejected.removeAttribute("title");
-      cardRejected.onclick = null;
-    }
-  }
+  // Synchronize New Student Workspace Sections (Next Steps, Upcoming Deadlines, Recommended Opportunities, Recent Activity)
+  syncStudentWorkspaceSections(myApplications, serverProfile, activeStudentEmail);
 
   // Update Filter Pill Counters (for My Scholarship Submissions)
   const filterCountAll = document.getElementById("filter-count-all");
@@ -1249,13 +1772,45 @@ function renderApplicationCards(applications, container) {
       `
       : "";
 
+    // 4. Status Explanation Text
+    let statusExplanation = "";
+    if (rawStatus.includes("approved")) {
+      statusExplanation = "Your application has been approved. Review provider onboarding instructions.";
+    } else if (rawStatus.includes("rejected")) {
+      statusExplanation = "Your application was not selected. Review provider remarks and feedback.";
+    } else if (rawStatus.includes("review")) {
+      if (followUpDocs.length > 0) {
+        statusExplanation = `Under provider review &bull; ${followUpDocs.length} follow-up document${followUpDocs.length === 1 ? "" : "s"} requested.`;
+      } else {
+        statusExplanation = "Your application and submitted documents are undergoing committee evaluation.";
+      }
+    } else {
+      statusExplanation = "Your application has been received and queued for committee review.";
+    }
+
+    // 5. Context-aware Button CTA Text
+    let ctaLabel = "View Full Details";
+    if (followUpDocs.length > 0) {
+      ctaLabel = "Upload Requested Docs";
+    } else if (hasFeedback) {
+      ctaLabel = "Review Remarks";
+    }
+
+    // 6. Last Updated Date
+    const lastUpdateDate = app.reviewedAt || app.updatedAt || app.submittedAt || date;
+    const formattedLastUpdate = formatStudentShortDate(lastUpdateDate);
+
     card.innerHTML = `
       <div class="student-app-header-row">
         ${logoHtml}
         <div class="student-app-info">
           <h4 class="student-app-title" title="${escapeHtml(title)}">${escapeHtml(title)}</h4>
-          <p class="student-app-org">${escapeHtml(orgName)} &bull; ${escapeHtml(date)}</p>
+          <p class="student-app-org">${escapeHtml(orgName)} &bull; Applied: ${escapeHtml(date)}</p>
         </div>
+      </div>
+
+      <div class="student-app-status-note">
+        <p class="status-note-text">${statusExplanation}</p>
       </div>
 
       <div class="student-app-pills-row">
@@ -1266,9 +1821,10 @@ function renderApplicationCards(applications, container) {
       </div>
 
       <div class="student-app-action-row">
+        <span class="student-app-update-date">Updated: ${escapeHtml(formattedLastUpdate)}</span>
         <button type="button" class="btn btn-secondary view-sub-details-btn" data-app-id="${app.id}">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-          View Full Details
+          ${ctaLabel}
         </button>
       </div>
     `;

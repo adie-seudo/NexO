@@ -39,96 +39,228 @@
 
   <div id="header-placeholder"></div>
 
-  <section id="auth-screen" class="auth-container">
-    <div class="auth-logo-container">
-      <img
-        src="assets/logo.png"
-        alt="NEXO Logo"
-        id="static-auth-logo"
-        class="auth-logo"
-      />
-      <!-- Tagline shows on Login view, hides on Register view -->
-      <p class="tagline" id="auth-tagline">
-        Find it. Apply for it. Make it your next.
-      </p>
+  <section id="auth-screen" class="auth-container" data-active-role="Student">
+    <!-- ==========================================
+         SHARED LOGO +LOGIN COLUMN (Mobile Default & Desktop Left/Right Panel)
+         ========================================== -->
+    <div class="auth-form-panel" id="auth-form-panel">
+      <div class="auth-logo-container">
+        <img
+          src="assets/logo.png"
+          alt="NEXO Logo"
+          id="static-auth-logo"
+          class="auth-logo"
+        />
+        <!-- Tagline shows on Login view, hides on Register view -->
+        <p class="tagline" id="auth-tagline">
+          Find it. Apply for it. Make it your next.
+        </p>
+      </div>
+
+      <!-- Desktop Role Header & Active Role Indicator (Hidden on Mobile) -->
+      <div class="auth-desktop-role-header" aria-live="polite">
+        <span class="auth-role-pill" id="auth-desktop-role-pill">
+          <img
+            src="assets/human-icon.png"
+            alt=""
+            class="auth-role-pill-icon"
+            id="auth-desktop-role-icon"
+          />
+          <span id="auth-desktop-role-badge-text">Student Portal</span>
+        </span>
+        <h2 class="auth-desktop-title" id="auth-desktop-title">
+          Student Sign In
+        </h2>
+        <p class="auth-desktop-subtitle" id="auth-desktop-subtitle">
+          Use your verified university email (.edu.ph) to access your account.
+        </p>
+      </div>
+
+      <!-- ==========================================
+             VIEW 1: LOGIN VIEW (Default)
+        =========================================== -->
+      <div id="login-view" class="auth-view">
+        <!-- Role Toggle (Visible on Mobile, Hidden on Desktop Split Mode) -->
+        <div class="role-toggle" role="tablist" aria-label="Account Role">
+          <button
+            type="button"
+            class="toggle-btn active"
+            id="btn-role-student"
+            role="tab"
+            aria-selected="true"
+          >
+            Student
+          </button>
+          <button
+            type="button"
+            class="toggle-btn"
+            id="btn-role-provider"
+            role="tab"
+            aria-selected="false"
+          >
+            Provider
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form">
+          <!-- Email Input Group -->
+          <div class="input-group" id="email-group">
+            <img src="assets/email-icon.png" alt="Email" class="input-icon" />
+            <div class="input-field">
+              <label for="email" id="login-email-label">Email</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="you@university.edu.ph"
+                required
+              />
+            </div>
+          </div>
+          <!-- Hidden Error Message -->
+          <p class="error-text" id="email-error">
+            Access Denied: Only valid university emails (.edu.ph) are permitted
+            for student registration.
+          </p>
+
+          <!-- Password -->
+          <div class="input-group">
+            <img
+              src="assets/password-icon.png"
+              alt="Password"
+              class="input-icon"
+            />
+            <div class="input-field">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <!-- Animated Eye SVG -->
+            <div class="animated-eye-icon" id="toggle-password">
+              <svg viewBox="0 0 24 24">
+                <g class="eye-open">
+                  <path
+                    d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"
+                  />
+                  <circle cx="12" cy="12" r="2.8" />
+                </g>
+                <path
+                  class="eye-shut"
+                  d="M3 10.5s3.5 5 9 5 9-5 9-5M5.8 13.6l-1.5 2M12 15.5v2.4M18.2 13.6l1.5 2"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <button type="submit" class="auth-submit" id="login-submit-btn">
+            Log In
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <a href="#" class="forgot-pass">Forgot Password?</a>
+          <p>
+            Don't have an account?
+            <a href="#" class="register-link" id="show-register">Register</a>
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- ==========================================
-           VIEW 1: LOGIN VIEW (Default)
-      =========================================== -->
-    <div id="login-view" class="auth-view">
-      <!-- Role Toggle -->
-      <div class="role-toggle">
-        <button class="toggle-btn active" id="btn-role-student">Student</button>
-        <button class="toggle-btn" id="btn-role-provider">Provider</button>
+         DESKTOP-ONLY SLIDING WELCOME / ROLE SWITCH PANEL
+         Hidden on mobile; slides horizontally on desktop
+         ========================================== -->
+    <aside
+      class="auth-switch-panel"
+      id="auth-switch-panel"
+      aria-label="Switch authentication role"
+    >
+      <!-- Decorative circles inspired by reference video, styled with NEXO brand palette -->
+      <div class="auth-switch-circle auth-switch-circle-top" aria-hidden="true"></div>
+      <div class="auth-switch-circle auth-switch-circle-bottom" aria-hidden="true"></div>
+
+      <!-- Content shown when STUDENT Login is active (invites switching to Provider) -->
+      <div
+        class="auth-switch-content is-active"
+        id="auth-switch-content-student"
+        aria-hidden="false"
+      >
+        <span class="auth-switch-eyebrow">Active Role: Student</span>
+        <h2 class="auth-switch-heading">Welcome, Student!</h2>
+        <p class="auth-switch-description">
+          Discover verified scholarship opportunities, track your applications in
+          real time, and take the next step toward your future with NEXO.
+        </p>
+        <div class="auth-switch-divider" aria-hidden="true"></div>
+        <p class="auth-switch-prompt">Representing an institution or sponsor?</p>
+        <button
+          type="button"
+          class="auth-switch-btn"
+          id="desktop-switch-to-provider"
+          data-switch-role="Provider"
+        >
+          <span>Continue as Provider</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
       </div>
 
-      <!-- Login Form -->
-      <form id="login-form">
-        <!-- Email Input Group -->
-        <div class="input-group" id="email-group">
-          <img src="assets/email-icon.png" alt="Email" class="input-icon" />
-          <div class="input-field">
-            <label for="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="you@university.edu.ph"
-              required
-            />
-          </div>
-        </div>
-        <!-- Hidden Error Message -->
-        <p class="error-text" id="email-error">
-          Access Denied: Only valid university emails (.edu.ph) are permitted
-          for student registration.
+      <!-- Content shown when SCHOLARSHIP PROVIDER Login is active (invites switching to Student) -->
+      <div
+        class="auth-switch-content is-hidden"
+        id="auth-switch-content-provider"
+        aria-hidden="true"
+      >
+        <span class="auth-switch-eyebrow">Active Role: Scholarship Provider</span>
+        <h2 class="auth-switch-heading">Welcome, Provider!</h2>
+        <p class="auth-switch-description">
+          Connect with verified students, publish scholarship programs, and
+          manage applicant selections seamlessly in one centralized portal.
         </p>
-
-        <!-- Password -->
-        <div class="input-group">
-          <img
-            src="assets/password-icon.png"
-            alt="Password"
-            class="input-icon"
-          />
-          <div class="input-field">
-            <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <!-- Animated Eye SVG -->
-          <div class="animated-eye-icon" id="toggle-password">
-            <svg viewBox="0 0 24 24">
-              <g class="eye-open">
-                <path
-                  d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"
-                />
-                <circle cx="12" cy="12" r="2.8" />
-              </g>
-              <path
-                class="eye-shut"
-                d="M3 10.5s3.5 5 9 5 9-5 9-5M5.8 13.6l-1.5 2M12 15.5v2.4M18.2 13.6l1.5 2"
-              />
-            </svg>
-          </div>
-        </div>
-
-        <button type="submit" class="auth-submit">Log In</button>
-      </form>
-
-      <div class="auth-links">
-        <a href="#" class="forgot-pass">Forgot Password?</a>
-        <p>
-          Don't have an account?
-          <a href="#" class="register-link" id="show-register">Register</a>
-        </p>
+        <div class="auth-switch-divider" aria-hidden="true"></div>
+        <p class="auth-switch-prompt">Looking for scholarships to apply for?</p>
+        <button
+          type="button"
+          class="auth-switch-btn"
+          id="desktop-switch-to-student"
+          data-switch-role="Student"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Continue as Student</span>
+        </button>
       </div>
-    </div>
+    </aside>
   </section>
 
   <!-- 2. MAIN CONTENT -->

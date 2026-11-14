@@ -87,7 +87,7 @@
 
           <!-- Modern Side Navigation Menu (Lines Removed) -->
           <nav class="nav-menu" id="nav-menu">
-            <a href="student-dashboard.html" class="nav-link active">
+            <a href="student-dashboard.html" class="nav-link active" data-tooltip="Home">
               <img
                 src="assets/home-icon.png"
                 alt="Home"
@@ -98,7 +98,7 @@
             </a>
 
             <!-- Browse / Explore Scholarships -->
-            <a href="student-browse.html" class="nav-link" id="nav-browse">
+            <a href="student-browse.html" class="nav-link" id="nav-browse" data-tooltip="Browse Scholarships">
               <img
                 src="assets/draft-icon.png"
                 alt="Browse"
@@ -109,7 +109,7 @@
             </a>
 
             <!-- View My Submissions -->
-            <a href="student-submissions.html" class="nav-link" id="nav-submissions">
+            <a href="student-submissions.html" class="nav-link" id="nav-submissions" data-tooltip="View My Submissions">
               <img
                 src="assets/policy-icon.png"
                 alt="Submissions"
@@ -122,7 +122,7 @@
             <!-- Modern Spacer (No Hardcoded Lines) -->
             <div class="nav-spacer"></div>
 
-            <a href="student-about.html" class="nav-link">
+            <a href="student-about.html" class="nav-link" data-tooltip="About Us">
               <img
                 src="assets/about-icon.png"
                 alt="About Us"
@@ -132,7 +132,7 @@
               <span class="nav-text">About Us</span>
             </a>
 
-            <a href="privacy.html" class="nav-link">
+            <a href="privacy.html" class="nav-link" data-tooltip="Policy">
               <img
                 src="assets/policy-icon.png"
                 alt="Policy"
@@ -142,7 +142,7 @@
               <span class="nav-text">Policy</span>
             </a>
 
-            <a href="credits.html" class="nav-link">
+            <a href="credits.html" class="nav-link" data-tooltip="Credits">
               <img
                 src="assets/credits-icon.png"
                 alt="Credits"
@@ -152,7 +152,7 @@
               <span class="nav-text">Credits</span>
             </a>
 
-            <a href="student-settings.html" class="nav-link">
+            <a href="student-settings.html" class="nav-link" data-tooltip="Settings">
               <img
                 src="assets/settings-icon.png"
                 alt="Settings"
@@ -170,6 +170,7 @@
                 href="index.html"
                 class="btn logout-btn"
                 id="student-logout-btn"
+                data-tooltip="Log Out"
                 style="text-decoration: none !important;"
               >
                 <img
@@ -199,49 +200,149 @@
         <!-- A. STUDENT WELCOME RECTANGULAR HERO CARD -->
         <section class="student-welcome-card" id="student-welcome-card">
           <!-- Squircle Avatar Container -->
-          <div class="student-welcome-avatar" id="student-card-avatar" title="View Account Settings">
+          <div class="student-welcome-avatar" id="student-card-avatar" title="View Account Settings" tabindex="0" role="button" aria-label="View Account Settings">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </div>
 
-          <!-- Student Dynamic Greetings, Name, and Tagline -->
+          <!-- Student Dynamic Greetings, Name, Tagline & Profile Summary -->
           <div class="student-welcome-content">
             <div class="student-greeting-row">
               <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
             </div>
             <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
             <p class="student-motto" id="student-motto">
-              Keep going! Your education journey opens more opportunities.
+              Here's what's happening with your scholarship journey.
             </p>
+
+            <!-- Student Profile & Academic Summary Bar -->
+            <div class="student-profile-summary" id="student-profile-summary">
+              <!-- Academic Chips (University, Course, Year) -->
+              <div class="student-academic-meta" id="student-academic-meta">
+                <span class="academic-chip" id="student-chip-uni">Batangas State University</span>
+                <span class="academic-chip" id="student-chip-course">Undergraduate Scholar</span>
+                <span class="academic-chip" id="student-chip-year">3rd Year</span>
+              </div>
+
+              <!-- Profile Completion Progress & Quick Action -->
+              <div class="student-profile-completion-wrap" id="student-profile-completion-wrap">
+                <div class="completion-meta-row">
+                  <div class="completion-label-group">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span class="completion-text" id="student-profile-completion-label">Profile 100% Complete</span>
+                  </div>
+                  <a href="student-settings.html" class="completion-action-link" id="student-profile-action-link">Edit Profile &rarr;</a>
+                </div>
+                <div class="student-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+                  <div class="student-progress-fill" id="student-profile-progress-fill" style="width: 100%;"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         <!-- B. 2x2 METRIC CARDS GRID -->
         <section class="student-stats-grid">
           <!-- Metric 1: My Applications -->
-          <div class="student-stat-card is-disabled" id="card-stat-my-apps">
-            <p class="student-stat-label">My Applications</p>
+          <div class="student-stat-card is-disabled" id="card-stat-my-apps" role="button" tabindex="0" aria-label="My Applications metric">
+            <div class="student-stat-card-header">
+              <p class="student-stat-label">My Applications</p>
+              <div class="student-stat-icon-badge badge-icon-apps">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </div>
+            </div>
             <h2 class="student-stat-value" id="stat-my-apps">0</h2>
+            <div class="student-stat-hint" id="hint-stat-my-apps">View all &rarr;</div>
           </div>
 
           <!-- Metric 2: Approved -->
-          <div class="student-stat-card is-disabled" id="card-stat-approved">
-            <p class="student-stat-label">Approved</p>
+          <div class="student-stat-card is-disabled" id="card-stat-approved" role="button" tabindex="0" aria-label="Approved applications metric">
+            <div class="student-stat-card-header">
+              <p class="student-stat-label">Approved</p>
+              <div class="student-stat-icon-badge badge-icon-approved">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+            </div>
             <h2 class="student-stat-value" id="stat-approved">0</h2>
+            <div class="student-stat-hint" id="hint-stat-approved">Filter approved &rarr;</div>
           </div>
 
           <!-- Metric 3: Under Review -->
-          <div class="student-stat-card is-disabled" id="card-stat-review">
-            <p class="student-stat-label">Under Review</p>
+          <div class="student-stat-card is-disabled" id="card-stat-review" role="button" tabindex="0" aria-label="Under review applications metric">
+            <div class="student-stat-card-header">
+              <p class="student-stat-label">Under Review</p>
+              <div class="student-stat-icon-badge badge-icon-review">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+            </div>
             <h2 class="student-stat-value" id="stat-review">0</h2>
+            <div class="student-stat-hint" id="hint-stat-review">Filter in review &rarr;</div>
           </div>
 
           <!-- Metric 4: Rejected -->
-          <div class="student-stat-card is-disabled" id="card-stat-rejected">
-            <p class="student-stat-label">Rejected</p>
+          <div class="student-stat-card is-disabled" id="card-stat-rejected" role="button" tabindex="0" aria-label="Rejected applications metric">
+            <div class="student-stat-card-header">
+              <p class="student-stat-label">Rejected</p>
+              <div class="student-stat-icon-badge badge-icon-rejected">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="15" y1="9" x2="9" y2="15"></line>
+                  <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+              </div>
+            </div>
             <h2 class="student-stat-value" id="stat-rejected">0</h2>
+            <div class="student-stat-hint" id="hint-stat-rejected">Filter rejected &rarr;</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- MIDDLE WORKSPACE ROW: YOUR NEXT STEPS (LEFT) + UPCOMING DEADLINES (RIGHT) -->
+      <div class="student-workspace-grid">
+        <!-- SECTION 1: YOUR NEXT STEPS -->
+        <section class="student-dashboard-card student-next-steps-card" id="student-next-steps-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 class="student-card-title">Your Next Steps</h3>
+                <span class="count-pill" id="next-steps-count-badge">0</span>
+              </div>
+              <p class="student-card-subtitle">Actionable items requiring your attention</p>
+            </div>
+          </div>
+          <div class="student-next-steps-list" id="student-next-steps-list">
+            <!-- Dynamic items rendered by student.js -->
+          </div>
+        </section>
+
+        <!-- SECTION 2: UPCOMING DEADLINES -->
+        <section class="student-dashboard-card student-deadlines-card" id="student-deadlines-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Upcoming Deadlines</h3>
+              <p class="student-card-subtitle">Key dates for scholarships &amp; submissions</p>
+            </div>
+            <a href="student-browse.html" class="student-subtle-link">Browse All &rarr;</a>
+          </div>
+          <div class="student-deadlines-list" id="student-deadlines-list">
+            <!-- Dynamic items rendered by student.js -->
           </div>
         </section>
       </div>
@@ -249,7 +350,10 @@
       <!-- C. MY SCHOLARSHIP APPLICATIONS -->
       <section class="student-apps-section">
         <div class="student-section-header">
-          <h3 class="student-section-title">My Scholarship Applications</h3>
+          <div class="student-section-title-wrap">
+            <h3 class="student-section-title">My Scholarship Applications</h3>
+            <p class="student-section-subtext">Manage and monitor the status of your submitted scholarship applications</p>
+          </div>
           <button
             type="button"
             class="student-view-all-btn"
@@ -294,6 +398,37 @@
         <!-- Dynamic Applications Feed (Rendered when applications exist) -->
         <div class="student-apps-feed" id="student-apps-feed" style="display: none"></div>
       </section>
+
+      <!-- LOWER DISCOVERY & ACTIVITY ROW: RECOMMENDED OPPORTUNITIES (LEFT) + RECENT ACTIVITY (RIGHT) -->
+      <div class="student-bottom-grid">
+        <!-- SECTION 3: RECOMMENDED OPPORTUNITIES -->
+        <section class="student-dashboard-card student-opps-card" id="student-opportunities-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Recommended Opportunities</h3>
+              <p class="student-card-subtitle">Active scholarships matching your student profile</p>
+            </div>
+            <a href="student-browse.html" class="student-subtle-link">View Directory &rarr;</a>
+          </div>
+          <div class="student-opportunities-feed" id="student-opportunities-feed">
+            <!-- Dynamic opportunities rendered by student.js -->
+          </div>
+        </section>
+
+        <!-- SECTION 4: RECENT ACTIVITY -->
+        <section class="student-dashboard-card student-activity-card" id="student-activity-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Recent Activity</h3>
+              <p class="student-card-subtitle">Chronological audit of your applications &amp; updates</p>
+            </div>
+            <a href="student-submissions.html" class="student-subtle-link">Submissions &rarr;</a>
+          </div>
+          <div class="student-activity-list" id="student-activity-list">
+            <!-- Dynamic timeline rendered by student.js -->
+          </div>
+        </section>
+      </div>
     </main>
 
     <!-- Global Footer -->

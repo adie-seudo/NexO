@@ -49,17 +49,54 @@ function initLoginFocus() {
 // =========================================
 function initLoginToggleAndSubmit() {
   const loginForm = document.getElementById("login-form");
+  const authScreen = document.getElementById("auth-screen");
 
-  // FIX: Grabs the buttons by class in case the IDs are missing in HTML
+  // Grab mobile role toggle buttons
   const toggleBtns = document.querySelectorAll(".role-toggle .toggle-btn");
-  const btnStudent = document.getElementById("btn-student") || toggleBtns[0];
-  const btnProvider = document.getElementById("btn-provider") || toggleBtns[1];
+  const btnStudent =
+    document.getElementById("btn-role-student") ||
+    document.getElementById("btn-student") ||
+    toggleBtns[0];
+  const btnProvider =
+    document.getElementById("btn-role-provider") ||
+    document.getElementById("btn-provider") ||
+    toggleBtns[1];
+
+  // Grab desktop split-panel role switch controls & header elements
+  const desktopSwitchToProviderBtn = document.getElementById(
+    "desktop-switch-to-provider",
+  );
+  const desktopSwitchToStudentBtn = document.getElementById(
+    "desktop-switch-to-student",
+  );
+  const switchContentStudent = document.getElementById(
+    "auth-switch-content-student",
+  );
+  const switchContentProvider = document.getElementById(
+    "auth-switch-content-provider",
+  );
+  const desktopRoleBadgeText = document.getElementById(
+    "auth-desktop-role-badge-text",
+  );
+  const desktopRoleIcon = document.getElementById("auth-desktop-role-icon");
+  const desktopTitle = document.getElementById("auth-desktop-title");
+  const desktopSubtitle = document.getElementById("auth-desktop-subtitle");
 
   const loginEmailInput = document.getElementById("email");
+  const loginEmailLabel = document.getElementById("login-email-label");
   const loginPasswordInput = document.getElementById("password");
   const emailGroup = document.getElementById("email-group");
   const emailIcon = document.querySelector("#email-group .input-icon");
   const emailError = document.getElementById("email-error");
+  const togglePasswordBtn = document.getElementById("toggle-password");
+
+  // Store per-role input drafts so switching roles never transfers credentials between contexts
+  const roleDrafts = {
+    Student: { email: "", password: "" },
+    Provider: { email: "", password: "" },
+  };
+  let currentActiveRole = "Student";
+  let switchingTimer = null;
 
   // Hide error automatically as user types
   if (loginEmailInput && emailGroup && emailError) {
@@ -69,14 +106,102 @@ function initLoginToggleAndSubmit() {
     });
   }
 
-  // Login Role Toggle
+  // Unified Role Switcher (synchronizes both Mobile Toggle & Desktop Split Panel)
   if (btnStudent && btnProvider) {
-    function setLoginRole(role) {
-      if (role === "Student") {
+    function setLoginRole(role, options = {}) {
+      const normalizedRole = role === "Provider" ? "Provider" : "Student";
+      const isRoleChange = normalizedRole !== currentActiveRole;
+
+      // Save current role's draft and restore target role's draft so credentials don't bleed across roles
+      if (isRoleChange) {
+        if (loginEmailInput) {
+          roleDrafts[currentActiveRole].email = loginEmailInput.value;
+        }
+        if (loginPasswordInput) {
+          roleDrafts[currentActiveRole].password = loginPasswordInput.value;
+        }
+      }
+
+      currentActiveRole = normalizedRole;
+
+      // Clear any validation error state from the previous role context
+      if (emailGroup) emailGroup.classList.remove("input-error", "has-error");
+      if (emailError) emailError.style.display = "none";
+      const passwordGroup = loginPasswordInput
+        ? loginPasswordInput.closest(".input-group")
+        : null;
+      if (passwordGroup) {
+        passwordGroup.classList.remove("input-error", "has-error");
+      }
+
+      // Reset password visibility mask when switching roles
+      if (isRoleChange && loginPasswordInput && togglePasswordBtn) {
+        loginPasswordInput.setAttribute("type", "password");
+        togglePasswordBtn.classList.remove("show-active");
+      }
+
+      // Trigger desktop sliding-panel stretch & form morph animation class
+      if (authScreen && options.animateDesktop && isRoleChange) {
+        authScreen.classList.add("is-switching");
+        if (switchingTimer) clearTimeout(switchingTimer);
+        switchingTimer = setTimeout(() => {
+          authScreen.classList.remove("is-switching");
+        }, 780);
+      }
+
+      if (normalizedRole === "Student") {
         btnStudent.classList.add("active");
+        btnStudent.setAttribute("aria-selected", "true");
         btnProvider.classList.remove("active");
-        if (loginEmailInput)
+        btnProvider.setAttribute("aria-selected", "false");
+
+        if (authScreen) {
+          authScreen.classList.remove("is-provider-mode");
+          authScreen.setAttribute("data-active-role", "Student");
+        }
+
+        if (switchContentStudent) {
+          switchContentStudent.classList.add("is-active");
+          switchContentStudent.classList.remove("is-hidden");
+          switchContentStudent.setAttribute("aria-hidden", "false");
+          if (desktopSwitchToProviderBtn) {
+            desktopSwitchToProviderBtn.tabIndex = 0;
+          }
+        }
+        if (switchContentProvider) {
+          switchContentProvider.classList.add("is-hidden");
+          switchContentProvider.classList.remove("is-active");
+          switchContentProvider.setAttribute("aria-hidden", "true");
+          if (desktopSwitchToStudentBtn) {
+            desktopSwitchToStudentBtn.tabIndex = -1;
+          }
+        }
+
+        if (desktopRoleBadgeText) {
+          desktopRoleBadgeText.textContent = "Student Portal";
+        }
+        if (desktopRoleIcon) {
+          desktopRoleIcon.src = "assets/human-icon.png";
+        }
+        if (desktopTitle) {
+          desktopTitle.textContent = "Student Sign In";
+        }
+        if (desktopSubtitle) {
+          desktopSubtitle.textContent =
+            "Use your verified university email (.edu.ph) to access your account.";
+        }
+        if (loginEmailLabel) {
+          loginEmailLabel.textContent = "Email";
+        }
+        if (loginEmailInput) {
           loginEmailInput.placeholder = "you@university.edu.ph";
+          if (isRoleChange) {
+            loginEmailInput.value = roleDrafts.Student.email;
+          }
+        }
+        if (loginPasswordInput && isRoleChange) {
+          loginPasswordInput.value = roleDrafts.Student.password;
+        }
         if (emailIcon) emailIcon.src = "assets/human-icon.png";
         if (emailError) {
           emailError.textContent =
@@ -84,24 +209,103 @@ function initLoginToggleAndSubmit() {
         }
       } else {
         btnProvider.classList.add("active");
+        btnProvider.setAttribute("aria-selected", "true");
         btnStudent.classList.remove("active");
-        if (loginEmailInput)
+        btnStudent.setAttribute("aria-selected", "false");
+
+        if (authScreen) {
+          authScreen.classList.add("is-provider-mode");
+          authScreen.setAttribute("data-active-role", "Provider");
+        }
+
+        if (switchContentProvider) {
+          switchContentProvider.classList.add("is-active");
+          switchContentProvider.classList.remove("is-hidden");
+          switchContentProvider.setAttribute("aria-hidden", "false");
+          if (desktopSwitchToStudentBtn) {
+            desktopSwitchToStudentBtn.tabIndex = 0;
+          }
+        }
+        if (switchContentStudent) {
+          switchContentStudent.classList.add("is-hidden");
+          switchContentStudent.classList.remove("is-active");
+          switchContentStudent.setAttribute("aria-hidden", "true");
+          if (desktopSwitchToProviderBtn) {
+            desktopSwitchToProviderBtn.tabIndex = -1;
+          }
+        }
+
+        if (desktopRoleBadgeText) {
+          desktopRoleBadgeText.textContent = "Scholarship Provider";
+        }
+        if (desktopRoleIcon) {
+          desktopRoleIcon.src = "assets/organization-icon.png";
+        }
+        if (desktopTitle) {
+          desktopTitle.textContent = "Provider Sign In";
+        }
+        if (desktopSubtitle) {
+          desktopSubtitle.textContent =
+            "Sign in with your organization credentials to manage scholarship programs.";
+        }
+        if (loginEmailLabel) {
+          loginEmailLabel.textContent = "Email";
+        }
+        if (loginEmailInput) {
           loginEmailInput.placeholder = "contact@organization.org";
+          if (isRoleChange) {
+            loginEmailInput.value = roleDrafts.Provider.email;
+          }
+        }
+        if (loginPasswordInput && isRoleChange) {
+          loginPasswordInput.value = roleDrafts.Provider.password;
+        }
         if (emailIcon) emailIcon.src = "assets/organization-icon.png";
-        if (emailError) emailError.style.display = "none";
-        if (emailGroup) emailGroup.classList.remove("input-error", "has-error");
+      }
+
+      if (options.focusEmail && loginEmailInput) {
+        setTimeout(() => {
+          loginEmailInput.focus({ preventScroll: true });
+        }, 420);
       }
     }
 
+    // Mobile role toggle listeners
     btnStudent.addEventListener("click", (e) => {
       e.preventDefault();
-      setLoginRole("Student");
+      setLoginRole("Student", { animateDesktop: true });
     });
 
     btnProvider.addEventListener("click", (e) => {
       e.preventDefault();
-      setLoginRole("Provider");
+      setLoginRole("Provider", { animateDesktop: true });
     });
+
+    // Desktop sliding panel button listeners
+    if (desktopSwitchToProviderBtn) {
+      desktopSwitchToProviderBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        setLoginRole("Provider", { animateDesktop: true, focusEmail: true });
+      });
+    }
+
+    if (desktopSwitchToStudentBtn) {
+      desktopSwitchToStudentBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        setLoginRole("Student", { animateDesktop: true, focusEmail: true });
+      });
+    }
+
+    // Keep state clean when resizing across the 1024px desktop/mobile breakpoint
+    window.addEventListener(
+      "resize",
+      () => {
+        if (authScreen && authScreen.classList.contains("is-switching")) {
+          authScreen.classList.remove("is-switching");
+        }
+      },
+      { passive: true },
+    );
   }
   // Login Form Submission (With Admin Bypass & Dynamic User Accounts)
   if (loginForm) {
@@ -111,7 +315,9 @@ function initLoginToggleAndSubmit() {
         ? loginEmailInput.value.trim().toLowerCase()
         : "";
       const passwordValue = loginPasswordInput ? loginPasswordInput.value : "";
-      const isStudent = btnStudent && btnStudent.classList.contains("active");
+      const isStudent =
+        (btnStudent && btnStudent.classList.contains("active")) ||
+        currentActiveRole === "Student";
 
       // Clear previous error states
       if (emailGroup) emailGroup.classList.remove("input-error", "has-error");
