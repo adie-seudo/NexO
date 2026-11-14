@@ -450,32 +450,52 @@ function initSplashScreen() {
   const splashScreen = document.getElementById("splash-screen");
   const introVideo = document.getElementById("intro-eagle-video");
 
-  if (splashScreen) {
-    const isStudent = window.location.pathname.includes("student");
-    const isDashboard = window.location.pathname.includes("dashboard");
-    if (isStudent || isDashboard) {
-      splashScreen.remove();
-      return;
+  if (!splashScreen) return;
+
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  const isPublicLanding = currentPage === "index.html" || currentPage === "";
+
+  if (!isPublicLanding) {
+    splashScreen.remove();
+    return;
+  }
+
+  const storageKey = "nexo-public-intro-played";
+  const hasPlayed = sessionStorage.getItem(storageKey);
+
+  if (hasPlayed === "true") {
+    splashScreen.remove();
+    return;
+  }
+
+  // Mark as played immediately so refreshing the page will never replay the intro
+  sessionStorage.setItem(storageKey, "true");
+
+  if (introVideo) {
+    let isHidden = false;
+    const hideSplash = () => {
+      if (isHidden) return;
+      isHidden = true;
+      splashScreen.classList.add("fade-out");
+      setTimeout(() => {
+        splashScreen.remove();
+      }, 600);
+    };
+
+    introVideo.addEventListener("ended", hideSplash);
+    introVideo.addEventListener("error", hideSplash);
+
+    const playPromise = introVideo.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {
+        // Fallback if autoplay is blocked by browser policy
+        setTimeout(hideSplash, 2600);
+      });
     }
 
-    const storageKey = "nexo-public-intro-played";
-    const hasPlayed = sessionStorage.getItem(storageKey);
-
-    if (hasPlayed) {
-      splashScreen.remove();
-    } else if (introVideo) {
-      const hideSplash = () => {
-        splashScreen.classList.add("fade-out");
-        setTimeout(() => {
-          splashScreen.remove();
-          sessionStorage.setItem(storageKey, "true");
-        }, 400);
-      };
-      introVideo.addEventListener("ended", hideSplash);
-      setTimeout(hideSplash, 3000);
-    } else {
-      splashScreen.remove();
-    }
+    setTimeout(hideSplash, 5000);
+  } else {
+    splashScreen.remove();
   }
 }
 
