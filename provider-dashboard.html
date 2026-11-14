@@ -244,106 +244,470 @@
 
     <!-- MAIN DASHBOARD CONTENT -->
     <main class="dash-main">
-      <!-- Profile Header & Welcome Section (Overlapping Hero Cover) -->
-      <section class="dash-welcome">
-        <div class="dash-profile-bar">
-          <!-- Overlapping Profile Picture (Facebook/TikTok style, Clickable to Settings) -->
+      <!-- 1. Redesigned Premium Provider Welcome & Identity Section -->
+      <section class="provider-welcome-hero" id="provider-welcome-section">
+        <div class="provider-welcome-left">
+          <!-- Overlapping/Elevated Profile Picture (Clickable to Brand Settings) -->
           <a
             href="provider-settings.html?tab=panel-brand"
-            class="dash-avatar-wrapper"
+            class="provider-avatar-box"
             id="welcome-avatar-wrapper"
             aria-label="Customize Brand & Profile in Settings"
-            title="Change Profile Picture & Brand"
+            title="Change Organization Logo & Profile in Settings"
           >
             <img id="welcome-avatar-img" src="" alt="Organization Logo" />
-            <span id="welcome-avatar-initials">NX</span>
+            <span id="welcome-avatar-initials" class="provider-avatar-initials">NX</span>
           </a>
 
-          <!-- Aligned Greeting & Title -->
-          <div class="dash-welcome-details">
-            <p class="welcome-sub">Welcome back,</p>
-            <div class="welcome-title-row">
-              <h1 class="welcome-title" id="dash-welcome-title">NEXO</h1>
+          <!-- Organization & Account Identity Details -->
+          <div class="provider-welcome-info">
+            <div class="provider-welcome-badge-row">
+              <span class="provider-badge-org">Scholarship Provider</span>
+              <span class="provider-verified-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Verified Institution
+              </span>
             </div>
+            <h1 class="provider-org-title" id="dash-welcome-title">NEXO Scholarship Committee</h1>
+            <p class="provider-welcome-subtitle">
+              Manage your scholarship programs, track student applications, and evaluate grants.
+            </p>
           </div>
         </div>
+
+        <button
+          type="button"
+          class="btn btn-primary provider-header-cta open-create-modal-btn"
+          id="provider-top-create-btn"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Create Scholarship</span>
+        </button>
       </section>
 
-      <!-- Statistics Cards Grid (Matching Student POV Card Style) -->
-      <section class="provider-stats-grid">
+      <!-- 2. Redesigned 4-Card Provider Statistics Layout -->
+      <section class="provider-stats-four-grid">
         <!-- Metric 1: Total Scholarships -->
         <div
-          class="student-stat-card is-clickable"
+          class="provider-stat-box"
           id="card-stat-total"
           onclick="window.location.href = 'provider-posts.html'"
-          title="View Posted Scholarships"
+          title="View all posted scholarship programs"
+          role="button"
+          tabindex="0"
         >
-          <p class="student-stat-label">Total Scholarships</p>
-          <h2 class="student-stat-value" id="stat-total">0</h2>
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Total Scholarships</p>
+            <div class="provider-stat-icon-wrap stat-icon-purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-total">0</h2>
+          <p class="provider-stat-desc">
+            <span>Published programs</span>
+            <span class="stat-link">View all &rarr;</span>
+          </p>
         </div>
 
         <!-- Metric 2: Total Applicants -->
         <div
-          class="student-stat-card is-clickable"
+          class="provider-stat-box"
           id="card-stat-applicants"
           onclick="window.location.href = 'provider-applications.html'"
-          title="View All Applications"
+          title="View all student submissions"
+          role="button"
+          tabindex="0"
         >
-          <p class="student-stat-label">Total Applicants</p>
-          <h2 class="student-stat-value" id="stat-applicants">0</h2>
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Total Applicants</p>
+            <div class="provider-stat-icon-wrap stat-icon-blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-applicants">0</h2>
+          <p class="provider-stat-desc">
+            <span>Registered candidates</span>
+            <span class="stat-link">Review &rarr;</span>
+          </p>
         </div>
 
-        <!-- Metric 3: Ongoing -->
+        <!-- Metric 3: Pending Review -->
         <div
-          class="student-stat-card is-clickable"
+          class="provider-stat-box"
+          id="card-stat-pending"
+          onclick="window.location.href = 'provider-applications.html?filter=review'"
+          title="Filter applications awaiting review"
+          role="button"
+          tabindex="0"
+        >
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Pending Review</p>
+            <div class="provider-stat-icon-wrap stat-icon-amber">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-pending">1</h2>
+          <p class="provider-stat-desc">
+            <span>Requires evaluation</span>
+            <span class="stat-link">Action &rarr;</span>
+          </p>
+        </div>
+
+        <!-- Metric 4: Ongoing Scholarships -->
+        <div
+          class="provider-stat-box"
           id="card-stat-ongoing"
           onclick="window.location.href = 'provider-posts.html?filter=open'"
-          title="View Ongoing Scholarships"
+          title="View active, open scholarship opportunities"
+          role="button"
+          tabindex="0"
         >
-          <p class="student-stat-label">Ongoing</p>
-          <h2 class="student-stat-value" id="stat-ongoing">0</h2>
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Ongoing Scholarships</p>
+            <div class="provider-stat-icon-wrap stat-icon-green">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-ongoing">0</h2>
+          <p class="provider-stat-desc">
+            <span>Accepting submissions</span>
+            <span class="stat-link">Manage &rarr;</span>
+          </p>
         </div>
       </section>
 
-      <!-- Recent Scholarships -->
-      <section class="dash-recent">
-        <div class="section-header">
-          <h3>Recent Scholarship</h3>
-          <a href="provider-posts.html" class="view-all" id="view-all-btn" style="display: none"
-            >View All</a
-          >
+      <!-- 3. Two-Column Provider Workspace Layout on Desktop -->
+      <div class="provider-main-grid">
+        <!-- LEFT COLUMN: Primary Administration & Evaluation -->
+        <div class="provider-col-left">
+          <!-- SECTION 1: Applications Requiring Attention (Clean Table) -->
+          <section class="provider-card" id="provider-attention-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">
+                  <span>Applications Requiring Attention</span>
+                  <span class="badge-status-pill badge-status-action" style="font-size: 11px;">1 Pending</span>
+                </h3>
+                <p class="provider-card-subtext">Recent student submissions waiting for committee verification or document review</p>
+              </div>
+              <a href="provider-applications.html" class="provider-action-link">View All Applications &rarr;</a>
+            </div>
+
+            <div class="provider-table-wrapper">
+              <table class="provider-attention-table" aria-label="Applications requiring attention">
+                <thead>
+                  <tr>
+                    <th>Applicant Name</th>
+                    <th>Scholarship Title</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="provider-attention-tbody">
+                  <!-- Realistic Mock Row (Adrian Del Mundo application from JSON database) -->
+                  <tr>
+                    <td>
+                      <div class="attention-applicant-cell">
+                        <div class="applicant-avatar-mini">AD</div>
+                        <div>
+                          <span class="applicant-name-text">Adrian Del Mundo</span>
+                          <span class="applicant-course-text">BSIT &bull; 3rd Year</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="attention-schol-title" title="BatStateU Academic Excellence Scholarship – 2026">
+                        BatStateU Academic Excellence Scholarship – 2026
+                      </span>
+                    </td>
+                    <td style="color: var(--text-secondary); white-space: nowrap;">Nov 11, 2026</td>
+                    <td>
+                      <span class="badge-status-pill badge-status-review">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;"></span>
+                        Under Review
+                      </span>
+                    </td>
+                    <td style="text-align: right;">
+                      <a href="provider-applications.html?appId=app_1794360837793_9d1509" class="btn btn-secondary btn-table-review">
+                        <span>Review</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- SECTION 2: Recent Scholarships (Horizontal Cards) -->
+          <section class="provider-card" id="provider-recent-schol-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Recent Scholarships</h3>
+                <p class="provider-card-subtext">Active programs and grants managed by your institution</p>
+              </div>
+              <a href="provider-posts.html" class="provider-action-link" id="view-all-btn">View All Posts &rarr;</a>
+            </div>
+
+            <!-- Empty State Fallback -->
+            <div class="empty-state-card" id="empty-state-card" style="display: none;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary); margin-bottom: 8px;">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">No active scholarships</h4>
+              <p style="margin: 0 0 12px 0;">Create and publish your first scholarship program to begin receiving student applications.</p>
+              <button type="button" class="btn btn-primary open-create-modal-btn" style="padding: 7px 18px; font-size: 13px; border-radius: 20px;">
+                + Create Scholarship
+              </button>
+            </div>
+
+            <!-- Horizontal Mini Scholarship Cards Container -->
+            <div class="provider-scholarships-cards" id="scholarships-feed">
+              <!-- Initial Realistic Card Mock -->
+              <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
+                <div class="mini-schol-header">
+                  <div>
+                    <h4 class="mini-schol-title">BatStateU Academic Excellence Scholarship – 2026</h4>
+                    <p class="mini-schol-meta">Merit-Based &bull; Closes Dec 15, 2026</p>
+                  </div>
+                  <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669;">Ongoing</span>
+                </div>
+                <div class="mini-schol-footer">
+                  <span class="mini-schol-counts">1 / 500 Applicants</span>
+                  <button type="button" class="mini-schol-manage-btn">
+                    Manage &rarr;
+                  </button>
+                </div>
+              </div>
+
+              <!-- Second Illustrative Card -->
+              <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
+                <div class="mini-schol-header">
+                  <div>
+                    <h4 class="mini-schol-title">CICS Technology Leadership Grant – Batch 2026</h4>
+                    <p class="mini-schol-meta">Need &amp; Merit &bull; Closes Jan 30, 2027</p>
+                  </div>
+                  <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669;">Ongoing</span>
+                </div>
+                <div class="mini-schol-footer">
+                  <span class="mini-schol-counts">0 / 250 Applicants</span>
+                  <button type="button" class="mini-schol-manage-btn">
+                    Manage &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
-        <div class="empty-state-card" id="empty-state-card">
-          <p>No recent scholarships yet.</p>
+        <!-- RIGHT COLUMN: Deadlines, Quick Actions, and Audit Activity -->
+        <div class="provider-col-right">
+          <!-- SECTION 3: Upcoming Deadlines (Compact Vertical List) -->
+          <section class="provider-card" id="provider-deadlines-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Upcoming Deadlines</h3>
+                <p class="provider-card-subtext">Application closures and review milestones</p>
+              </div>
+              <a href="provider-posts.html" class="provider-action-link">Calendar &rarr;</a>
+            </div>
+
+            <div class="provider-deadlines-list" id="provider-deadlines-list">
+              <!-- Item 1 -->
+              <div class="provider-deadline-item" onclick="window.location.href='provider-posts.html'">
+                <div class="deadline-calendar-badge">
+                  <span class="deadline-cal-month">DEC</span>
+                  <span class="deadline-cal-day">15</span>
+                </div>
+                <div class="deadline-text-group">
+                  <h4 class="deadline-text-title" title="BatStateU Academic Excellence Scholarship">Academic Excellence Scholarship</h4>
+                  <div class="deadline-sub-row">
+                    <span>Program Closing Date</span>
+                    <span class="badge-status-pill" style="background: rgba(59, 130, 246, 0.1); color: #2563eb; font-size: 10.5px; padding: 2px 7px;">In 30 Days</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="provider-deadline-item" onclick="window.location.href='provider-applications.html?filter=review'">
+                <div class="deadline-calendar-badge">
+                  <span class="deadline-cal-month">NOV</span>
+                  <span class="deadline-cal-day">20</span>
+                </div>
+                <div class="deadline-text-group">
+                  <h4 class="deadline-text-title" title="Committee Evaluation Period">Committee Evaluation Period</h4>
+                  <div class="deadline-sub-row">
+                    <span>First Round Review</span>
+                    <span class="badge-status-pill" style="background: rgba(245, 158, 11, 0.12); color: #d97706; font-size: 10.5px; padding: 2px 7px;">Priority</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 4: Quick Actions Grid (Replaces Oversized Full-Width Buttons) -->
+          <section class="provider-card" id="provider-quick-actions-section">
+            <div class="provider-card-header" style="margin-bottom: 14px;">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Quick Actions</h3>
+                <p class="provider-card-subtext">Frequent administration tasks</p>
+              </div>
+            </div>
+
+            <div class="provider-actions-grid">
+              <!-- Action 1: Create Scholarship (Primary) -->
+              <div
+                class="provider-action-tile tile-primary open-create-modal-btn"
+                id="open-create-modal"
+                role="button"
+                tabindex="0"
+                title="Publish a new scholarship opportunity"
+              >
+                <div class="action-tile-icon-wrap tile-icon-purple">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Create Scholarship</h4>
+                <p class="action-tile-desc">Draft and launch a new grant program</p>
+              </div>
+
+              <!-- Action 2: Review Applicants -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-applications.html'"
+                role="button"
+                tabindex="0"
+                title="Review incoming student submissions"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Review Applicants</h4>
+                <p class="action-tile-desc">Inspect candidates and submitted files</p>
+              </div>
+
+              <!-- Action 3: Manage Scholarships -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-posts.html'"
+                role="button"
+                tabindex="0"
+                title="Manage active scholarship postings"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Manage Programs</h4>
+                <p class="action-tile-desc">Edit criteria, deadlines, and limits</p>
+              </div>
+
+              <!-- Action 4: Organization Brand Settings -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-settings.html?tab=panel-brand'"
+                role="button"
+                tabindex="0"
+                title="Customize institution logo, banner, and bio"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Brand Settings</h4>
+                <p class="action-tile-desc">Update logo, cover image, and contacts</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 5: Recent Activity (Compact Timeline) -->
+          <section class="provider-card" id="provider-recent-activity-section">
+            <div class="provider-card-header" style="margin-bottom: 14px;">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Recent Activity</h3>
+                <p class="provider-card-subtext">Audit log of system and committee events</p>
+              </div>
+            </div>
+
+            <div class="provider-activity-timeline" id="provider-activity-list">
+              <!-- Event 1 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse activity-dot-amber"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">Application under committee evaluation</h5>
+                    <span class="activity-timestamp">2d ago</span>
+                  </div>
+                  <p class="activity-text-desc">Adrian Del Mundo &bull; BatStateU Academic Excellence Scholarship</p>
+                </div>
+              </div>
+
+              <!-- Event 2 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse activity-dot-green"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">New application received</h5>
+                    <span class="activity-timestamp">3d ago</span>
+                  </div>
+                  <p class="activity-text-desc">Candidate submission registered for Academic Excellence Scholarship</p>
+                </div>
+              </div>
+
+              <!-- Event 3 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">Scholarship program published</h5>
+                    <span class="activity-timestamp">4d ago</span>
+                  </div>
+                  <p class="activity-text-desc">BatStateU Academic Excellence Scholarship – 2026 published to student directory</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
-
-        <div
-          id="scholarships-feed"
-          style="display: flex; flex-direction: column; gap: 16px"
-        ></div>
-      </section>
-
-      <!-- Quick Actions -->
-      <section class="dash-actions">
-        <h3>Quick Actions</h3>
-        <button
-          type="button"
-          id="open-create-modal"
-          class="btn btn-primary"
-          style="width: 100%; display: block; margin-bottom: 14px; border-radius: 20px;"
-        >
-          Create New Scholarship
-        </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          style="width: 100%; display: block; border-radius: 20px;"
-          onclick="window.location.href = 'provider-applications.html'"
-        >
-          View Applications
-        </button>
-      </section>
+      </div>
 
       <!-- DRAFTS SECTION -->
       <section id="dash-drafts-section" style="display: none; padding-top: 80px; max-width: 680px; margin: 0 auto;">
