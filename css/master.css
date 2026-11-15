@@ -6945,6 +6945,7 @@ body.dark-theme .skeleton-bone {
   body.menu-open {
     overflow: auto !important;
     overscroll-behavior-y: auto !important;
+    padding-right: 260px !important;
   }
 
   /* DESKTOP RESOLUTION ADJUSTMENTS */
@@ -6954,6 +6955,7 @@ body.dark-theme .skeleton-bone {
     padding-right: 68px !important; /* Offset for docked rail so content is never covered */
     box-sizing: border-box !important;
     overflow-x: hidden !important;
+    transition: padding-right 0.28s cubic-bezier(0.2, 0.9, 0.4, 1) !important;
   }
 
   /* Ensure global footer also stops cleanly before the 68px pre-opened side menu */
@@ -7056,12 +7058,14 @@ body.dark-theme .skeleton-bone {
   }
 
   /* When switched to Scholarship Provider: form panel slides smoothly to the right half */
-  #auth-screen.auth-container:not(.register-mode).is-provider-mode .auth-form-panel {
+  #auth-screen.auth-container:not(.register-mode).is-provider-mode
+    .auth-form-panel {
     transform: translateX(100%) !important;
   }
 
   /* Subtle content cross-fade + scale micro-motion when role switches */
-  #auth-screen.auth-container:not(.register-mode).is-switching .auth-desktop-role-header,
+  #auth-screen.auth-container:not(.register-mode).is-switching
+    .auth-desktop-role-header,
   #auth-screen.auth-container:not(.register-mode).is-switching #login-view {
     animation: authFormRoleMorph 0.78s cubic-bezier(0.65, 0, 0.35, 1);
   }
@@ -7296,13 +7300,15 @@ body.dark-theme .skeleton-bone {
   }
 
   /* Slide the welcome panel horizontally to the left half when Provider is active */
-  #auth-screen.auth-container:not(.register-mode).is-provider-mode .auth-switch-panel {
+  #auth-screen.auth-container:not(.register-mode).is-provider-mode
+    .auth-switch-panel {
     transform: translateX(-100%) !important;
     box-shadow: 10px 0 30px rgba(44, 28, 95, 0.18) !important;
   }
 
   /* Elastic width pulse during the horizontal slide (matches reference video's .is-gx effect) */
-  #auth-screen.auth-container:not(.register-mode).is-switching .auth-switch-panel {
+  #auth-screen.auth-container:not(.register-mode).is-switching
+    .auth-switch-panel {
     animation: authSwitchPanelStretch 0.78s cubic-bezier(0.65, 0, 0.35, 1);
   }
 
@@ -7345,11 +7351,13 @@ body.dark-theme .skeleton-bone {
     left: -100px !important;
   }
 
-  #auth-screen.auth-container:not(.register-mode).is-provider-mode .auth-switch-circle-top {
+  #auth-screen.auth-container:not(.register-mode).is-provider-mode
+    .auth-switch-circle-top {
     transform: translateX(-110px) translateY(15px) scale(1.06) !important;
   }
 
-  #auth-screen.auth-container:not(.register-mode).is-provider-mode .auth-switch-circle-bottom {
+  #auth-screen.auth-container:not(.register-mode).is-provider-mode
+    .auth-switch-circle-bottom {
     transform: translateX(120px) translateY(-10px) scale(1.05) !important;
   }
 
@@ -7529,7 +7537,7 @@ body.dark-theme .skeleton-bone {
     width: 100% !important;
     margin: 0 !important;
     padding-left: 24px !important;
-    padding-right: 24px !important;
+    padding-right: 28px !important;
     box-sizing: border-box !important;
   }
 
@@ -7569,6 +7577,7 @@ body.dark-theme .skeleton-bone {
   .student-app-card,
   .student-welcome-card,
   .provider-app-card,
+  .provider-card,
   .empty-state-card,
   .student-empty-card {
     max-width: 100% !important;
@@ -7868,7 +7877,9 @@ body.dark-theme .skeleton-bone {
   }
 
   /* 3-Column Application Cards Grid on Desktop (up to 3x3 = 9 cards) */
-  .student-apps-feed {
+  .student-apps-feed,
+  .applications-feed,
+  #applications-feed {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 20px !important;
@@ -7997,30 +8008,37 @@ body.dark-theme .skeleton-bone {
     border-radius: 10px !important;
   }
 
-  /* Search & Filter row on Desktop (Reduced vertical gap before cards) */
+  /* Search & Filter row on Desktop (Clean vertical gap before cards) */
   .submissions-search-filter-section,
   #submissions-filter-section {
-    margin-bottom: 10px !important;
+    margin-bottom: 22px !important;
   }
 
   .submissions-search-filter-row {
     max-width: 100% !important;
-    margin-bottom: 4px !important;
+    margin-bottom: 22px !important;
   }
 
   .student-apps-section {
-    margin-top: 4px !important;
+    margin-top: 18px !important;
   }
 
   /* 3-Column Scholarship Directory Grid on Desktop (up to 3x3 = 9 cards) */
   .browse-feed,
-  #browse-scholarships-feed {
+  #browse-scholarships-feed,
+  .posts-grid,
+  #posts-feed,
+  .applications-feed,
+  #applications-feed,
+  .drafts-feed,
+  #drafts-feed {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 20px !important;
     align-items: stretch !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    margin-top: 18px !important;
   }
 
   .directory-card {
@@ -9384,7 +9402,9 @@ body.dark-theme .opp-applied-badge {
   pointer-events: none;
   z-index: 999999;
   transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.25s ease;
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease;
   will-change: transform, opacity;
   box-shadow: 0 0 50px rgba(127, 86, 217, 0.4);
 }
@@ -9452,7 +9472,9 @@ body.dark-theme .opp-applied-badge {
   flex-shrink: 0;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease;
 }
 
 .provider-avatar-box:hover {
@@ -9602,7 +9624,10 @@ body.dark-theme .provider-verified-chip {
   gap: 12px;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -9710,9 +9735,11 @@ body.dark-theme .provider-stat-desc span.stat-link {
 
 @media (min-width: 1024px) {
   .provider-main-grid {
-    grid-template-columns: 1.45fr 1fr;
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
     gap: 24px;
     align-items: start;
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -9722,7 +9749,13 @@ body.dark-theme .provider-stat-desc span.stat-link {
   flex-direction: column;
   gap: 22px;
   width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+}
+
+.provider-col-right {
+  position: relative;
+  z-index: 2;
 }
 
 /* Base Card Shell for Provider Workspace Sections */
@@ -9736,6 +9769,8 @@ body.dark-theme .provider-stat-desc span.stat-link {
   flex-direction: column;
   box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .provider-card-header {
@@ -9960,7 +9995,10 @@ body.dark-theme .badge-status-action {
   flex-direction: column;
   justify-content: space-between;
   gap: 12px;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   cursor: pointer;
 }
 
@@ -10044,7 +10082,9 @@ body.dark-theme .mini-schol-manage-btn {
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
   cursor: pointer;
 }
 
@@ -10133,7 +10173,10 @@ body.dark-theme .deadline-cal-month {
   gap: 8px;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   box-sizing: border-box;
 }
 
@@ -10270,7 +10313,3 @@ body.dark-theme .activity-dot-pulse {
   margin: 2px 0 0 0;
   line-height: 1.4;
 }
-
-
-
-

@@ -405,7 +405,7 @@
               <div class="provider-card-title-group">
                 <h3 class="provider-card-title">
                   <span>Applications Requiring Attention</span>
-                  <span class="badge-status-pill badge-status-action" style="font-size: 11px;">1 Pending</span>
+                  <span id="provider-attention-badge" class="badge-status-pill badge-status-action" style="font-size: 11px;">1 Pending</span>
                 </h3>
                 <p class="provider-card-subtext">Recent student submissions waiting for committee verification or document review</p>
               </div>
@@ -710,7 +710,7 @@
       </div>
 
       <!-- DRAFTS SECTION -->
-      <section id="dash-drafts-section" style="display: none; padding-top: 80px; max-width: 680px; margin: 0 auto;">
+      <section id="dash-drafts-section" style="display: none; padding-top: 80px; width: 100%; margin: 0 auto;">
         <div
           class="section-header"
           style="
@@ -747,7 +747,7 @@
 
         <div
           id="drafts-feed"
-          style="display: flex; flex-direction: column; gap: 16px"
+          class="drafts-feed"
         ></div>
       </section>
 

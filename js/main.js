@@ -827,9 +827,31 @@ window.renderSkeletonCards = function (containerOrId, count = null) {
     el.id === "browse-scholarships-feed" ||
     (el.classList && el.classList.contains("browse-feed"));
 
+  const isProviderPostsFeed =
+    el.id === "posts-feed" ||
+    (el.classList && el.classList.contains("posts-grid"));
+
+  const isProviderAppsFeed =
+    el.id === "applications-feed" ||
+    (el.classList && el.classList.contains("applications-feed"));
+
+  const isDraftsFeed =
+    el.id === "drafts-feed" ||
+    (el.classList && el.classList.contains("drafts-feed"));
+
+  const isProviderMiniCardsFeed =
+    el.id === "scholarships-feed" ||
+    (el.classList && el.classList.contains("provider-scholarships-cards"));
+
   if (count === null || count === undefined) {
     const isDesktop = window.innerWidth >= 1024;
-    count = (isStudentAppFeed || isDirectoryFeed) && isDesktop ? 9 : 3;
+    if (isProviderMiniCardsFeed) {
+      count = 2;
+    } else if ((isStudentAppFeed || isDirectoryFeed || isProviderPostsFeed || isProviderAppsFeed || isDraftsFeed) && isDesktop) {
+      count = 9;
+    } else {
+      count = 3;
+    }
   }
 
   let html = "";

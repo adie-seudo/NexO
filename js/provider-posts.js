@@ -23,6 +23,7 @@
   // State
   let allScholarships = [];
   let allApplications = [];
+  let isPostsExpanded = false;
   let studentSettings = null;
   let studentProfiles = {};
   let users = [];
@@ -351,7 +352,7 @@
   async function loadData(isBackground = false) {
     const postsFeed = document.getElementById("posts-feed");
     if (!isBackground && typeof window.renderSkeletonCards === "function" && postsFeed && postsFeed.children.length === 0) {
-      window.renderSkeletonCards(postsFeed, 3);
+      window.renderSkeletonCards(postsFeed);
     }
 
     let scholarships = [];
@@ -625,12 +626,48 @@
     }
 
     postsEmptyStateEl.style.display = "none";
-    postsFeedEl.style.display = "flex";
+    postsFeedEl.style.display = "grid";
     postsFeedEl.innerHTML = "";
 
-    filtered.forEach((schol) => {
+    const isDesktop = window.innerWidth >= 1024;
+    const maxInitialCards = isDesktop ? 9 : 3;
+    const totalMatching = filtered.length;
+    const visiblePosts = isPostsExpanded ? filtered : filtered.slice(0, maxInitialCards);
+
+    visiblePosts.forEach((schol) => {
       postsFeedEl.appendChild(createPostCard(schol));
     });
+
+    if (totalMatching > maxInitialCards) {
+      const toggleContainer = document.createElement("div");
+      toggleContainer.className = "posts-view-all-container";
+      toggleContainer.style.cssText =
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
+      toggleContainer.innerHTML = `
+        <button type="button" id="btn-toggle-posts-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+          ${
+            isPostsExpanded
+              ? `<span>Show Less</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+              : `<span>View All Scholarships (${totalMatching})</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+          }
+        </button>
+      `;
+      postsFeedEl.appendChild(toggleContainer);
+
+      const toggleBtn = toggleContainer.querySelector("#btn-toggle-posts-all");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          isPostsExpanded = !isPostsExpanded;
+          lastPostsSig = null; // Invalidate sig so rerender applies smoothly
+          renderPostsFeed();
+          if (!isPostsExpanded) {
+            postsFeedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+    }
   }
 
   function getApplicationTimestamp(app) {

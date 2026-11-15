@@ -6,6 +6,7 @@ let ongoingScholarships = 0;
 let draftCount = 0;
 let currentEditingDraftCard = null; // Tracks if we are updating a draft
 let currentEditingDraftId = null;
+let isDraftsExpanded = false;
 
 // Local Node.js / Express Server file-handling endpoint
 window.API_BASE =
@@ -600,7 +601,9 @@ function initViewSwitching() {
   const navHome = document.querySelector('a[href="provider-dashboard.html"]');
   const navDrafts = document.getElementById("nav-drafts");
   const dashCoverBanner = document.getElementById("dash-cover-banner");
-  const dashWelcome = document.querySelector(".dash-welcome");
+  const dashWelcomeHero = document.getElementById("provider-welcome-section") || document.querySelector(".provider-welcome-hero, .dash-welcome");
+  const dashStatsGrid = document.querySelector(".provider-stats-four-grid, .provider-stats-grid, .dash-stats-container");
+  const dashMainGrid = document.querySelector(".provider-main-grid");
   const dashRecent = document.querySelector(".dash-recent");
   const dashActions = document.querySelector(".dash-actions");
   const dashDraftsSection = document.getElementById("dash-drafts-section");
@@ -611,15 +614,11 @@ function initViewSwitching() {
   const viewAllBtn = document.getElementById("view-all-btn");
   const backToDashBtn = document.getElementById("back-to-dash-btn");
 
-  function getStatsElement() {
-    return document.querySelector(".provider-stats-grid, .dash-stats-container");
-  }
-
   function showHome() {
-    const statsEl = getStatsElement();
     if (dashCoverBanner) dashCoverBanner.style.display = "block";
-    if (dashWelcome) dashWelcome.style.display = "block";
-    if (statsEl) statsEl.style.display = "";
+    if (dashWelcomeHero) dashWelcomeHero.style.display = "flex";
+    if (dashStatsGrid) dashStatsGrid.style.display = "grid";
+    if (dashMainGrid) dashMainGrid.style.display = "grid";
     if (dashRecent) dashRecent.style.display = "block";
     if (dashActions) dashActions.style.display = "block";
     if (dashDraftsSection) dashDraftsSection.style.display = "none";
@@ -633,10 +632,10 @@ function initViewSwitching() {
   }
 
   function showDrafts() {
-    const statsEl = getStatsElement();
     if (dashCoverBanner) dashCoverBanner.style.display = "none";
-    if (dashWelcome) dashWelcome.style.display = "none";
-    if (statsEl) statsEl.style.display = "none";
+    if (dashWelcomeHero) dashWelcomeHero.style.display = "none";
+    if (dashStatsGrid) dashStatsGrid.style.display = "none";
+    if (dashMainGrid) dashMainGrid.style.display = "none";
     if (dashRecent) dashRecent.style.display = "none";
     if (dashActions) dashActions.style.display = "none";
     if (dashDraftsSection) dashDraftsSection.style.display = "block";
@@ -1186,7 +1185,7 @@ function createDraftCard(draft) {
   return newDraft;
 }
 
-function updateStatsUI(total, ongoing, drafts, applicants = 0) {
+function updateStatsUI(total, ongoing, drafts, applicants = 0, pending = 0) {
   totalScholarships = total;
   ongoingScholarships = ongoing;
   draftCount = drafts;
@@ -1194,15 +1193,391 @@ function updateStatsUI(total, ongoing, drafts, applicants = 0) {
   const statTotal = document.getElementById("stat-total");
   const statOngoing = document.getElementById("stat-ongoing");
   const statApplicants = document.getElementById("stat-applicants");
+  const statPending = document.getElementById("stat-pending");
   const draftBadge = document.getElementById("draft-badge");
 
   if (statTotal) statTotal.textContent = total;
   if (statOngoing) statOngoing.textContent = ongoing;
   if (statApplicants) statApplicants.textContent = applicants;
+  if (statPending) statPending.textContent = pending;
 
   if (draftBadge) {
     draftBadge.textContent = drafts;
     draftBadge.style.display = drafts > 0 ? "inline-block" : "none";
+  }
+}
+
+// =========================================
+// RENDERERS FOR REDESIGNED WORKSPACE PANELS
+// =========================================
+function renderProviderAttentionTable(myApplications) {
+  const tbody = document.getElementById("provider-attention-tbody");
+  const badgeEl = document.getElementById("provider-attention-badge");
+  if (!tbody) return;
+
+  const attentionApps = (Array.isArray(myApplications) ? myApplications : []).filter((app) => {
+    const st = (app.status || "").toLowerCase();
+    return st.includes("review") || st.includes("pending") || st.includes("submitted");
+  });
+
+  if (badgeEl) {
+    badgeEl.textContent = `${attentionApps.length} Pending`;
+    badgeEl.style.display = attentionApps.length > 0 ? "inline-flex" : "none";
+  }
+
+  tbody.innerHTML = "";
+
+  if (attentionApps.length === 0) {
+    const emptyTr = document.createElement("tr");
+    emptyTr.innerHTML = `
+      <td colspan="5" style="text-align: center; padding: 24px 16px; color: var(--text-secondary); font-size: 13.5px;">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary); opacity: 0.6;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span style="font-weight: 600;">All caught up! No applications currently require attention.</span>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(emptyTr);
+    return;
+  }
+
+  attentionApps.slice(0, 5).forEach((app) => {
+    const tr = document.createElement("tr");
+
+    const studentName = app.studentName || "Student Applicant";
+    const inits = typeof extractInitials === "function" ? extractInitials(studentName) : "ST";
+    const course = app.course || "Student";
+    const yearLevel = app.yearLevel ? ` • ${app.yearLevel}` : "";
+    const scholTitle = app.scholarshipTitle || app.title || "Scholarship Program";
+    const dateFormatted = app.formattedDate || (app.submittedAt ? new Date(app.submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "Recently");
+    const statusText = app.statusText || app.status || "Under Review";
+    const isSubmitted = statusText.toLowerCase().includes("submitted");
+    const dotColor = isSubmitted ? "#3b82f6" : "#f59e0b";
+    const badgeClass = isSubmitted ? "badge-status-submitted" : "badge-status-review";
+    const reviewHref = `provider-applications.html?appId=${encodeURIComponent(app.id || "")}`;
+
+    tr.innerHTML = `
+      <td>
+        <div class="attention-applicant-cell">
+          <div class="applicant-avatar-mini">${escapeHtml(inits)}</div>
+          <div>
+            <span class="applicant-name-text">${escapeHtml(studentName)}</span>
+            <span class="applicant-course-text">${escapeHtml(course + yearLevel)}</span>
+          </div>
+        </div>
+      </td>
+      <td>
+        <span class="attention-schol-title" title="${escapeHtml(scholTitle)}">
+          ${escapeHtml(scholTitle)}
+        </span>
+      </td>
+      <td style="color: var(--text-secondary); white-space: nowrap;">${escapeHtml(dateFormatted)}</td>
+      <td>
+        <span class="badge-status-pill ${badgeClass}">
+          <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor};"></span>
+          ${escapeHtml(statusText)}
+        </span>
+      </td>
+      <td style="text-align: right;">
+        <a href="${reviewHref}" class="btn btn-secondary btn-table-review">
+          <span>Review</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </a>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderProviderUpcomingDeadlines(myScholarships) {
+  const container = document.getElementById("provider-deadlines-list");
+  if (!container) return;
+
+  const validSchols = [];
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+
+  (Array.isArray(myScholarships) ? myScholarships : []).forEach((s) => {
+    if (!s.deadline) return;
+    let d = null;
+    if (s.deadline.includes("/")) {
+      const parts = s.deadline.split("/");
+      if (parts.length === 3) {
+        d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10));
+      }
+    } else {
+      d = new Date(s.deadline);
+    }
+
+    if (d && !isNaN(d.getTime())) {
+      validSchols.push({ schol: s, dateObj: d });
+    }
+  });
+
+  validSchols.sort((a, b) => a.dateObj - b.dateObj);
+
+  container.innerHTML = "";
+
+  if (validSchols.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 13px;">
+        No active deadlines scheduled.
+      </div>
+    `;
+    return;
+  }
+
+  validSchols.slice(0, 3).forEach(({ schol, dateObj }) => {
+    const month = dateObj.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+    const day = dateObj.getDate();
+    const diffDays = Math.ceil((dateObj - now) / (1000 * 60 * 60 * 24));
+    let badgeText = "";
+    let badgeStyle = "";
+
+    if (diffDays < 0) {
+      badgeText = "Closed";
+      badgeStyle = "background: rgba(239, 68, 68, 0.1); color: #dc2626;";
+    } else if (diffDays === 0) {
+      badgeText = "Closes Today";
+      badgeStyle = "background: rgba(239, 68, 68, 0.12); color: #dc2626;";
+    } else if (diffDays <= 7) {
+      badgeText = `In ${diffDays} Day${diffDays > 1 ? "s" : ""}`;
+      badgeStyle = "background: rgba(245, 158, 11, 0.12); color: #d97706;";
+    } else {
+      badgeText = `In ${diffDays} Days`;
+      badgeStyle = "background: rgba(59, 130, 246, 0.1); color: #2563eb;";
+    }
+
+    const item = document.createElement("div");
+    item.className = "provider-deadline-item";
+    item.onclick = () => {
+      const targetId = encodeURIComponent(schol.id || schol.title || "");
+      window.location.href = `provider-posts.html?scholarshipId=${targetId}&postId=${targetId}`;
+    };
+
+    item.innerHTML = `
+      <div class="deadline-calendar-badge">
+        <span class="deadline-cal-month">${escapeHtml(month)}</span>
+        <span class="deadline-cal-day">${escapeHtml(String(day))}</span>
+      </div>
+      <div class="deadline-text-group">
+        <h4 class="deadline-text-title" title="${escapeHtml(schol.title || "")}">${escapeHtml(schol.title || "Program Deadline")}</h4>
+        <div class="deadline-sub-row">
+          <span>Program Closing Date</span>
+          <span class="badge-status-pill" style="${badgeStyle} font-size: 10.5px; padding: 2px 7px;">${escapeHtml(badgeText)}</span>
+        </div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderProviderRecentActivity(myScholarships, myApplications, notifications) {
+  const container = document.getElementById("provider-activity-list");
+  if (!container) return;
+
+  const events = [];
+
+  // Synthesize from notifications if available
+  if (Array.isArray(notifications)) {
+    notifications.forEach((n) => {
+      if ((n.recipient || "").toLowerCase().includes("provider") || (n.recipientEmail || "").toLowerCase().includes("provider")) {
+        events.push({
+          type: "notif",
+          title: n.title || "Notification",
+          desc: n.message || "",
+          time: n.timestamp || new Date().toISOString(),
+          link: n.link || "provider-applications.html",
+        });
+      }
+    });
+  }
+
+  // Synthesize from genuine application events
+  (Array.isArray(myApplications) ? myApplications : []).forEach((a) => {
+    const st = (a.status || "").toLowerCase();
+    if (a.submittedAt) {
+      events.push({
+        type: "app_submit",
+        title: "New application received",
+        desc: `${a.studentName || "Student"} applied for ${a.scholarshipTitle || "Scholarship Program"}`,
+        time: a.submittedAt,
+        link: `provider-applications.html?appId=${encodeURIComponent(a.id || "")}`,
+      });
+    }
+    if (st.includes("review")) {
+      events.push({
+        type: "app_review",
+        title: "Application under evaluation",
+        desc: `${a.studentName || "Student"} • ${a.scholarshipTitle || "Scholarship Program"}`,
+        time: a.reviewedAt || a.submittedAt || new Date().toISOString(),
+        link: `provider-applications.html?appId=${encodeURIComponent(a.id || "")}`,
+      });
+    }
+  });
+
+  // Synthesize from scholarship publishing events
+  (Array.isArray(myScholarships) ? myScholarships : []).forEach((s) => {
+    const postDate = s.createdAt || s.postedAt;
+    events.push({
+      type: "schol_publish",
+      title: "Scholarship program published",
+      desc: `${s.title || "Scholarship"} published to directory`,
+      time: postDate || new Date().toISOString(),
+      link: `provider-posts.html?scholarshipId=${encodeURIComponent(s.id || s.title || "")}`,
+    });
+  });
+
+  // De-duplicate similar events and sort newest first
+  const seen = new Set();
+  const uniqueEvents = [];
+  events.forEach((e) => {
+    const key = `${e.type}_${e.desc}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueEvents.push(e);
+    }
+  });
+
+  uniqueEvents.sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
+
+  container.innerHTML = "";
+
+  if (uniqueEvents.length === 0) {
+    container.innerHTML = `
+      <div style="padding: 16px; text-align: center; color: var(--text-secondary); font-size: 13px;">
+        No recent activity recorded yet.
+      </div>
+    `;
+    return;
+  }
+
+  function formatTimeAgo(dateStr) {
+    try {
+      const diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
+      if (diff < 60) return "Just now";
+      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+      if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+      return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    } catch (_) {
+      return "Recently";
+    }
+  }
+
+  uniqueEvents.slice(0, 4).forEach((e) => {
+    const row = document.createElement("div");
+    row.className = "provider-activity-row";
+    if (e.link) {
+      row.style.cursor = "pointer";
+      row.onclick = () => { window.location.href = e.link; };
+    }
+
+    let dotClass = "";
+    if (e.type === "app_review") dotClass = "activity-dot-amber";
+    else if (e.type === "app_submit") dotClass = "activity-dot-green";
+
+    row.innerHTML = `
+      <div class="activity-node-col">
+        <span class="activity-dot-pulse ${dotClass}"></span>
+      </div>
+      <div class="activity-body-wrap">
+        <div class="activity-line-top">
+          <h5 class="activity-text-title">${escapeHtml(e.title)}</h5>
+          <span class="activity-timestamp">${escapeHtml(formatTimeAgo(e.time))}</span>
+        </div>
+        <p class="activity-text-desc">${escapeHtml(e.desc)}</p>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function renderProviderScholarshipsFeed(myScholarships, myApplications) {
+  const feed = document.getElementById("scholarships-feed");
+  const emptyState = document.getElementById("empty-state-card");
+  const viewAllBtn = document.getElementById("view-all-btn");
+  if (!feed) return;
+
+  const scholSig = JSON.stringify(
+    myScholarships.map((s) => ({
+      id: s.id,
+      title: s.title,
+      applicants: s.applicantCount,
+      status: s.status,
+    }))
+  );
+
+  if (window._lastScholSig !== scholSig) {
+    window._lastScholSig = scholSig;
+    feed.innerHTML = "";
+
+    if (myScholarships.length > 0) {
+      if (emptyState) emptyState.style.display = "none";
+      myScholarships.slice(0, 3).forEach((schol) => {
+        const miniCard = document.createElement("div");
+        miniCard.className = "provider-mini-schol-card";
+        miniCard.dataset.id = schol.id || "";
+
+        const limitNum = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+        const liveCount = (Array.isArray(myApplications) ? myApplications : []).filter((a) => {
+          if (a.scholarshipId && schol.id && String(a.scholarshipId) === String(schol.id)) return true;
+          if (schol.title && (a.scholarshipTitle === schol.title || a.title === schol.title)) return true;
+          return false;
+        }).length;
+
+        const isClosed = (schol.status || "").toLowerCase().includes("closed");
+        const statusText = isClosed ? "Closed" : "Ongoing";
+        const statusBg = isClosed ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)";
+        const statusColor = isClosed ? "#dc2626" : "#059669";
+
+        const deadlineText = schol.formattedDate || (schol.deadline ? (schol.deadline.includes("/") ? `Closes ${schol.deadline}` : `Closes ${new Date(schol.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`) : "Open Program");
+        const typeText = schol.typeText || schol.type || "Scholarship";
+
+        miniCard.innerHTML = `
+          <div class="mini-schol-header">
+            <div>
+              <h4 class="mini-schol-title">${escapeHtml(schol.title || "Scholarship Program")}</h4>
+              <p class="mini-schol-meta">${escapeHtml(typeText)} &bull; ${escapeHtml(deadlineText)}</p>
+            </div>
+            <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor};">${escapeHtml(statusText)}</span>
+          </div>
+          <div class="mini-schol-footer">
+            <span class="mini-schol-counts">${liveCount} / ${limitNum} Applicants</span>
+            <button type="button" class="mini-schol-manage-btn">
+              Manage &rarr;
+            </button>
+          </div>
+        `;
+
+        miniCard.onclick = () => {
+          const targetId = encodeURIComponent(schol.id || schol.title || "");
+          window.location.href = `provider-posts.html?scholarshipId=${targetId}&postId=${targetId}`;
+        };
+
+        const manageBtn = miniCard.querySelector(".mini-schol-manage-btn");
+        if (manageBtn) {
+          manageBtn.onclick = (e) => {
+            e.stopPropagation();
+            const targetId = encodeURIComponent(schol.id || schol.title || "");
+            window.location.href = `provider-posts.html?scholarshipId=${targetId}&postId=${targetId}`;
+          };
+        }
+
+        feed.appendChild(miniCard);
+      });
+
+      if (viewAllBtn) {
+        viewAllBtn.style.display = myScholarships.length > 0 ? "inline-flex" : "none";
+      }
+    } else {
+      if (emptyState) emptyState.style.display = "block";
+      if (viewAllBtn) viewAllBtn.style.display = "none";
+    }
   }
 }
 
@@ -1211,20 +1586,22 @@ async function loadPersistedData() {
   const draftsFeed = document.getElementById("drafts-feed");
   const emptyState = document.getElementById("empty-state-card");
   const emptyDraftsCard = document.getElementById("empty-drafts-card");
+
   if (typeof window.renderSkeletonCards === "function") {
     if (feed && feed.children.length === 0) {
       if (emptyState) emptyState.style.display = "none";
-      window.renderSkeletonCards(feed, 3);
+      window.renderSkeletonCards(feed, 2);
     }
     if (draftsFeed && draftsFeed.children.length === 0) {
       if (emptyDraftsCard) emptyDraftsCard.style.display = "none";
-      window.renderSkeletonCards(draftsFeed, 3);
+      window.renderSkeletonCards(draftsFeed);
     }
   }
 
   let scholarships = [];
   let drafts = [];
   let applications = [];
+  let notifications = [];
 
   try {
     const res = await fetch(`${API_BASE}/api/data`);
@@ -1234,26 +1611,39 @@ async function loadPersistedData() {
     scholarships = Array.isArray(data.scholarships) ? data.scholarships : [];
     drafts = Array.isArray(data.drafts) ? data.drafts : [];
     applications = Array.isArray(data.applications) ? data.applications : [];
+    notifications = Array.isArray(data.notifications) ? data.notifications : [];
 
     // Cache local copy for offline/Live Server fallback
     try {
       localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
       localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
       localStorage.setItem("nexo_applications", JSON.stringify(applications));
+      localStorage.setItem("nexo_notifications", JSON.stringify(notifications));
     } catch (_) {}
   } catch (err) {
-    console.warn(
-      "NEXO: Backend /api/data not reached, using local storage cache:",
-      err,
-    );
     try {
-      const cachedSchols = localStorage.getItem("nexo_scholarships");
-      const cachedDrafts = localStorage.getItem("nexo_drafts");
-      const cachedApps = localStorage.getItem("nexo_applications");
-      if (cachedSchols) scholarships = JSON.parse(cachedSchols);
-      if (cachedDrafts) drafts = JSON.parse(cachedDrafts);
-      if (cachedApps) applications = JSON.parse(cachedApps);
-    } catch (_) {}
+      const dataRes = await fetch("data.json");
+      if (dataRes.ok) {
+        const localData = await dataRes.json();
+        scholarships = Array.isArray(localData.scholarships) ? localData.scholarships : [];
+        drafts = Array.isArray(localData.drafts) ? localData.drafts : [];
+        applications = Array.isArray(localData.applications) ? localData.applications : [];
+        notifications = Array.isArray(localData.notifications) ? localData.notifications : [];
+      } else {
+        throw new Error("data.json fallback unavailable");
+      }
+    } catch (_) {
+      try {
+        const cachedSchols = localStorage.getItem("nexo_scholarships");
+        const cachedDrafts = localStorage.getItem("nexo_drafts");
+        const cachedApps = localStorage.getItem("nexo_applications");
+        const cachedNotifs = localStorage.getItem("nexo_notifications");
+        if (cachedSchols) scholarships = JSON.parse(cachedSchols);
+        if (cachedDrafts) drafts = JSON.parse(cachedDrafts);
+        if (cachedApps) applications = JSON.parse(cachedApps);
+        if (cachedNotifs) notifications = JSON.parse(cachedNotifs);
+      } catch (_) {}
+    }
   }
 
   const currentProviderEmail = (
@@ -1262,25 +1652,68 @@ async function loadPersistedData() {
     ""
   ).toLowerCase();
 
-  const myDrafts = currentProviderEmail
-    ? drafts.filter(
-        (d) =>
-          !d.providerEmail ||
-          d.providerEmail.toLowerCase() === currentProviderEmail,
-      )
-    : drafts;
+  const currentProviderName = (
+    sessionStorage.getItem("nexo-provider-name") ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO"
+  ).toLowerCase();
+
+  // Filter scholarships and drafts belonging to the authenticated provider
+  const myScholarships = scholarships.filter((s) => {
+    if (!currentProviderEmail && !currentProviderName) return true;
+    const sEmail = (s.providerEmail || "").toLowerCase();
+    const sName = (s.providerName || s.organization || "").toLowerCase();
+    if (currentProviderEmail && sEmail && sEmail === currentProviderEmail) return true;
+    if (currentProviderName && sName && (sName === currentProviderName || sName === "nexo")) return true;
+    return !sEmail && !sName;
+  });
+
+  const myDrafts = drafts.filter((d) => {
+    const dEmail = (d.providerEmail || "").toLowerCase();
+    if (!currentProviderEmail) return true;
+    return !dEmail || dEmail === currentProviderEmail || dEmail === "provider@nexo.edu.ph";
+  });
+
+  // Filter applications submitted to this provider's scholarships
+  const myApplications = applications.filter((app) => {
+    if (!currentProviderEmail && !currentProviderName) return true;
+    const appEmail = (app.providerEmail || "").toLowerCase();
+    const appProvName = (app.providerName || "").toLowerCase();
+    if (currentProviderEmail && appEmail && appEmail === currentProviderEmail) return true;
+    if (currentProviderName && appProvName && (appProvName === currentProviderName || appProvName === "nexo")) return true;
+
+    // Match against scholarshipId or scholarshipTitle
+    const matchesSchol = myScholarships.some((s) => {
+      if (app.scholarshipId && s.id && String(app.scholarshipId) === String(s.id)) return true;
+      if (s.title && (app.scholarshipTitle === s.title || app.title === s.title)) return true;
+      return false;
+    });
+    return matchesSchol;
+  });
+
+  // Accurate 4 metrics calculation
+  const totalSchols = myScholarships.length;
+  const totalApplicants = myApplications.length;
+  const pendingReview = myApplications.filter((a) => {
+    const st = (a.status || "").toLowerCase();
+    return st.includes("review") || st.includes("pending") || st.includes("submitted");
+  }).length;
+  const ongoingSchols = myScholarships.filter((s) => {
+    return (s.status || "Open").toLowerCase() === "open";
+  }).length;
 
   updateStatsUI(
-    scholarships.length,
-    scholarships.length,
+    totalSchols,
+    ongoingSchols,
     myDrafts.length,
-    applications.length,
+    totalApplicants,
+    pendingReview,
   );
 
   // Synchronize local cache with accurate live counts
-  if (Array.isArray(scholarships) && Array.isArray(applications)) {
-    scholarships.forEach((s) => {
-      const liveCount = applications.filter(
+  if (Array.isArray(myScholarships) && Array.isArray(myApplications)) {
+    myScholarships.forEach((s) => {
+      const liveCount = myApplications.filter(
         (a) =>
           (a.scholarshipId &&
             s.id &&
@@ -1294,58 +1727,25 @@ async function loadPersistedData() {
       s.maxApplicants = limit;
       s.applicantCount = `${liveCount} / ${limit} Applicants`;
     });
-    try {
-      localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
-    } catch (_) {}
   }
 
-  // Populate Scholarships Feed
-  const feed = document.getElementById("scholarships-feed");
-  const allFeed = document.getElementById("all-scholarships-feed");
-  const emptyState = document.getElementById("empty-state-card");
-  const viewAllBtn = document.getElementById("view-all-btn");
+  // Render Section 1: Applications Requiring Attention (Clean Table)
+  renderProviderAttentionTable(myApplications);
 
-  if (feed) {
-    const scholSig = JSON.stringify(
-      scholarships.map((s) => ({
-        id: s.id,
-        title: s.title,
-        applicants: s.applicantCount,
-        status: s.status,
-      }))
-    );
+  // Render Section 2: Recent Scholarships (Horizontal Cards)
+  renderProviderScholarshipsFeed(myScholarships, myApplications);
 
-    if (window._lastScholSig !== scholSig) {
-      window._lastScholSig = scholSig;
-      feed.innerHTML = "";
-      if (allFeed) allFeed.innerHTML = "";
+  // Render Section 3: Upcoming Deadlines (Compact Calendar List)
+  renderProviderUpcomingDeadlines(myScholarships);
 
-      if (scholarships.length > 0) {
-        if (emptyState) emptyState.style.display = "none";
-        scholarships.forEach((schol, idx) => {
-          if (idx < 3) {
-            feed.appendChild(createCompactCard(schol, applications));
-          }
-          if (allFeed) {
-            allFeed.appendChild(createCompactCard(schol, applications));
-          }
-        });
-        if (viewAllBtn) {
-          viewAllBtn.style.display =
-            scholarships.length > 3 ? "inline-block" : "none";
-        }
-      } else {
-        if (emptyState) emptyState.style.display = "block";
-        if (viewAllBtn) viewAllBtn.style.display = "none";
-      }
-    }
-  }
+  // Render Section 5: Recent Activity (Compact Timeline)
+  renderProviderRecentActivity(myScholarships, myApplications, notifications);
 
   // Populate Drafts Feed (anti-flicker diffing)
-  const draftsFeed = document.getElementById("drafts-feed");
-  const emptyDraftsCard = document.getElementById("empty-drafts-card");
+  const draftsFeedEl = document.getElementById("drafts-feed");
+  const emptyDraftsCardEl = document.getElementById("empty-drafts-card");
 
-  if (draftsFeed) {
+  if (draftsFeedEl) {
     const draftsSig = JSON.stringify(
       myDrafts.map((d) => ({
         id: d.id,
@@ -1356,22 +1756,61 @@ async function loadPersistedData() {
       }))
     );
 
-    if (window._lastDraftsSig !== draftsSig) {
+    if (window._lastDraftsSig !== draftsSig || window._forceDraftsRerender) {
       window._lastDraftsSig = draftsSig;
-      draftsFeed.innerHTML = "";
+      window._forceDraftsRerender = false;
+      if (typeof window.clearSkeleton === "function") {
+        window.clearSkeleton(draftsFeedEl);
+      }
+      draftsFeedEl.innerHTML = "";
       if (myDrafts.length > 0) {
-        if (emptyDraftsCard)
-          emptyDraftsCard.setAttribute("style", "display: none !important;");
-        myDrafts.forEach((draft) => {
-          draftsFeed.appendChild(createDraftCard(draft));
+        if (emptyDraftsCardEl)
+          emptyDraftsCardEl.setAttribute("style", "display: none !important;");
+
+        const isDesktop = window.innerWidth >= 1024;
+        const maxInitialCards = isDesktop ? 9 : 3;
+        const visibleDrafts = isDraftsExpanded ? myDrafts : myDrafts.slice(0, maxInitialCards);
+
+        visibleDrafts.forEach((draft) => {
+          draftsFeedEl.appendChild(createDraftCard(draft));
         });
+
+        if (myDrafts.length > maxInitialCards) {
+          const toggleContainer = document.createElement("div");
+          toggleContainer.className = "drafts-view-all-container";
+          toggleContainer.style.cssText =
+            "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
+          toggleContainer.innerHTML = `
+            <button type="button" id="btn-toggle-drafts-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+              ${
+                isDraftsExpanded
+                  ? `<span>Show Less</span>
+                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+                  : `<span>View All Drafts (${myDrafts.length})</span>
+                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+              }
+            </button>
+          `;
+          draftsFeedEl.appendChild(toggleContainer);
+
+          const toggleBtn = toggleContainer.querySelector("#btn-toggle-drafts-all");
+          if (toggleBtn) {
+            toggleBtn.addEventListener("click", () => {
+              isDraftsExpanded = !isDraftsExpanded;
+              window._forceDraftsRerender = true;
+              loadPersistedData();
+              if (!isDraftsExpanded) {
+                draftsFeedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            });
+          }
+        }
       } else {
-        if (emptyDraftsCard) emptyDraftsCard.removeAttribute("style");
+        if (emptyDraftsCardEl) emptyDraftsCardEl.removeAttribute("style");
       }
     }
   }
 }
-
 // =========================================
 // 8. PUBLISH AND DRAFT SUBMISSION LOGIC
 // =========================================
@@ -1602,11 +2041,12 @@ function initPublishAndDraft() {
         const dateVal = DOM.dateInput ? DOM.dateInput.value : "";
         const collectedRequirements = getCollectedRequirements();
 
-        const providerEmail = (
+        const currentProvEmail = (
           sessionStorage.getItem("nexo-provider-email") ||
           localStorage.getItem("nexo-provider-email") ||
           ""
         ).toLowerCase();
+        const providerEmail = currentProvEmail || "provider@nexo.edu.ph";
 
         const draftPayload = {
           id: currentEditingDraftId || "draft_" + Date.now(),
@@ -1652,14 +2092,14 @@ function initPublishAndDraft() {
           localStorage.setItem("nexo_drafts", JSON.stringify(cachedDrafts));
         } catch (_) {}
 
-        // If updating, delete the old draft from UI first
+        const wasEditing = Boolean(currentEditingDraftCard || currentEditingDraftId);
+
+        // If updating, remove old card if still in DOM
         if (currentEditingDraftCard) {
           currentEditingDraftCard.remove();
-          draftCount = Math.max(0, draftCount - 1);
           currentEditingDraftCard = null;
-          currentEditingDraftId = null;
-          window.dispatchEvent(new Event("nexo_drafts_updated"));
         }
+        currentEditingDraftId = null;
 
         // Hide empty drafts state card
         const emptyDraftsCard = document.getElementById("empty-drafts-card");
@@ -1670,10 +2110,13 @@ function initPublishAndDraft() {
         const draftsFeed = document.getElementById("drafts-feed");
         if (draftsFeed) {
           window._lastDraftsSig = null;
+          // Prepend newly saved or updated draft card
           draftsFeed.prepend(createDraftCard(savedDraft));
         }
 
-        draftCount++;
+        if (!wasEditing) {
+          draftCount++;
+        }
         const draftBadge = document.getElementById("draft-badge");
         if (draftBadge) {
           draftBadge.textContent = draftCount;
@@ -1895,8 +2338,23 @@ async function syncProviderProfile(incomingSettings = null) {
             JSON.stringify(settings),
           );
         } catch (_) {}
+      } else {
+        throw new Error("Settings fetch failed");
       }
-    } catch (_) {}
+    } catch (_) {
+      try {
+        const dataRes = await fetch("data.json");
+        if (dataRes.ok) {
+          const rawData = await dataRes.json();
+          if (rawData && rawData.settings) {
+            settings = rawData.settings;
+            try {
+              localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+    }
   }
 
   window._activeProviderSettings = settings;

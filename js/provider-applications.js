@@ -10,6 +10,7 @@
     : "http://localhost:3000";
 
   let allApplications = [];
+  let isAppsExpanded = false;
   let allScholarships = [];
   let studentSettings = null;
   let studentProfiles = {};
@@ -189,8 +190,8 @@
     const emptyState = document.getElementById("apps-empty-state");
     if (!isBackground && typeof window.renderSkeletonCards === "function" && appsFeed && appsFeed.children.length === 0) {
       if (emptyState) emptyState.style.display = "none";
-      window.renderSkeletonCards(appsFeed, 3);
-      appsFeed.style.display = "flex";
+      window.renderSkeletonCards(appsFeed);
+      appsFeed.style.display = "";
     }
 
     let serverApps = null;
@@ -253,6 +254,37 @@
     updateTabCounters();
     populateScholarshipFilterMenu();
     renderApplicationsList();
+
+    // Check query params on initial load
+    if (!window._initialUrlParamsHandled) {
+      window._initialUrlParamsHandled = true;
+      const targetAppId = urlParams.get("appId");
+      if (targetAppId) {
+        const targetApp = allApplications.find((a) => String(a.id) === String(targetAppId));
+        if (targetApp) {
+          setTimeout(() => {
+            if (typeof window.openReviewModalByAppId === "function") {
+              window.openReviewModalByAppId(targetAppId);
+            }
+          }, 150);
+        }
+      }
+      const initialFilter = urlParams.get("filter");
+      if (initialFilter) {
+        if (initialFilter.toLowerCase().includes("review")) {
+          activeFilterTab = "review";
+          const triggerLabel = document.getElementById("status-filter-label");
+          if (triggerLabel) triggerLabel.textContent = "Under Review";
+          const statusItems = document.querySelectorAll("[data-status-filter]");
+          statusItems.forEach((si) => {
+            if (si.dataset.statusFilter === "review") si.classList.add("selected");
+            else si.classList.remove("selected");
+          });
+          updateFilterIndicator();
+          renderApplicationsList();
+        }
+      }
+    }
   }
 
   // -------------------------------------------------------------
@@ -712,12 +744,47 @@
     }
 
     emptyStateEl.style.display = "none";
-    appsFeedEl.style.display = "flex";
+    appsFeedEl.style.display = "grid";
     appsFeedEl.innerHTML = "";
 
-    filtered.forEach((app) => {
+    const isDesktop = window.innerWidth >= 1024;
+    const maxInitialCards = isDesktop ? 9 : 3;
+    const totalMatching = filtered.length;
+    const visibleApps = isAppsExpanded ? filtered : filtered.slice(0, maxInitialCards);
+
+    visibleApps.forEach((app) => {
       appsFeedEl.appendChild(createApplicationCard(app));
     });
+
+    if (totalMatching > maxInitialCards) {
+      const toggleContainer = document.createElement("div");
+      toggleContainer.className = "applications-view-all-container";
+      toggleContainer.style.cssText =
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
+      toggleContainer.innerHTML = `
+        <button type="button" id="btn-toggle-apps-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+          ${
+            isAppsExpanded
+              ? `<span>Show Less</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+              : `<span>View All Applications (${totalMatching})</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+          }
+        </button>
+      `;
+      appsFeedEl.appendChild(toggleContainer);
+
+      const toggleBtn = toggleContainer.querySelector("#btn-toggle-apps-all");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          isAppsExpanded = !isAppsExpanded;
+          renderApplicationsList();
+          if (!isAppsExpanded) {
+            appsFeedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+    }
   }
 
   // -------------------------------------------------------------
