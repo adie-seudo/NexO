@@ -248,8 +248,66 @@
       } catch (_) {}
     }
 
-    allApplications = serverApps || [];
-    allScholarships = serverSchols || [];
+    const currentProviderEmail = (
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase();
+    const currentProviderName = (
+      sessionStorage.getItem("nexo-provider-name") ||
+      localStorage.getItem("nexo-provider-name") ||
+      ""
+    ).toLowerCase();
+    const isPrimaryProvider =
+      !currentProviderEmail ||
+      currentProviderEmail === "admin@admin" ||
+      currentProviderEmail === "provider@nexo.edu.ph";
+
+    allScholarships = (serverSchols || []).filter((s) => {
+      if (isPrimaryProvider && (!s.providerEmail || s.providerName === "NEXO")) {
+        return true;
+      }
+      if (
+        currentProviderEmail &&
+        s.providerEmail &&
+        s.providerEmail.toLowerCase() === currentProviderEmail
+      ) {
+        return true;
+      }
+      if (
+        currentProviderName &&
+        s.providerName &&
+        s.providerName.toLowerCase() === currentProviderName
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    const myScholIds = new Set(allScholarships.map((s) => String(s.id)));
+    const myScholTitles = new Set(
+      allScholarships.map((s) => (s.title || "").toLowerCase().trim()),
+    );
+
+    allApplications = (serverApps || []).filter((a) => {
+      if (a.scholarshipId && myScholIds.has(String(a.scholarshipId))) {
+        return true;
+      }
+      const titleKey = (a.scholarshipTitle || a.title || "")
+        .toLowerCase()
+        .trim();
+      if (titleKey && myScholTitles.has(titleKey)) {
+        return true;
+      }
+      if (
+        currentProviderEmail &&
+        a.providerEmail &&
+        a.providerEmail.toLowerCase() === currentProviderEmail
+      ) {
+        return true;
+      }
+      return false;
+    });
 
     updateTabCounters();
     populateScholarshipFilterMenu();

@@ -190,13 +190,27 @@ function initImageUploads() {
 // ==========================================
 async function loadSettings() {
   let settings = null;
+  const activeProviderEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase();
 
   try {
-    const res = await fetch(`${API_BASE}/api/settings`);
+    const query = activeProviderEmail
+      ? `?email=${encodeURIComponent(activeProviderEmail)}`
+      : "";
+    const res = await fetch(`${API_BASE}/api/settings${query}`);
     if (res.ok) {
       settings = await res.json();
       // Cache copy in localStorage for offline & quick navigation
       try {
+        if (activeProviderEmail) {
+          localStorage.setItem(
+            `nexo_provider_settings_${activeProviderEmail}`,
+            JSON.stringify(settings),
+          );
+        }
         localStorage.setItem(
           "nexo_provider_settings",
           JSON.stringify(settings),
@@ -213,7 +227,10 @@ async function loadSettings() {
   // If backend was offline, read from localStorage fallback
   if (!settings) {
     try {
-      const cached = localStorage.getItem("nexo_provider_settings");
+      const cached =
+        (activeProviderEmail &&
+          localStorage.getItem(`nexo_provider_settings_${activeProviderEmail}`)) ||
+        localStorage.getItem("nexo_provider_settings");
       if (cached) settings = JSON.parse(cached);
     } catch (_) {}
   }
@@ -227,34 +244,33 @@ async function loadSettings() {
 function applySettingsToUI(s) {
   currentSettings = s;
 
+  const activeEmail =
+    s.email ||
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    "provider@nexo.edu.ph";
+
   // Basic Information
   const orgNameInput = document.getElementById("org-name");
   const orgLocationInput = document.getElementById("org-location");
   const orgBioInput = document.getElementById("org-bio");
 
-  if (orgNameInput && s.orgName) orgNameInput.value = s.orgName;
-  if (orgLocationInput && s.location) orgLocationInput.value = s.location;
-  if (orgBioInput && s.bio) orgBioInput.value = s.bio;
+  if (orgNameInput) orgNameInput.value = s.orgName || "";
+  if (orgLocationInput) orgLocationInput.value = s.location || "";
+  if (orgBioInput) orgBioInput.value = s.bio || "";
 
   // Contact Details
   const contactPersonInput = document.getElementById("contact-person");
   const contactNumberInput = document.getElementById("contact-number");
   const contactEmailInput = document.getElementById("contact-email");
 
-  if (contactPersonInput && s.contactPerson)
-    contactPersonInput.value = s.contactPerson;
-  if (contactNumberInput && s.contactNumber)
-    contactNumberInput.value = s.contactNumber;
-  if (contactEmailInput && s.email) contactEmailInput.value = s.email;
+  if (contactPersonInput) contactPersonInput.value = s.contactPerson || "";
+  if (contactNumberInput) contactNumberInput.value = s.contactNumber || "";
+  if (contactEmailInput) contactEmailInput.value = s.email || activeEmail;
 
   // Current Email & Active Session Display in Security tab
   const currentAccountEmail = document.getElementById("current-account-email");
   const sessionActiveEmail = document.getElementById("session-active-email");
-  const activeEmail =
-    s.email ||
-    sessionStorage.getItem("nexo-provider-email") ||
-    localStorage.getItem("nexo-provider-email") ||
-    "provider@nexo.edu.ph";
   if (currentAccountEmail) currentAccountEmail.textContent = activeEmail;
   if (sessionActiveEmail) sessionActiveEmail.textContent = activeEmail;
 
@@ -265,6 +281,10 @@ function applySettingsToUI(s) {
     bannerPreview.src = s.bannerImage;
     bannerPreview.classList.add("has-image");
     if (btnRemoveBanner) btnRemoveBanner.classList.add("visible");
+  } else if (bannerPreview) {
+    bannerPreview.src = "";
+    bannerPreview.classList.remove("has-image");
+    if (btnRemoveBanner) btnRemoveBanner.classList.remove("visible");
   }
 
   // Logo Preview & Initials
@@ -445,6 +465,12 @@ async function saveAllSettings(saveBtn = null) {
     `;
   }
 
+  const activeProviderEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase();
+
   const orgNameVal =
     document.getElementById("org-name")?.value.trim() || "NEXO";
   const locationVal =
@@ -453,7 +479,10 @@ async function saveAllSettings(saveBtn = null) {
     document.getElementById("contact-person")?.value.trim() || "";
   const contactNumberVal =
     document.getElementById("contact-number")?.value.trim() || "";
-  const emailVal = document.getElementById("contact-email")?.value.trim() || "";
+  const emailVal =
+    document.getElementById("contact-email")?.value.trim() ||
+    activeProviderEmail ||
+    "";
   const bioVal = document.getElementById("org-bio")?.value.trim() || "";
 
   // Determine image payloads
@@ -514,12 +543,20 @@ async function saveAllSettings(saveBtn = null) {
 
   // Always mirror to localStorage for instant cross-page sync
   try {
+    const targetEmailKey = (emailVal || activeProviderEmail).toLowerCase();
+    if (targetEmailKey) {
+      localStorage.setItem(
+        `nexo_provider_settings_${targetEmailKey}`,
+        JSON.stringify(currentSettings),
+      );
+    }
     localStorage.setItem(
       "nexo_provider_settings",
       JSON.stringify(currentSettings),
     );
     localStorage.setItem("nexo_settings", JSON.stringify(currentSettings));
     localStorage.setItem("nexo-provider-name", orgNameVal);
+    sessionStorage.setItem("nexo-provider-name", orgNameVal);
     localStorage.setItem("nexo-provider-logo", finalLogo);
     localStorage.setItem("nexo-provider-banner", finalBanner);
 
@@ -538,13 +575,23 @@ async function saveAllSettings(saveBtn = null) {
       }
     }
 
-    // Update all scholarships in local storage so Directory inherits the updated banner
+    // Update matching scholarships in local storage so Directory inherits the updated banner
     const cachedSchols = JSON.parse(
       localStorage.getItem("nexo_scholarships") || "[]"
     );
+    const isPrimary =
+      targetEmailKey === "admin@admin" ||
+      targetEmailKey === "provider@nexo.edu.ph";
     if (Array.isArray(cachedSchols) && cachedSchols.length > 0) {
       cachedSchols.forEach((s) => {
-        if (!s.providerName || s.providerName === "NEXO" || s.providerName === orgNameVal) {
+        const emailMatch =
+          targetEmailKey &&
+          s.providerEmail &&
+          s.providerEmail.toLowerCase() === targetEmailKey;
+        const nameMatch =
+          s.providerName === orgNameVal ||
+          (isPrimary && (!s.providerName || s.providerName === "NEXO"));
+        if (emailMatch || nameMatch) {
           if (finalBanner) s.providerBanner = finalBanner;
           if (finalLogo) s.providerLogo = finalLogo;
           if (orgNameVal) s.providerName = orgNameVal;

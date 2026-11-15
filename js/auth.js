@@ -437,20 +437,48 @@ function initLoginToggleAndSubmit() {
 
       // 5. Successful Login Execution
       if (matchedUser.role === "provider") {
+        const provEmailLower = (matchedUser.email || "").toLowerCase().trim();
+        const provDisplayName = matchedUser.orgName || matchedUser.name || "NEXO";
         try {
-          localStorage.removeItem("nexo-provider-banner");
-          localStorage.removeItem("provider-banner-preview");
+          const lastProvEmail = (localStorage.getItem("nexo-provider-email") || "").toLowerCase().trim();
+          if (lastProvEmail !== provEmailLower) {
+            localStorage.removeItem("nexo_provider_settings");
+            localStorage.removeItem("nexo_settings");
+            localStorage.removeItem("nexo-provider-logo");
+            localStorage.removeItem("nexo-provider-banner");
+            localStorage.removeItem("provider-banner-preview");
+          } else {
+            localStorage.removeItem("nexo-provider-banner");
+            localStorage.removeItem("provider-banner-preview");
+          }
+
+          if (provEmailLower) {
+            const scopedProv = localStorage.getItem(`nexo_provider_settings_${provEmailLower}`);
+            if (scopedProv) {
+              localStorage.setItem("nexo_provider_settings", scopedProv);
+              try {
+                const parsedProv = JSON.parse(scopedProv);
+                if (parsedProv.logoImage) {
+                  localStorage.setItem("nexo-provider-logo", parsedProv.logoImage);
+                } else {
+                  localStorage.removeItem("nexo-provider-logo");
+                }
+                if (parsedProv.bannerImage) {
+                  localStorage.setItem("nexo-provider-banner", parsedProv.bannerImage);
+                }
+              } catch (_) {}
+            } else {
+              localStorage.removeItem("nexo_provider_settings");
+              localStorage.removeItem("nexo_settings");
+              localStorage.removeItem("nexo-provider-logo");
+            }
+          }
+
           sessionStorage.setItem("nexo-logged-in", "provider");
-          sessionStorage.setItem(
-            "nexo-provider-name",
-            matchedUser.name || matchedUser.orgName || "NEXO",
-          );
+          sessionStorage.setItem("nexo-provider-name", provDisplayName);
           sessionStorage.setItem("nexo-provider-email", matchedUser.email);
           localStorage.setItem("nexo-logged-in", "provider");
-          localStorage.setItem(
-            "nexo-provider-name",
-            matchedUser.name || matchedUser.orgName || "NEXO",
-          );
+          localStorage.setItem("nexo-provider-name", provDisplayName);
           localStorage.setItem("nexo-provider-email", matchedUser.email);
         } catch (_) {}
         window.location.href = "provider-dashboard.html";
@@ -458,13 +486,10 @@ function initLoginToggleAndSubmit() {
       } else {
         const emailLower = (matchedUser.email || "").toLowerCase().trim();
         try {
-          const lastStudentEmail = localStorage.getItem("nexo-student-email");
-          if (lastStudentEmail && lastStudentEmail.toLowerCase() !== emailLower) {
-            // Different student account logging in - clear stale cached settings & avatar
-            localStorage.removeItem("nexo_student_settings");
-            localStorage.removeItem("nexo-student-avatar");
-            sessionStorage.removeItem("nexo-student-avatar");
-          }
+          // Always clear global unscoped student keys first; we will re-populate ONLY from this student's own profile
+          localStorage.removeItem("nexo_student_settings");
+          localStorage.removeItem("nexo-student-avatar");
+          sessionStorage.removeItem("nexo-student-avatar");
         } catch (_) {}
 
         // Set essential auth flags FIRST before storing large avatar strings so quota errors never block login
@@ -641,16 +666,18 @@ function initRegisterPage() {
     }
 
     // 2. Validate Email
+    const urlParams = new URLSearchParams(window.location.search);
+    const isProviderReg = (urlParams.get("role") || "").toLowerCase() === "provider";
     const emailVal = emailInput ? emailInput.value.trim().toLowerCase() : "";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailVal) {
-      showError(groupEmail, errorEmail, "Please enter your school email.");
+      showError(groupEmail, errorEmail, isProviderReg ? "Please enter your organization email." : "Please enter your school email.");
       isValid = false;
     } else if (!emailRegex.test(emailVal)) {
       showError(groupEmail, errorEmail, "Please enter a valid email address.");
       isValid = false;
-    } else if (!emailVal.endsWith(".edu.ph")) {
+    } else if (!isProviderReg && !emailVal.endsWith(".edu.ph")) {
       showError(
         groupEmail,
         errorEmail,
@@ -687,13 +714,13 @@ function initRegisterPage() {
       submitBtn.style.pointerEvents = "none";
     }
 
-    // Persist pending credentials into sessionStorage so verify.js can register user
+    // Persist pending credentials into sessionStorage so verify.js / provider-setup.js can register user
     sessionStorage.setItem("nexo-pending-name", nameInput.value.trim());
     sessionStorage.setItem("nexo-pending-email", emailVal);
     sessionStorage.setItem("nexo-pending-password", passVal);
 
     setTimeout(() => {
-      window.location.href = "verify.html";
+      window.location.href = isProviderReg ? "provider-setup.html" : "verify.html";
     }, 900);
   };
 

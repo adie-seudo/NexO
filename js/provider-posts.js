@@ -390,11 +390,62 @@
       localStorage.getItem("nexo-provider-email") ||
       ""
     ).toLowerCase();
+    const currentProviderName = (
+      sessionStorage.getItem("nexo-provider-name") ||
+      localStorage.getItem("nexo-provider-name") ||
+      ""
+    ).toLowerCase();
+    const isPrimaryProvider =
+      !currentProviderEmail ||
+      currentProviderEmail === "admin@admin" ||
+      currentProviderEmail === "provider@nexo.edu.ph";
 
-    // Synchronize with portal scholarships (matches provider-dashboard.html)
-    allScholarships = scholarships;
+    // Filter scholarships and applications by the logged-in provider (matches provider-dashboard.html)
+    allScholarships = (scholarships || []).filter((s) => {
+      if (isPrimaryProvider && (!s.providerEmail || s.providerName === "NEXO")) {
+        return true;
+      }
+      if (
+        currentProviderEmail &&
+        s.providerEmail &&
+        s.providerEmail.toLowerCase() === currentProviderEmail
+      ) {
+        return true;
+      }
+      if (
+        currentProviderName &&
+        s.providerName &&
+        s.providerName.toLowerCase() === currentProviderName
+      ) {
+        return true;
+      }
+      return false;
+    });
 
-    allApplications = applications;
+    const myScholIds = new Set(allScholarships.map((s) => String(s.id)));
+    const myScholTitles = new Set(
+      allScholarships.map((s) => (s.title || "").toLowerCase().trim()),
+    );
+
+    allApplications = (applications || []).filter((a) => {
+      if (a.scholarshipId && myScholIds.has(String(a.scholarshipId))) {
+        return true;
+      }
+      const titleKey = (a.scholarshipTitle || a.title || "")
+        .toLowerCase()
+        .trim();
+      if (titleKey && myScholTitles.has(titleKey)) {
+        return true;
+      }
+      if (
+        currentProviderEmail &&
+        a.providerEmail &&
+        a.providerEmail.toLowerCase() === currentProviderEmail
+      ) {
+        return true;
+      }
+      return false;
+    });
 
     // Refresh active post object if currently viewing applicants
     if (currentActivePost) {
@@ -596,8 +647,13 @@
       }),
     );
 
-    if (lastPostsSig === currentSig) return;
+    const hasSkeletons =
+      postsFeedEl.querySelector(".nexo-skeleton-card") !== null;
+    if (lastPostsSig === currentSig && !hasSkeletons) return;
     lastPostsSig = currentSig;
+    if (typeof window.clearSkeleton === "function") {
+      window.clearSkeleton(postsFeedEl);
+    }
 
     if (allScholarships.length === 0) {
       postsFeedEl.style.display = "none";

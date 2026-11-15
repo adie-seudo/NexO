@@ -1512,6 +1512,9 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
     }))
   );
 
+  if (typeof window.clearSkeleton === "function") {
+    window.clearSkeleton(feed);
+  }
   if (window._lastScholSig !== scholSig) {
     window._lastScholSig = scholSig;
     feed.innerHTML = "";
@@ -1588,11 +1591,11 @@ async function loadPersistedData() {
   const emptyDraftsCard = document.getElementById("empty-drafts-card");
 
   if (typeof window.renderSkeletonCards === "function") {
-    if (feed && feed.children.length === 0) {
+    if (window._lastScholSig === undefined && feed && feed.children.length === 0) {
       if (emptyState) emptyState.style.display = "none";
       window.renderSkeletonCards(feed, 2);
     }
-    if (draftsFeed && draftsFeed.children.length === 0) {
+    if (window._lastDraftsSig === undefined && draftsFeed && draftsFeed.children.length === 0) {
       if (emptyDraftsCard) emptyDraftsCard.style.display = "none";
       window.renderSkeletonCards(draftsFeed);
     }
@@ -1650,39 +1653,46 @@ async function loadPersistedData() {
     sessionStorage.getItem("nexo-provider-email") ||
     localStorage.getItem("nexo-provider-email") ||
     ""
-  ).toLowerCase();
+  ).toLowerCase().trim();
 
   const currentProviderName = (
     sessionStorage.getItem("nexo-provider-name") ||
     localStorage.getItem("nexo-provider-name") ||
     "NEXO"
-  ).toLowerCase();
+  ).toLowerCase().trim();
+
+  const isPrimaryProvider =
+    currentProviderEmail === "admin@admin" ||
+    currentProviderEmail === "provider@nexo.edu.ph";
 
   // Filter scholarships and drafts belonging to the authenticated provider
   const myScholarships = scholarships.filter((s) => {
     if (!currentProviderEmail && !currentProviderName) return true;
-    const sEmail = (s.providerEmail || "").toLowerCase();
-    const sName = (s.providerName || s.organization || "").toLowerCase();
-    if (currentProviderEmail && sEmail && sEmail === currentProviderEmail) return true;
-    if (currentProviderName && sName && (sName === currentProviderName || sName === "nexo")) return true;
-    return !sEmail && !sName;
+    const sEmail = (s.providerEmail || "").toLowerCase().trim();
+    const sName = (s.providerName || s.organization || "").toLowerCase().trim();
+    if (currentProviderEmail && sEmail) return sEmail === currentProviderEmail;
+    if (currentProviderName && sName === currentProviderName) return true;
+    if (isPrimaryProvider && (!sEmail && (!sName || sName === "nexo"))) return true;
+    return false;
   });
 
   const myDrafts = drafts.filter((d) => {
-    const dEmail = (d.providerEmail || "").toLowerCase();
-    if (!currentProviderEmail) return true;
-    if (dEmail) return dEmail === currentProviderEmail;
+    const dEmail = (d.providerEmail || "").toLowerCase().trim();
+    const dName = (d.providerName || "").toLowerCase().trim();
+    if (!currentProviderEmail && !currentProviderName) return true;
+    if (currentProviderEmail && dEmail) return dEmail === currentProviderEmail;
+    if (!dEmail && currentProviderName && dName === currentProviderName) return true;
     // Only associate unassigned drafts with primary provider admin
-    return currentProviderEmail === "provider@nexo.edu.ph" || currentProviderEmail === "admin@admin";
+    return isPrimaryProvider && !dEmail;
   });
 
   // Filter applications submitted to this provider's scholarships
   const myApplications = applications.filter((app) => {
     if (!currentProviderEmail && !currentProviderName) return true;
-    const appEmail = (app.providerEmail || "").toLowerCase();
-    const appProvName = (app.providerName || "").toLowerCase();
+    const appEmail = (app.providerEmail || "").toLowerCase().trim();
+    const appProvName = (app.providerName || "").toLowerCase().trim();
     if (currentProviderEmail && appEmail && appEmail === currentProviderEmail) return true;
-    if (currentProviderName && appProvName && (appProvName === currentProviderName || appProvName === "nexo")) return true;
+    if (currentProviderName && appProvName === currentProviderName) return true;
 
     // Match against scholarshipId or scholarshipTitle
     const matchesSchol = myScholarships.some((s) => {
@@ -1748,6 +1758,9 @@ async function loadPersistedData() {
   const emptyDraftsCardEl = document.getElementById("empty-drafts-card");
 
   if (draftsFeedEl) {
+    if (typeof window.clearSkeleton === "function") {
+      window.clearSkeleton(draftsFeedEl);
+    }
     const draftsSig = JSON.stringify(
       myDrafts.map((d) => ({
         id: d.id,
@@ -1755,15 +1768,14 @@ async function loadPersistedData() {
         desc: d.desc,
         date: d.date,
         type: d.type,
+        applicantLimit: d.applicantLimit,
+        requirements: d.requirements,
       }))
     );
 
     if (window._lastDraftsSig !== draftsSig || window._forceDraftsRerender) {
       window._lastDraftsSig = draftsSig;
       window._forceDraftsRerender = false;
-      if (typeof window.clearSkeleton === "function") {
-        window.clearSkeleton(draftsFeedEl);
-      }
       draftsFeedEl.innerHTML = "";
       if (myDrafts.length > 0) {
         if (emptyDraftsCardEl)
@@ -1810,6 +1822,8 @@ async function loadPersistedData() {
       } else {
         if (emptyDraftsCardEl) emptyDraftsCardEl.removeAttribute("style");
       }
+    } else if (myDrafts.length === 0 && emptyDraftsCardEl) {
+      emptyDraftsCardEl.removeAttribute("style");
     }
   }
 }
@@ -1852,8 +1866,15 @@ function initPublishAndDraft() {
 
         const collectedRequirements = getCollectedRequirements();
         const draftIdToDelete = currentEditingDraftId;
+        const providerEmail = (
+          sessionStorage.getItem("nexo-provider-email") ||
+          localStorage.getItem("nexo-provider-email") ||
+          ""
+        ).toLowerCase().trim();
         const providerName =
-          localStorage.getItem("nexo-provider-name") || "NEXO";
+          sessionStorage.getItem("nexo-provider-name") ||
+          localStorage.getItem("nexo-provider-name") ||
+          "NEXO";
         const providerLogo = localStorage.getItem("nexo-provider-logo") || "";
         const providerBanner =
           localStorage.getItem("nexo-provider-banner") ||
@@ -1884,6 +1905,7 @@ function initPublishAndDraft() {
           applicantCount: `0 / ${applicantLimit} Applicants`,
           requirements: collectedRequirements,
           providerName,
+          providerEmail,
           providerLogo,
           providerBanner,
           status: "Open",
@@ -2035,111 +2057,100 @@ function initPublishAndDraft() {
       btn.style.opacity = "0.7";
 
       setTimeout(async () => {
-        const titleInput = DOM.nameInput ? DOM.nameInput.value.trim() : "";
-        const descInput = DOM.descInput ? DOM.descInput.value.trim() : "";
-        const draftTitle = titleInput || "Untitled Scholarship";
-        const draftDesc = descInput || "No description provided yet...";
-        const typeVal = DOM.typeInput ? DOM.typeInput.value : "";
-        const dateVal = DOM.dateInput ? DOM.dateInput.value : "";
-        const collectedRequirements = getCollectedRequirements();
-
-        const currentProvEmail = (
-          sessionStorage.getItem("nexo-provider-email") ||
-          localStorage.getItem("nexo-provider-email") ||
-          ""
-        ).toLowerCase();
-        const providerEmail = currentProvEmail;
-
-        const draftPayload = {
-          id: currentEditingDraftId || "draft_" + Date.now(),
-          title: draftTitle,
-          desc: draftDesc,
-          type: typeVal,
-          date: dateVal,
-          providerEmail,
-          applicantLimit: DOM.limitInput
-            ? parseInt(DOM.limitInput.value, 10) || 200
-            : 200,
-          requirements: collectedRequirements,
-        };
-
-        let savedDraft = draftPayload;
-
         try {
-          const res = await fetch(`${API_BASE}/api/drafts`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(draftPayload),
-          });
-          if (res.ok) {
-            savedDraft = await res.json();
+          const titleInput = DOM.nameInput ? DOM.nameInput.value.trim() : "";
+          const descInput = DOM.descInput ? DOM.descInput.value.trim() : "";
+          const draftTitle = titleInput || "Untitled Scholarship";
+          const draftDesc = descInput || "No description provided yet...";
+          const typeVal = DOM.typeInput ? DOM.typeInput.value : "";
+          const typeSelectedText =
+            DOM.typeSelected && DOM.typeSelected.classList.contains("has-value")
+              ? DOM.typeSelected.querySelector("span").textContent
+              : "";
+          const dateVal = DOM.dateInput ? DOM.dateInput.value : "";
+          const collectedRequirements = getCollectedRequirements();
+
+          const providerEmail = (
+            sessionStorage.getItem("nexo-provider-email") ||
+            localStorage.getItem("nexo-provider-email") ||
+            ""
+          ).toLowerCase().trim();
+          const providerName =
+            sessionStorage.getItem("nexo-provider-name") ||
+            localStorage.getItem("nexo-provider-name") ||
+            "NEXO";
+
+          const draftPayload = {
+            id: currentEditingDraftId || "draft_" + Date.now(),
+            title: draftTitle,
+            desc: draftDesc,
+            type: typeVal,
+            typeText: typeSelectedText,
+            date: dateVal,
+            providerEmail,
+            providerName,
+            applicantLimit: DOM.limitInput
+              ? parseInt(DOM.limitInput.value, 10) || 200
+              : 200,
+            requirements: collectedRequirements,
+          };
+
+          let savedDraft = draftPayload;
+
+          try {
+            const res = await fetch(`${API_BASE}/api/drafts`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(draftPayload),
+            });
+            if (res.ok) {
+              savedDraft = await res.json();
+            }
+          } catch (e) {
+            console.warn(
+              "Could not save draft to data.json directly via server:",
+              e,
+            );
           }
-        } catch (e) {
-          console.warn(
-            "Could not save draft to data.json directly via server:",
-            e,
-          );
-        }
 
-        // Keep local cache in sync
-        try {
-          const cachedDrafts = JSON.parse(
-            localStorage.getItem("nexo_drafts") || "[]",
-          );
-          const idx = cachedDrafts.findIndex(
-            (d) => String(d.id) === String(savedDraft.id),
-          );
-          if (idx >= 0) cachedDrafts[idx] = savedDraft;
-          else cachedDrafts.unshift(savedDraft);
-          localStorage.setItem("nexo_drafts", JSON.stringify(cachedDrafts));
-        } catch (_) {}
+          // Keep local cache in sync
+          try {
+            const cachedDrafts = JSON.parse(
+              localStorage.getItem("nexo_drafts") || "[]",
+            );
+            const idx = cachedDrafts.findIndex(
+              (d) => String(d.id) === String(savedDraft.id),
+            );
+            if (idx >= 0) cachedDrafts[idx] = savedDraft;
+            else cachedDrafts.unshift(savedDraft);
+            localStorage.setItem("nexo_drafts", JSON.stringify(cachedDrafts));
+          } catch (_) {}
 
-        const wasEditing = Boolean(currentEditingDraftCard || currentEditingDraftId);
-
-        // If updating, remove old card if still in DOM
-        if (currentEditingDraftCard) {
-          currentEditingDraftCard.remove();
           currentEditingDraftCard = null;
+          currentEditingDraftId = null;
+
+          window._forceDraftsRerender = true;
+          await loadPersistedData();
+          window.dispatchEvent(new Event("nexo_drafts_updated"));
+
+          // Close modal and reset
+          if (DOM.creationModal) {
+            DOM.creationModal.classList.remove("active");
+            DOM.creationModal.setAttribute("aria-hidden", "true");
+          }
+          document.body.style.overflow = "auto";
+        } finally {
+          setTimeout(() => {
+            goToStep(1, false);
+            const step1Form = document.getElementById("step-1-form");
+            if (step1Form) step1Form.reset();
+
+            btn.textContent = "Save as Draft";
+            btn.disabled = false;
+            btn.style.opacity = "1";
+          }, 300);
         }
-        currentEditingDraftId = null;
-
-        // Hide empty drafts state card
-        const emptyDraftsCard = document.getElementById("empty-drafts-card");
-        if (emptyDraftsCard) {
-          emptyDraftsCard.setAttribute("style", "display: none !important;");
-        }
-
-        const draftsFeed = document.getElementById("drafts-feed");
-        if (draftsFeed) {
-          window._lastDraftsSig = null;
-          // Prepend newly saved or updated draft card
-          draftsFeed.prepend(createDraftCard(savedDraft));
-        }
-
-        if (!wasEditing) {
-          draftCount++;
-        }
-        const draftBadge = document.getElementById("draft-badge");
-        if (draftBadge) {
-          draftBadge.textContent = draftCount;
-          draftBadge.style.display = "inline-block";
-        }
-        window.dispatchEvent(new Event("nexo_drafts_updated"));
-
-        // Close modal and reset
-        if (DOM.creationModal) DOM.creationModal.classList.remove("active");
-        document.body.style.overflow = "auto";
-
-        setTimeout(() => {
-          goToStep(1, false);
-          const step1Form = document.getElementById("step-1-form");
-          if (step1Form) step1Form.reset();
-
-          btn.textContent = originalText;
-          btn.disabled = false;
-          btn.style.opacity = "1";
-        }, 400);
-      }, 800);
+      }, 400);
     });
   }
 }
@@ -2321,20 +2332,45 @@ async function initDynamicAvatar() {
 
 async function syncProviderProfile(incomingSettings = null) {
   let settings = incomingSettings;
+  const currentProvEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase().trim();
 
   if (!settings) {
     try {
-      const cached = localStorage.getItem("nexo_provider_settings");
-      if (cached) settings = JSON.parse(cached);
+      const cached =
+        (currentProvEmail && localStorage.getItem(`nexo_provider_settings_${currentProvEmail}`)) ||
+        localStorage.getItem("nexo_provider_settings");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (
+          !parsed.email ||
+          !currentProvEmail ||
+          String(parsed.email).toLowerCase().trim() === currentProvEmail
+        ) {
+          settings = parsed;
+        }
+      }
     } catch (_) {}
   }
 
   if (!settings) {
     try {
-      const res = await fetch(`${API_BASE}/api/settings`);
+      const endpoint = currentProvEmail
+        ? `${API_BASE}/api/settings?email=${encodeURIComponent(currentProvEmail)}`
+        : `${API_BASE}/api/settings`;
+      const res = await fetch(endpoint);
       if (res.ok) {
         settings = await res.json();
         try {
+          if (currentProvEmail) {
+            localStorage.setItem(
+              `nexo_provider_settings_${currentProvEmail}`,
+              JSON.stringify(settings),
+            );
+          }
           localStorage.setItem(
             "nexo_provider_settings",
             JSON.stringify(settings),
@@ -2348,8 +2384,18 @@ async function syncProviderProfile(incomingSettings = null) {
         const dataRes = await fetch("data.json");
         if (dataRes.ok) {
           const rawData = await dataRes.json();
-          if (rawData && rawData.settings) {
+          if (currentProvEmail && rawData && rawData.providerProfiles && rawData.providerProfiles[currentProvEmail]) {
+            settings = rawData.providerProfiles[currentProvEmail];
+          } else if (
+            rawData &&
+            rawData.settings &&
+            (!currentProvEmail ||
+              currentProvEmail === "admin@admin" ||
+              currentProvEmail === "provider@nexo.edu.ph")
+          ) {
             settings = rawData.settings;
+          }
+          if (settings) {
             try {
               localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
             } catch (_) {}
@@ -2363,15 +2409,14 @@ async function syncProviderProfile(incomingSettings = null) {
 
   const orgName =
     (settings && settings.orgName) ||
+    sessionStorage.getItem("nexo-provider-name") ||
     localStorage.getItem("nexo-provider-name") ||
     "NEXO";
   const logoImage =
-    (settings && settings.logoImage) ||
-    localStorage.getItem("nexo-provider-logo") ||
+    (settings && settings.logoImage !== undefined ? settings.logoImage : localStorage.getItem("nexo-provider-logo")) ||
     "";
   const bannerImage =
-    (settings && settings.bannerImage) ||
-    localStorage.getItem("nexo-provider-banner") ||
+    (settings && settings.bannerImage !== undefined ? settings.bannerImage : localStorage.getItem("nexo-provider-banner")) ||
     "";
   const initials = extractInitials(orgName);
 
@@ -2469,16 +2514,20 @@ function initDraftEditing() {
   }
 
   if (confirmDeleteBtn) {
-    confirmDeleteBtn.addEventListener("click", (e) => {
+    confirmDeleteBtn.addEventListener("click", async (e) => {
       e.preventDefault();
       const draftId = pendingDeleteDraftId;
       const card = pendingDeleteDraftCard;
       closeDeleteDraftModal();
 
       if (draftId) {
-        fetch(`${API_BASE}/api/drafts/${draftId}`, {
-          method: "DELETE",
-        }).catch(console.error);
+        try {
+          await fetch(`${API_BASE}/api/drafts/${draftId}`, {
+            method: "DELETE",
+          });
+        } catch (err) {
+          console.error(err);
+        }
         try {
           const cachedDrafts = JSON.parse(
             localStorage.getItem("nexo_drafts") || "[]",
@@ -2492,31 +2541,16 @@ function initDraftEditing() {
       }
 
       if (card) {
-        card.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+        card.style.transition = "opacity 0.25s ease, transform 0.25s ease";
         card.style.opacity = "0";
         card.style.transform = "scale(0.95)";
-
-        setTimeout(() => {
-          card.remove();
-          draftCount = Math.max(0, draftCount - 1);
-          window._lastDraftsSig = null;
-
-          const draftBadge = document.getElementById("draft-badge");
-          if (draftBadge) {
-            draftBadge.textContent = draftCount;
-            draftBadge.style.display = draftCount > 0 ? "inline-block" : "none";
-          }
-          if (draftCount <= 0) {
-            // Bring the empty state card back when there are 0 drafts
-            const emptyDraftsCard =
-              document.getElementById("empty-drafts-card");
-            if (emptyDraftsCard) {
-              emptyDraftsCard.removeAttribute("style");
-            }
-          }
-          window.dispatchEvent(new Event("nexo_drafts_updated"));
-        }, 300);
       }
+
+      setTimeout(async () => {
+        window._forceDraftsRerender = true;
+        await loadPersistedData();
+        window.dispatchEvent(new Event("nexo_drafts_updated"));
+      }, 260);
     });
   }
 

@@ -738,11 +738,16 @@ function syncGlobalDraftBadge() {
     if (raw) {
       const drafts = JSON.parse(raw);
       if (Array.isArray(drafts)) {
+        const isPrimaryProvider =
+          !currentProviderEmail ||
+          currentProviderEmail === "admin@admin" ||
+          currentProviderEmail === "provider@nexo.edu.ph";
         const myDrafts = currentProviderEmail
           ? drafts.filter(
               (d) =>
-                !d.providerEmail ||
-                d.providerEmail.toLowerCase() === currentProviderEmail,
+                (isPrimaryProvider && !d.providerEmail) ||
+                (d.providerEmail &&
+                  d.providerEmail.toLowerCase() === currentProviderEmail),
             )
           : drafts;
         count = myDrafts.length;

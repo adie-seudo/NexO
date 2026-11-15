@@ -64,7 +64,8 @@ DEFAULT_DATA = {
             "notes": "Primary Administrator & Provider Account"
         }
     ],
-    "studentProfiles": {}
+    "studentProfiles": {},
+    "providerProfiles": {}
 }
 
 def read_data():
@@ -72,21 +73,22 @@ def read_data():
         path_to_read = DATA_FILE_BACKEND if os.path.exists(DATA_FILE_BACKEND) else DATA_FILE_ROOT
         if not os.path.exists(path_to_read):
             write_data(DEFAULT_DATA)
-            return DEFAULT_DATA
+            return json.loads(json.dumps(DEFAULT_DATA))
         with open(path_to_read, "r", encoding="utf-8") as f:
             data = json.load(f)
         if "scholarships" not in data: data["scholarships"] = []
         if "drafts" not in data: data["drafts"] = []
         if "applications" not in data: data["applications"] = []
         if "notifications" not in data: data["notifications"] = []
-        if "settings" not in data: data["settings"] = DEFAULT_DATA["settings"]
+        if "settings" not in data: data["settings"] = json.loads(json.dumps(DEFAULT_DATA["settings"]))
         if "studentSettings" not in data: data["studentSettings"] = {}
-        if "users" not in data: data["users"] = DEFAULT_DATA["users"]
+        if "users" not in data: data["users"] = json.loads(json.dumps(DEFAULT_DATA["users"]))
         if "studentProfiles" not in data: data["studentProfiles"] = {}
+        if "providerProfiles" not in data: data["providerProfiles"] = {}
         return data
     except Exception as e:
         print("Error reading data:", e)
-        return DEFAULT_DATA
+        return json.loads(json.dumps(DEFAULT_DATA))
 
 def write_data(data):
     try:
@@ -256,6 +258,32 @@ class NexoHandler(BaseHTTPRequestHandler):
 
         if path == "/api/settings":
             data = read_data()
+            query_email = (query.get("email", [""])[0] or "").strip().lower()
+            if query_email:
+                profiles = data.setdefault("providerProfiles", {})
+                if query_email in profiles:
+                    return self._send_json(200, profiles[query_email])
+                if query_email in ("admin@admin", "provider@nexo.edu.ph", (data.get("settings", {}).get("email") or "").strip().lower()):
+                    return self._send_json(200, data.get("settings", DEFAULT_DATA["settings"]))
+                matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == query_email), None)
+                prof = {
+                    "orgName": (matched.get("orgName") or matched.get("name") if matched else "") or "",
+                    "location": (matched.get("location") if matched else "") or "",
+                    "contactPerson": (matched.get("contactPerson") if matched else "") or "",
+                    "contactNumber": (matched.get("contactNumber") if matched else "") or "",
+                    "email": query_email,
+                    "bannerImage": (matched.get("bannerImage") if matched else "") or "",
+                    "logoImage": (matched.get("logoImage") if matched else "") or "",
+                    "bio": (matched.get("bio") if matched else "") or "",
+                    "notifications": {
+                        "newApplications": True,
+                        "emailAlerts": True,
+                        "weeklyDigest": False,
+                        "systemUpdates": True
+                    },
+                    "preferences": {"theme": "light", "twoFactor": False}
+                }
+                return self._send_json(200, prof)
             return self._send_json(200, data.get("settings", DEFAULT_DATA["settings"]))
 
         if path == "/api/student-settings":
@@ -348,11 +376,31 @@ class NexoHandler(BaseHTTPRequestHandler):
         body = self._read_json()
         data = read_data()
 
+        if path == "/api/auth/login":
+            email = (body.get("email") or "").strip().lower()
+            password = str(body.get("password") or "")
+            req_role = (body.get("role") or "").strip().lower()
+            if not email or not password:
+                return self._send_json(400, {"success": False, "error": "Email and password are required."})
+            matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == email), None)
+            if not matched:
+                return self._send_json(404, {"success": False, "error": "Account not found. Only registered accounts can log in."})
+            if matched.get("status") == "banned":
+                return self._send_json(403, {"success": False, "error": "This account has been suspended by the administrator."})
+            if req_role and matched.get("role") != req_role and matched.get("role") != "admin":
+                return self._send_json(403, {"success": False, "error": f"This email is registered as a {matched.get('role')} account. Please switch tabs."})
+            if str(matched.get("password") or "") != password:
+                return self._send_json(401, {"success": False, "error": "Incorrect password. Please verify your credentials."})
+            safe_user = {k: v for k, v in matched.items() if k != "password"}
+            return self._send_json(200, {"success": True, "user": safe_user})
+
         if path == "/api/scholarships":
             limit = int(body.get("applicantLimit") or body.get("maxApplicants") or 200)
             now_dt = datetime.now()
             posted_at = body.get("postedAt") or body.get("createdAt") or now_dt.isoformat()
             formatted_posted = body.get("formattedPostedDate") or now_dt.strftime("%b %d, %Y")
+            prov_email = (body.get("providerEmail") or "").strip().lower()
+            prov_prof = data.get("providerProfiles", {}).get(prov_email, {}) if prov_email else {}
             new_sch = {
                 "id": body.get("id", f"schol_{int(time.time()*1000)}"),
                 "title": (body.get("title") or "Untitled Scholarship").strip(),
@@ -369,9 +417,10 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "formattedPostedDate": formatted_posted,
                 "createdAt": posted_at,
                 "requirements": body.get("requirements", []),
-                "providerName": body.get("providerName", data["settings"].get("orgName", "NEXO")),
-                "providerLogo": body.get("providerLogo", data["settings"].get("logoImage", "")),
-                "providerBanner": body.get("providerBanner", data["settings"].get("bannerImage", "")),
+                "providerName": body.get("providerName") or prov_prof.get("orgName") or data["settings"].get("orgName", "NEXO"),
+                "providerEmail": prov_email or (data["settings"].get("email") or "").lower(),
+                "providerLogo": body.get("providerLogo") or prov_prof.get("logoImage") or data["settings"].get("logoImage", ""),
+                "providerBanner": body.get("providerBanner") or prov_prof.get("bannerImage") or data["settings"].get("bannerImage", ""),
                 "status": body.get("status", "Open"),
             }
             data.setdefault("scholarships", []).insert(0, new_sch)
@@ -595,12 +644,36 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {"success": True})
 
         if path == "/api/settings":
-            current = data.get("settings", DEFAULT_DATA["settings"])
+            target_email = (body.get("email") or query.get("email", [""])[0] or "").strip().lower()
+            is_primary = not target_email or target_email in ("admin@admin", "provider@nexo.edu.ph")
+            profiles = data.setdefault("providerProfiles", {})
+            current = profiles.get(target_email) if target_email in profiles else (data.get("settings", DEFAULT_DATA["settings"]).copy() if is_primary else {
+                "orgName": "",
+                "location": "",
+                "contactPerson": "",
+                "contactNumber": "",
+                "email": target_email,
+                "bannerImage": "",
+                "logoImage": "",
+                "bio": "",
+                "notifications": {"newApplications": True, "emailAlerts": True, "weeklyDigest": False, "systemUpdates": True},
+                "preferences": {"theme": "light", "twoFactor": False}
+            })
             current.update(body)
-            data["settings"] = current
+            if target_email:
+                current["email"] = target_email
+                profiles[target_email] = current
+            if is_primary:
+                data["settings"] = current
+            for u in data.get("users", []):
+                if target_email and (u.get("email") or "").strip().lower() == target_email:
+                    if "orgName" in body and body["orgName"]:
+                        u["orgName"] = body["orgName"]
+                        u["name"] = body["orgName"]
             if "logoImage" in body or "bannerImage" in body or "orgName" in body:
                 for s in data.get("scholarships", []):
-                    if not s.get("providerName") or s.get("providerName") == "NEXO" or s.get("providerName") == current.get("orgName"):
+                    s_email = (s.get("providerEmail") or "").strip().lower()
+                    if (target_email and s_email == target_email) or (is_primary and (not s_email or s_email in ("admin@admin", "provider@nexo.edu.ph"))):
                         if "logoImage" in body:
                             s["providerLogo"] = body["logoImage"]
                         if "bannerImage" in body:
@@ -739,11 +812,14 @@ class NexoHandler(BaseHTTPRequestHandler):
             if not target_user:
                 return self._send_json(404, {"error": "User not found"})
             
+            target_email = (target_user.get("email") or "").lower().strip()
+            if target_user.get("role") == "admin" or target_email == "admin@admin":
+                return self._send_json(403, {"success": False, "error": "The primary System Administrator account cannot be deleted."})
+
             data["users"] = [u for u in users if str(u.get("id")) != str(uid)]
             removed_posts = 0
             removed_apps = 0
 
-            target_email = (target_user.get("email") or "").lower().strip()
             if target_user.get("role") == "student":
                 pre_apps = len(data.get("applications", []))
                 data["applications"] = [a for a in data.get("applications", []) if (a.get("studentEmail") or "").lower() != target_email]
@@ -760,6 +836,8 @@ class NexoHandler(BaseHTTPRequestHandler):
                 removed_posts = len(prov_schols)
                 data["scholarships"] = [s for s in data.get("scholarships", []) if str(s.get("id")) not in prov_schols]
                 data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) not in prov_schols and (d.get("providerEmail") or "").lower() != target_email]
+                if "providerProfiles" in data and target_email in data["providerProfiles"]:
+                    del data["providerProfiles"][target_email]
                 pre_apps = len(data.get("applications", []))
                 data["applications"] = [a for a in data.get("applications", []) if str(a.get("scholarshipId")) not in prov_schols]
                 removed_apps = pre_apps - len(data["applications"])

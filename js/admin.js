@@ -198,21 +198,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!loadedFromApi) {
-      // Fallback to localStorage
+      // Fallback to static data.json if served via static web server
       try {
-        users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
-        scholarships = JSON.parse(
-          localStorage.getItem("nexo_scholarships") || "[]",
-        );
-        applications = JSON.parse(
-          localStorage.getItem("nexo_applications") || "[]",
-        );
-        drafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
+        const fallbackRes = await fetch("data.json", {
+          cache: "no-store",
+        }).catch(() => null);
+        if (fallbackRes && fallbackRes.ok) {
+          const data = await fallbackRes.json();
+          users = Array.isArray(data.users) ? data.users : [];
+          scholarships = Array.isArray(data.scholarships)
+            ? data.scholarships
+            : [];
+          applications = Array.isArray(data.applications)
+            ? data.applications
+            : [];
+          drafts = Array.isArray(data.drafts) ? data.drafts : [];
+        } else {
+          users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+          scholarships = JSON.parse(
+            localStorage.getItem("nexo_scholarships") || "[]",
+          );
+          applications = JSON.parse(
+            localStorage.getItem("nexo_applications") || "[]",
+          );
+          drafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
+        }
       } catch (_) {}
     }
 
     if (liveSyncIndicator) {
       liveSyncIndicator.style.display = "inline-flex";
+      if (loadedFromApi) {
+        liveSyncIndicator.style.background = "rgba(16, 185, 129, 0.12)";
+        liveSyncIndicator.style.color = "#10b981";
+        liveSyncIndicator.innerHTML = `<span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span> Live Sync: data.json`;
+      } else {
+        liveSyncIndicator.style.background = "rgba(239, 68, 68, 0.12)";
+        liveSyncIndicator.style.color = "#ef4444";
+        liveSyncIndicator.innerHTML = `<span style="width: 7px; height: 7px; border-radius: 50%; background: #ef4444;"></span> Server Offline (Read-Only)`;
+      }
     }
 
     renderAll();
@@ -440,6 +464,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     providerUsers.forEach((user) => {
       const isBanned = user.status === "banned";
+      const isPrimaryAdmin =
+        user.role === "admin" ||
+        String(user.email || "").toLowerCase() === "admin@admin";
       const orgName = user.orgName || user.name || "Scholarship Provider";
       const initials = orgName
         .split(" ")
@@ -485,7 +512,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
 
         <div class="admin-card-meta-details">
-          <span>${user.role === "admin" ? "NEXO System Administrator &bull; Developer Access" : "Scholarship Organization &bull; Verified Provider"}</span>
+          <span>${isPrimaryAdmin ? "NEXO System Administrator &bull; Protected Root Account" : "Scholarship Organization &bull; Verified Provider"}</span>
         </div>
 
         <div class="admin-card-footer-strip">
@@ -496,6 +523,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ${user.notes ? `<div class="admin-card-note">Note: ${escapeHtml(user.notes)}</div>` : ""}
 
         <div class="admin-card-actions">
+          ${
+            isPrimaryAdmin
+              ? `<span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px;">🔒 Protected System Admin Account</span>`
+              : `
           <button type="button" class="btn-admin-action ${isBanned ? "btn-admin-unban" : "btn-admin-ban"}" data-action="toggle-ban" data-id="${user.id}">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               ${isBanned ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>'}
@@ -510,6 +541,8 @@ document.addEventListener("DOMContentLoaded", () => {
             </svg>
             Delete Account
           </button>
+          `
+          }
         </div>
       `;
 
@@ -731,41 +764,33 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(newAccountPayload),
         }).catch(() => null);
 
-        if (res && !res.ok) {
+        if (!res) {
+          showToast(
+            "Server is offline. Start the backend server to persist new accounts to data.json.",
+            true,
+          );
+          return;
+        }
+
+        if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           showToast(errData.error || "Failed to create account on server.", true);
           return;
         }
 
-        let createdUser = null;
-        if (res && res.ok) {
-          const respData = await res.json();
-          createdUser = respData.user;
-        }
+        const respData = await res.json();
+        const createdUser = respData.user;
 
-        if (!createdUser) {
-          // Client-side fallback if server offline
-          createdUser = {
-            id:
-              "usr_" +
-              (activeRoleSelection === "provider" ? "prov_" : "stud_") +
-              Date.now(),
-            ...newAccountPayload,
-            createdAt: new Date().toISOString(),
-            formattedDate: new Date().toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }),
-          };
-        }
-
-        users.unshift(createdUser);
         try {
-          localStorage.setItem("nexo_users", JSON.stringify(users));
           localStorage.removeItem(`nexo_student_settings_${email}`);
+          localStorage.removeItem(`nexo_provider_settings_${email}`);
           localStorage.removeItem("nexo_student_settings");
+          localStorage.removeItem("nexo_provider_settings");
+          localStorage.removeItem("nexo_avatar_" + email);
+          localStorage.removeItem("nexo-student-avatar-" + email);
         } catch (_) {}
+
+        await loadData();
 
         showToast(
           `Account for "${email}" created successfully as ${activeRoleSelection === "provider" ? "Provider" : "Student"}!`,
@@ -774,7 +799,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Switch to the created account tab and refresh
         switchTab(activeRoleSelection === "provider" ? "providers" : "students");
-        renderStats();
       } catch (err) {
         console.error("Account creation error:", err);
         showToast("Failed to create account. Check connection.", true);
@@ -788,26 +812,29 @@ document.addEventListener("DOMContentLoaded", () => {
   async function toggleAccountBan(userId, shouldBan) {
     const targetStatus = shouldBan ? "banned" : "active";
     try {
-      await fetch(`${API_BASE}/api/users/${userId}`, {
+      const res = await fetch(`${API_BASE}/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: targetStatus }),
       }).catch(() => null);
 
-      const u = users.find((item) => String(item.id) === String(userId));
-      if (u) {
-        u.status = targetStatus;
-        try {
-          localStorage.setItem("nexo_users", JSON.stringify(users));
-        } catch (_) {}
+      if (!res || !res.ok) {
+        const errData = res ? await res.json().catch(() => ({})) : {};
+        showToast(
+          errData.error ||
+            "Could not update account status in data.json. Ensure the server is running.",
+          true,
+        );
+        return;
       }
+
+      await loadData();
 
       showToast(
         shouldBan
           ? "Account has been banned. Login access restricted."
           : "Account has been unbanned. Login access restored.",
       );
-      renderAll();
     } catch (err) {
       console.error("Ban toggle error:", err);
       showToast("Could not update account status.", true);
@@ -892,23 +919,24 @@ document.addEventListener("DOMContentLoaded", () => {
             },
           ).catch(() => null);
 
-          if (res && !res.ok) {
+          if (!res) {
+            showToast(
+              "Server is offline. Start the backend server to permanently delete accounts from data.json.",
+              true,
+            );
+            closeConfirmModal();
+            return;
+          }
+
+          if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
             showToast(errData.error || "Failed to delete account on server.", true);
             closeConfirmModal();
             return;
           }
 
-          // Local state cascade removal
-          const uid = String(pendingDeleteTarget.id);
-          const u = users.find((x) => String(x.id) === uid);
-          users = users.filter((x) => String(x.id) !== uid);
-
           if (pendingDeleteTarget.role === "student") {
             const uEmail = (pendingDeleteTarget.email || "").toLowerCase();
-            applications = applications.filter(
-              (a) => (a.studentEmail || "").toLowerCase() !== uEmail,
-            );
             try {
               localStorage.removeItem(`nexo_student_settings_${uEmail}`);
               localStorage.removeItem("nexo_student_settings");
@@ -923,141 +951,110 @@ document.addEventListener("DOMContentLoaded", () => {
                 localStorage.removeItem("nexo-student-email");
                 localStorage.removeItem("nexo-student-name");
                 localStorage.removeItem("nexo-student-avatar");
+                localStorage.removeItem("nexo-logged-in");
               }
               if ((sessionStorage.getItem("nexo-student-email") || "").toLowerCase() === uEmail) {
                 sessionStorage.removeItem("nexo-student-email");
                 sessionStorage.removeItem("nexo-student-name");
                 sessionStorage.removeItem("nexo-student-avatar");
+                sessionStorage.removeItem("nexo-logged-in");
               }
             } catch (_) {}
           } else if (pendingDeleteTarget.role === "provider") {
-            const provName =
-              pendingDeleteTarget.name || pendingDeleteTarget.orgName || pendingDeleteTarget.email;
             const provEmail = (pendingDeleteTarget.email || "").toLowerCase();
-            const removedIds = scholarships
-              .filter((s) => s.providerName === provName || (s.providerEmail || "").toLowerCase() === provEmail)
-              .map((s) => String(s.id));
-            scholarships = scholarships.filter(
-              (s) => !removedIds.includes(String(s.id)),
-            );
-            drafts = drafts.filter(
-              (d) =>
-                (d.providerEmail || "").toLowerCase() !== provEmail &&
-                !removedIds.includes(String(d.id)),
-            );
-            applications = applications.filter(
-              (a) => !removedIds.includes(String(a.scholarshipId)),
-            );
             try {
+              localStorage.removeItem(`nexo_provider_settings_${provEmail}`);
               if ((localStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
                 localStorage.removeItem("nexo-provider-email");
                 localStorage.removeItem("nexo-provider-name");
+                localStorage.removeItem("nexo_provider_settings");
+                localStorage.removeItem("nexo_settings");
+                localStorage.removeItem("nexo-provider-logo");
+                localStorage.removeItem("nexo-provider-banner");
+                localStorage.removeItem("nexo-logged-in");
               }
               if ((sessionStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
                 sessionStorage.removeItem("nexo-provider-email");
                 sessionStorage.removeItem("nexo-provider-name");
+                sessionStorage.removeItem("nexo-logged-in");
               }
             } catch (_) {}
           }
 
-          try {
-            localStorage.setItem("nexo_users", JSON.stringify(users));
-            localStorage.setItem(
-              "nexo_scholarships",
-              JSON.stringify(scholarships),
-            );
-            localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
-            localStorage.setItem(
-              "nexo_applications",
-              JSON.stringify(applications),
-            );
-            localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
-          } catch (_) {}
-
-          showToast("Account and associated data deleted successfully!");
+          await loadData();
+          showToast("Account and associated data deleted permanently from data.json!");
         } else if (pendingDeleteTarget.type === "scholarship") {
           const sid = String(pendingDeleteTarget.id);
-          await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete_scholarship", id: sid }),
           }).catch(() => null);
 
-          scholarships = scholarships.filter((s) => String(s.id) !== sid);
-          applications = applications.filter(
-            (a) => String(a.scholarshipId) !== sid,
-          );
-
-          try {
-            localStorage.setItem(
-              "nexo_scholarships",
-              JSON.stringify(scholarships),
+          if (!res || !res.ok) {
+            showToast(
+              "Could not delete scholarship in data.json. Ensure the server is running.",
+              true,
             );
-            localStorage.setItem(
-              "nexo_applications",
-              JSON.stringify(applications),
-            );
-          } catch (_) {}
+            closeConfirmModal();
+            return;
+          }
 
+          await loadData();
           showToast("Scholarship post and applications deleted!");
         } else if (pendingDeleteTarget.type === "purge_apps") {
-          await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "clear_applications" }),
           }).catch(() => null);
 
-          applications = [];
-          scholarships.forEach((s) => {
-            s.applicantTotal = 0;
-            s.applicantCount = `0 / ${s.applicantLimit || 200} Applicants`;
-          });
-
-          try {
-            localStorage.setItem("nexo_applications", "[]");
-            localStorage.setItem(
-              "nexo_scholarships",
-              JSON.stringify(scholarships),
+          if (!res || !res.ok) {
+            showToast(
+              "Could not purge applications in data.json. Ensure the server is running.",
+              true,
             );
-          } catch (_) {}
+            closeConfirmModal();
+            return;
+          }
 
+          await loadData();
           showToast("All applications purged from data.json!");
         } else if (pendingDeleteTarget.type === "purge_drafts") {
-          await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "clear_drafts" }),
           }).catch(() => null);
 
-          drafts = [];
-          try {
-            localStorage.setItem("nexo_drafts", "[]");
-          } catch (_) {}
+          if (!res || !res.ok) {
+            showToast(
+              "Could not clear drafts in data.json. Ensure the server is running.",
+              true,
+            );
+            closeConfirmModal();
+            return;
+          }
 
+          await loadData();
           showToast("All drafts cleared from data.json!");
         } else if (pendingDeleteTarget.type === "factory_reset") {
-          await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "reset_factory_data" }),
           }).catch(() => null);
 
-          applications = [];
-          drafts = [];
-          scholarships.forEach((s) => {
-            s.applicantTotal = 0;
-            s.applicantCount = `0 / ${s.applicantLimit || 200} Applicants`;
-          });
-
-          try {
-            localStorage.setItem("nexo_applications", "[]");
-            localStorage.setItem("nexo_drafts", "[]");
-            localStorage.setItem(
-              "nexo_scholarships",
-              JSON.stringify(scholarships),
+          if (!res || !res.ok) {
+            showToast(
+              "Could not reset database in data.json. Ensure the server is running.",
+              true,
             );
-          } catch (_) {}
+            closeConfirmModal();
+            return;
+          }
 
+          await loadData();
           showToast("Database restored to clean factory state!");
         }
       } catch (err) {

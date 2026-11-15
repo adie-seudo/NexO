@@ -151,7 +151,7 @@ function initFormAndNotifications() {
   }
 
   if (DOM.verifyForm) {
-    DOM.verifyForm.addEventListener("submit", (e) => {
+    DOM.verifyForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
       let enteredCode = "";
@@ -171,9 +171,9 @@ function initFormAndNotifications() {
         clearInterval(countdownTimer);
 
         // Sync new verified student to file handling and localStorage database
-        const pendingEmail = sessionStorage.getItem("nexo-pending-email");
+        const pendingEmail = (sessionStorage.getItem("nexo-pending-email") || "").trim().toLowerCase();
         const pendingName =
-          sessionStorage.getItem("nexo-pending-name") || "Verified Student";
+          (sessionStorage.getItem("nexo-pending-name") || "Verified Student").trim();
         const pendingPassword =
           sessionStorage.getItem("nexo-pending-password") || "password123";
 
@@ -188,27 +188,58 @@ function initFormAndNotifications() {
 
           const apiBase =
             window.API_BASE ||
-            (window.location.protocol.startsWith("http")
+            (window.location.origin && window.location.origin.includes(":3000")
               ? ""
               : "http://localhost:3000");
 
-          fetch(`${apiBase}/api/users`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newStudentUser),
-          }).catch(() => {});
+          let createdUser = null;
+          try {
+            const res = await fetch(`${apiBase}/api/users`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(newStudentUser),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+              showNotification(
+                data.error || data.message || "Failed to register account.",
+                "error",
+              );
+              return;
+            }
+            createdUser = data.user || newStudentUser;
+          } catch (err) {
+            showNotification(
+              "Could not reach the NEXO server to save your account. Please make sure the server is running.",
+              "error",
+            );
+            return;
+          }
+
+          // Clear any old cached state for this email so re-registered accounts start 100% fresh
+          try {
+            localStorage.removeItem(`nexo_student_settings_${pendingEmail}`);
+            localStorage.removeItem("nexo_avatar_" + pendingEmail);
+            localStorage.removeItem("nexo-student-avatar-" + pendingEmail);
+            localStorage.removeItem("nexo_student_settings");
+            localStorage.removeItem("nexo-student-avatar");
+            sessionStorage.removeItem("nexo-student-avatar");
+            const profs = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+            if (profs[pendingEmail]) {
+              delete profs[pendingEmail];
+              localStorage.setItem("nexo_student_profiles", JSON.stringify(profs));
+            }
+          } catch (_) {}
 
           try {
             let uList = [];
             const cached = localStorage.getItem("nexo_users");
             if (cached) uList = JSON.parse(cached);
-            if (
-              !uList.some(
-                (u) =>
-                  (u.email || "").toLowerCase() === pendingEmail.toLowerCase(),
-              )
-            ) {
-              uList.unshift({
+            uList = uList.filter(
+              (u) => (u.email || "").toLowerCase() !== pendingEmail,
+            );
+            uList.unshift(
+              createdUser || {
                 id: "usr_stud_" + Date.now(),
                 email: pendingEmail,
                 password: pendingPassword,
@@ -221,9 +252,9 @@ function initFormAndNotifications() {
                   day: "numeric",
                   year: "numeric",
                 }),
-              });
-              localStorage.setItem("nexo_users", JSON.stringify(uList));
-            }
+              },
+            );
+            localStorage.setItem("nexo_users", JSON.stringify(uList));
           } catch (_) {}
         }
 

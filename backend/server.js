@@ -101,8 +101,22 @@ const DEFAULT_DATA = {
     },
   },
   studentSettings: {},
-  users: [],
+  users: [
+    {
+      id: "usr_admin_root",
+      email: "admin@admin",
+      password: "admin",
+      role: "admin",
+      name: "System Administrator",
+      orgName: "NEXO Root Control",
+      status: "active",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      formattedDate: "Jan 1, 2026",
+      notes: "Root Developer Administrator Account",
+    },
+  ],
   studentProfiles: {},
+  providerProfiles: {},
 };
 
 function cloneDefaultData() {
@@ -146,6 +160,9 @@ function readData() {
     }
     if (!parsed.studentProfiles || typeof parsed.studentProfiles !== "object") {
       parsed.studentProfiles = defaults.studentProfiles;
+    }
+    if (!parsed.providerProfiles || typeof parsed.providerProfiles !== "object") {
+      parsed.providerProfiles = defaults.providerProfiles || {};
     }
     return parsed;
   } catch (err) {
@@ -569,6 +586,15 @@ async function handleRequest(req, res) {
             year: "numeric",
           });
 
+        const provEmail = String(body.providerEmail || "").toLowerCase().trim();
+        const provProfile =
+          (provEmail && data.providerProfiles && data.providerProfiles[provEmail]) ||
+          (provEmail === "admin@admin" || provEmail === "provider@nexo.edu.ph" || !provEmail ? data.settings : {}) ||
+          {};
+        const matchedProvUser = (data.users || []).find(
+          (u) => provEmail && String(u.email || "").toLowerCase() === provEmail,
+        );
+
         const newScholarship = {
           id: makeId("schol"),
           title,
@@ -585,16 +611,20 @@ async function handleRequest(req, res) {
           formattedPostedDate,
           createdAt: postedAt,
           requirements: Array.isArray(body.requirements) ? body.requirements : [],
-          providerName: body.providerName || data.settings.orgName || "NEXO",
-          providerEmail: String(body.providerEmail || data.settings.email || "").toLowerCase(),
+          providerName:
+            body.providerName ||
+            provProfile.orgName ||
+            (matchedProvUser && (matchedProvUser.orgName || matchedProvUser.name)) ||
+            "NEXO",
+          providerEmail: provEmail || String(data.settings.email || "").toLowerCase(),
           providerLogo:
-            body.providerLogo !== undefined
+            body.providerLogo !== undefined && body.providerLogo !== ""
               ? body.providerLogo
-              : data.settings.logoImage || "",
+              : provProfile.logoImage || "",
           providerBanner:
-            body.providerBanner !== undefined
+            body.providerBanner !== undefined && body.providerBanner !== ""
               ? body.providerBanner
-              : data.settings.bannerImage || "",
+              : provProfile.bannerImage || "",
           status: body.status || "Open",
         };
 
@@ -684,6 +714,14 @@ async function handleRequest(req, res) {
           ? data.drafts.findIndex((d) => String(d.id) === draftId)
           : -1;
 
+        const provEmail = String(body.providerEmail || "").toLowerCase().trim();
+        const provProfile =
+          (provEmail && data.providerProfiles && data.providerProfiles[provEmail]) ||
+          {};
+        const matchedProvUser = (data.users || []).find(
+          (u) => provEmail && String(u.email || "").toLowerCase() === provEmail,
+        );
+
         const draftItem = {
           id: existingIdx >= 0 ? draftId : makeId("draft"),
           title: String(body.title || "Untitled Scholarship").trim(),
@@ -693,8 +731,13 @@ async function handleRequest(req, res) {
           date: body.date || "",
           applicantLimit: parseInt(body.applicantLimit || 200, 10) || 200,
           requirements: Array.isArray(body.requirements) ? body.requirements : [],
-          providerName: body.providerName || data.settings.orgName || "NEXO",
-          providerEmail: String(body.providerEmail || data.settings.email || "").toLowerCase(),
+          providerName:
+            body.providerName ||
+            provProfile.orgName ||
+            (matchedProvUser && (matchedProvUser.orgName || matchedProvUser.name)) ||
+            data.settings.orgName ||
+            "NEXO",
+          providerEmail: provEmail || String(data.settings.email || "").toLowerCase(),
           updatedAt: new Date().toISOString(),
         };
 
@@ -1144,16 +1187,95 @@ async function handleRequest(req, res) {
       return sendJson(res, 405, { success: false, error: "Method not allowed" });
     }
 
-    // 5. PROVIDER SETTINGS API
+    // 5. PROVIDER SETTINGS API (Multi-Provider Profile Isolation)
     if (pathname === "/api/settings") {
       const data = readData();
+      data.providerProfiles = data.providerProfiles || {};
+      const queryEmail = String(reqUrl.searchParams.get("email") || "")
+        .toLowerCase()
+        .trim();
+
       if (method === "GET") {
+        if (queryEmail) {
+          if (data.providerProfiles[queryEmail]) {
+            return sendJson(res, 200, data.providerProfiles[queryEmail]);
+          }
+          const matched = (data.users || []).find(
+            (u) => String(u.email || "").toLowerCase() === queryEmail,
+          );
+          if (
+            queryEmail === "admin@admin" ||
+            queryEmail === "provider@nexo.edu.ph" ||
+            queryEmail === String((data.settings && data.settings.email) || "").toLowerCase()
+          ) {
+            return sendJson(res, 200, data.settings || cloneDefaultData().settings);
+          }
+          const freshProfile = {
+            orgName: (matched && (matched.orgName || matched.name)) || "",
+            location: (matched && matched.location) || "",
+            contactPerson: (matched && matched.contactPerson) || "",
+            contactNumber: (matched && matched.contactNumber) || "",
+            email: queryEmail,
+            bannerImage: (matched && matched.bannerImage) || "",
+            logoImage: (matched && matched.logoImage) || "",
+            bio: (matched && matched.bio) || "",
+            notifications: {
+              newApplications: true,
+              emailAlerts: true,
+              weeklyDigest: false,
+              systemUpdates: true,
+            },
+            preferences: {
+              theme: "light",
+              twoFactor: false,
+            },
+          };
+          return sendJson(res, 200, freshProfile);
+        }
         return sendJson(res, 200, data.settings || cloneDefaultData().settings);
       }
 
       if (method === "POST" || method === "PUT" || method === "PATCH") {
         const body = await parseRequestBody(req);
-        const current = data.settings || cloneDefaultData().settings;
+        const targetEmail = String(body.email || queryEmail || "")
+          .toLowerCase()
+          .trim();
+
+        const isPrimaryProvider =
+          !targetEmail ||
+          targetEmail === "admin@admin" ||
+          targetEmail === "provider@nexo.edu.ph";
+
+        const matchedUser = targetEmail
+          ? (data.users || []).find(
+              (u) => String(u.email || "").toLowerCase() === targetEmail,
+            )
+          : null;
+
+        const current =
+          (targetEmail && data.providerProfiles[targetEmail]) ||
+          (isPrimaryProvider
+            ? data.settings || cloneDefaultData().settings
+            : {
+                orgName: (matchedUser && (matchedUser.orgName || matchedUser.name)) || "",
+                location: (matchedUser && matchedUser.location) || "",
+                contactPerson: (matchedUser && matchedUser.contactPerson) || "",
+                contactNumber: (matchedUser && matchedUser.contactNumber) || "",
+                email: targetEmail,
+                bannerImage: "",
+                logoImage: "",
+                bio: "",
+                notifications: {
+                  newApplications: true,
+                  emailAlerts: true,
+                  weeklyDigest: false,
+                  systemUpdates: true,
+                },
+                preferences: {
+                  theme: "light",
+                  twoFactor: false,
+                },
+              });
 
         const updated = {
           ...current,
@@ -1173,10 +1295,7 @@ async function handleRequest(req, res) {
             body.contactNumber !== undefined
               ? String(body.contactNumber).trim()
               : current.contactNumber,
-          email:
-            body.email !== undefined
-              ? String(body.email).trim()
-              : current.email,
+          email: targetEmail || current.email,
           bio: body.bio !== undefined ? String(body.bio).trim() : current.bio,
           bannerImage:
             body.bannerImage !== undefined
@@ -1195,12 +1314,39 @@ async function handleRequest(req, res) {
           updatedAt: new Date().toISOString(),
         };
 
-        data.settings = updated;
+        if (targetEmail) {
+          data.providerProfiles[targetEmail] = updated;
+        }
+        if (isPrimaryProvider) {
+          data.settings = updated;
+        }
+
+        if (matchedUser) {
+          if (updated.orgName) {
+            matchedUser.orgName = updated.orgName;
+            matchedUser.name = updated.orgName;
+          }
+          if (updated.location !== undefined) matchedUser.location = updated.location;
+          if (updated.contactPerson !== undefined) matchedUser.contactPerson = updated.contactPerson;
+          if (updated.contactNumber !== undefined) matchedUser.contactNumber = updated.contactNumber;
+          if (updated.bio !== undefined) matchedUser.bio = updated.bio;
+          if (updated.logoImage !== undefined) matchedUser.logoImage = updated.logoImage;
+          if (updated.bannerImage !== undefined) matchedUser.bannerImage = updated.bannerImage;
+        }
 
         // Cascade logoImage, bannerImage, and orgName to existing scholarships posted by this provider
         if (Array.isArray(data.scholarships)) {
           data.scholarships.forEach((s) => {
-            if (!s.providerName || s.providerName === "NEXO" || s.providerName === updated.orgName) {
+            const sEmail = String(s.providerEmail || "").toLowerCase().trim();
+            const matchesEmail = targetEmail && sEmail === targetEmail;
+            const matchesPrimary =
+              isPrimaryProvider &&
+              (!sEmail || sEmail === "provider@nexo.edu.ph" || sEmail === "admin@admin");
+            const matchesName =
+              !sEmail &&
+              current.orgName &&
+              String(s.providerName || "").toLowerCase() === String(current.orgName).toLowerCase();
+            if (matchesEmail || matchesPrimary || matchesName) {
               if (updated.logoImage !== undefined) s.providerLogo = updated.logoImage;
               if (updated.bannerImage !== undefined) s.providerBanner = updated.bannerImage;
               if (updated.orgName) s.providerName = updated.orgName;
@@ -1702,7 +1848,10 @@ async function handleRequest(req, res) {
         const password = String(body.password || "").trim();
         const university = String(body.university || "").trim();
         const course = String(body.course || "").trim();
-        const status = body.status === "banned" ? "banned" : "active";
+        const status =
+          String(body.status || "").toLowerCase() === "banned"
+            ? "banned"
+            : "active";
 
         if (!name) {
           return sendJson(res, 400, {
@@ -1789,7 +1938,7 @@ async function handleRequest(req, res) {
             fullName: name,
             email,
             university: newUser.university || "",
-            course: "",
+            course: newUser.course || "",
             yearLevel: "",
             studentId: newUser.studentId || "",
             contactNumber: "",
@@ -1802,6 +1951,28 @@ async function handleRequest(req, res) {
               deadlineReminders: true,
             },
             preferences: { theme: "light" },
+          };
+        } else if (role === "provider") {
+          data.providerProfiles = data.providerProfiles || {};
+          data.providerProfiles[email] = {
+            orgName: String(body.orgName || name).trim(),
+            location: String(body.location || body.address || "").trim(),
+            contactPerson: String(body.contactPerson || "").trim(),
+            contactNumber: String(body.contactNumber || body.phone || "").trim(),
+            email,
+            bannerImage: "",
+            logoImage: "",
+            bio: String(body.bio || "").trim(),
+            notifications: {
+              newApplications: true,
+              emailAlerts: true,
+              weeklyDigest: false,
+              systemUpdates: true,
+            },
+            preferences: {
+              theme: "light",
+              twoFactor: false,
+            },
           };
         }
 
@@ -1836,7 +2007,9 @@ async function handleRequest(req, res) {
 
         if (body.status !== undefined) {
           data.users[userIdx].status =
-            body.status === "banned" ? "banned" : "active";
+            String(body.status).toLowerCase() === "banned"
+              ? "banned"
+              : "active";
         }
         if (body.name !== undefined) {
           data.users[userIdx].name = String(body.name).trim();
@@ -1868,6 +2041,12 @@ async function handleRequest(req, res) {
         }
 
         const userEmailLower = String(user.email || "").toLowerCase();
+        if (user.role === "admin" || userEmailLower === "admin@admin") {
+          return sendJson(res, 403, {
+            success: false,
+            error: "The primary System Administrator account cannot be deleted.",
+          });
+        }
         data.users = data.users.filter((u) => String(u.id) !== String(id));
 
         let removedPostsCount = 0;
@@ -1894,6 +2073,15 @@ async function handleRequest(req, res) {
           if (data.studentProfiles && userEmailLower) {
             delete data.studentProfiles[userEmailLower];
           }
+          if (
+            data.studentSettings &&
+            String(data.studentSettings.email || "").toLowerCase() === userEmailLower
+          ) {
+            data.studentSettings = {};
+          }
+          data.notifications = (data.notifications || []).filter(
+            (n) => String(n.recipientEmail || "").toLowerCase() !== userEmailLower,
+          );
           syncScholarshipApplicantCounts(data);
         } else if (user.role === "provider") {
           const matchesProvider = (item) => {
@@ -1919,16 +2107,31 @@ async function handleRequest(req, res) {
           );
           data.drafts = (data.drafts || []).filter((d) => !matchesProvider(d));
 
-          const appsToDelete = (data.applications || []).filter((a) =>
-            providerScholarshipIds.includes(String(a.scholarshipId)),
+          if (data.providerProfiles && userEmailLower) {
+            delete data.providerProfiles[userEmailLower];
+          }
+
+          const appsToDelete = (data.applications || []).filter(
+            (a) =>
+              providerScholarshipIds.includes(String(a.scholarshipId)) ||
+              (userEmailLower &&
+                String(a.providerEmail || "").toLowerCase() === userEmailLower),
           );
           cleanupUploadedFilesForApplications(appsToDelete);
 
           const initialAppCount = (data.applications || []).length;
           data.applications = (data.applications || []).filter(
-            (a) => !providerScholarshipIds.includes(String(a.scholarshipId)),
+            (a) =>
+              !providerScholarshipIds.includes(String(a.scholarshipId)) &&
+              !(
+                userEmailLower &&
+                String(a.providerEmail || "").toLowerCase() === userEmailLower
+              ),
           );
           removedAppsCount = initialAppCount - data.applications.length;
+          data.notifications = (data.notifications || []).filter(
+            (n) => String(n.recipientEmail || "").toLowerCase() !== userEmailLower,
+          );
         }
 
         if (!writeData(data)) {

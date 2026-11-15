@@ -51,13 +51,11 @@ function prefillData() {
   const pendingName = sessionStorage.getItem("nexo-pending-name");
   if (DOM.orgNameInput && pendingName) {
     DOM.orgNameInput.value = pendingName;
-    sessionStorage.removeItem("nexo-pending-name"); // Wipe memory to prevent data leaks
   }
 
   const pendingEmail = sessionStorage.getItem("nexo-pending-email");
   if (DOM.orgEmailInput && pendingEmail) {
     DOM.orgEmailInput.value = pendingEmail;
-    sessionStorage.removeItem("nexo-pending-email"); // Wipe memory to prevent data leaks
   }
 }
 
@@ -257,7 +255,7 @@ function initFormValidation() {
     }
 
     // Handle Submit
-    DOM.providerSetupForm.addEventListener("submit", (e) => {
+    DOM.providerSetupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       let isValid = true;
 
@@ -351,16 +349,32 @@ function initFormValidation() {
       if (!isValid) return;
 
       // Sync registered provider account to backend file handling and localStorage
-      const orgEmailVal = orgEmail ? orgEmail.value.trim() : "";
+      const orgEmailVal = orgEmail ? orgEmail.value.trim().toLowerCase() : "";
       const orgNameVal = orgName
         ? orgName.value.trim()
         : "Scholarship Provider";
+      const pendingPassword =
+        sessionStorage.getItem("nexo-pending-password") || "admin";
+
+      const submitBtn = document.querySelector(
+        "#provider-setup-form .auth-submit",
+      );
+      if (submitBtn) {
+        submitBtn.textContent = "Submitting Application...";
+        submitBtn.style.opacity = "0.7";
+        submitBtn.style.pointerEvents = "none";
+      }
+
       if (orgEmailVal) {
         const newProviderUser = {
           email: orgEmailVal,
+          password: pendingPassword,
           role: "provider",
           name: orgNameVal,
           orgName: orgNameVal,
+          contactPerson: orgContact ? orgContact.value.trim() : "",
+          contactNumber: orgPhone ? orgPhone.value.trim() : "",
+          location: orgAddress ? orgAddress.value.trim() : "",
           status: "active",
         };
 
@@ -370,25 +384,62 @@ function initFormValidation() {
             ? ""
             : "http://localhost:3000");
 
-        fetch(`${apiBase}/api/users`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newProviderUser),
-        }).catch(() => {});
+        let createdProvider = null;
+        try {
+          const res = await fetch(`${apiBase}/api/users`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(newProviderUser),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            if (submitBtn) {
+              submitBtn.textContent = "Next";
+              submitBtn.style.opacity = "1";
+              submitBtn.style.pointerEvents = "auto";
+            }
+            showNotification(
+              data.error || data.message || "Failed to register provider account.",
+              "error",
+            );
+            return;
+          }
+          createdProvider = data.user || newProviderUser;
+        } catch (err) {
+          if (submitBtn) {
+            submitBtn.textContent = "Next";
+            submitBtn.style.opacity = "1";
+            submitBtn.style.pointerEvents = "auto";
+          }
+          showNotification(
+            "Could not reach the NEXO server to save your organization account. Please make sure the server is running.",
+            "error",
+          );
+          return;
+        }
+
+        // Clear any stale provider settings for this email so re-registered providers start fresh
+        try {
+          localStorage.removeItem(`nexo_provider_settings_${orgEmailVal}`);
+          localStorage.removeItem("nexo_provider_settings");
+          localStorage.removeItem("nexo_settings");
+          localStorage.removeItem("nexo-provider-logo");
+          localStorage.removeItem("nexo-provider-banner");
+          localStorage.removeItem("provider-banner-preview");
+        } catch (_) {}
 
         try {
           let uList = [];
           const cached = localStorage.getItem("nexo_users");
           if (cached) uList = JSON.parse(cached);
-          if (
-            !uList.some(
-              (u) =>
-                (u.email || "").toLowerCase() === orgEmailVal.toLowerCase(),
-            )
-          ) {
-            uList.unshift({
+          uList = uList.filter(
+            (u) => (u.email || "").toLowerCase() !== orgEmailVal,
+          );
+          uList.unshift(
+            createdProvider || {
               id: "usr_prov_" + Date.now(),
               email: orgEmailVal,
+              password: pendingPassword,
               role: "provider",
               name: orgNameVal,
               orgName: orgNameVal,
@@ -399,24 +450,18 @@ function initFormValidation() {
                 day: "numeric",
                 year: "numeric",
               }),
-            });
-            localStorage.setItem("nexo_users", JSON.stringify(uList));
-          }
+            },
+          );
+          localStorage.setItem("nexo_users", JSON.stringify(uList));
         } catch (_) {}
+
+        sessionStorage.removeItem("nexo-pending-name");
+        sessionStorage.removeItem("nexo-pending-email");
+        sessionStorage.removeItem("nexo-pending-password");
       }
 
       // Hide active general notification if it was showing
       if (DOM.notificationEl) DOM.notificationEl.classList.remove("show");
-
-      // Change button text to show loading state
-      const submitBtn = document.querySelector(
-        "#provider-setup-form .auth-submit",
-      );
-      if (submitBtn) {
-        submitBtn.textContent = "Submitting Application...";
-        submitBtn.style.opacity = "0.7";
-        submitBtn.style.pointerEvents = "none";
-      }
 
       // Simulate a small delay, then swap to "Application Submitted!" view
       setTimeout(() => {
