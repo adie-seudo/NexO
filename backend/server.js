@@ -179,20 +179,21 @@ function readData() {
   }
 }
 
-// Helper: Atomically write data to backend/data.json and root data.json
+// Helper: Atomically write data to backend/data.json and sync root data.json
 function writeData(data) {
   try {
     ensureDirectoryExists(BACKEND_DIR);
     const jsonStr = JSON.stringify(data, null, 2) + "\n";
 
+    // Write temporary file inside backend/ (which is ignored by Live Server)
     const tmpBackend = `${DATA_FILE_BACKEND}.tmp.${process.pid}`;
     fs.writeFileSync(tmpBackend, jsonStr, "utf8");
     fs.renameSync(tmpBackend, DATA_FILE_BACKEND);
 
+    // Write directly to root data.json without creating a root .tmp.* file
+    // (creating a .tmp.* file in root triggers VS Code Live Server full-page reloads!)
     try {
-      const tmpRoot = `${DATA_FILE_ROOT}.tmp.${process.pid}`;
-      fs.writeFileSync(tmpRoot, jsonStr, "utf8");
-      fs.renameSync(tmpRoot, DATA_FILE_ROOT);
+      fs.writeFileSync(DATA_FILE_ROOT, jsonStr, "utf8");
     } catch (rootErr) {
       console.error("[Database Sync Warning] Could not sync root data.json:", rootErr.message);
     }

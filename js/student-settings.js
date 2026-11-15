@@ -33,6 +33,48 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   // 1. EXPANDABLE SETTINGS CATEGORY BARS (Independent Accordions)
   // -------------------------------------------------------------
+  const OPEN_CATS_KEY = "nexo_student_open_settings_categories";
+
+  function saveOpenCategoriesState() {
+    try {
+      const openIds = Array.from(
+        document.querySelectorAll(".settings-category-group.is-open"),
+      )
+        .map((g) => g.id)
+        .filter(Boolean);
+      sessionStorage.setItem(OPEN_CATS_KEY, JSON.stringify(openIds));
+    } catch (_) {}
+  }
+
+  function restoreOpenCategoriesState(defaultToProfile = false) {
+    try {
+      const raw = sessionStorage.getItem(OPEN_CATS_KEY);
+      if (raw) {
+        const openIds = JSON.parse(raw);
+        if (Array.isArray(openIds) && openIds.length > 0) {
+          openIds.forEach((id) => {
+            const group = document.getElementById(id);
+            if (group) {
+              group.classList.add("is-open");
+              const barBtn = group.querySelector(".settings-category-bar");
+              if (barBtn) barBtn.setAttribute("aria-expanded", "true");
+            }
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+
+    if (defaultToProfile) {
+      const profGroup = document.getElementById("category-student-profile");
+      if (profGroup) {
+        profGroup.classList.add("is-open");
+        const barBtn = profGroup.querySelector(".settings-category-bar");
+        if (barBtn) barBtn.setAttribute("aria-expanded", "true");
+      }
+    }
+  }
+
   const categoryBars = document.querySelectorAll(".settings-category-bar");
   categoryBars.forEach((bar) => {
     bar.addEventListener("click", (e) => {
@@ -42,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const isOpen = group.classList.contains("is-open");
       group.classList.toggle("is-open", !isOpen);
       bar.setAttribute("aria-expanded", String(!isOpen));
+      saveOpenCategoriesState();
     });
   });
 
@@ -60,8 +103,204 @@ document.addEventListener("DOMContentLoaded", () => {
       match.classList.add("is-open");
       const barBtn = match.querySelector(".settings-category-bar");
       if (barBtn) barBtn.setAttribute("aria-expanded", "true");
+      saveOpenCategoriesState();
+    }
+  } else {
+    restoreOpenCategoriesState(false);
+  }
+
+  // -------------------------------------------------------------
+  // 1.5 CLIENT-SIDE AVATAR COMPRESSION & SAFE STORAGE HELPER
+  // -------------------------------------------------------------
+  function compressImageDataUrl(dataUrl, maxDim = 256, quality = 0.84) {
+    return new Promise((resolve) => {
+      if (!dataUrl || typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) {
+        resolve(dataUrl || "");
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        try {
+          let width = img.width || maxDim;
+          let height = img.height || maxDim;
+          if (width > maxDim || height > maxDim) {
+            if (width >= height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          let out = canvas.toDataURL("image/webp", quality);
+          if (!out || out.length > dataUrl.length || !out.startsWith("data:image/")) {
+            out = canvas.toDataURL("image/jpeg", quality);
+          }
+          resolve(out && out.length < dataUrl.length ? out : dataUrl);
+        } catch (_) {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  function safeSaveStudentSettingsToStorage(payload, emailLower) {
+    const cleanEmail = (emailLower || payload.email || "").toLowerCase().trim();
+    const corePayload = { ...payload };
+
+    // 1. Save core settings (attempt with profilePicture first; if quota exceeded, save without large pic so isProfileConfirmed is NEVER lost)
+    try {
+      localStorage.setItem("nexo_student_settings", JSON.stringify(corePayload));
+      if (cleanEmail) {
+        localStorage.setItem(`nexo_student_settings_${cleanEmail}`, JSON.stringify(corePayload));
+      }
+    } catch (quotaErr) {
+      try {
+        // Free up duplicate avatar keys and retry
+        localStorage.removeItem("nexo-student-avatar");
+        if (cleanEmail) {
+          localStorage.removeItem("nexo-student-avatar-" + cleanEmail);
+        }
+        localStorage.setItem("nexo_student_settings", JSON.stringify(corePayload));
+        if (cleanEmail) {
+          localStorage.setItem(`nexo_student_settings_${cleanEmail}`, JSON.stringify(corePayload));
+        }
+      } catch (_) {
+        try {
+          const slimPayload = { ...corePayload, profilePicture: "" };
+          localStorage.setItem("nexo_student_settings", JSON.stringify(slimPayload));
+          if (cleanEmail) {
+            localStorage.setItem(`nexo_student_settings_${cleanEmail}`, JSON.stringify(slimPayload));
+          }
+        } catch (__) {}
+      }
+    }
+
+    // 2. Save identity keys
+    try {
+      if (cleanEmail) {
+        sessionStorage.setItem("nexo-student-email", cleanEmail);
+        localStorage.setItem("nexo-student-email", cleanEmail);
+      }
+      if (corePayload.fullName) {
+        sessionStorage.setItem("nexo-student-name", corePayload.fullName);
+        localStorage.setItem("nexo-student-name", corePayload.fullName);
+      }
+    } catch (_) {}
+
+    // 3. Save avatar keys in isolated try/catch
+    if (corePayload.profilePicture !== undefined) {
+      try {
+        if (corePayload.profilePicture) {
+          sessionStorage.setItem("nexo-student-avatar", corePayload.profilePicture);
+          localStorage.setItem("nexo-student-avatar", corePayload.profilePicture);
+          if (cleanEmail) {
+            localStorage.setItem("nexo_avatar_" + cleanEmail, corePayload.profilePicture);
+            localStorage.setItem("nexo-student-avatar-" + cleanEmail, corePayload.profilePicture);
+          }
+        } else {
+          sessionStorage.removeItem("nexo-student-avatar");
+          localStorage.removeItem("nexo-student-avatar");
+          if (cleanEmail) {
+            localStorage.removeItem("nexo_avatar_" + cleanEmail);
+            localStorage.removeItem("nexo-student-avatar-" + cleanEmail);
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 4. Update nexo_student_profiles in isolated try/catch
+    if (cleanEmail) {
+      try {
+        const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+        profiles[cleanEmail] = { ...(profiles[cleanEmail] || {}), ...corePayload };
+        localStorage.setItem("nexo_student_profiles", JSON.stringify(profiles));
+      } catch (_) {
+        try {
+          const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+          const slim = { ...corePayload, profilePicture: "" };
+          profiles[cleanEmail] = { ...(profiles[cleanEmail] || {}), ...slim };
+          localStorage.setItem("nexo_student_profiles", JSON.stringify(profiles));
+        } catch (__) {}
+      }
+
+      // 5. Update nexo_users in isolated try/catch
+      try {
+        const usersList = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+        if (Array.isArray(usersList)) {
+          const u = usersList.find((x) => (x.email || "").toLowerCase().trim() === cleanEmail);
+          if (u) {
+            if (corePayload.course !== undefined) u.course = corePayload.course;
+            if (corePayload.yearLevel !== undefined) u.yearLevel = corePayload.yearLevel;
+            if (corePayload.university !== undefined) u.university = corePayload.university;
+            if (corePayload.studentId !== undefined) u.studentId = corePayload.studentId;
+            if (corePayload.contactNumber !== undefined) u.contactNumber = corePayload.contactNumber;
+            if (corePayload.bio !== undefined) u.bio = corePayload.bio;
+            if (corePayload.isProfileConfirmed !== undefined) {
+              u.isProfileConfirmed = Boolean(corePayload.isProfileConfirmed);
+            }
+            if (corePayload.profilePicture !== undefined) {
+              u.profilePicture = corePayload.profilePicture;
+            }
+            localStorage.setItem("nexo_users", JSON.stringify(usersList));
+          }
+        }
+      } catch (_) {}
     }
   }
+
+  // Draft input state persistence (so unsaved edits survive any accidental reload)
+  function getDraftStorageKey(email) {
+    return `nexo_student_draft_inputs_${(email || "default").toLowerCase().trim()}`;
+  }
+
+  function saveDraftInputsToSession() {
+    if (activeStudentSettings && activeStudentSettings.isProfileConfirmed) return;
+    const currentEmail = (
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      ""
+    ).toLowerCase().trim();
+    const draft = {
+      university: document.getElementById("input-student-university")?.value || "",
+      course: document.getElementById("input-student-course")?.value || "",
+      yearLevel: document.getElementById("select-student-year")?.value || "",
+      studentId: document.getElementById("input-student-id")?.value || "",
+      contactNumber: document.getElementById("input-student-phone")?.value || "",
+      bio: document.getElementById("input-student-bio")?.value || "",
+    };
+    try {
+      sessionStorage.setItem(getDraftStorageKey(currentEmail), JSON.stringify(draft));
+    } catch (_) {}
+  }
+
+  function clearDraftInputsFromSession(email) {
+    try {
+      sessionStorage.removeItem(getDraftStorageKey(email));
+    } catch (_) {}
+  }
+
+  [
+    "input-student-university",
+    "input-student-course",
+    "select-student-year",
+    "input-student-id",
+    "input-student-phone",
+    "input-student-bio",
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input", saveDraftInputsToSession);
+      el.addEventListener("change", saveDraftInputsToSession);
+    }
+  });
 
   // -------------------------------------------------------------
   // 2. TOAST NOTIFICATION HELPER
@@ -149,7 +388,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const reader = new FileReader();
       reader.onload = async (event) => {
-        currentAvatarBase64 = event.target.result;
+        const rawDataUrl = event.target.result;
+        currentAvatarBase64 = await compressImageDataUrl(rawDataUrl, 256, 0.84);
         setAvatarPreview(currentAvatarBase64);
         updateHeaderAvatar(currentAvatarBase64);
 
@@ -159,6 +399,10 @@ document.addEventListener("DOMContentLoaded", () => {
           ""
         ).toLowerCase().trim();
 
+        saveOpenCategoriesState();
+        saveDraftInputsToSession();
+
+        // Update local/session storage safely without exceeding browser 5MB quota
         try {
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
           localStorage.setItem("nexo-student-avatar", currentAvatarBase64);
@@ -199,10 +443,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           }
         } catch (_) {}
-        showToast("Profile image updated");
 
-        // Auto-save immediately to server
-        if (currentEmail) {
+        updateHeaderAvatar(currentAvatarBase64);
+
+        // Only auto-save immediately to server if the profile is ALREADY confirmed.
+        // While the profile is still unconfirmed, keep the user's open form state intact
+        // until they click "Save Changes" (prevents any dev server file-watcher reload from interrupting editing).
+        if (currentEmail && activeStudentSettings && activeStudentSettings.isProfileConfirmed) {
+          showToast("Profile image updated");
           try {
             await fetch(`${API_BASE}/api/student-settings`, {
               method: "POST",
@@ -212,6 +460,8 @@ document.addEventListener("DOMContentLoaded", () => {
           } catch (err) {
             console.warn("Could not auto-save avatar to server:", err);
           }
+        } else {
+          showToast("Profile image selected — click Save Changes to confirm your profile");
         }
       };
       reader.readAsDataURL(file);
@@ -230,6 +480,9 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.getItem("nexo-student-email") ||
         ""
       ).toLowerCase().trim();
+
+      saveOpenCategoriesState();
+      saveDraftInputsToSession();
 
       try {
         sessionStorage.removeItem("nexo-student-avatar");
@@ -273,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
       showToast("Profile image removed");
 
-      if (currentEmail) {
+      if (currentEmail && activeStudentSettings && activeStudentSettings.isProfileConfirmed) {
         try {
           await fetch(`${API_BASE}/api/student-settings`, {
             method: "POST",
@@ -342,13 +595,31 @@ document.addEventListener("DOMContentLoaded", () => {
             !currentEmail ||
             fetched.email.toLowerCase() === currentEmail)
         ) {
-          settings = fetched;
+          // If local storage already has a confirmed profile for this email, preserve confirmation if server is stale
           try {
-            localStorage.setItem("nexo_student_settings", JSON.stringify(settings));
-            if (currentEmail) {
-              localStorage.setItem(`nexo_student_settings_${currentEmail}`, JSON.stringify(settings));
+            const rawLocal =
+              (currentEmail && localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
+              localStorage.getItem("nexo_student_settings");
+            if (rawLocal) {
+              const parsedLocal = JSON.parse(rawLocal);
+              if (
+                parsedLocal &&
+                parsedLocal.email &&
+                parsedLocal.email.toLowerCase() === currentEmail &&
+                parsedLocal.isProfileConfirmed &&
+                !fetched.isProfileConfirmed
+              ) {
+                Object.assign(fetched, parsedLocal);
+              }
             }
           } catch (_) {}
+
+          if (fetched.profilePicture && fetched.profilePicture.length > 80000) {
+            fetched.profilePicture = await compressImageDataUrl(fetched.profilePicture, 256, 0.84);
+          }
+
+          settings = fetched;
+          safeSaveStudentSettingsToStorage(settings, currentEmail);
           if (typeof window.syncGlobalStudentIdentity === "function") {
             window.syncGlobalStudentIdentity();
           }
@@ -461,6 +732,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (idInput) idInput.value = settings.studentId || "";
     if (phoneInput) phoneInput.value = settings.contactNumber || "";
     if (bioInput) bioInput.value = settings.bio || "";
+
+    // If profile is not yet confirmed, restore any unsaved draft inputs from sessionStorage
+    if (!settings.isProfileConfirmed) {
+      try {
+        const rawDraft = sessionStorage.getItem(getDraftStorageKey(currentEmail));
+        if (rawDraft) {
+          const draft = JSON.parse(rawDraft);
+          if (uniInput && !uniInput.value && draft.university) uniInput.value = draft.university;
+          if (courseInput && !courseInput.value && draft.course) courseInput.value = draft.course;
+          if (yearSelect && !yearSelect.value && draft.yearLevel) yearSelect.value = draft.yearLevel;
+          if (idInput && !idInput.value && draft.studentId) idInput.value = draft.studentId;
+          if (phoneInput && !phoneInput.value && draft.contactNumber) phoneInput.value = draft.contactNumber;
+          if (bioInput && !bioInput.value && draft.bio) bioInput.value = draft.bio;
+        }
+      } catch (_) {}
+      // Automatically open Profile & Academic accordion if no accordion is open yet so unconfirmed users immediately see the form
+      const anyOpen = document.querySelector(".settings-category-group.is-open");
+      if (!anyOpen) {
+        restoreOpenCategoriesState(true);
+      }
+    }
 
     if (!settings.profilePicture) {
       const fallbackAvatar =
@@ -665,6 +957,66 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     };
 
+    if (payload.profilePicture && payload.profilePicture.length > 80000) {
+      payload.profilePicture = await compressImageDataUrl(payload.profilePicture, 256, 0.84);
+      currentAvatarBase64 = payload.profilePicture;
+    }
+
+    const emailLower = (payload.email || savedEmail || "").toLowerCase().trim();
+
+    // 1. Save to localStorage & sessionStorage FIRST before network call
+    //    (prevents any dev-server file-watcher reload from aborting localStorage updates!)
+    safeSaveStudentSettingsToStorage(payload, emailLower);
+    if (isConfirmed) {
+      clearDraftInputsFromSession(emailLower);
+    }
+
+    // Update nexo_applications locally
+    if (emailLower) {
+      try {
+        let appsList = JSON.parse(
+          localStorage.getItem("nexo_applications") || "[]",
+        );
+        if (Array.isArray(appsList)) {
+          let changed = false;
+          appsList.forEach((app) => {
+            if (
+              (app.studentEmail || "").toLowerCase().trim() === emailLower
+            ) {
+              if (payload.course) app.course = payload.course;
+              if (payload.yearLevel) app.yearLevel = payload.yearLevel;
+              if (payload.university) app.university = payload.university;
+              if (payload.studentId) app.studentId = payload.studentId;
+              if (payload.contactNumber)
+                app.contactNumber = payload.contactNumber;
+              app.bio = payload.bio || "";
+              if (payload.profilePicture) {
+                app.studentProfilePic = payload.profilePicture;
+                app.profilePicture = payload.profilePicture;
+              }
+              changed = true;
+            }
+          });
+          if (changed) {
+            localStorage.setItem(
+              "nexo_applications",
+              JSON.stringify(appsList),
+            );
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Immediately update global identity & remove red dot before network call
+    activeStudentSettings = payload;
+    if (typeof window.syncGlobalStudentIdentity === "function") {
+      window.syncGlobalStudentIdentity();
+    }
+    window.dispatchEvent(
+      new CustomEvent("nexo:profile-updated", { detail: payload }),
+    );
+
+    // 2. Persist to backend server
     try {
       const res = await fetch(`${API_BASE}/api/student-settings`, {
         method: "POST",
@@ -675,109 +1027,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const resData = await res.json();
         if (resData && resData.settings) {
           Object.assign(payload, resData.settings);
+          safeSaveStudentSettingsToStorage(payload, emailLower);
         }
       }
     } catch (err) {
       console.warn("Could not save to /api/student-settings via server:", err);
     }
 
-    // Comprehensive LocalStorage sync
-    try {
-      localStorage.setItem("nexo_student_settings", JSON.stringify(payload));
-      if (payload.profilePicture) {
-        sessionStorage.setItem("nexo-student-avatar", payload.profilePicture);
-        localStorage.setItem("nexo-student-avatar", payload.profilePicture);
-      }
-      if (payload.email) {
-        const emailLower = payload.email.toLowerCase().trim();
-        if (payload.profilePicture) {
-          localStorage.setItem("nexo_avatar_" + emailLower, payload.profilePicture);
-          localStorage.setItem("nexo-student-avatar-" + emailLower, payload.profilePicture);
-        }
-        localStorage.setItem(
-          `nexo_student_settings_${emailLower}`,
-          JSON.stringify(payload),
-        );
-        sessionStorage.setItem("nexo-student-email", payload.email);
-        localStorage.setItem("nexo-student-email", payload.email);
-
-        // Update nexo_student_profiles
-        let profiles = {};
-        try {
-          profiles = JSON.parse(
-            localStorage.getItem("nexo_student_profiles") || "{}",
-          );
-        } catch (_) {}
-        profiles[emailLower] = { ...(profiles[emailLower] || {}), ...payload };
-        localStorage.setItem(
-          "nexo_student_profiles",
-          JSON.stringify(profiles),
-        );
-
-        // Update nexo_users
-        try {
-          let usersList = JSON.parse(
-            localStorage.getItem("nexo_users") || "[]",
-          );
-          if (Array.isArray(usersList)) {
-            let u = usersList.find(
-              (x) => (x.email || "").toLowerCase().trim() === emailLower,
-            );
-            if (u) {
-              if (payload.course) u.course = payload.course;
-              if (payload.yearLevel) u.yearLevel = payload.yearLevel;
-              if (payload.university) u.university = payload.university;
-              if (payload.studentId) u.studentId = payload.studentId;
-              if (payload.contactNumber)
-                u.contactNumber = payload.contactNumber;
-              u.bio = payload.bio || "";
-              u.isProfileConfirmed = payload.isProfileConfirmed;
-              if (payload.profilePicture)
-                u.profilePicture = payload.profilePicture;
-              localStorage.setItem("nexo_users", JSON.stringify(usersList));
-            }
-          }
-        } catch (_) {}
-
-        // Update nexo_applications
-        try {
-          let appsList = JSON.parse(
-            localStorage.getItem("nexo_applications") || "[]",
-          );
-          if (Array.isArray(appsList)) {
-            let changed = false;
-            appsList.forEach((app) => {
-              if (
-                (app.studentEmail || "").toLowerCase().trim() === emailLower
-              ) {
-                if (payload.course) app.course = payload.course;
-                if (payload.yearLevel) app.yearLevel = payload.yearLevel;
-                if (payload.university) app.university = payload.university;
-                if (payload.studentId) app.studentId = payload.studentId;
-                if (payload.contactNumber)
-                  app.contactNumber = payload.contactNumber;
-                app.bio = payload.bio || "";
-                if (payload.profilePicture) {
-                  app.studentProfilePic = payload.profilePicture;
-                  app.profilePicture = payload.profilePicture;
-                }
-                changed = true;
-              }
-            });
-            if (changed) {
-              localStorage.setItem(
-                "nexo_applications",
-                JSON.stringify(appsList),
-              );
-            }
-          }
-        } catch (_) {}
-      }
-      sessionStorage.setItem("nexo-student-name", payload.fullName || "");
-      localStorage.setItem("nexo-student-name", payload.fullName || "");
-    } catch (_) {}
-
-    // Refresh global identity
+    // Refresh global identity again after server confirmation
     if (typeof window.syncGlobalStudentIdentity === "function") {
       window.syncGlobalStudentIdentity();
     }

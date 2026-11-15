@@ -195,64 +195,74 @@ function isStudentProfileComplete() {
     .toLowerCase()
     .trim();
 
-  let settings = null;
+  const merged = {};
+  const mergeCandidate = (obj) => {
+    if (!obj || typeof obj !== "object") return;
+    const objEmail = (obj.email || "").toLowerCase().trim();
+    if (currentEmail && objEmail && objEmail !== currentEmail) return;
+    if (!currentEmail && objEmail) {
+      currentEmail = objEmail;
+    }
+    if (obj.isProfileConfirmed === true) merged.isProfileConfirmed = true;
+    if ((obj.course || "").trim()) merged.course = obj.course.trim();
+    if ((obj.yearLevel || "").trim()) merged.yearLevel = obj.yearLevel.trim();
+    if ((obj.university || "").trim()) merged.university = obj.university.trim();
+    if ((obj.studentId || "").trim()) merged.studentId = obj.studentId.trim();
+    if ((obj.contactNumber || "").trim()) merged.contactNumber = obj.contactNumber.trim();
+  };
+
+  // 1. Check email-scoped settings
+  if (currentEmail) {
+    try {
+      const rawScoped = localStorage.getItem(`nexo_student_settings_${currentEmail}`);
+      if (rawScoped) mergeCandidate(JSON.parse(rawScoped));
+    } catch (_) {}
+  }
+
+  // 2. Check global student settings
   try {
-    const raw =
-      (currentEmail && localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
-      localStorage.getItem("nexo_student_settings");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && (!parsed.email || !currentEmail || parsed.email.toLowerCase().trim() === currentEmail)) {
-        settings = parsed;
-        if (!currentEmail && parsed.email) {
-          currentEmail = parsed.email.toLowerCase().trim();
-        }
+    const rawGlobal = localStorage.getItem("nexo_student_settings");
+    if (rawGlobal) mergeCandidate(JSON.parse(rawGlobal));
+  } catch (_) {}
+
+  // 3. Check nexo_student_profiles
+  try {
+    const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+    if (currentEmail && profiles[currentEmail]) {
+      mergeCandidate(profiles[currentEmail]);
+    } else if (!currentEmail) {
+      const keys = Object.keys(profiles);
+      if (keys.length === 1) {
+        mergeCandidate(profiles[keys[0]]);
+      } else {
+        const confirmedKey = keys.find((k) => profiles[k] && profiles[k].isProfileConfirmed === true);
+        if (confirmedKey) mergeCandidate(profiles[confirmedKey]);
       }
     }
   } catch (_) {}
 
-  if (!settings) {
-    try {
-      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
-      if (currentEmail && profiles[currentEmail]) {
-        settings = profiles[currentEmail];
-      } else if (!currentEmail) {
-        const keys = Object.keys(profiles);
-        if (keys.length === 1) {
-          settings = profiles[keys[0]];
-        } else {
-          const confirmedKey = keys.find((k) => profiles[k] && profiles[k].isProfileConfirmed === true);
-          if (confirmedKey) settings = profiles[confirmedKey];
-        }
-      }
-    } catch (_) {}
-  }
+  // 4. Check nexo_users
+  try {
+    const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+    if (Array.isArray(users)) {
+      const matched = currentEmail
+        ? users.find((u) => (u.email || "").toLowerCase().trim() === currentEmail)
+        : users.find((u) => u.role === "student" && u.isProfileConfirmed === true);
+      if (matched) mergeCandidate(matched);
+    }
+  } catch (_) {}
 
-  if (!settings) {
-    try {
-      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
-      if (Array.isArray(users)) {
-        const matched = currentEmail
-          ? users.find((u) => (u.email || "").toLowerCase().trim() === currentEmail)
-          : users.find((u) => u.role === "student" && u.isProfileConfirmed === true);
-        if (matched) settings = matched;
-      }
-    } catch (_) {}
-  }
-
-  if (!settings) return false;
-
-  // Once profile is confirmed & locked (or has Course and Year Level confirmed), it is 100% complete
-  if (settings.isProfileConfirmed === true) {
+  // Once profile is confirmed & locked, or has all academic details saved, it is 100% complete
+  if (merged.isProfileConfirmed === true) {
     return true;
   }
 
   return Boolean(
-    (settings.course || "").trim() &&
-    (settings.yearLevel || "").trim() &&
-    (settings.university || "").trim() &&
-    (settings.studentId || "").trim() &&
-    (settings.contactNumber || "").trim()
+    merged.course &&
+    merged.yearLevel &&
+    merged.university &&
+    merged.studentId &&
+    merged.contactNumber
   );
 }
 
@@ -467,14 +477,22 @@ function syncGlobalStudentIdentity() {
 
         if (fetchedProfile && (fetchedProfile.email || fetchedProfile.isProfileConfirmed !== undefined)) {
           try {
-            localStorage.setItem("nexo_student_settings", JSON.stringify(fetchedProfile));
             const targetEm = (fetchedProfile.email || currentEmail || "").toLowerCase().trim();
-            if (targetEm) {
-              localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(fetchedProfile));
-              if (!currentEmail) {
-                sessionStorage.setItem("nexo-student-email", targetEm);
-                localStorage.setItem("nexo-student-email", targetEm);
+            try {
+              localStorage.setItem("nexo_student_settings", JSON.stringify(fetchedProfile));
+              if (targetEm) {
+                localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(fetchedProfile));
               }
+            } catch (_) {
+              const slim = { ...fetchedProfile, profilePicture: "" };
+              localStorage.setItem("nexo_student_settings", JSON.stringify(slim));
+              if (targetEm) {
+                localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(slim));
+              }
+            }
+            if (targetEm && !currentEmail) {
+              sessionStorage.setItem("nexo-student-email", targetEm);
+              localStorage.setItem("nexo-student-email", targetEm);
             }
             if (fetchedProfile.fullName) {
               sessionStorage.setItem("nexo-student-name", fetchedProfile.fullName);

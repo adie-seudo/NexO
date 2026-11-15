@@ -615,7 +615,12 @@ function formatStudentShortDate(dateVal) {
 // 3.1 Calculate and render profile completion
 function calculateStudentProfileCompletion(profile, activeEmail) {
   const p = profile || {};
-  if (p.isProfileConfirmed === true) {
+  const isConfirmedGlobal =
+    p.isProfileConfirmed === true ||
+    (typeof window.isStudentProfileComplete === "function" &&
+      window.isStudentProfileComplete());
+
+  if (isConfirmedGlobal) {
     return {
       percent: 100,
       filledCount: 7,
@@ -638,7 +643,7 @@ function calculateStudentProfileCompletion(profile, activeEmail) {
     percent: Math.min(100, Math.max(0, percent)),
     filledCount,
     totalCount: fields.length,
-    isConfirmed: false,
+    isConfirmed: filledCount === fields.length,
   };
 }
 
@@ -704,7 +709,7 @@ function renderStudentNextSteps(profile, myApplications, activeEmail) {
   const completion = calculateStudentProfileCompletion(profile, activeEmail);
 
   // 1. Incomplete Profile
-  if (completion.percent < 100 || !(profile && profile.isProfileConfirmed)) {
+  if (completion.percent < 100 && !completion.isConfirmed) {
     items.push({
       id: "step-profile",
       badgeClass: "badge-step-profile",
@@ -1404,10 +1409,27 @@ async function loadStudentData() {
 
     if (serverProfile) {
       try {
-        localStorage.setItem(
-          "nexo_student_settings",
-          JSON.stringify(serverProfile),
-        );
+        try {
+          localStorage.setItem(
+            "nexo_student_settings",
+            JSON.stringify(serverProfile),
+          );
+          if (activeStudentEmail) {
+            localStorage.setItem(
+              `nexo_student_settings_${activeStudentEmail}`,
+              JSON.stringify(serverProfile),
+            );
+          }
+        } catch (_) {
+          const slim = { ...serverProfile, profilePicture: "" };
+          localStorage.setItem("nexo_student_settings", JSON.stringify(slim));
+          if (activeStudentEmail) {
+            localStorage.setItem(
+              `nexo_student_settings_${activeStudentEmail}`,
+              JSON.stringify(slim),
+            );
+          }
+        }
         if (serverProfile.fullName) {
           sessionStorage.setItem("nexo-student-name", serverProfile.fullName);
           localStorage.setItem("nexo-student-name", serverProfile.fullName);
@@ -1416,31 +1438,27 @@ async function loadStudentData() {
         if (nameTitleEl && serverProfile.fullName) {
           nameTitleEl.textContent = serverProfile.fullName;
         }
-        if (activeStudentEmail) {
-          localStorage.setItem(
-            `nexo_student_settings_${activeStudentEmail}`,
-            JSON.stringify(serverProfile),
-          );
-        }
         if (serverProfile.profilePicture) {
-          sessionStorage.setItem(
-            "nexo-student-avatar",
-            serverProfile.profilePicture,
-          );
-          localStorage.setItem(
-            "nexo-student-avatar",
-            serverProfile.profilePicture,
-          );
-          if (activeStudentEmail) {
-            localStorage.setItem(
-              "nexo_avatar_" + activeStudentEmail,
+          try {
+            sessionStorage.setItem(
+              "nexo-student-avatar",
               serverProfile.profilePicture,
             );
             localStorage.setItem(
-              "nexo-student-avatar-" + activeStudentEmail,
+              "nexo-student-avatar",
               serverProfile.profilePicture,
             );
-          }
+            if (activeStudentEmail) {
+              localStorage.setItem(
+                "nexo_avatar_" + activeStudentEmail,
+                serverProfile.profilePicture,
+              );
+              localStorage.setItem(
+                "nexo-student-avatar-" + activeStudentEmail,
+                serverProfile.profilePicture,
+              );
+            }
+          } catch (_) {}
         }
       } catch (_) {}
     }
