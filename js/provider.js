@@ -229,6 +229,11 @@ function getProviderNotificationsFromStorage() {
 function initNotificationBell() {
   const notifBtn = document.querySelector(".notification-btn");
   if (!notifBtn) return;
+  if (!notifBtn.hasAttribute("type")) {
+    notifBtn.setAttribute("type", "button");
+  }
+  if (notifBtn.dataset.notifBound === "true") return;
+  notifBtn.dataset.notifBound = "true";
 
   // Ensure unread indicator dot element exists inside the button
   let dot =
@@ -363,7 +368,8 @@ function initNotificationBell() {
     deleteProviderNotification(id);
   }
 
-  function markAllNotificationsRead() {
+  function markAllNotificationsRead(syncServer = false) {
+    let hadUnread = false;
     try {
       const cached = JSON.parse(
         localStorage.getItem("nexo_notifications") || "[]",
@@ -374,20 +380,27 @@ function initNotificationBell() {
           n.recipient === "provider" ||
           n.recipient === "all"
         ) {
+          if (!n.read) hadUnread = true;
           n.read = true;
         }
       });
-      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      if (hadUnread) {
+        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      }
     } catch (_) {}
 
-    // Send read request to server if online
-    fetch(`${API_BASE}/api/notifications/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipient: "provider" }),
-    }).catch(() => {});
+    // Only write to server when explicitly requested and there were unread notifications
+    // (Prevents Live Server auto-reloading the whole page when simply opening the notification bell)
+    if (syncServer && hadUnread) {
+      fetch(`${API_BASE}/api/notifications/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient: "provider" }),
+      }).catch(() => {});
+    }
 
-    loadNotifications();
+    const updatedNotifs = getProviderNotificationsFromStorage();
+    renderNotifications(updatedNotifs);
   }
 
   function confirmClearAllProviderNotifications() {
@@ -449,7 +462,9 @@ function initNotificationBell() {
 
   function clampPopoverPosition() {
     if (!popover) return;
-    popover.style.right = "0";
+    const isDesktop = window.innerWidth >= 1024;
+    // On desktop, the pre-opened side menu rail is 68px wide on the right edge; offset popover so it never goes underneath the rail
+    popover.style.right = isDesktop ? "52px" : "0";
     popover.style.left = "auto";
     const rect = popover.getBoundingClientRect();
     if (rect.left < 14) {
@@ -526,15 +541,26 @@ function initNotificationBell() {
       item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
         const appId = item.dataset.appId;
+        const href = item.getAttribute("href") || "";
         if (notifId) deleteProviderNotification(notifId);
 
+        const currentPage = (window.location.pathname.split("/").pop() || "").toLowerCase();
+        const targetPage = (href.split("?")[0].split("#")[0].split("/").pop() || "").toLowerCase();
+
         // If already on provider-applications.html, open review modal directly
-        if (window.location.pathname.includes("provider-applications.html") && appId) {
+        if (currentPage === "provider-applications.html" && appId) {
           e.preventDefault();
           closeNotifications();
           if (typeof window.openReviewModalByAppId === "function") {
             window.openReviewModalByAppId(appId);
           }
+          return;
+        }
+
+        // Prevent full page reload when clicking a notification linking to the current page
+        if (!href || href === "#" || (targetPage && targetPage === currentPage && !href.includes("?"))) {
+          e.preventDefault();
+          closeNotifications();
         }
       });
     });
@@ -560,7 +586,7 @@ function initNotificationBell() {
     markReadBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      markAllNotificationsRead();
+      markAllNotificationsRead(true);
     });
   }
 
@@ -576,6 +602,7 @@ function initNotificationBell() {
 
   // Toggle dropdown on bell click
   notifBtn.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
     closeSideMenu();
     const willOpen = !popover.classList.contains("open");
@@ -583,9 +610,8 @@ function initNotificationBell() {
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
     if (willOpen) {
       clampPopoverPosition();
-      loadNotifications();
-      // Instantly mark notifications as read and remove red dot
-      markAllNotificationsRead();
+      // Mark notifications read locally without triggering disk writes that cause Live Server reloads
+      markAllNotificationsRead(false);
       const currentDot = notifBtn.querySelector(".notification-dot") || document.getElementById("notif-dot");
       if (currentDot) currentDot.classList.remove("active");
       notifBtn.classList.remove("has-unread");

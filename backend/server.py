@@ -631,16 +631,21 @@ class NexoHandler(BaseHTTPRequestHandler):
         if path == "/api/notifications/read":
             target_recipient = body.get("recipient")
             target_id = body.get("id")
+            changed = False
             for n in data.get("notifications", []):
                 if target_id:
-                    if str(n.get("id")) == str(target_id):
+                    if str(n.get("id")) == str(target_id) and not n.get("read"):
                         n["read"] = True
+                        changed = True
                 elif target_recipient:
-                    if not n.get("recipient") or n.get("recipient") == target_recipient or n.get("recipient") == "all":
+                    if (not n.get("recipient") or n.get("recipient") == target_recipient or n.get("recipient") == "all") and not n.get("read"):
                         n["read"] = True
-                else:
+                        changed = True
+                elif not n.get("read"):
                     n["read"] = True
-            write_data(data)
+                    changed = True
+            if changed:
+                write_data(data)
             return self._send_json(200, {"success": True})
 
         if path == "/api/settings":

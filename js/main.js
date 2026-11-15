@@ -187,32 +187,72 @@ function getDynamicInitials(name) {
 }
 
 function isStudentProfileComplete() {
-  const currentEmail = (
+  let currentEmail = (
     sessionStorage.getItem("nexo-student-email") ||
     localStorage.getItem("nexo-student-email") ||
     ""
-  ).toLowerCase();
+  )
+    .toLowerCase()
+    .trim();
 
   let settings = null;
   try {
     const raw =
-      localStorage.getItem(`nexo_student_settings_${currentEmail}`) ||
+      (currentEmail && localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
       localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (!parsed.email || !currentEmail || parsed.email.toLowerCase() === currentEmail) {
+      if (parsed && (!parsed.email || !currentEmail || parsed.email.toLowerCase().trim() === currentEmail)) {
         settings = parsed;
+        if (!currentEmail && parsed.email) {
+          currentEmail = parsed.email.toLowerCase().trim();
+        }
       }
     }
   } catch (_) {}
 
-  // Profile must be confirmed and have Course, Year Level, and Bio completed
+  if (!settings) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      if (currentEmail && profiles[currentEmail]) {
+        settings = profiles[currentEmail];
+      } else if (!currentEmail) {
+        const keys = Object.keys(profiles);
+        if (keys.length === 1) {
+          settings = profiles[keys[0]];
+        } else {
+          const confirmedKey = keys.find((k) => profiles[k] && profiles[k].isProfileConfirmed === true);
+          if (confirmedKey) settings = profiles[confirmedKey];
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!settings) {
+    try {
+      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+      if (Array.isArray(users)) {
+        const matched = currentEmail
+          ? users.find((u) => (u.email || "").toLowerCase().trim() === currentEmail)
+          : users.find((u) => u.role === "student" && u.isProfileConfirmed === true);
+        if (matched) settings = matched;
+      }
+    } catch (_) {}
+  }
+
+  if (!settings) return false;
+
+  // Once profile is confirmed & locked (or has Course and Year Level confirmed), it is 100% complete
+  if (settings.isProfileConfirmed === true) {
+    return true;
+  }
+
   return Boolean(
-    settings &&
-    settings.isProfileConfirmed === true &&
     (settings.course || "").trim() &&
     (settings.yearLevel || "").trim() &&
-    (settings.bio || "").trim()
+    (settings.university || "").trim() &&
+    (settings.studentId || "").trim() &&
+    (settings.contactNumber || "").trim()
   );
 }
 
@@ -373,21 +413,79 @@ function syncGlobalStudentIdentity() {
 
   // Profile Completeness Indicator on Side Menu Settings Link
   const isComplete = isStudentProfileComplete();
-  const settingsNavLinks = document.querySelectorAll("a[href=\"student-settings.html\"].nav-link");
+  const settingsNavLinks = document.querySelectorAll('a[href="student-settings.html"], a[href="student-settings.html"].nav-link');
   settingsNavLinks.forEach((link) => {
-    let dot = link.querySelector(".nav-alert-dot");
+    const dots = link.querySelectorAll(".nav-alert-dot");
     if (!isComplete) {
-      if (!dot) {
-        dot = document.createElement("span");
+      if (dots.length === 0) {
+        const dot = document.createElement("span");
         dot.className = "nav-alert-dot";
         dot.title = "Profile incomplete - Please complete your profile details in Settings";
         link.appendChild(dot);
+      } else {
+        dots[0].style.display = "inline-block";
       }
-      dot.style.display = "inline-block";
-    } else if (dot) {
-      dot.style.display = "none";
+    } else {
+      dots.forEach((dot) => {
+        dot.remove();
+      });
     }
   });
+
+  // If local storage did not have the student profile yet, sync from backend / data.json once
+  if (!isComplete && !window._hasFetchedStudentProfileInMain) {
+    const role = sessionStorage.getItem("nexo-logged-in") || localStorage.getItem("nexo-logged-in");
+    const path = (window.location.pathname.split("/").pop() || "").toLowerCase();
+    if (role === "student" || path.startsWith("student-")) {
+      window._hasFetchedStudentProfileInMain = true;
+      (async () => {
+        let fetchedProfile = null;
+        try {
+          const queryParam = currentEmail ? `?email=${encodeURIComponent(currentEmail)}` : "";
+          const res = await fetch(`${window.API_BASE}/api/student-settings${queryParam}`);
+          if (res.ok) {
+            fetchedProfile = await res.json();
+          }
+        } catch (_) {}
+
+        if (!fetchedProfile || (!fetchedProfile.email && !fetchedProfile.isProfileConfirmed)) {
+          try {
+            const dataRes = await fetch(`${window.API_BASE}/api/data`).catch(() => fetch("data.json"));
+            if (dataRes && dataRes.ok) {
+              const fullData = await dataRes.json();
+              if (currentEmail && fullData.studentProfiles && fullData.studentProfiles[currentEmail]) {
+                fetchedProfile = fullData.studentProfiles[currentEmail];
+              } else if (fullData.studentSettings && fullData.studentSettings.email) {
+                fetchedProfile = fullData.studentSettings;
+              } else if (fullData.studentProfiles) {
+                const keys = Object.keys(fullData.studentProfiles);
+                if (keys.length > 0) fetchedProfile = fullData.studentProfiles[keys[0]];
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (fetchedProfile && (fetchedProfile.email || fetchedProfile.isProfileConfirmed !== undefined)) {
+          try {
+            localStorage.setItem("nexo_student_settings", JSON.stringify(fetchedProfile));
+            const targetEm = (fetchedProfile.email || currentEmail || "").toLowerCase().trim();
+            if (targetEm) {
+              localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(fetchedProfile));
+              if (!currentEmail) {
+                sessionStorage.setItem("nexo-student-email", targetEm);
+                localStorage.setItem("nexo-student-email", targetEm);
+              }
+            }
+            if (fetchedProfile.fullName) {
+              sessionStorage.setItem("nexo-student-name", fetchedProfile.fullName);
+              localStorage.setItem("nexo-student-name", fetchedProfile.fullName);
+            }
+          } catch (_) {}
+          syncGlobalStudentIdentity();
+        }
+      })();
+    }
+  }
 }
 
 window.getDynamicInitials = getDynamicInitials;
@@ -398,12 +496,16 @@ window.syncGlobalStudentIdentity = syncGlobalStudentIdentity;
 document.addEventListener("DOMContentLoaded", () => {
   syncGlobalStudentIdentity();
 });
+window.addEventListener("nexo:profile-updated", () => {
+  syncGlobalStudentIdentity();
+});
 window.addEventListener("storage", (e) => {
   if (
     e.key === "nexo_student_settings" ||
+    e.key === "nexo_student_profiles" ||
     e.key === "nexo-student-name" ||
     e.key === "nexo-student-avatar" ||
-    (e.key && e.key.startsWith("nexo_avatar_"))
+    (e.key && (e.key.startsWith("nexo_avatar_") || e.key.startsWith("nexo_student_settings_")))
   ) {
     syncGlobalStudentIdentity();
   }
@@ -718,6 +820,11 @@ function hydrateRoleAwareHeader() {
     syncMenuTooltips();
   }
 
+  // Re-sync student identity & settings red dot after role-aware menu hydration
+  if (typeof syncGlobalStudentIdentity === "function") {
+    syncGlobalStudentIdentity();
+  }
+
   // Global Drafts Badge Sync
   syncGlobalDraftBadge();
 }
@@ -853,7 +960,7 @@ window.renderSkeletonCards = function (containerOrId, count = null) {
     if (isProviderMiniCardsFeed) {
       count = 2;
     } else if ((isStudentAppFeed || isDirectoryFeed || isProviderPostsFeed || isProviderAppsFeed || isDraftsFeed) && isDesktop) {
-      count = 9;
+      count = 6;
     } else {
       count = 3;
     }

@@ -349,9 +349,11 @@
   // -------------------------------------------------------------
   // DATA FETCHING & LIVE SYNC
   // -------------------------------------------------------------
+  let hasLoadedPostsOnce = false;
+
   async function loadData(isBackground = false) {
     const postsFeed = document.getElementById("posts-feed");
-    if (!isBackground && typeof window.renderSkeletonCards === "function" && postsFeed && postsFeed.children.length === 0) {
+    if (!hasLoadedPostsOnce && !isBackground && typeof window.renderSkeletonCards === "function" && postsFeed && postsFeed.children.length === 0) {
       window.renderSkeletonCards(postsFeed);
     }
 
@@ -655,6 +657,11 @@
       window.clearSkeleton(postsFeedEl);
     }
 
+    hasLoadedPostsOnce = true;
+    if (typeof window.clearSkeleton === "function" && postsFeedEl) {
+      window.clearSkeleton(postsFeedEl);
+    }
+
     if (allScholarships.length === 0) {
       postsFeedEl.style.display = "none";
       postsFeedEl.innerHTML = "";
@@ -686,7 +693,7 @@
     postsFeedEl.innerHTML = "";
 
     const isDesktop = window.innerWidth >= 1024;
-    const maxInitialCards = isDesktop ? 9 : 3;
+    const maxInitialCards = isDesktop ? 6 : 3;
     const totalMatching = filtered.length;
     const visiblePosts = isPostsExpanded ? filtered : filtered.slice(0, maxInitialCards);
 

@@ -185,10 +185,12 @@
   // -------------------------------------------------------------
   // 1. FETCH LIVE APPLICATIONS & SCHOLARSHIPS
   // -------------------------------------------------------------
+  let hasLoadedAppsOnce = false;
+
   async function loadApplicationsData(isBackground = false) {
     const appsFeed = document.getElementById("applications-feed");
     const emptyState = document.getElementById("apps-empty-state");
-    if (!isBackground && typeof window.renderSkeletonCards === "function" && appsFeed && appsFeed.children.length === 0) {
+    if (!hasLoadedAppsOnce && !isBackground && typeof window.renderSkeletonCards === "function" && appsFeed && appsFeed.children.length === 0) {
       if (emptyState) emptyState.style.display = "none";
       window.renderSkeletonCards(appsFeed);
       appsFeed.style.display = "";
@@ -775,6 +777,11 @@
     );
 
     // Empty state handling
+    hasLoadedAppsOnce = true;
+    if (typeof window.clearSkeleton === "function" && appsFeedEl) {
+      window.clearSkeleton(appsFeedEl);
+    }
+
     if (filtered.length === 0) {
       appsFeedEl.style.display = "none";
       appsFeedEl.innerHTML = "";
@@ -806,7 +813,7 @@
     appsFeedEl.innerHTML = "";
 
     const isDesktop = window.innerWidth >= 1024;
-    const maxInitialCards = isDesktop ? 9 : 3;
+    const maxInitialCards = isDesktop ? 6 : 3;
     const totalMatching = filtered.length;
     const visibleApps = isAppsExpanded ? filtered : filtered.slice(0, maxInitialCards);
 

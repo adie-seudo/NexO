@@ -1774,28 +1774,37 @@ async function handleRequest(req, res) {
       data.notifications = data.notifications || [];
       const targetRecipient = body.recipient;
       const targetId = body.id;
+      let changed = false;
 
       data.notifications.forEach((n) => {
         if (targetId) {
-          if (String(n.id) === String(targetId)) n.read = true;
+          if (String(n.id) === String(targetId) && n.read !== true) {
+            n.read = true;
+            changed = true;
+          }
         } else if (targetRecipient) {
           if (
-            !n.recipient ||
-            n.recipient === targetRecipient ||
-            n.recipient === "all"
+            (!n.recipient ||
+              n.recipient === targetRecipient ||
+              n.recipient === "all") &&
+            n.read !== true
           ) {
             n.read = true;
+            changed = true;
           }
-        } else {
+        } else if (n.read !== true) {
           n.read = true;
+          changed = true;
         }
       });
 
-      if (!writeData(data)) {
-        return sendJson(res, 500, {
-          success: false,
-          message: "Failed to update notifications.",
-        });
+      if (changed) {
+        if (!writeData(data)) {
+          return sendJson(res, 500, {
+            success: false,
+            message: "Failed to update notifications.",
+          });
+        }
       }
       return sendJson(res, 200, {
         success: true,

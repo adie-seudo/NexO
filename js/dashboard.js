@@ -1782,7 +1782,7 @@ async function loadPersistedData() {
           emptyDraftsCardEl.setAttribute("style", "display: none !important;");
 
         const isDesktop = window.innerWidth >= 1024;
-        const maxInitialCards = isDesktop ? 9 : 3;
+        const maxInitialCards = isDesktop ? 6 : 3;
         const visibleDrafts = isDraftsExpanded ? myDrafts : myDrafts.slice(0, maxInitialCards);
 
         visibleDrafts.forEach((draft) => {

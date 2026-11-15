@@ -343,6 +343,15 @@ document.addEventListener("DOMContentLoaded", () => {
             fetched.email.toLowerCase() === currentEmail)
         ) {
           settings = fetched;
+          try {
+            localStorage.setItem("nexo_student_settings", JSON.stringify(settings));
+            if (currentEmail) {
+              localStorage.setItem(`nexo_student_settings_${currentEmail}`, JSON.stringify(settings));
+            }
+          } catch (_) {}
+          if (typeof window.syncGlobalStudentIdentity === "function") {
+            window.syncGlobalStudentIdentity();
+          }
         }
       }
     } catch (e) {

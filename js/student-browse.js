@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ) {
       if (emptyEl) emptyEl.style.display = "none";
       const isDesktopBrowse = window.innerWidth >= 1024;
-      window.renderSkeletonCards(browseFeed, isDesktopBrowse ? 9 : 3);
+      window.renderSkeletonCards(browseFeed, isDesktopBrowse ? 6 : 3);
       browseFeed.style.display = "";
     }
 
@@ -239,10 +239,20 @@ document.addEventListener("DOMContentLoaded", () => {
         ).toLowerCase();
         if (currentStudentEmail && fullData.studentProfiles && fullData.studentProfiles[currentStudentEmail]) {
           studentSettings = fullData.studentProfiles[currentStudentEmail];
+        } else if (fullData.studentSettings && fullData.studentSettings.email) {
+          studentSettings = fullData.studentSettings;
+        }
+        if (studentSettings) {
           try {
-            localStorage.setItem(`nexo_student_settings_${currentStudentEmail}`, JSON.stringify(studentSettings));
+            const targetEm = (studentSettings.email || currentStudentEmail || "").toLowerCase().trim();
+            if (targetEm) {
+              localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(studentSettings));
+            }
             localStorage.setItem("nexo_student_settings", JSON.stringify(studentSettings));
           } catch (_) {}
+          if (typeof window.syncGlobalStudentIdentity === "function") {
+            window.syncGlobalStudentIdentity();
+          }
         }
 
         // Keep local cache exactly in sync with server
@@ -639,8 +649,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (filtered.length === 0) {
       feedContainer.innerHTML = "";
+      feedContainer.style.display = "none";
       if (emptyState) {
-        emptyState.style.display = "block";
+        emptyState.style.display = "flex";
         const emptyTitle = emptyState.querySelector(".student-empty-title");
         const emptyDesc = emptyState.querySelector(".student-empty-desc");
         const resetBtn = document.getElementById("browse-reset-btn");
@@ -664,11 +675,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (emptyState) emptyState.style.display = "none";
+    feedContainer.style.display = "";
     feedContainer.innerHTML = "";
 
     const totalMatching = filtered.length;
     const isDesktop = window.innerWidth >= 1024;
-    const maxInitialCards = isDesktop ? 9 : 3;
+    const maxInitialCards = isDesktop ? 6 : 3;
     const displayedItems =
       totalMatching > maxInitialCards && !isBrowseExpanded
         ? filtered.slice(0, maxInitialCards)

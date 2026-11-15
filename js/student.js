@@ -164,6 +164,11 @@ function getStudentNotificationsFromStorage() {
 function initNotificationBell() {
   const notifBtn = document.querySelector(".notification-btn");
   if (!notifBtn) return;
+  if (!notifBtn.hasAttribute("type")) {
+    notifBtn.setAttribute("type", "button");
+  }
+  if (notifBtn.dataset.notifBound === "true") return;
+  notifBtn.dataset.notifBound = "true";
 
   // Ensure unread dot exists inside button
   let dot =
@@ -301,7 +306,8 @@ function initNotificationBell() {
     deleteStudentNotification(id);
   }
 
-  function markAllStudentNotificationsRead() {
+  function markAllStudentNotificationsRead(syncServer = false) {
+    let hadUnread = false;
     try {
       const cached = JSON.parse(
         localStorage.getItem("nexo_notifications") || "[]",
@@ -312,20 +318,27 @@ function initNotificationBell() {
           n.recipient === "student" ||
           n.recipient === "all"
         ) {
+          if (!n.read) hadUnread = true;
           n.read = true;
         }
       });
-      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      if (hadUnread) {
+        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      }
     } catch (_) {}
 
-    // Send read request to server if online
-    fetch(`${NOTIF_API}/api/notifications/read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipient: "student" }),
-    }).catch(() => {});
+    // Only write to server when explicitly requested and there were unread notifications
+    // (Prevents Live Server auto-reloading the whole page when simply opening the notification bell)
+    if (syncServer && hadUnread) {
+      fetch(`${NOTIF_API}/api/notifications/read`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient: "student" }),
+      }).catch(() => {});
+    }
 
-    loadStudentNotifications();
+    const updatedNotifs = getStudentNotificationsFromStorage();
+    renderStudentNotifications(updatedNotifs);
   }
 
   function confirmClearAllStudentNotifications() {
@@ -403,7 +416,9 @@ function initNotificationBell() {
 
   function clampPopoverPosition() {
     if (!popover) return;
-    popover.style.right = "0";
+    const isDesktop = window.innerWidth >= 1024;
+    // On desktop, the pre-opened side menu rail is 68px wide on the right edge; offset popover so it never goes underneath the rail
+    popover.style.right = isDesktop ? "52px" : "0";
     popover.style.left = "auto";
     const rect = popover.getBoundingClientRect();
     if (rect.left < 14) {
@@ -483,14 +498,18 @@ function initNotificationBell() {
       item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
         const targetAppId = item.dataset.appId;
+        const href = item.getAttribute("href") || "";
         if (notifId) {
           deleteStudentNotification(notifId);
           item.remove();
         }
 
+        const currentPage = (window.location.pathname.split("/").pop() || "").toLowerCase();
+        const targetPage = (href.split("?")[0].split("#")[0].split("/").pop() || "").toLowerCase();
+
         // If already on submissions page, open modal directly without page reload or persistent query param loop
         if (
-          window.location.pathname.includes("student-submissions.html") &&
+          currentPage === "student-submissions.html" &&
           targetAppId &&
           Array.isArray(allStudentApplications)
         ) {
@@ -501,10 +520,16 @@ function initNotificationBell() {
           );
           if (match) {
             e.preventDefault();
-            const notifDropdown = document.getElementById("student-notif-dropdown");
-            if (notifDropdown) notifDropdown.classList.remove("active");
+            closeNotifications();
             openSubmissionDetailsModal(match);
+            return;
           }
+        }
+
+        // Prevent full page reload when clicking a notification that points to the current page
+        if (!href || href === "#" || (targetPage && targetPage === currentPage && !href.includes("?"))) {
+          e.preventDefault();
+          closeNotifications();
         }
       });
     });
@@ -530,7 +555,7 @@ function initNotificationBell() {
     markReadBtn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      markAllStudentNotificationsRead();
+      markAllStudentNotificationsRead(true);
     });
   }
 
@@ -546,6 +571,7 @@ function initNotificationBell() {
 
   // Toggle notification popover on bell click
   notifBtn.addEventListener("click", (e) => {
+    e.preventDefault();
     e.stopPropagation();
     closeSideMenu();
     const willOpen = !popover.classList.contains("open");
@@ -553,9 +579,8 @@ function initNotificationBell() {
     notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
     if (willOpen) {
       clampPopoverPosition();
-      loadStudentNotifications();
-      // Instantly mark notifications as read and remove red dot
-      markAllStudentNotificationsRead();
+      // Mark notifications read locally without triggering disk writes that cause Live Server reloads
+      markAllStudentNotificationsRead(false);
       const currentDot = notifBtn.querySelector(".notification-dot") || document.getElementById("student-notif-dot");
       if (currentDot) currentDot.classList.remove("active");
       notifBtn.classList.remove("has-unread");
@@ -587,9 +612,17 @@ function formatStudentShortDate(dateVal) {
   });
 }
 
-// 3.1 Calculate and render profile completion and academic chips
+// 3.1 Calculate and render profile completion
 function calculateStudentProfileCompletion(profile, activeEmail) {
   const p = profile || {};
+  if (p.isProfileConfirmed === true) {
+    return {
+      percent: 100,
+      filledCount: 7,
+      totalCount: 7,
+      isConfirmed: true,
+    };
+  }
   const fields = [
     Boolean(p.fullName && p.fullName.trim()),
     Boolean((p.email || activeEmail) && (p.email || activeEmail).trim()),
@@ -598,64 +631,55 @@ function calculateStudentProfileCompletion(profile, activeEmail) {
     Boolean(p.yearLevel && p.yearLevel.trim()),
     Boolean(p.studentId && p.studentId.trim()),
     Boolean(p.contactNumber && p.contactNumber.trim()),
-    Boolean(p.bio && p.bio.trim()),
   ];
   const filledCount = fields.filter(Boolean).length;
-  let percent = Math.round((filledCount / fields.length) * 100);
-  if (p.isProfileConfirmed && percent > 0) {
-    percent = Math.max(percent, 100);
-  }
+  const percent = Math.round((filledCount / fields.length) * 100);
   return {
     percent: Math.min(100, Math.max(0, percent)),
     filledCount,
     totalCount: fields.length,
-    isConfirmed: Boolean(p.isProfileConfirmed),
+    isConfirmed: false,
   };
 }
 
 function updateStudentDashboardProfileOverview(profile, activeEmail) {
   const completionData = calculateStudentProfileCompletion(profile, activeEmail);
-  const p = profile || {};
 
+  const summaryEl = document.getElementById("student-profile-summary");
   const wrapEl = document.getElementById("student-profile-completion-wrap");
   const completionLabel = document.getElementById("student-profile-completion-label");
   const progressFill = document.getElementById("student-profile-progress-fill");
   const actionLink = document.getElementById("student-profile-action-link");
-  const chipUni = document.getElementById("student-chip-uni");
-  const chipCourse = document.getElementById("student-chip-course");
-  const chipYear = document.getElementById("student-chip-year");
+  const academicMetaEl = document.getElementById("student-academic-meta");
+  if (academicMetaEl) {
+    academicMetaEl.remove();
+  }
 
-  // Requirement 1: Remove/hide profile percentage complete bar once it's already 100%
+  // Remove/hide profile percentage complete bar once profile is edited & locked (100%)
+  const isFullyCompleted = completionData.isConfirmed || completionData.percent >= 100;
   if (wrapEl) {
-    if (completionData.percent >= 100) {
-      wrapEl.style.display = "none";
+    if (isFullyCompleted) {
+      wrapEl.remove();
     } else {
-      wrapEl.style.display = "block";
+      wrapEl.style.display = "flex";
+    }
+  }
+  if (summaryEl) {
+    if (isFullyCompleted) {
+      summaryEl.style.display = "none";
+    } else {
+      summaryEl.style.display = "flex";
     }
   }
 
-  if (completionLabel) {
+  if (completionLabel && !isFullyCompleted) {
     completionLabel.textContent = `Profile ${completionData.percent}% Complete`;
   }
-  if (progressFill) {
+  if (progressFill && !isFullyCompleted) {
     progressFill.style.width = `${completionData.percent}%`;
   }
-  if (actionLink) {
-    if (completionData.percent < 100) {
-      actionLink.textContent = "Complete Profile \u2192";
-    } else {
-      actionLink.textContent = "Edit Profile \u2192";
-    }
-  }
-
-  if (chipUni) {
-    chipUni.textContent = p.university || "Batangas State University";
-  }
-  if (chipCourse) {
-    chipCourse.textContent = p.course || "Undergraduate Scholar";
-  }
-  if (chipYear) {
-    chipYear.textContent = p.yearLevel || "Enrolled Student";
+  if (actionLink && !isFullyCompleted) {
+    actionLink.textContent = "Complete Profile \u2192";
   }
 }
 
@@ -1162,15 +1186,160 @@ let allStudentApplications = [];
 let currentSubmissionsFilter = "all";
 let currentSubmissionsSearch = "";
 let lastStudentAppsHash = "";
+let hasLoadedStudentDataOnce = false;
+
+function renderStudentDashboardSkeletons() {
+  // 1. Metric Cards Values Skeleton
+  ["stat-my-apps", "stat-approved", "stat-review", "stat-rejected"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerHTML = `<span class="skeleton-bone" style="display: inline-block; width: 34px; height: 26px; border-radius: 6px;" data-skeleton="true"></span>`;
+    }
+  });
+
+  // 2. Your Next Steps Skeleton
+  const nextStepsList = document.getElementById("student-next-steps-list");
+  if (nextStepsList) {
+    nextStepsList.innerHTML = `
+      <div class="next-step-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="next-step-header">
+          <div class="skeleton-bone" style="width: 72px; height: 18px; border-radius: 9999px;"></div>
+          <div class="skeleton-bone" style="width: 96px; height: 14px; border-radius: 4px;"></div>
+        </div>
+        <div class="skeleton-bone" style="width: 78%; height: 16px; border-radius: 5px; margin-top: 4px;"></div>
+        <div class="skeleton-bone" style="width: 92%; height: 13px; border-radius: 4px; margin-top: 4px;"></div>
+      </div>
+      <div class="next-step-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="next-step-header">
+          <div class="skeleton-bone" style="width: 84px; height: 18px; border-radius: 9999px;"></div>
+          <div class="skeleton-bone" style="width: 88px; height: 14px; border-radius: 4px;"></div>
+        </div>
+        <div class="skeleton-bone" style="width: 68%; height: 16px; border-radius: 5px; margin-top: 4px;"></div>
+        <div class="skeleton-bone" style="width: 86%; height: 13px; border-radius: 4px; margin-top: 4px;"></div>
+      </div>
+    `;
+  }
+
+  // 3. Upcoming Deadlines Skeleton
+  const deadlinesList = document.getElementById("student-deadlines-list");
+  if (deadlinesList) {
+    deadlinesList.innerHTML = `
+      <div class="deadline-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="skeleton-bone" style="width: 44px; height: 46px; border-radius: 10px; flex-shrink: 0;"></div>
+        <div class="deadline-info" style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+          <div class="skeleton-bone" style="width: 74%; height: 15px; border-radius: 4px;"></div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="skeleton-bone" style="width: 110px; height: 12px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 68px; height: 18px; border-radius: 9999px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="deadline-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="skeleton-bone" style="width: 44px; height: 46px; border-radius: 10px; flex-shrink: 0;"></div>
+        <div class="deadline-info" style="display: flex; flex-direction: column; gap: 6px; flex: 1;">
+          <div class="skeleton-bone" style="width: 66%; height: 15px; border-radius: 4px;"></div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="skeleton-bone" style="width: 104px; height: 12px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 64px; height: 18px; border-radius: 9999px;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 4. Recommended Opportunities Skeleton
+  const oppsFeed = document.getElementById("student-opportunities-feed");
+  if (oppsFeed) {
+    oppsFeed.innerHTML = `
+      <div class="opportunity-mini-card" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+          <div class="skeleton-bone" style="width: 74px; height: 18px; border-radius: 9999px;"></div>
+          <div class="skeleton-bone" style="width: 96px; height: 18px; border-radius: 9999px;"></div>
+        </div>
+        <div class="skeleton-bone" style="width: 78%; height: 16px; border-radius: 5px;"></div>
+        <div class="skeleton-bone" style="width: 54%; height: 13px; border-radius: 4px;"></div>
+        <div class="opportunity-mini-footer" style="margin-top: 4px;">
+          <div class="skeleton-bone" style="width: 108px; height: 13px; border-radius: 4px;"></div>
+          <div class="skeleton-bone" style="width: 118px; height: 28px; border-radius: 8px;"></div>
+        </div>
+      </div>
+      <div class="opportunity-mini-card" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div style="display: flex; gap: 6px; margin-bottom: 4px;">
+          <div class="skeleton-bone" style="width: 68px; height: 18px; border-radius: 9999px;"></div>
+        </div>
+        <div class="skeleton-bone" style="width: 70%; height: 16px; border-radius: 5px;"></div>
+        <div class="skeleton-bone" style="width: 48%; height: 13px; border-radius: 4px;"></div>
+        <div class="opportunity-mini-footer" style="margin-top: 4px;">
+          <div class="skeleton-bone" style="width: 102px; height: 13px; border-radius: 4px;"></div>
+          <div class="skeleton-bone" style="width: 118px; height: 28px; border-radius: 8px;"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 5. Recent Activity Timeline Skeleton
+  const activityList = document.getElementById("student-activity-list");
+  if (activityList) {
+    activityList.innerHTML = `
+      <div class="activity-timeline-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="activity-dot-col">
+          <div class="skeleton-bone" style="width: 10px; height: 10px; border-radius: 50%; margin-top: 4px;"></div>
+          <span class="activity-timeline-line"></span>
+        </div>
+        <div class="activity-content">
+          <div class="activity-header-line">
+            <div class="skeleton-bone" style="width: 68%; height: 15px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 58px; height: 12px; border-radius: 4px;"></div>
+          </div>
+          <div class="skeleton-bone" style="width: 46%; height: 13px; border-radius: 4px; margin-top: 6px;"></div>
+        </div>
+      </div>
+      <div class="activity-timeline-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="activity-dot-col">
+          <div class="skeleton-bone" style="width: 10px; height: 10px; border-radius: 50%; margin-top: 4px;"></div>
+          <span class="activity-timeline-line"></span>
+        </div>
+        <div class="activity-content">
+          <div class="activity-header-line">
+            <div class="skeleton-bone" style="width: 62%; height: 15px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 58px; height: 12px; border-radius: 4px;"></div>
+          </div>
+          <div class="skeleton-bone" style="width: 50%; height: 13px; border-radius: 4px; margin-top: 6px;"></div>
+        </div>
+      </div>
+      <div class="activity-timeline-item" style="pointer-events: none;" aria-hidden="true" data-skeleton="true">
+        <div class="activity-dot-col">
+          <div class="skeleton-bone" style="width: 10px; height: 10px; border-radius: 50%; margin-top: 4px;"></div>
+        </div>
+        <div class="activity-content">
+          <div class="activity-header-line">
+            <div class="skeleton-bone" style="width: 72%; height: 15px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 58px; height: 12px; border-radius: 4px;"></div>
+          </div>
+          <div class="skeleton-bone" style="width: 42%; height: 13px; border-radius: 4px; margin-top: 6px;"></div>
+        </div>
+      </div>
+    `;
+  }
+}
 
 async function loadStudentData() {
+  const isFirstStudentLoad = !hasLoadedStudentDataOnce;
+  const skeletonStartTime = Date.now();
   const studentAppsFeed = document.getElementById("student-apps-feed");
   const emptyAppsCard = document.getElementById("student-empty-apps");
-  if (typeof window.renderSkeletonCards === "function" && studentAppsFeed && studentAppsFeed.children.length === 0) {
-    if (emptyAppsCard) emptyAppsCard.style.display = "none";
-    const isDesktopApp = window.innerWidth >= 1024;
-    window.renderSkeletonCards(studentAppsFeed, isDesktopApp ? 9 : 3);
-    studentAppsFeed.style.display = "";
+  if (isFirstStudentLoad) {
+    renderStudentDashboardSkeletons();
+    if (
+      typeof window.renderSkeletonCards === "function" &&
+      studentAppsFeed &&
+      studentAppsFeed.children.length === 0
+    ) {
+      if (emptyAppsCard) emptyAppsCard.style.display = "none";
+      const isDesktopApp = window.innerWidth >= 1024;
+      window.renderSkeletonCards(studentAppsFeed, isDesktopApp ? 6 : 3);
+      studentAppsFeed.style.display = "";
+    }
   }
 
   const statMyApps = document.getElementById("stat-my-apps");
@@ -1185,6 +1354,18 @@ async function loadStudentData() {
   ).toLowerCase();
 
   let applications = [];
+  let serverProfile = null;
+  try {
+    const cachedRaw =
+      (activeStudentEmail && localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`)) ||
+      localStorage.getItem("nexo_student_settings");
+    if (cachedRaw) {
+      const parsed = JSON.parse(cachedRaw);
+      if (!parsed.email || !activeStudentEmail || parsed.email.toLowerCase() === activeStudentEmail) {
+        serverProfile = parsed;
+      }
+    }
+  } catch (_) {}
 
   try {
     const response = await fetch(`${API_BASE}/api/data`);
@@ -1197,7 +1378,6 @@ async function loadStudentData() {
     if (Array.isArray(data.scholarships)) window.cachedScholarships = data.scholarships;
 
     // Sync student settings and avatar from server data
-    let serverProfile = null;
     if (activeStudentEmail && data.studentProfiles && data.studentProfiles[activeStudentEmail]) {
       serverProfile = data.studentProfiles[activeStudentEmail];
     } else if (
@@ -1324,6 +1504,14 @@ async function loadStudentData() {
     }
   }
 
+  // Ensure skeleton screen is smoothly visible on initial page load
+  if (isFirstStudentLoad) {
+    const elapsed = Date.now() - skeletonStartTime;
+    if (elapsed < 340) {
+      await new Promise((r) => setTimeout(r, 340 - elapsed));
+    }
+  }
+
   // Filter applications specifically belonging to currently logged-in student
   const myApplications = activeStudentEmail
     ? applications.filter(
@@ -1439,6 +1627,10 @@ async function loadStudentData() {
   if (filterCountRejected) filterCountRejected.textContent = rejectedCount;
 
   // Render application feed
+  hasLoadedStudentDataOnce = true;
+  if (typeof window.clearSkeleton === "function" && studentAppsFeed) {
+    window.clearSkeleton(studentAppsFeed);
+  }
   renderFilteredSubmissions();
 
   // Handle direct one-tap navigation to submission from Scholarship Directory or Notification
@@ -1490,7 +1682,7 @@ function renderFilteredSubmissions() {
   if (!appsFeed) return;
 
   if (allStudentApplications.length === 0) {
-    if (emptyAppsCard) emptyAppsCard.style.display = "block";
+    if (emptyAppsCard) emptyAppsCard.style.display = "flex";
     if (filterEmptyCard) filterEmptyCard.style.display = "none";
     if (viewAllBtn) viewAllBtn.style.display = "none";
     appsFeed.style.display = "none";
@@ -1538,7 +1730,7 @@ function renderFilteredSubmissions() {
     });
 
     if (listToRender.length === 0) {
-      if (filterEmptyCard) filterEmptyCard.style.display = "block";
+      if (filterEmptyCard) filterEmptyCard.style.display = "flex";
       appsFeed.style.display = "none";
       appsFeed.innerHTML = "";
       return;
@@ -1546,7 +1738,7 @@ function renderFilteredSubmissions() {
 
     const totalMatchingSub = listToRender.length;
     const isDesktopSub = window.innerWidth >= 1024;
-    const maxInitialSubCards = isDesktopSub ? 9 : 3;
+    const maxInitialSubCards = isDesktopSub ? 6 : 3;
 
     if (totalMatchingSub > maxInitialSubCards && !window._submissionsShowAllApps) {
       listToRender = listToRender.slice(0, maxInitialSubCards);
@@ -1601,10 +1793,10 @@ function renderFilteredSubmissions() {
   } else {
     // On Dashboard / Home Page:
     // Mobile (< 1024px): 3 applications max listed then View All option occurs.
-    // Desktop (>= 1024px): 3x3 grid (9 applications max listed) then View All option occurs.
+    // Desktop (>= 1024px): 3x2 grid (6 applications max listed) then View All option occurs.
     const totalApps = allStudentApplications.length;
     const isDesktop = window.innerWidth >= 1024;
-    const maxInitialCards = isDesktop ? 9 : 3;
+    const maxInitialCards = isDesktop ? 6 : 3;
 
     if (viewAllBtn) {
       if (totalApps > maxInitialCards) {

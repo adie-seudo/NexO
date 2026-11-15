@@ -2268,6 +2268,7 @@ section:has(> #login-form),
   position: relative;
   display: inline-flex;
   align-items: center;
+  z-index: 1050;
 }
 
 .notification-popover {
@@ -2280,7 +2281,7 @@ section:has(> #login-form),
   border: 1px solid var(--border-strong);
   border-radius: 14px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
-  z-index: 995;
+  z-index: 1050;
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
@@ -2288,6 +2289,12 @@ section:has(> #login-form),
   transform-origin: top right;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  .notification-popover {
+    right: 52px;
+  }
 }
 
 .notification-popover.open {
@@ -3728,11 +3735,10 @@ body.dark-theme .view-details-btn:hover {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 72px 18px 48px 18px; /* Consistent 72px header clearance */
+  padding: 72px 18px 20px 18px; /* Consistent 72px header clearance & clean bottom gap before footer */
   box-sizing: border-box;
-  /* Ensure page content exceeds viewport so footer is naturally below the fold on mobile */
-  min-height: calc(100vh + 50px);
-  min-height: calc(100dvh + 50px);
+  min-height: calc(100vh - 68px);
+  min-height: calc(100dvh - 68px);
   display: flex;
   flex-direction: column;
 }
@@ -4006,7 +4012,12 @@ body.dark-theme .student-view-all-btn:hover {
   border-radius: 16px;
   padding: 44px 20px;
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 .student-empty-icon {
   width: 52px;
@@ -4289,10 +4300,10 @@ body.dark-theme .view-sub-details-btn:hover {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  padding: 72px 18px 48px 18px; /* Consistent 72px header clearance */
+  padding: 72px 18px 20px 18px; /* Consistent 72px header clearance & clean bottom gap before footer */
   box-sizing: border-box;
-  min-height: calc(100vh + 50px);
-  min-height: calc(100dvh + 50px);
+  min-height: calc(100vh - 68px);
+  min-height: calc(100dvh - 68px);
   display: flex;
   flex-direction: column;
 }
@@ -4419,7 +4430,7 @@ body.dark-theme .schol-modal-sheet {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
   overflow: visible !important;
   position: relative;
@@ -7541,6 +7552,14 @@ body.dark-theme .skeleton-bone {
     box-sizing: border-box !important;
   }
 
+  .student-dash-main,
+  .browse-page-main {
+    flex: 1 !important;
+    min-height: calc(100vh - 96px) !important;
+    min-height: calc(100dvh - 96px) !important;
+    padding-bottom: 18px !important;
+  }
+
   /* Ensure inner sections and cards inside Provider & Student accounts stretch full width */
   /* Ensure inner sections, search bars, filter rows, and cards inside Public, Provider & Student accounts fit cleanly */
   #dash-drafts-section,
@@ -8011,19 +8030,19 @@ body.dark-theme .skeleton-bone {
   /* Search & Filter row on Desktop (Clean vertical gap before cards) */
   .submissions-search-filter-section,
   #submissions-filter-section {
-    margin-bottom: 22px !important;
+    margin-bottom: 10px !important;
   }
 
   .submissions-search-filter-row {
     max-width: 100% !important;
-    margin-bottom: 22px !important;
+    margin-bottom: 0 !important;
   }
 
   .student-apps-section {
-    margin-top: 18px !important;
+    margin-top: 4px !important;
   }
 
-  /* 3-Column Scholarship Directory Grid on Desktop (up to 3x3 = 9 cards) */
+  /* 3-Column Scholarship Directory Grid on Desktop (up to 2x3 = 6 cards) */
   .browse-feed,
   #browse-scholarships-feed,
   .posts-grid,
@@ -8038,7 +8057,12 @@ body.dark-theme .skeleton-bone {
     align-items: stretch !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    margin-top: 18px !important;
+    margin-top: 8px !important;
+  }
+
+  #browse-scholarships-feed:empty {
+    display: none !important;
+    margin-top: 0 !important;
   }
 
   .directory-card {
@@ -8791,7 +8815,7 @@ body.dark-theme .student-subtle-link:hover {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -8801,6 +8825,7 @@ body.dark-theme .student-subtle-link:hover {
     grid-template-columns: 1.15fr 1fr;
     gap: 20px;
     align-items: stretch;
+    margin-bottom: 20px;
   }
 }
 
@@ -9111,14 +9136,26 @@ body.dark-theme .student-app-status-note {
 }
 
 /* Lower Discovery & Activity Grid (2 Columns on Desktop) */
+/* On student-dashboard.html, .student-apps-section precedes .student-bottom-grid */
+.student-dash-main:has(.student-bottom-grid) .student-apps-section {
+  flex: 0 0 auto;
+  margin-top: 0 !important;
+  margin-bottom: 0;
+}
+
 .student-bottom-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
-  margin-top: 28px;
-  margin-bottom: 28px;
+  margin-top: 20px;
+  margin-bottom: 8px;
   width: 100%;
   box-sizing: border-box;
+  flex: 1;
+}
+
+.student-bottom-grid > .student-dashboard-card {
+  height: 100%;
 }
 
 @media (min-width: 1024px) {
@@ -9126,7 +9163,19 @@ body.dark-theme .student-app-status-note {
     grid-template-columns: 1.35fr 1fr;
     gap: 20px;
     align-items: stretch;
+    margin-top: 20px;
+    margin-bottom: 6px;
   }
+}
+
+/* Empty states in Scholarship Directory & My Scholarship Submissions extend toward footer without touching it */
+.browse-page-main #browse-empty-state,
+.student-dash-main:not(:has(.student-bottom-grid)) .student-apps-section #student-empty-apps,
+.student-dash-main:not(:has(.student-bottom-grid)) .student-apps-section #student-filter-empty {
+  flex: 1;
+  min-height: 360px;
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
 }
 
 /* Recommended Opportunities Mini Cards */
