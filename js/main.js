@@ -976,7 +976,7 @@ window.renderSkeletonCards = function (containerOrId, count = null) {
   if (count === null || count === undefined) {
     const isDesktop = window.innerWidth >= 1024;
     if (isProviderMiniCardsFeed) {
-      count = 2;
+      count = 3;
     } else if ((isStudentAppFeed || isDirectoryFeed || isProviderPostsFeed || isProviderAppsFeed || isDraftsFeed) && isDesktop) {
       count = 6;
     } else {
@@ -986,7 +986,23 @@ window.renderSkeletonCards = function (containerOrId, count = null) {
 
   let html = "";
   for (let i = 0; i < count; i++) {
-    if (isStudentAppFeed) {
+    if (isProviderMiniCardsFeed) {
+      html += `
+        <div class="skeleton-card provider-mini-schol-card" style="padding: 13px 18px; pointer-events: none;" aria-hidden="true" data-skeleton="true">
+          <div class="mini-schol-left" style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <div class="skeleton-bone" style="width: 60%; height: 16px; border-radius: 4px;"></div>
+              <div class="skeleton-bone" style="width: 54px; height: 18px; border-radius: 9999px;"></div>
+            </div>
+            <div class="skeleton-bone" style="width: 38%; height: 12px; border-radius: 4px;"></div>
+          </div>
+          <div class="mini-schol-right" style="display: flex; align-items: center; gap: 14px;">
+            <div class="skeleton-bone" style="width: 86px; height: 14px; border-radius: 4px;"></div>
+            <div class="skeleton-bone" style="width: 70px; height: 26px; border-radius: 6px;"></div>
+          </div>
+        </div>
+      `;
+    } else if (isStudentAppFeed) {
       html += `
         <div class="skeleton-card skeleton-student-app-card" aria-hidden="true" data-skeleton="true">
           <div class="skeleton-app-header">

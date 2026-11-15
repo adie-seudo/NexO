@@ -1213,6 +1213,7 @@ function updateStatsUI(total, ongoing, drafts, applicants = 0, pending = 0) {
 function renderProviderAttentionTable(myApplications) {
   const tbody = document.getElementById("provider-attention-tbody");
   const badgeEl = document.getElementById("provider-attention-badge");
+  const viewAllLink = document.getElementById("attention-view-all-link");
   if (!tbody) return;
 
   const attentionApps = (Array.isArray(myApplications) ? myApplications : []).filter((app) => {
@@ -1224,6 +1225,15 @@ function renderProviderAttentionTable(myApplications) {
     badgeEl.textContent = `${attentionApps.length} Pending`;
     badgeEl.style.display = attentionApps.length > 0 ? "inline-flex" : "none";
   }
+
+  // Max of 3 contents inside; view all will eventually appear once it reaches more than 3
+  if (viewAllLink) {
+    viewAllLink.style.display = attentionApps.length > 3 ? "inline-flex" : "none";
+    viewAllLink.textContent = `View All Applications (${attentionApps.length}) \u2192`;
+  }
+
+  const existingBottomViewAll = document.getElementById("attention-table-view-all-container");
+  if (existingBottomViewAll) existingBottomViewAll.remove();
 
   tbody.innerHTML = "";
 
@@ -1243,7 +1253,8 @@ function renderProviderAttentionTable(myApplications) {
     return;
   }
 
-  attentionApps.slice(0, 5).forEach((app) => {
+  // Max 3 applications
+  attentionApps.slice(0, 3).forEach((app) => {
     const tr = document.createElement("tr");
 
     const studentName = app.studentName || "Student Applicant";
@@ -1291,6 +1302,20 @@ function renderProviderAttentionTable(myApplications) {
     `;
     tbody.appendChild(tr);
   });
+
+  if (attentionApps.length > 3) {
+    const bottomDiv = document.createElement("div");
+    bottomDiv.id = "attention-table-view-all-container";
+    bottomDiv.style.cssText = "display: flex; justify-content: center; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-color);";
+    bottomDiv.innerHTML = `
+      <a href="provider-applications.html" class="btn btn-outline" style="border-radius: 100px; padding: 7px 20px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); transition: all 0.2s ease;">
+        <span>View All Applications (${attentionApps.length})</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </a>
+    `;
+    const section = document.getElementById("provider-attention-section");
+    if (section) section.appendChild(bottomDiv);
+  }
 }
 
 function renderProviderUpcomingDeadlines(myScholarships) {
@@ -1542,17 +1567,18 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
         const typeText = schol.typeText || schol.type || "Scholarship";
 
         miniCard.innerHTML = `
-          <div class="mini-schol-header">
-            <div>
-              <h4 class="mini-schol-title">${escapeHtml(schol.title || "Scholarship Program")}</h4>
-              <p class="mini-schol-meta">${escapeHtml(typeText)} &bull; ${escapeHtml(deadlineText)}</p>
+          <div class="mini-schol-left">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+              <h4 class="mini-schol-title" title="${escapeHtml(schol.title || 'Scholarship Program')}">${escapeHtml(schol.title || "Scholarship Program")}</h4>
+              <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor}; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">${escapeHtml(statusText)}</span>
             </div>
-            <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor};">${escapeHtml(statusText)}</span>
+            <p class="mini-schol-meta">${escapeHtml(typeText)} &bull; ${escapeHtml(deadlineText)}</p>
           </div>
-          <div class="mini-schol-footer">
+          <div class="mini-schol-right">
             <span class="mini-schol-counts">${liveCount} / ${limitNum} Applicants</span>
-            <button type="button" class="mini-schol-manage-btn">
-              Manage &rarr;
+            <button type="button" class="mini-schol-manage-btn" title="Manage ${escapeHtml(schol.title || 'program')}">
+              <span>Manage</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
         `;
@@ -1574,12 +1600,33 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
         feed.appendChild(miniCard);
       });
 
+      const existingScholBottomBtn = document.getElementById("scholarships-feed-view-all-container");
+      if (existingScholBottomBtn) existingScholBottomBtn.remove();
+
+      // View All option only occurs once it reaches more than 3
       if (viewAllBtn) {
-        viewAllBtn.style.display = myScholarships.length > 0 ? "inline-flex" : "none";
+        viewAllBtn.style.display = myScholarships.length > 3 ? "inline-flex" : "none";
+        viewAllBtn.textContent = `View All Posts (${myScholarships.length}) \u2192`;
+      }
+
+      if (myScholarships.length > 3) {
+        const bottomScholDiv = document.createElement("div");
+        bottomScholDiv.id = "scholarships-feed-view-all-container";
+        bottomScholDiv.style.cssText = "display: flex; justify-content: center; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-color); width: 100%;";
+        bottomScholDiv.innerHTML = `
+          <a href="provider-posts.html" class="btn btn-outline" style="border-radius: 100px; padding: 7px 20px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); transition: all 0.2s ease;">
+            <span>View All Posted Scholarships (${myScholarships.length})</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </a>
+        `;
+        const sec = document.getElementById("provider-recent-schol-section");
+        if (sec) sec.appendChild(bottomScholDiv);
       }
     } else {
       if (emptyState) emptyState.style.display = "block";
       if (viewAllBtn) viewAllBtn.style.display = "none";
+      const existingScholBottomBtn = document.getElementById("scholarships-feed-view-all-container");
+      if (existingScholBottomBtn) existingScholBottomBtn.remove();
     }
   }
 }
@@ -1593,7 +1640,7 @@ async function loadPersistedData() {
   if (typeof window.renderSkeletonCards === "function") {
     if (window._lastScholSig === undefined && feed && feed.children.length === 0) {
       if (emptyState) emptyState.style.display = "none";
-      window.renderSkeletonCards(feed, 2);
+      window.renderSkeletonCards(feed, 3);
     }
     if (window._lastDraftsSig === undefined && draftsFeed && draftsFeed.children.length === 0) {
       if (emptyDraftsCard) emptyDraftsCard.style.display = "none";

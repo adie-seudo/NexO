@@ -23,6 +23,10 @@
         max-width: 680px;
         margin: 0 auto;
         color: var(--text-primary);
+        min-height: calc(100vh - 165px);
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
       }
 
       @media (min-width: 1024px) {
@@ -34,6 +38,12 @@
           padding-right: 24px !important;
           box-sizing: border-box !important;
         }
+      }
+
+      #posts-list-view {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
       }
 
       .posts-header-row {
@@ -942,13 +952,20 @@
         color: #64748b !important;
       }
 
-      /* Empty State */
+      /* Empty State - Sized identically to Application Page blank state */
       .empty-state, .posts-empty-card {
         background: var(--card-bg, #ffffff);
-        border: 1px dashed var(--border-color, #e5e7eb);
+        border: 1.5px dashed var(--border-color, #e5e7eb);
         border-radius: 16px;
         padding: 48px 24px;
         text-align: center;
+        margin-top: 20px !important; /* Copies exact spacing from search bar as Applications page */
+        min-height: 380px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
       }
       .dark-theme .empty-state, .dark-theme .posts-empty-card {
         background: #181d27;
@@ -964,6 +981,12 @@
         display: flex;
         align-items: center;
         justify-content: center;
+      }
+      @media (min-width: 1024px) {
+        .empty-state, .posts-empty-card {
+          padding: 56px 28px;
+          border-radius: 20px;
+        }
       }
     </style>
   </head>

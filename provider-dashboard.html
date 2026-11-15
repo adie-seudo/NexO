@@ -409,7 +409,7 @@
                 </h3>
                 <p class="provider-card-subtext">Recent student submissions waiting for committee verification or document review</p>
               </div>
-              <a href="provider-applications.html" class="provider-action-link">View All Applications &rarr;</a>
+              <a href="provider-applications.html" class="provider-action-link" id="attention-view-all-link" style="display: none;">View All Applications &rarr;</a>
             </div>
 
             <div class="provider-table-wrapper">
@@ -468,7 +468,7 @@
                 <h3 class="provider-card-title">Recent Scholarships</h3>
                 <p class="provider-card-subtext">Active programs and grants managed by your institution</p>
               </div>
-              <a href="provider-posts.html" class="provider-action-link" id="view-all-btn">View All Posts &rarr;</a>
+              <a href="provider-posts.html" class="provider-action-link" id="view-all-btn" style="display: none;">View All Posts &rarr;</a>
             </div>
 
             <!-- Empty State Fallback -->
@@ -488,34 +488,36 @@
             <div class="provider-scholarships-cards" id="scholarships-feed">
               <!-- Initial Realistic Card Mock -->
               <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
-                <div class="mini-schol-header">
-                  <div>
+                <div class="mini-schol-left">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
                     <h4 class="mini-schol-title">BatStateU Academic Excellence Scholarship – 2026</h4>
-                    <p class="mini-schol-meta">Merit-Based &bull; Closes Dec 15, 2026</p>
+                    <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">Ongoing</span>
                   </div>
-                  <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669;">Ongoing</span>
+                  <p class="mini-schol-meta">Merit-Based &bull; Closes Dec 15, 2026</p>
                 </div>
-                <div class="mini-schol-footer">
+                <div class="mini-schol-right">
                   <span class="mini-schol-counts">1 / 500 Applicants</span>
                   <button type="button" class="mini-schol-manage-btn">
-                    Manage &rarr;
+                    <span>Manage</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </button>
                 </div>
               </div>
 
               <!-- Second Illustrative Card -->
               <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
-                <div class="mini-schol-header">
-                  <div>
+                <div class="mini-schol-left">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
                     <h4 class="mini-schol-title">CICS Technology Leadership Grant – Batch 2026</h4>
-                    <p class="mini-schol-meta">Need &amp; Merit &bull; Closes Jan 30, 2027</p>
+                    <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">Ongoing</span>
                   </div>
-                  <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669;">Ongoing</span>
+                  <p class="mini-schol-meta">Need &amp; Merit &bull; Closes Jan 30, 2027</p>
                 </div>
-                <div class="mini-schol-footer">
+                <div class="mini-schol-right">
                   <span class="mini-schol-counts">0 / 250 Applicants</span>
                   <button type="button" class="mini-schol-manage-btn">
-                    Manage &rarr;
+                    <span>Manage</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </button>
                 </div>
               </div>
