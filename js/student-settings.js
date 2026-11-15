@@ -367,16 +367,15 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (_) {}
     }
 
-    if (!settings) {
+    if (!settings && currentEmail) {
       try {
         const rawGlobal = localStorage.getItem("nexo_student_settings");
         if (rawGlobal) {
           const parsedG = JSON.parse(rawGlobal);
           if (
             parsedG &&
-            (!parsedG.email ||
-              !currentEmail ||
-              parsedG.email.toLowerCase() === currentEmail)
+            parsedG.email &&
+            parsedG.email.toLowerCase() === currentEmail
           ) {
             settings = parsedG;
           }

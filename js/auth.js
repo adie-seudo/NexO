@@ -355,7 +355,7 @@ function initLoginToggleAndSubmit() {
         }
       } catch (_) {}
 
-      // Fallback to local data.json when running on Live Server or static host without Node backend
+      // Fallback to local data.json when running without backend API
       if (!fetchedFromApi) {
         try {
           const fallbackRes = await fetch("data.json", {
@@ -364,19 +364,7 @@ function initLoginToggleAndSubmit() {
           if (fallbackRes && fallbackRes.ok) {
             const fullData = await fallbackRes.json();
             if (fullData && Array.isArray(fullData.users)) {
-              // Merge any locally registered accounts in userList with data.json users
-              const byEmail = new Map();
-              fullData.users.forEach((u) => {
-                if (u && u.email) byEmail.set(u.email.toLowerCase(), u);
-              });
-              if (Array.isArray(userList)) {
-                userList.forEach((u) => {
-                  if (u && u.email && !byEmail.has(u.email.toLowerCase())) {
-                    byEmail.set(u.email.toLowerCase(), u);
-                  }
-                });
-              }
-              userList = Array.from(byEmail.values());
+              userList = fullData.users;
               try {
                 localStorage.setItem("nexo_users", JSON.stringify(userList));
               } catch (_) {}

@@ -1671,7 +1671,9 @@ async function loadPersistedData() {
   const myDrafts = drafts.filter((d) => {
     const dEmail = (d.providerEmail || "").toLowerCase();
     if (!currentProviderEmail) return true;
-    return !dEmail || dEmail === currentProviderEmail || dEmail === "provider@nexo.edu.ph";
+    if (dEmail) return dEmail === currentProviderEmail;
+    // Only associate unassigned drafts with primary provider admin
+    return currentProviderEmail === "provider@nexo.edu.ph" || currentProviderEmail === "admin@admin";
   });
 
   // Filter applications submitted to this provider's scholarships
@@ -2046,7 +2048,7 @@ function initPublishAndDraft() {
           localStorage.getItem("nexo-provider-email") ||
           ""
         ).toLowerCase();
-        const providerEmail = currentProvEmail || "provider@nexo.edu.ph";
+        const providerEmail = currentProvEmail;
 
         const draftPayload = {
           id: currentEditingDraftId || "draft_" + Date.now(),

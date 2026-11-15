@@ -912,17 +912,34 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
               localStorage.removeItem(`nexo_student_settings_${uEmail}`);
               localStorage.removeItem("nexo_student_settings");
+              localStorage.removeItem(`nexo_avatar_${uEmail}`);
+              localStorage.removeItem(`nexo-student-avatar-${uEmail}`);
+              const profs = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+              if (profs && profs[uEmail]) {
+                delete profs[uEmail];
+                localStorage.setItem("nexo_student_profiles", JSON.stringify(profs));
+              }
+              if ((localStorage.getItem("nexo-student-email") || "").toLowerCase() === uEmail) {
+                localStorage.removeItem("nexo-student-email");
+                localStorage.removeItem("nexo-student-name");
+                localStorage.removeItem("nexo-student-avatar");
+              }
+              if ((sessionStorage.getItem("nexo-student-email") || "").toLowerCase() === uEmail) {
+                sessionStorage.removeItem("nexo-student-email");
+                sessionStorage.removeItem("nexo-student-name");
+                sessionStorage.removeItem("nexo-student-avatar");
+              }
             } catch (_) {}
           } else if (pendingDeleteTarget.role === "provider") {
             const provName =
-              pendingDeleteTarget.name || pendingDeleteTarget.email;
+              pendingDeleteTarget.name || pendingDeleteTarget.orgName || pendingDeleteTarget.email;
+            const provEmail = (pendingDeleteTarget.email || "").toLowerCase();
             const removedIds = scholarships
-              .filter((s) => s.providerName === provName)
+              .filter((s) => s.providerName === provName || (s.providerEmail || "").toLowerCase() === provEmail)
               .map((s) => String(s.id));
             scholarships = scholarships.filter(
               (s) => !removedIds.includes(String(s.id)),
             );
-            const provEmail = (pendingDeleteTarget.email || "").toLowerCase();
             drafts = drafts.filter(
               (d) =>
                 (d.providerEmail || "").toLowerCase() !== provEmail &&
@@ -931,6 +948,16 @@ document.addEventListener("DOMContentLoaded", () => {
             applications = applications.filter(
               (a) => !removedIds.includes(String(a.scholarshipId)),
             );
+            try {
+              if ((localStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
+                localStorage.removeItem("nexo-provider-email");
+                localStorage.removeItem("nexo-provider-name");
+              }
+              if ((sessionStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
+                sessionStorage.removeItem("nexo-provider-email");
+                sessionStorage.removeItem("nexo-provider-name");
+              }
+            } catch (_) {}
           }
 
           try {

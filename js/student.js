@@ -1108,7 +1108,7 @@ function initStudentGreeting() {
     const raw = localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (!parsed.email || !currentStudentEmail || parsed.email.toLowerCase() === currentStudentEmail) {
+      if (parsed.email && currentStudentEmail && parsed.email.toLowerCase() === currentStudentEmail) {
         studentSettings = parsed;
       }
     }

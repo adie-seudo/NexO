@@ -28,6 +28,7 @@ DEFAULT_DATA = {
     "scholarships": [],
     "drafts": [],
     "applications": [],
+    "notifications": [],
     "settings": {
         "orgName": "NEXO",
         "location": "Batangas City, Philippines",
@@ -48,25 +49,7 @@ DEFAULT_DATA = {
             "twoFactor": False
         }
     },
-    "studentSettings": {
-        "fullName": "Adrian Del Mundo",
-        "email": "adrian@batstate-u.edu.ph",
-        "university": "Batangas State University",
-        "course": "BS Information Technology",
-        "yearLevel": "3rd Year",
-        "studentId": "21-04589",
-        "contactNumber": "+63 912 345 6789",
-        "bio": "Passionate IT student striving for academic excellence and innovation in web technologies.",
-        "profilePicture": "",
-        "notifications": {
-            "scholarshipMatches": True,
-            "applicationUpdates": True,
-            "deadlineReminders": True
-        },
-        "preferences": {
-            "theme": "light"
-        }
-    },
+    "studentSettings": {},
     "users": [
         {
             "id": "usr_prov_nexo",
@@ -78,38 +61,10 @@ DEFAULT_DATA = {
             "createdAt": "2026-11-01T08:00:00.000Z",
             "formattedDate": "Nov 1, 2026",
             "status": "active",
-            "notes": "Primary Scholarship Provider Account"
-        },
-        {
-            "id": "usr_stud_adrian",
-            "email": "adrian@batstate-u.edu.ph",
-            "password": "password123",
-            "role": "student",
-            "name": "Adrian Del Mundo",
-            "university": "Batangas State University",
-            "course": "BS Information Technology",
-            "yearLevel": "3rd Year",
-            "createdAt": "2026-11-01T08:00:00.000Z",
-            "formattedDate": "Nov 1, 2026",
-            "status": "active",
-            "notes": "Verified Student Account"
-        },
-        {
-            "id": "usr_stud_2402924",
-            "email": "24-02924@g.batstate-u.edu.ph",
-            "password": "password123",
-            "role": "student",
-            "name": "",
-            "university": "Batangas State University",
-            "course": "",
-            "yearLevel": "",
-            "studentId": "24-02924",
-            "createdAt": "2026-11-09T08:00:00.000Z",
-            "formattedDate": "Nov 9, 2026",
-            "status": "active",
-            "notes": "Student Account created via Admin Panel"
+            "notes": "Primary Administrator & Provider Account"
         }
-    ]
+    ],
+    "studentProfiles": {}
 }
 
 def read_data():
@@ -123,8 +78,11 @@ def read_data():
         if "scholarships" not in data: data["scholarships"] = []
         if "drafts" not in data: data["drafts"] = []
         if "applications" not in data: data["applications"] = []
+        if "notifications" not in data: data["notifications"] = []
         if "settings" not in data: data["settings"] = DEFAULT_DATA["settings"]
-        if "studentSettings" not in data: data["studentSettings"] = DEFAULT_DATA["studentSettings"]
+        if "studentSettings" not in data: data["studentSettings"] = {}
+        if "users" not in data: data["users"] = DEFAULT_DATA["users"]
+        if "studentProfiles" not in data: data["studentProfiles"] = {}
         return data
     except Exception as e:
         print("Error reading data:", e)
@@ -435,6 +393,8 @@ class NexoHandler(BaseHTTPRequestHandler):
 
         if path == "/api/drafts":
             did = body.get("id")
+            prov_email = (body.get("providerEmail") or data.get("settings", {}).get("email") or "provider@nexo.edu.ph").strip().lower()
+            prov_name = body.get("providerName") or data.get("settings", {}).get("orgName") or "NEXO"
             draft_item = {
                 "id": did if did else f"draft_{int(time.time()*1000)}",
                 "title": (body.get("title") or "Untitled Scholarship").strip(),
@@ -442,6 +402,9 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "type": body.get("type", ""),
                 "typeText": body.get("typeText", body.get("type", "")),
                 "date": body.get("date", ""),
+                "providerEmail": prov_email,
+                "providerName": prov_name,
+                "applicantLimit": int(body.get("applicantLimit") or 200),
                 "requirements": body.get("requirements", []),
                 "updatedAt": datetime.now().isoformat()
             }
@@ -780,18 +743,23 @@ class NexoHandler(BaseHTTPRequestHandler):
             removed_posts = 0
             removed_apps = 0
 
+            target_email = (target_user.get("email") or "").lower().strip()
             if target_user.get("role") == "student":
                 pre_apps = len(data.get("applications", []))
-                data["applications"] = [a for a in data.get("applications", []) if (a.get("studentEmail") or "").lower() != target_user.get("email", "").lower()]
+                data["applications"] = [a for a in data.get("applications", []) if (a.get("studentEmail") or "").lower() != target_email]
                 removed_apps = pre_apps - len(data["applications"])
+                # Purge student profile from studentProfiles dictionary
+                if "studentProfiles" in data and target_email in data["studentProfiles"]:
+                    del data["studentProfiles"][target_email]
+                if data.get("studentSettings", {}).get("email", "").lower() == target_email:
+                    data["studentSettings"] = {}
                 sync_counts(data)
             elif target_user.get("role") == "provider":
                 prov_name = target_user.get("name") or target_user.get("orgName")
-                prov_email = (target_user.get("email") or "").lower()
-                prov_schols = [str(s.get("id")) for s in data.get("scholarships", []) if s.get("providerName") == prov_name or (s.get("providerEmail") or "").lower() == prov_email]
+                prov_schols = [str(s.get("id")) for s in data.get("scholarships", []) if s.get("providerName") == prov_name or (s.get("providerEmail") or "").lower() == target_email]
                 removed_posts = len(prov_schols)
                 data["scholarships"] = [s for s in data.get("scholarships", []) if str(s.get("id")) not in prov_schols]
-                data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) not in prov_schols]
+                data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) not in prov_schols and (d.get("providerEmail") or "").lower() != target_email]
                 pre_apps = len(data.get("applications", []))
                 data["applications"] = [a for a in data.get("applications", []) if str(a.get("scholarshipId")) not in prov_schols]
                 removed_apps = pre_apps - len(data["applications"])

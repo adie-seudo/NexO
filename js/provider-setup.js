@@ -364,7 +364,13 @@ function initFormValidation() {
           status: "active",
         };
 
-        fetch("http://localhost:3000/api/users", {
+        const apiBase =
+          window.API_BASE ||
+          (window.location.origin && window.location.origin.includes(":3000")
+            ? ""
+            : "http://localhost:3000");
+
+        fetch(`${apiBase}/api/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newProviderUser),
