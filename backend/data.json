@@ -449,24 +449,13 @@
   ],
   "notifications": [
     {
-      "id": "notif_1794985719413",
-      "recipient": "student",
-      "title": "Application Status: Under Review",
-      "message": "Your application for \"BatStateU Academic Excellence Scholarship – 2026\" is now Under Review.",
-      "timestamp": "2026-11-18T15:08:39.414445",
-      "formattedTime": "Just now",
-      "read": false,
-      "link": "student-submissions.html",
-      "appId": "app_1794982524069"
-    },
-    {
       "id": "notif_1794983269883",
       "recipient": "student",
       "title": "New Scholarship Posted",
       "message": "NEXO published \"Future Leaders Financial Assistance Program – AY 2026–2027\". Applications are now open!",
       "timestamp": "2026-11-18T14:27:49.883986",
       "formattedTime": "Just now",
-      "read": false,
+      "read": true,
       "link": "student-browse.html",
       "scholarshipId": "schol_1794983269851"
     },
