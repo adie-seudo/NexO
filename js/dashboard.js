@@ -1711,15 +1711,34 @@ async function loadPersistedData() {
     if (cn) localNotifications = JSON.parse(cn);
     const del = localStorage.getItem("nexo_deleted_ids");
     if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    const dis = localStorage.getItem("nexo_dismissed_notifs");
+    if (dis) {
+      try {
+        JSON.parse(dis).forEach((id) => deletedIds.add(String(id)));
+      } catch (_) {}
+    }
   } catch (_) {}
 
-  function mergeById(primaryList, secondaryList) {
+  let notifClearedBefore = 0;
+  try {
+    notifClearedBefore =
+      parseInt(
+        localStorage.getItem("nexo_notifs_cleared_at_provider") || "0",
+        10,
+      ) || 0;
+  } catch (_) {}
+
+  function mergeById(primaryList, secondaryList, isNotifList = false) {
     const result = [];
     const seen = new Set();
     (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
       if (!item) return;
       const id = String(item.id || "");
       if (id && deletedIds.has(id)) return;
+      if (isNotifList && notifClearedBefore > 0) {
+        const ts = new Date(item.timestamp || 0).getTime() || Number(item.id) || 0;
+        if (ts && ts <= notifClearedBefore) return;
+      }
       if (id) seen.add(id);
       result.push(item);
     });
@@ -1727,6 +1746,10 @@ async function loadPersistedData() {
       if (!item) return;
       const id = String(item.id || "");
       if (id && (seen.has(id) || deletedIds.has(id))) return;
+      if (isNotifList && notifClearedBefore > 0) {
+        const ts = new Date(item.timestamp || 0).getTime() || Number(item.id) || 0;
+        if (ts && ts <= notifClearedBefore) return;
+      }
       if (id) seen.add(id);
       result.push(item);
     });
@@ -1769,7 +1792,7 @@ async function loadPersistedData() {
     scholarships = mergeById(serverSchols, localScholarships);
     drafts = localDrafts !== null ? mergeById(serverDrafts, localDrafts) : serverDrafts;
     applications = mergeById(serverApps, localApplications);
-    notifications = mergeById(localNotifications, serverNotifs);
+    notifications = mergeById(localNotifications, serverNotifs, true);
 
     // Cache local copy for offline/Live Server fallback
     try {
@@ -1797,7 +1820,7 @@ async function loadPersistedData() {
           ? staticData.drafts
           : [];
     applications = mergeById(localApplications, staticData.applications);
-    notifications = mergeById(localNotifications, staticData.notifications);
+    notifications = mergeById(localNotifications, staticData.notifications, true);
 
     try {
       localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
@@ -2157,7 +2180,8 @@ function initPublishAndDraft() {
             timestamp: new Date().toISOString(),
             formattedTime: "Just now",
             read: false,
-            link: "student-browse.html",
+            link: `student-browse.html?scholId=${encodeURIComponent(newSchol.id)}`,
+            scholarshipId: newSchol.id,
             scholId: newSchol.id,
           });
           localStorage.setItem(

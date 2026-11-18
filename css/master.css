@@ -2268,7 +2268,7 @@ section:has(> #login-form),
   position: relative;
   display: inline-flex;
   align-items: center;
-  z-index: 1050;
+  z-index: auto;
 }
 
 .notification-popover {
@@ -2333,6 +2333,33 @@ section:has(> #login-form),
 .notif-trash-btn:hover {
   color: #ef4444 !important;
   background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.notif-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+}
+
+body.dark-theme .notif-item-wrapper {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+
+.notif-single-delete-btn {
+  opacity: 0.6;
+  transition:
+    opacity 0.18s ease,
+    color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.15s ease;
+}
+
+.notif-single-delete-btn:hover {
+  opacity: 1 !important;
+  color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.12) !important;
+  transform: scale(1.1);
 }
 
 body.dark-theme .notification-popover {
@@ -7252,6 +7279,12 @@ body.dark-theme .skeleton-bone {
   .header-actions {
     gap: 14px !important;
     margin-right: 0 !important;
+  }
+
+  .notification-container,
+  .notification-btn,
+  .theme-toggle-container {
+    z-index: 998 !important;
   }
 
   /* Hamburger Button Connected to the Side Menu on Desktop:

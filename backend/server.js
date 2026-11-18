@@ -648,8 +648,9 @@ async function handleRequest(req, res) {
           timestamp: now.toISOString(),
           formattedTime: "Just now",
           read: false,
-          link: "student-browse.html",
+          link: `student-browse.html?scholId=${encodeURIComponent(newScholarship.id)}`,
           scholarshipId: newScholarship.id,
+          scholId: newScholarship.id,
         });
 
         if (body.draftId) {
@@ -1010,8 +1011,10 @@ async function handleRequest(req, res) {
           timestamp: new Date().toISOString(),
           formattedTime: "Just now",
           read: false,
-          link: "provider-applications.html",
+          link: `provider-applications.html?appId=${encodeURIComponent(newApp.id)}`,
           appId: newApp.id,
+          scholarshipId: newApp.scholarshipId,
+          scholId: newApp.scholarshipId,
         });
 
         if (!writeData(data)) {
@@ -1138,8 +1141,10 @@ async function handleRequest(req, res) {
             timestamp: new Date().toISOString(),
             formattedTime: "Just now",
             read: false,
-            link: "provider-applications.html",
+            link: `provider-applications.html?appId=${encodeURIComponent(id)}`,
             appId: id,
+            scholarshipId: currentApp.scholarshipId || "",
+            scholId: currentApp.scholarshipId || "",
           });
         }
 
@@ -1175,8 +1180,10 @@ async function handleRequest(req, res) {
             timestamp: new Date().toISOString(),
             formattedTime: "Just now",
             read: false,
-            link: "student-submissions.html",
+            link: `student-submissions.html?id=${encodeURIComponent(id)}`,
             appId: id,
+            scholarshipId: currentApp.scholarshipId || "",
+            scholId: currentApp.scholarshipId || "",
           });
         }
 
@@ -1718,31 +1725,55 @@ async function handleRequest(req, res) {
             return true;
           });
         }
+        function parseTs(n) {
+          if (!n) return 0;
+          if (n.timestamp) {
+            const t = new Date(n.timestamp).getTime();
+            if (!isNaN(t) && t > 0) return t;
+            const num = Number(n.timestamp);
+            if (!isNaN(num) && num > 0) return num;
+          }
+          const nid = String(n.id || "");
+          const match = nid.match(/\d{10,}/);
+          if (match) {
+            const parsed = Number(match[0]);
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+          }
+          return 0;
+        }
+        filtered.sort((a, b) => parseTs(b) - parseTs(a));
         return sendJson(res, 200, filtered);
       }
 
-      if (method === "POST") {
-        const body = await parseRequestBody(req);
-        const newNotif = {
-          id: makeId("notif"),
-          recipient: body.recipient || "all",
-          recipientEmail: body.recipientEmail || "",
-          title: String(body.title || "New Notification").trim(),
-          message: String(body.message || "").trim(),
-          timestamp: new Date().toISOString(),
-          formattedTime: "Just now",
-          read: false,
-          link: body.link || "#",
-        };
-        data.notifications.unshift(newNotif);
-        if (!writeData(data)) {
-          return sendJson(res, 500, {
-            success: false,
-            error: "Failed to save notification.",
-          });
+        if (method === "POST") {
+          const body = await parseRequestBody(req);
+          const nid = body.id || makeId("notif");
+          if (!data.notifications.some((n) => String(n.id) === String(nid))) {
+            const newNotif = {
+              id: nid,
+              recipient: body.recipient || "all",
+              recipientEmail: body.recipientEmail || "",
+              title: String(body.title || "New Notification").trim(),
+              message: String(body.message || "").trim(),
+              timestamp: body.timestamp || new Date().toISOString(),
+              formattedTime: body.formattedTime || "Just now",
+              read: Boolean(body.read),
+              link: body.link || "#",
+              appId: body.appId || "",
+              scholarshipId: body.scholarshipId || body.scholId || "",
+              scholId: body.scholId || body.scholarshipId || "",
+            };
+            data.notifications.unshift(newNotif);
+            if (!writeData(data)) {
+              return sendJson(res, 500, {
+                success: false,
+                error: "Failed to save notification.",
+              });
+            }
+            return sendJson(res, 201, newNotif);
+          }
+          return sendJson(res, 200, { success: true });
         }
-        return sendJson(res, 201, newNotif);
-      }
 
       if (method === "DELETE") {
         const recipient = reqUrl.searchParams.get("recipient");

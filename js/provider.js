@@ -206,6 +206,26 @@ function escapeNotifHtml(text) {
 
 const DEFAULT_NEXO_NOTIFICATIONS = [];
 
+function getProviderNotifTimestamp(n) {
+  if (!n) return 0;
+  if (n.timestamp) {
+    const t = new Date(n.timestamp).getTime();
+    if (!isNaN(t) && t > 0) return t;
+    const num = Number(n.timestamp);
+    if (!isNaN(num) && num > 0) return num;
+  }
+  if (n.id) {
+    const num = Number(n.id);
+    if (!isNaN(num) && num > 0) return num;
+    const match = String(n.id).match(/\d{10,}/);
+    if (match) {
+      const parsed = Number(match[0]);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+  }
+  return 0;
+}
+
 function getProviderNotificationsFromStorage() {
   let all = [];
   try {
@@ -221,9 +241,29 @@ function getProviderNotificationsFromStorage() {
   } catch (_) {}
   if (!Array.isArray(dismissed)) dismissed = [];
 
-  return all.filter(
-    (n) => (!n.recipient || n.recipient === "provider" || n.recipient === "all") && !dismissed.includes(String(n.id)),
-  );
+  let clearedBefore = 0;
+  try {
+    clearedBefore =
+      parseInt(
+        localStorage.getItem("nexo_notifs_cleared_at_provider") || "0",
+        10,
+      ) || 0;
+  } catch (_) {}
+
+  const filtered = all.filter((n) => {
+    if (!n) return false;
+    if (dismissed.includes(String(n.id))) return false;
+    const isProvider = !n.recipient || n.recipient === "provider" || n.recipient === "all";
+    if (!isProvider) return false;
+    if (clearedBefore > 0) {
+      const ts = getProviderNotifTimestamp(n);
+      if (!ts || ts <= clearedBefore) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => getProviderNotifTimestamp(b) - getProviderNotifTimestamp(a));
+  return filtered;
 }
 
 function initNotificationBell() {
@@ -316,18 +356,38 @@ function initNotificationBell() {
       );
       if (res.ok) {
         const serverNotifs = await res.json();
-        if (Array.isArray(serverNotifs) && serverNotifs.length > 0) {
+        if (Array.isArray(serverNotifs)) {
           try {
+            const dismissed = new Set(
+              JSON.parse(
+                localStorage.getItem("nexo_dismissed_notifs") || "[]",
+              ).map(String),
+            );
+            const clearedBefore =
+              parseInt(
+                localStorage.getItem("nexo_notifs_cleared_at_provider") || "0",
+                10,
+              ) || 0;
             const cached = JSON.parse(
               localStorage.getItem("nexo_notifications") || "[]",
-            );
+            ).filter((c) => c && !dismissed.has(String(c.id)));
+
             serverNotifs.forEach((sn) => {
+              if (!sn || dismissed.has(String(sn.id))) return;
+              if (clearedBefore > 0) {
+                const ts = getProviderNotifTimestamp(sn);
+                if (!ts || ts <= clearedBefore) return;
+              }
               const idx = cached.findIndex(
                 (c) => String(c.id) === String(sn.id),
               );
               if (idx >= 0) cached[idx] = sn;
-              else cached.unshift(sn);
+              else cached.push(sn);
             });
+            cached.sort(
+              (a, b) =>
+                getProviderNotifTimestamp(b) - getProviderNotifTimestamp(a),
+            );
             localStorage.setItem("nexo_notifications", JSON.stringify(cached));
           } catch (_) {}
           const mergedNotifs = getProviderNotificationsFromStorage();
@@ -338,6 +398,7 @@ function initNotificationBell() {
   }
 
   function deleteProviderNotification(id) {
+    if (!id) return;
     try {
       let cached = JSON.parse(
         localStorage.getItem("nexo_notifications") || "[]",
@@ -355,8 +416,10 @@ function initNotificationBell() {
       }
     } catch (_) {}
 
+    lastProviderNotifsHash = "";
+
     // Send delete request to server if online
-    fetch(`${API_BASE}/api/notifications/${id}`, {
+    fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}`, {
       method: "DELETE",
       keepalive: true,
     }).catch(() => {});
@@ -389,8 +452,6 @@ function initNotificationBell() {
       }
     } catch (_) {}
 
-    // Only write to server when explicitly requested and there were unread notifications
-    // (Prevents Live Server auto-reloading the whole page when simply opening the notification bell)
     if (syncServer && hadUnread) {
       fetch(`${API_BASE}/api/notifications/read`, {
         method: "POST",
@@ -442,17 +503,54 @@ function initNotificationBell() {
   }
 
   async function clearAllProviderNotifications() {
+    const nowTs = Date.now();
+    try {
+      localStorage.setItem("nexo_notifs_cleared_at_provider", String(nowTs));
+    } catch (_) {}
+
+    const visibleNotifs = getProviderNotificationsFromStorage();
+    const idsToDelete = visibleNotifs.map((n) => String(n.id)).filter(Boolean);
+
+    try {
+      let dismissed = JSON.parse(
+        localStorage.getItem("nexo_dismissed_notifs") || "[]",
+      );
+      if (!Array.isArray(dismissed)) dismissed = [];
+      idsToDelete.forEach((id) => {
+        if (!dismissed.includes(id)) dismissed.push(id);
+      });
+      localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+    } catch (_) {}
+
     try {
       let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
-      cached = cached.filter((n) => n.recipient && n.recipient !== "provider" && n.recipient !== "all");
+      cached = cached.filter((n) => {
+        if (!n) return false;
+        if (idsToDelete.includes(String(n.id))) return false;
+        if (!n.recipient || n.recipient === "provider" || n.recipient === "all") {
+          return false;
+        }
+        return true;
+      });
       localStorage.setItem("nexo_notifications", JSON.stringify(cached));
     } catch (_) {}
+
+    lastProviderNotifsHash = "";
+    renderNotifications([]);
 
     try {
       await fetch(`${API_BASE}/api/notifications?recipient=provider`, {
         method: "DELETE",
+        keepalive: true,
       });
     } catch (_) {}
+
+    idsToDelete.forEach((id) => {
+      fetch(`${API_BASE}/api/notifications/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        keepalive: true,
+      }).catch(() => {});
+    });
 
     loadNotifications();
     if (typeof showToast === "function") {
@@ -513,46 +611,118 @@ function initNotificationBell() {
       .map((n) => {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
-        const linkUrl = n.appId
-          ? `provider-applications.html?appId=${encodeURIComponent(n.appId)}`
-          : (n.link || "provider-applications.html");
+        const resolvedScholId = n.scholarshipId || n.scholId || "";
+        const resolvedAppId = n.appId || "";
+        let linkUrl = n.link || "provider-applications.html";
+        if (resolvedAppId) {
+          linkUrl = `provider-applications.html?appId=${encodeURIComponent(resolvedAppId)}`;
+        } else if (resolvedScholId) {
+          linkUrl = `provider-posts.html?scholarshipId=${encodeURIComponent(resolvedScholId)}`;
+        } else {
+          // Extract quoted scholarship/applicant from message
+          const quoteMatch = String(n.message || "").match(/"([^"]+)"/);
+          const extractedTitle = quoteMatch ? quoteMatch[1].trim() : "";
+          const titleLower = String(n.title || "").toLowerCase();
+          if (extractedTitle) {
+            if (
+              titleLower.includes("application") ||
+              titleLower.includes("document") ||
+              titleLower.includes("review") ||
+              titleLower.includes("applicant")
+            ) {
+              linkUrl = `provider-applications.html?appId=${encodeURIComponent(extractedTitle)}`;
+            } else if (
+              titleLower.includes("scholarship") ||
+              titleLower.includes("post")
+            ) {
+              linkUrl = `provider-posts.html?scholarshipId=${encodeURIComponent(extractedTitle)}`;
+            }
+          }
+        }
+
         return `
-          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}" data-app-id="${n.appId || ""}">
-            <div class="notif-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="8.5" cy="7" r="4"></circle>
-                <polyline points="17 11 19 13 23 9"></polyline>
-              </svg>
-            </div>
-            <div class="notif-item-content">
-              <h5 class="notif-item-title">${escapeNotifHtml(n.title)}</h5>
-              <p class="notif-item-msg">${escapeNotifHtml(n.message)}</p>
-              <span class="notif-item-time">${escapeNotifHtml(timeStr)}</span>
-            </div>
-          </a>
+          <div class="notif-item-wrapper" style="position: relative; display: flex; align-items: stretch;">
+            <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" style="flex: 1; padding-right: 34px;" data-id="${n.id}" data-app-id="${escapeNotifHtml(resolvedAppId)}" data-schol-id="${escapeNotifHtml(resolvedScholId)}">
+              <div class="notif-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <polyline points="17 11 19 13 23 9"></polyline>
+                </svg>
+              </div>
+              <div class="notif-item-content">
+                <h5 class="notif-item-title">${escapeNotifHtml(n.title)}</h5>
+                <p class="notif-item-msg">${escapeNotifHtml(n.message)}</p>
+                <span class="notif-item-time">${escapeNotifHtml(timeStr)}</span>
+              </div>
+            </a>
+            <button type="button" class="notif-single-delete-btn" data-delete-id="${n.id}" title="Delete notification" aria-label="Delete notification" style="position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted, #9ca3af); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
         `;
       })
       .join("");
 
+    // Wire individual notification delete buttons
+    bodyEl.querySelectorAll(".notif-single-delete-btn").forEach((delBtn) => {
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const delId = delBtn.dataset.deleteId;
+        if (delId) {
+          lastProviderNotifsHash = "";
+          deleteProviderNotification(delId);
+        }
+      });
+    });
+
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
       item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
-        const appId = item.dataset.appId;
+        const targetAppId = item.dataset.appId;
+        const targetScholId = item.dataset.scholId;
         const href = item.getAttribute("href") || "";
-        if (notifId) deleteProviderNotification(notifId);
+        if (notifId) {
+          lastProviderNotifsHash = "";
+          deleteProviderNotification(notifId);
+        }
 
         const currentPage = (window.location.pathname.split("/").pop() || "").toLowerCase();
         const targetPage = (href.split("?")[0].split("#")[0].split("/").pop() || "").toLowerCase();
 
-        // If already on provider-applications.html, open review modal directly
-        if (currentPage === "provider-applications.html" && appId) {
-          e.preventDefault();
-          closeNotifications();
-          if (typeof window.openReviewModalByAppId === "function") {
-            window.openReviewModalByAppId(appId);
+        // 1. If already on provider-applications.html, open review modal directly
+        if (currentPage === "provider-applications.html" && (targetAppId || href.includes("appId="))) {
+          let lookup = targetAppId;
+          if (!lookup && href.includes("?")) {
+            try {
+              const qp = new URLSearchParams(href.split("?")[1]);
+              lookup = qp.get("appId") || qp.get("id") || "";
+            } catch (_) {}
           }
-          return;
+          if (typeof window.openReviewModalByAppId === "function") {
+            e.preventDefault();
+            closeNotifications();
+            window.openReviewModalByAppId(lookup);
+            return;
+          }
+        }
+
+        // 2. If already on provider-posts.html, open post applicants view directly
+        if (currentPage === "provider-posts.html" && (targetScholId || href.includes("scholarshipId=") || href.includes("scholId="))) {
+          let lookup = targetScholId;
+          if (!lookup && href.includes("?")) {
+            try {
+              const qp = new URLSearchParams(href.split("?")[1]);
+              lookup = qp.get("scholarshipId") || qp.get("scholId") || qp.get("id") || "";
+            } catch (_) {}
+          }
+          if (typeof window.openPostApplicantsView === "function") {
+            e.preventDefault();
+            closeNotifications();
+            window.openPostApplicantsView(lookup);
+            return;
+          }
         }
 
         // Prevent full page reload when clicking a notification linking to the current page

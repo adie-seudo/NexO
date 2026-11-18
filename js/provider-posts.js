@@ -1135,6 +1135,7 @@
     }
   }
 
+  window.openPostApplicantsView = openPostApplicantsView;
   function openPostApplicantsView(scholId) {
     if (!scholId) return;
     const cleanId = String(scholId).trim().toLowerCase();

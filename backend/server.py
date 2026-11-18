@@ -252,8 +252,40 @@ class NexoHandler(BaseHTTPRequestHandler):
             data = read_data()
             notifs = data.get("notifications", [])
             recip = query.get("recipient", [None])[0]
+            q_email = (query.get("email", [""])[0] or "").strip().lower()
             if recip:
-                notifs = [n for n in notifs if not n.get("recipient") or n.get("recipient") == recip or n.get("recipient") == "all"]
+                filtered = []
+                for n in notifs:
+                    r_ok = not n.get("recipient") or n.get("recipient") == recip or n.get("recipient") == "all"
+                    if not r_ok:
+                        continue
+                    if q_email and n.get("recipientEmail"):
+                        if str(n.get("recipientEmail")).strip().lower() != q_email:
+                            continue
+                    filtered.append(n)
+                notifs = filtered
+            def parse_notif_ts(n):
+                ts = n.get("timestamp")
+                if ts:
+                    try:
+                        if isinstance(ts, (int, float)):
+                            return float(ts)
+                        # Handle ISO string like "2026-11-18T10:00:00.000Z"
+                        dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                        return dt.timestamp()
+                    except Exception:
+                        pass
+                nid = str(n.get("id") or "")
+                # Extract numeric digits from id if any (e.g. notif_1731940000000)
+                digits = "".join(ch for ch in nid if ch.isdigit())
+                if digits:
+                    try:
+                        return float(digits)
+                    except Exception:
+                        pass
+                return 0.0
+
+            notifs.sort(key=parse_notif_ts, reverse=True)
             return self._send_json(200, notifs)
 
         if path == "/api/settings":
@@ -436,8 +468,9 @@ class NexoHandler(BaseHTTPRequestHandler):
                     "timestamp": datetime.now().isoformat(),
                     "formattedTime": "Just now",
                     "read": False,
-                    "link": "student-browse.html",
-                    "scholarshipId": new_sch["id"]
+                    "link": f"student-browse.html?scholId={new_sch['id']}",
+                    "scholarshipId": new_sch["id"],
+                    "scholId": new_sch["id"]
                 })
             if body.get("draftId"):
                 data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) != str(body.get("draftId"))]
@@ -550,8 +583,10 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "timestamp": datetime.now().isoformat(),
                 "formattedTime": "Just now",
                 "read": False,
-                "link": "provider-applications.html",
-                "appId": new_app["id"]
+                "link": f"provider-applications.html?appId={new_app['id']}",
+                "appId": new_app["id"],
+                "scholarshipId": new_app["scholarshipId"],
+                "scholId": new_app["scholarshipId"]
             })
             sync_counts(data)
             write_data(data)
@@ -612,25 +647,53 @@ class NexoHandler(BaseHTTPRequestHandler):
                             "timestamp": datetime.now().isoformat(),
                             "formattedTime": "Just now",
                             "read": False,
-                            "link": "provider-applications.html",
-                            "appId": app_id
+                            "link": f"provider-applications.html?appId={app_id}",
+                            "appId": app_id,
+                            "scholarshipId": a.get("scholarshipId", ""),
+                            "scholId": a.get("scholarshipId", "")
                         })
 
                     if "status" in body:
                         data.setdefault("notifications", []).insert(0, {
                             "id": f"notif_{int(time.time()*1000)}",
                             "recipient": "student",
+                            "recipientEmail": (a.get("studentEmail") or "").strip().lower(),
                             "title": f"Application Status: {a.get('status', 'Updated')}",
                             "message": f"Your application for \"{a.get('scholarshipTitle', 'Scholarship')}\" is now {a.get('status', 'Updated')}.",
                             "timestamp": datetime.now().isoformat(),
                             "formattedTime": "Just now",
                             "read": False,
-                            "link": "student-submissions.html",
-                            "appId": app_id
+                            "link": f"student-submissions.html?id={app_id}",
+                            "appId": app_id,
+                            "scholarshipId": a.get("scholarshipId", ""),
+                            "scholId": a.get("scholarshipId", "")
                         })
                     write_data(data)
                     return self._send_json(200, {"success": True, "application": a})
             return self._send_json(404, {"success": False, "message": "Application not found"})
+
+        if path == "/api/notifications":
+            nid = body.get("id") or f"notif_{int(time.time()*1000)}"
+            notifs = data.setdefault("notifications", [])
+            if not any(str(n.get("id")) == str(nid) for n in notifs):
+                new_notif = {
+                    "id": nid,
+                    "recipient": body.get("recipient") or "all",
+                    "recipientEmail": (body.get("recipientEmail") or "").strip().lower(),
+                    "title": (body.get("title") or "New Notification").strip(),
+                    "message": (body.get("message") or "").strip(),
+                    "timestamp": body.get("timestamp") or datetime.now().isoformat(),
+                    "formattedTime": body.get("formattedTime") or "Just now",
+                    "read": bool(body.get("read", False)),
+                    "link": body.get("link") or "#",
+                    "appId": body.get("appId") or "",
+                    "scholarshipId": body.get("scholarshipId") or body.get("scholId") or "",
+                    "scholId": body.get("scholId") or body.get("scholarshipId") or "",
+                }
+                notifs.insert(0, new_notif)
+                write_data(data)
+                return self._send_json(201, new_notif)
+            return self._send_json(200, {"success": True})
 
         if path == "/api/notifications/read":
             target_recipient = body.get("recipient")
@@ -843,7 +906,28 @@ class NexoHandler(BaseHTTPRequestHandler):
     def do_DELETE(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+        query = urllib.parse.parse_qs(parsed.query)
         data = read_data()
+
+        if path == "/api/notifications":
+            recip = query.get("recipient", [None])[0]
+            q_email = (query.get("email", [""])[0] or "").strip().lower()
+            if recip:
+                remaining = []
+                for n in data.get("notifications", []):
+                    role_match = not n.get("recipient") or n.get("recipient") == recip or n.get("recipient") == "all"
+                    if not role_match:
+                        remaining.append(n)
+                        continue
+                    if q_email and n.get("recipientEmail"):
+                        if str(n.get("recipientEmail")).strip().lower() != q_email:
+                            remaining.append(n)
+                            continue
+                data["notifications"] = remaining
+            else:
+                data["notifications"] = []
+            write_data(data)
+            return self._send_json(200, {"success": True, "message": "Notifications deleted permanently"})
 
         if path.startswith("/api/notifications/"):
             nid = path.replace("/api/notifications/", "").split("/")[0]

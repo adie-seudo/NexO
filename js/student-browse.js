@@ -1004,6 +1004,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnOpenDropbox = document.getElementById("btn-open-dropbox");
   const btnShare = document.getElementById("btn-share-schol");
 
+  window.openDetailsModal = openDetailsModal;
   function openDetailsModal(schol) {
     activeScholarship = schol;
     window.activeScholarship = schol;
@@ -2153,8 +2154,10 @@ document.addEventListener("DOMContentLoaded", () => {
           timestamp: new Date().toISOString(),
           formattedTime: "Just now",
           read: false,
-          link: "provider-applications.html",
+          link: `provider-applications.html?appId=${encodeURIComponent(newApp.id)}`,
           appId: newApp.id,
+          scholarshipId: activeScholarship ? activeScholarship.id : "",
+          scholId: activeScholarship ? activeScholarship.id : "",
         };
         notifList.unshift(newNotif);
         localStorage.setItem("nexo_notifications", JSON.stringify(notifList));

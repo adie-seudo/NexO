@@ -961,6 +961,14 @@ function initSharedHeaderNotificationBell(notifBtn, role) {
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
           <button type="button" class="notif-mark-read-btn" id="shared-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+          <button type="button" class="notif-trash-btn" id="shared-clear-all-btn" title="Delete All Notifications" aria-label="Delete all notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <line x1="10" y1="11" x2="10" y2="17"></line>
+              <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+          </button>
         </div>
       </div>
       <div class="notif-popover-body" id="shared-notif-body">
@@ -986,6 +994,30 @@ function initSharedHeaderNotificationBell(notifBtn, role) {
     container.appendChild(popover);
   }
 
+  const NOTIF_API = window.location.origin.includes(":3000")
+    ? ""
+    : "http://localhost:3000";
+
+  function getSharedNotifTimestamp(n) {
+    if (!n) return 0;
+    if (n.timestamp) {
+      const t = new Date(n.timestamp).getTime();
+      if (!isNaN(t) && t > 0) return t;
+      const num = Number(n.timestamp);
+      if (!isNaN(num) && num > 0) return num;
+    }
+    if (n.id) {
+      const num = Number(n.id);
+      if (!isNaN(num) && num > 0) return num;
+      const match = String(n.id).match(/\d{10,}/);
+      if (match) {
+        const parsed = Number(match[0]);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+      }
+    }
+    return 0;
+  }
+
   function getSharedNotifs() {
     let all = [];
     try {
@@ -1006,14 +1038,123 @@ function initSharedHeaderNotificationBell(notifBtn, role) {
       ""
     ).toLowerCase().trim();
 
-    return all.filter((n) => {
+    let clearedBefore = 0;
+    try {
+      if (role === "student") {
+        clearedBefore =
+          parseInt(
+            localStorage.getItem(`nexo_notifs_cleared_at_student_${currentEmail || "default"}`) ||
+              localStorage.getItem("nexo_notifs_cleared_at_student") ||
+              "0",
+            10,
+          ) || 0;
+      } else if (role === "provider") {
+        clearedBefore =
+          parseInt(
+            localStorage.getItem("nexo_notifs_cleared_at_provider") || "0",
+            10,
+          ) || 0;
+      }
+    } catch (_) {}
+
+    const filtered = all.filter((n) => {
+      if (!n) return false;
       if (dismissed.includes(String(n.id))) return false;
       const matchRole = !n.recipient || n.recipient === role || n.recipient === "all";
       if (!matchRole) return false;
       if (role === "student" && n.recipientEmail && currentEmail) {
-        return String(n.recipientEmail).toLowerCase().trim() === currentEmail;
+        if (String(n.recipientEmail).toLowerCase().trim() !== currentEmail) return false;
+      }
+      if (clearedBefore > 0) {
+        const ts = getSharedNotifTimestamp(n);
+        if (!ts || ts <= clearedBefore) return false;
       }
       return true;
+    });
+
+    filtered.sort((a, b) => getSharedNotifTimestamp(b) - getSharedNotifTimestamp(a));
+    return filtered;
+  }
+
+  function deleteSharedNotification(id) {
+    if (!id) return;
+    try {
+      let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+      cached = cached.filter((n) => String(n.id) !== String(id));
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+
+      let dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+      if (!Array.isArray(dismissed)) dismissed = [];
+      if (!dismissed.includes(String(id))) {
+        dismissed.push(String(id));
+        localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+      }
+    } catch (_) {}
+
+    fetch(`${NOTIF_API}/api/notifications/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      keepalive: true,
+    }).catch(() => {});
+
+    renderSharedNotifs();
+  }
+
+  async function clearAllSharedNotifications() {
+    const nowTs = Date.now();
+    const currentEmail = (
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      ""
+    ).toLowerCase().trim();
+
+    try {
+      if (role === "student") {
+        localStorage.setItem("nexo_notifs_cleared_at_student", String(nowTs));
+        if (currentEmail) {
+          localStorage.setItem(`nexo_notifs_cleared_at_student_${currentEmail}`, String(nowTs));
+        }
+      } else {
+        localStorage.setItem("nexo_notifs_cleared_at_provider", String(nowTs));
+      }
+    } catch (_) {}
+
+    const visibleNotifs = getSharedNotifs();
+    const idsToDelete = visibleNotifs.map((n) => String(n.id)).filter(Boolean);
+
+    try {
+      let dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+      if (!Array.isArray(dismissed)) dismissed = [];
+      idsToDelete.forEach((id) => {
+        if (!dismissed.includes(id)) dismissed.push(id);
+      });
+      localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+    } catch (_) {}
+
+    try {
+      let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+      cached = cached.filter((n) => {
+        if (!n) return false;
+        if (idsToDelete.includes(String(n.id))) return false;
+        if (!n.recipient || n.recipient === role || n.recipient === "all") return false;
+        return true;
+      });
+      localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+    } catch (_) {}
+
+    renderSharedNotifs();
+
+    try {
+      await fetch(
+        `${NOTIF_API}/api/notifications?recipient=${encodeURIComponent(role || "all")}${currentEmail && role === "student" ? `&email=${encodeURIComponent(currentEmail)}` : ""}`,
+        { method: "DELETE", keepalive: true },
+      );
+    } catch (_) {}
+
+    idsToDelete.forEach((id) => {
+      fetch(`${NOTIF_API}/api/notifications/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        keepalive: true,
+      }).catch(() => {});
     });
   }
 
@@ -1028,33 +1169,93 @@ function initSharedHeaderNotificationBell(notifBtn, role) {
       notifBtn.classList.toggle("has-unread", unreadCount > 0);
     }
     if (!bodyEl) return;
-    if (list.length === 0) return;
+    if (list.length === 0) {
+      bodyEl.innerHTML = `
+        <div class="notif-empty-box">
+          <div class="notif-empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </div>
+          <p class="notif-empty-heading">No notifications yet</p>
+          <p class="notif-empty-text">You're all caught up! New updates will appear here.</p>
+        </div>
+      `;
+      return;
+    }
+
     bodyEl.innerHTML = list
       .map((n) => {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
-        const defaultLink = role === "provider" ? "provider-applications.html" : "student-submissions.html";
-        const linkUrl = n.link || defaultLink;
+        const resolvedScholId = n.scholarshipId || n.scholId || "";
+        const resolvedAppId = n.appId || "";
+        let linkUrl = n.link || (role === "provider" ? "provider-applications.html" : "student-submissions.html");
+        if (role === "provider") {
+          if (resolvedAppId) {
+            linkUrl = `provider-applications.html?appId=${encodeURIComponent(resolvedAppId)}`;
+          } else if (resolvedScholId) {
+            linkUrl = `provider-posts.html?scholarshipId=${encodeURIComponent(resolvedScholId)}`;
+          }
+        } else {
+          if (resolvedAppId) {
+            linkUrl = `student-submissions.html?id=${encodeURIComponent(resolvedAppId)}`;
+          } else if (resolvedScholId) {
+            linkUrl = `student-browse.html?scholId=${encodeURIComponent(resolvedScholId)}`;
+          }
+        }
+
         return `
-          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
-            <div class="notif-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </div>
-            <div class="notif-item-content">
-              <h5 class="notif-item-title">${n.title || "Notification"}</h5>
-              <p class="notif-item-msg">${n.message || ""}</p>
-              <span class="notif-item-time">${timeStr}</span>
-            </div>
-          </a>
+          <div class="notif-item-wrapper" style="position: relative; display: flex; align-items: stretch;">
+            <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" style="flex: 1; padding-right: 34px;" data-id="${n.id}" data-app-id="${resolvedAppId}" data-schol-id="${resolvedScholId}">
+              <div class="notif-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              </div>
+              <div class="notif-item-content">
+                <h5 class="notif-item-title">${n.title || "Notification"}</h5>
+                <p class="notif-item-msg">${n.message || ""}</p>
+                <span class="notif-item-time">${timeStr}</span>
+              </div>
+            </a>
+            <button type="button" class="notif-single-delete-btn" data-delete-id="${n.id}" title="Delete notification" aria-label="Delete notification" style="position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted, #9ca3af); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
         `;
       })
       .join("");
+
+    bodyEl.querySelectorAll(".notif-single-delete-btn").forEach((delBtn) => {
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const delId = delBtn.dataset.deleteId;
+        if (delId) deleteSharedNotification(delId);
+      });
+    });
+
+    bodyEl.querySelectorAll(".notif-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const notifId = item.dataset.id;
+        if (notifId) deleteSharedNotification(notifId);
+      });
+    });
   }
 
   renderSharedNotifs();
+
+  const clearAllBtn = document.getElementById("shared-clear-all-btn");
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearAllSharedNotifications();
+    });
+  }
 
   const markReadBtn = document.getElementById("shared-mark-read");
   if (markReadBtn) {
@@ -1367,12 +1568,21 @@ function closeMobileNav() {
 }
 window.closeMobileNav = closeMobileNav;
 
+function closeNotifications() {
+  const popover = document.getElementById("header-notif-popover");
+  const notifBtn = document.querySelector(".notification-btn");
+  if (popover) popover.classList.remove("open");
+  if (notifBtn) notifBtn.setAttribute("aria-expanded", "false");
+}
+window.closeNotifications = closeNotifications;
+
 // Global Side Menu Handler (Consistent with student.js & provider.js)
 window.handleMenuToggle = function (e) {
   if (e) {
     e.preventDefault();
     e.stopPropagation();
   }
+  closeNotifications();
   const btn =
     document.getElementById("avatar-menu-btn") ||
     document.querySelector(".hamburger-btn");

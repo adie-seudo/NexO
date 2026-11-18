@@ -1408,16 +1408,25 @@
     pendingDecision = null;
   }
 
+  function openReviewModalByAppId(id) {
+    if (!id) return;
+    const clean = String(id).trim().toLowerCase();
+    const target = allApplications.find(
+      (a) =>
+        String(a.id || "").toLowerCase() === clean ||
+        String(a.scholarshipId || "").toLowerCase() === clean ||
+        String(a.studentName || "").toLowerCase() === clean ||
+        String(a.scholarshipTitle || "").toLowerCase() === clean,
+    );
+    if (target) {
+      openReviewModal(target);
+    }
+  }
+  window.openReviewModalByAppId = openReviewModalByAppId;
+
   function openReviewModal(app) {
     currentActiveApp = app;
     isModalOpen = true;
-
-    window.openReviewModalByAppId = function (id) {
-      const target = allApplications.find((a) => String(a.id) === String(id));
-      if (target) {
-        openReviewModal(target);
-      }
-    };
 
     // Reset feedback success banner and error messages
     const successBanner = document.getElementById(
@@ -1884,8 +1893,11 @@
         timestamp: new Date().toISOString(),
         formattedTime: "Just now",
         read: false,
-        link: "student-submissions.html",
+        link: `student-submissions.html?id=${encodeURIComponent(appId)}`,
         appId: appId,
+        scholarshipId: targetApp ? targetApp.scholarshipId : "",
+        scholId: targetApp ? targetApp.scholarshipId : "",
+        recipientEmail: targetApp ? targetApp.studentEmail || "" : "",
       };
       notifList.unshift(newNotif);
       localStorage.setItem("nexo_notifications", JSON.stringify(notifList));

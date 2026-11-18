@@ -82,24 +82,49 @@ function resolveAppProviderLogo(app) {
   }
   const match = schols.find(
     (s) =>
-      (app && app.scholarshipId && s.id && String(s.id) === String(app.scholarshipId)) ||
-      (app && app.scholarshipTitle && s.title && s.title.toLowerCase() === app.scholarshipTitle.toLowerCase()) ||
-      (app && app.title && s.title && s.title.toLowerCase() === app.title.toLowerCase())
+      (app &&
+        app.scholarshipId &&
+        s.id &&
+        String(s.id) === String(app.scholarshipId)) ||
+      (app &&
+        app.scholarshipTitle &&
+        s.title &&
+        s.title.toLowerCase() === app.scholarshipTitle.toLowerCase()) ||
+      (app &&
+        app.title &&
+        s.title &&
+        s.title.toLowerCase() === app.title.toLowerCase()),
   );
   if (match) {
-    if (match.providerLogo && String(match.providerLogo).trim()) return match.providerLogo;
-    if (match.logoImage && String(match.logoImage).trim()) return match.logoImage;
+    if (match.providerLogo && String(match.providerLogo).trim())
+      return match.providerLogo;
+    if (match.logoImage && String(match.logoImage).trim())
+      return match.logoImage;
   }
 
   let pSet = window.cachedProviderSettings;
   if (!pSet) {
     try {
-      pSet = JSON.parse(localStorage.getItem("nexo_provider_settings") || localStorage.getItem("nexo_settings") || "null");
+      pSet = JSON.parse(
+        localStorage.getItem("nexo_provider_settings") ||
+          localStorage.getItem("nexo_settings") ||
+          "null",
+      );
     } catch (_) {}
   }
-  const activeOrgName = (pSet && pSet.orgName) || localStorage.getItem("nexo-provider-name") || "NEXO";
-  const appOrg = (app && (app.providerName || app.organization) ? (app.providerName || app.organization).trim() : "");
-  if (!appOrg || appOrg.toLowerCase() === activeOrgName.toLowerCase() || appOrg.toLowerCase() === "nexo") {
+  const activeOrgName =
+    (pSet && pSet.orgName) ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
+  const appOrg =
+    app && (app.providerName || app.organization)
+      ? (app.providerName || app.organization).trim()
+      : "";
+  if (
+    !appOrg ||
+    appOrg.toLowerCase() === activeOrgName.toLowerCase() ||
+    appOrg.toLowerCase() === "nexo"
+  ) {
     if (pSet && pSet.logoImage && String(pSet.logoImage).trim()) {
       return pSet.logoImage;
     }
@@ -126,6 +151,18 @@ function escapeStudentNotifHtml(text) {
 
 const DEFAULT_STUDENT_NOTIFICATIONS = [];
 
+function getStudentNotifTimestamp(n) {
+  if (!n) return 0;
+  if (n.timestamp) {
+    const t = new Date(n.timestamp).getTime();
+    if (!isNaN(t)) return t;
+  }
+  const m = String(n.id || "").match(/(\d{10,})/);
+  if (m) return parseInt(m[1], 10);
+  const num = parseInt(String(n.id || "").replace(/\D/g, ""), 10);
+  return isNaN(num) ? 0 : num;
+}
+
 function getStudentNotificationsFromStorage() {
   let all = [];
   try {
@@ -137,7 +174,9 @@ function getStudentNotificationsFromStorage() {
 
   let dismissed = [];
   try {
-    dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+    dismissed = JSON.parse(
+      localStorage.getItem("nexo_dismissed_notifs") || "[]",
+    );
   } catch (_) {}
   if (!Array.isArray(dismissed)) dismissed = [];
 
@@ -150,15 +189,40 @@ function getStudentNotificationsFromStorage() {
     .toLowerCase()
     .trim();
 
-  return all.filter((n) => {
+  let clearedBefore = 0;
+  try {
+    clearedBefore =
+      parseInt(
+        localStorage.getItem(
+          `nexo_notifs_cleared_at_student_${currentEmail || "default"}`,
+        ) ||
+          localStorage.getItem("nexo_notifs_cleared_at_student") ||
+          "0",
+        10,
+      ) || 0;
+  } catch (_) {}
+
+  const filtered = all.filter((n) => {
+    if (!n) return false;
     if (dismissed.includes(String(n.id))) return false;
-    const isStudent = !n.recipient || n.recipient === "student" || n.recipient === "all";
+    const isStudent =
+      !n.recipient || n.recipient === "student" || n.recipient === "all";
     if (!isStudent) return false;
     if (n.recipientEmail && currentEmail) {
-      return String(n.recipientEmail).toLowerCase().trim() === currentEmail;
+      if (String(n.recipientEmail).toLowerCase().trim() !== currentEmail)
+        return false;
+    }
+    if (clearedBefore > 0) {
+      const ts = getStudentNotifTimestamp(n);
+      if (!ts || ts <= clearedBefore) return false;
     }
     return true;
   });
+
+  filtered.sort(
+    (a, b) => getStudentNotifTimestamp(b) - getStudentNotifTimestamp(a),
+  );
+  return filtered;
 }
 
 function initNotificationBell() {
@@ -254,22 +318,36 @@ function initNotificationBell() {
       );
       if (res.ok) {
         const serverNotifs = await res.json();
-        if (Array.isArray(serverNotifs) && serverNotifs.length > 0) {
+        if (Array.isArray(serverNotifs)) {
           try {
+            const dismissed = new Set(
+              JSON.parse(
+                localStorage.getItem("nexo_dismissed_notifs") || "[]",
+              ).map(String),
+            );
             const cached = JSON.parse(
               localStorage.getItem("nexo_notifications") || "[]",
-            );
+            ).filter((c) => c && !dismissed.has(String(c.id)));
             serverNotifs.forEach((sn) => {
+              if (!sn || dismissed.has(String(sn.id))) return;
               const idx = cached.findIndex(
                 (c) => String(c.id) === String(sn.id),
               );
-              if (idx >= 0) cached[idx] = sn;
-              else cached.unshift(sn);
+              if (idx >= 0) cached[idx] = { ...cached[idx], ...sn };
+              else cached.push(sn);
             });
+            cached.sort(
+              (a, b) =>
+                getStudentNotifTimestamp(b) - getStudentNotifTimestamp(a),
+            );
             localStorage.setItem("nexo_notifications", JSON.stringify(cached));
           } catch (_) {}
           const mergedNotifs = getStudentNotificationsFromStorage();
-          renderStudentNotifications(mergedNotifs);
+          const mergedHash = JSON.stringify(mergedNotifs);
+          if (mergedHash !== lastStudentNotifsHash) {
+            lastStudentNotifsHash = mergedHash;
+            renderStudentNotifications(mergedNotifs);
+          }
         }
       }
     } catch (_) {}
@@ -289,7 +367,10 @@ function initNotificationBell() {
       if (!Array.isArray(dismissed)) dismissed = [];
       if (!dismissed.includes(String(id))) {
         dismissed.push(String(id));
-        localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+        localStorage.setItem(
+          "nexo_dismissed_notifs",
+          JSON.stringify(dismissed),
+        );
       }
     } catch (_) {}
 
@@ -365,34 +446,70 @@ function initNotificationBell() {
       `;
       document.body.appendChild(modal);
 
-      modal.querySelector("#btn-cancel-clear-student-notifs").addEventListener("click", () => {
-        modal.classList.remove("open");
-      });
+      modal
+        .querySelector("#btn-cancel-clear-student-notifs")
+        .addEventListener("click", () => {
+          modal.classList.remove("open");
+        });
       modal.addEventListener("click", (e) => {
         if (e.target === modal) modal.classList.remove("open");
       });
-      modal.querySelector("#btn-confirm-clear-student-notifs").addEventListener("click", async () => {
-        modal.classList.remove("open");
-        await clearAllStudentNotifications();
-      });
+      modal
+        .querySelector("#btn-confirm-clear-student-notifs")
+        .addEventListener("click", async () => {
+          modal.classList.remove("open");
+          await clearAllStudentNotifications();
+        });
     }
     modal.classList.add("open");
   }
 
   async function clearAllStudentNotifications() {
     const currentEmail = (
-    sessionStorage.getItem("nexo-student-email") ||
-    localStorage.getItem("nexo-student-email") ||
-    localStorage.getItem("nexo_student_email") ||
-    ""
-  )
-    .toLowerCase()
-    .trim();
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo_student_email") ||
+      ""
+    )
+      .toLowerCase()
+      .trim();
+
+    const currentVisible = getStudentNotificationsFromStorage();
+    const idsToDelete = currentVisible.map((n) => String(n.id)).filter(Boolean);
+
     try {
-      let cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+      const nowTs = String(Date.now());
+      localStorage.setItem("nexo_notifs_cleared_at_student", nowTs);
+      localStorage.setItem(
+        `nexo_notifs_cleared_at_student_${currentEmail || "default"}`,
+        nowTs,
+      );
+
+      let dismissed = JSON.parse(
+        localStorage.getItem("nexo_dismissed_notifs") || "[]",
+      );
+      if (!Array.isArray(dismissed)) dismissed = [];
+      idsToDelete.forEach((id) => {
+        if (!dismissed.includes(id)) dismissed.push(id);
+      });
+      localStorage.setItem("nexo_dismissed_notifs", JSON.stringify(dismissed));
+
+      let cached = JSON.parse(
+        localStorage.getItem("nexo_notifications") || "[]",
+      );
       cached = cached.filter((n) => {
-        if (!n.recipient || n.recipient === "student" || n.recipient === "all") {
-          if (n.recipientEmail && currentEmail && String(n.recipientEmail).toLowerCase().trim() !== currentEmail) {
+        if (!n) return false;
+        if (idsToDelete.includes(String(n.id))) return false;
+        if (
+          !n.recipient ||
+          n.recipient === "student" ||
+          n.recipient === "all"
+        ) {
+          if (
+            n.recipientEmail &&
+            currentEmail &&
+            String(n.recipientEmail).toLowerCase().trim() !== currentEmail
+          ) {
             return true;
           }
           return false;
@@ -402,11 +519,25 @@ function initNotificationBell() {
       localStorage.setItem("nexo_notifications", JSON.stringify(cached));
     } catch (_) {}
 
+    lastStudentNotifsHash = "";
+    renderStudentNotifications([]);
+
     try {
-      await fetch(`${NOTIF_API}/api/notifications?recipient=student${currentEmail ? `&email=${encodeURIComponent(currentEmail)}` : ""}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `${NOTIF_API}/api/notifications?recipient=student${currentEmail ? `&email=${encodeURIComponent(currentEmail)}` : ""}`,
+        {
+          method: "DELETE",
+          keepalive: true,
+        },
+      );
     } catch (_) {}
+
+    idsToDelete.forEach((id) => {
+      fetch(`${NOTIF_API}/api/notifications/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        keepalive: true,
+      }).catch(() => {});
+    });
 
     loadStudentNotifications();
     if (typeof showToast === "function") {
@@ -467,54 +598,109 @@ function initNotificationBell() {
       .map((n) => {
         const isUnread = !n.read;
         const timeStr = n.formattedTime || "Recently";
+        const resolvedScholId = n.scholarshipId || n.scholId || "";
+        const resolvedAppId = n.appId || "";
         let linkUrl = n.link || "student-submissions.html";
-        if (n.appId) {
-          linkUrl = `student-submissions.html?id=${encodeURIComponent(n.appId)}`;
-        } else if (n.scholId) {
-          linkUrl = `student-browse.html?id=${encodeURIComponent(n.scholId)}`;
+        if (resolvedAppId) {
+          linkUrl = `student-submissions.html?id=${encodeURIComponent(resolvedAppId)}`;
+        } else if (resolvedScholId) {
+          linkUrl = `student-browse.html?scholId=${encodeURIComponent(resolvedScholId)}`;
+        } else {
+          // Fallback: extract quoted scholarship/application title from notification message for deep-linking
+          const quoteMatch = String(n.message || "").match(/"([^"]+)"/);
+          const extractedTitle = quoteMatch ? quoteMatch[1].trim() : "";
+          const titleLower = String(n.title || "").toLowerCase();
+          if (extractedTitle) {
+            if (titleLower.includes("scholarship")) {
+              linkUrl = `student-browse.html?scholId=${encodeURIComponent(extractedTitle)}`;
+            } else if (
+              titleLower.includes("application") ||
+              titleLower.includes("status")
+            ) {
+              linkUrl = `student-submissions.html?id=${encodeURIComponent(extractedTitle)}`;
+            }
+          } else if (
+            titleLower.includes("verification") ||
+            titleLower.includes("profile")
+          ) {
+            linkUrl = "student-settings.html";
+          }
         }
         return `
-          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}" data-app-id="${n.appId || ""}">
-            <div class="notif-item-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-                <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-              </svg>
-            </div>
-            <div class="notif-item-content">
-              <h5 class="notif-item-title">${escapeStudentNotifHtml(n.title)}</h5>
-              <p class="notif-item-msg">${escapeStudentNotifHtml(n.message)}</p>
-              <span class="notif-item-time">${escapeStudentNotifHtml(timeStr)}</span>
-            </div>
-          </a>
+          <div class="notif-item-wrapper" style="position: relative; display: flex; align-items: stretch;">
+            <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" style="flex: 1; padding-right: 34px;" data-id="${n.id}" data-app-id="${escapeStudentNotifHtml(resolvedAppId)}" data-schol-id="${escapeStudentNotifHtml(resolvedScholId)}">
+              <div class="notif-item-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+              </div>
+              <div class="notif-item-content">
+                <h5 class="notif-item-title">${escapeStudentNotifHtml(n.title)}</h5>
+                <p class="notif-item-msg">${escapeStudentNotifHtml(n.message)}</p>
+                <span class="notif-item-time">${escapeStudentNotifHtml(timeStr)}</span>
+              </div>
+            </a>
+            <button type="button" class="notif-single-delete-btn" data-delete-id="${n.id}" title="Delete notification" aria-label="Delete notification" style="position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 6px; border: none; background: transparent; color: var(--text-muted, #9ca3af); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
         `;
       })
       .join("");
 
-    // Attach click listeners to individual items: clicking permanently deletes the notification so it won't flood
+    // Wire individual notification delete buttons
+    bodyEl.querySelectorAll(".notif-single-delete-btn").forEach((delBtn) => {
+      delBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const delId = delBtn.dataset.deleteId;
+        if (delId) {
+          lastStudentNotifsHash = "";
+          deleteStudentNotification(delId);
+        }
+      });
+    });
+
+    // Attach click listeners to individual items: clicking permanently deletes the notification and navigates directly to the target item
     bodyEl.querySelectorAll(".notif-item").forEach((item) => {
       item.addEventListener("click", (e) => {
         const notifId = item.dataset.id;
         const targetAppId = item.dataset.appId;
+        const targetScholId = item.dataset.scholId;
         const href = item.getAttribute("href") || "";
         if (notifId) {
+          lastStudentNotifsHash = "";
           deleteStudentNotification(notifId);
-          item.remove();
         }
 
-        const currentPage = (window.location.pathname.split("/").pop() || "").toLowerCase();
-        const targetPage = (href.split("?")[0].split("#")[0].split("/").pop() || "").toLowerCase();
+        const currentPage = (
+          window.location.pathname.split("/").pop() || ""
+        ).toLowerCase();
+        const targetPage = (
+          href.split("?")[0].split("#")[0].split("/").pop() || ""
+        ).toLowerCase();
 
-        // If already on submissions page, open modal directly without page reload or persistent query param loop
+        // 1. If already on student-submissions.html, open the submission details modal directly
         if (
           currentPage === "student-submissions.html" &&
-          targetAppId &&
+          (targetAppId || href.includes("id=")) &&
           Array.isArray(allStudentApplications)
         ) {
+          let lookup = targetAppId;
+          if (!lookup && href.includes("?")) {
+            try {
+              const qp = new URLSearchParams(href.split("?")[1]);
+              lookup = qp.get("id") || qp.get("appId") || "";
+            } catch (_) {}
+          }
           const match = allStudentApplications.find(
             (a) =>
-              String(a.id) === String(targetAppId) ||
-              String(a.scholarshipId) === String(targetAppId),
+              String(a.id) === String(lookup) ||
+              String(a.scholarshipId) === String(lookup) ||
+              (a.scholarshipTitle &&
+                a.scholarshipTitle.toLowerCase() ===
+                  String(lookup).toLowerCase()),
           );
           if (match) {
             e.preventDefault();
@@ -524,8 +710,46 @@ function initNotificationBell() {
           }
         }
 
-        // Prevent full page reload when clicking a notification that points to the current page
-        if (!href || href === "#" || (targetPage && targetPage === currentPage && !href.includes("?"))) {
+        // 2. If already on student-browse.html, open the specific scholarship post details modal directly
+        if (
+          currentPage === "student-browse.html" &&
+          (targetScholId || href.includes("scholId=") || href.includes("id="))
+        ) {
+          let lookup = targetScholId;
+          if (!lookup && href.includes("?")) {
+            try {
+              const qp = new URLSearchParams(href.split("?")[1]);
+              lookup =
+                qp.get("scholId") ||
+                qp.get("id") ||
+                qp.get("scholarshipId") ||
+                "";
+            } catch (_) {}
+          }
+          const scholsList =
+            window.allScholarships || window.cachedScholarships || [];
+          const matchSchol = Array.isArray(scholsList)
+            ? scholsList.find(
+                (s) =>
+                  String(s.id) === String(lookup) ||
+                  (s.title &&
+                    s.title.toLowerCase() === String(lookup).toLowerCase()),
+              )
+            : null;
+          if (matchSchol && typeof window.openDetailsModal === "function") {
+            e.preventDefault();
+            closeNotifications();
+            window.openDetailsModal(matchSchol);
+            return;
+          }
+        }
+
+        // Prevent full page reload when clicking a notification that points to the current page with no query target
+        if (
+          !href ||
+          href === "#" ||
+          (targetPage && targetPage === currentPage && !href.includes("?"))
+        ) {
           e.preventDefault();
           closeNotifications();
         }
@@ -579,7 +803,9 @@ function initNotificationBell() {
       clampPopoverPosition();
       // Mark notifications read locally without triggering disk writes that cause Live Server reloads
       markAllStudentNotificationsRead(false);
-      const currentDot = notifBtn.querySelector(".notification-dot") || document.getElementById("student-notif-dot");
+      const currentDot =
+        notifBtn.querySelector(".notification-dot") ||
+        document.getElementById("student-notif-dot");
       if (currentDot) currentDot.classList.remove("active");
       notifBtn.classList.remove("has-unread");
     }
@@ -646,11 +872,16 @@ function calculateStudentProfileCompletion(profile, activeEmail) {
 }
 
 function updateStudentDashboardProfileOverview(profile, activeEmail) {
-  const completionData = calculateStudentProfileCompletion(profile, activeEmail);
+  const completionData = calculateStudentProfileCompletion(
+    profile,
+    activeEmail,
+  );
 
   const summaryEl = document.getElementById("student-profile-summary");
   const wrapEl = document.getElementById("student-profile-completion-wrap");
-  const completionLabel = document.getElementById("student-profile-completion-label");
+  const completionLabel = document.getElementById(
+    "student-profile-completion-label",
+  );
   const progressFill = document.getElementById("student-profile-progress-fill");
   const actionLink = document.getElementById("student-profile-action-link");
   const academicMetaEl = document.getElementById("student-academic-meta");
@@ -659,7 +890,8 @@ function updateStudentDashboardProfileOverview(profile, activeEmail) {
   }
 
   // Remove/hide profile percentage complete bar once profile is edited & locked (100%)
-  const isFullyCompleted = completionData.isConfirmed || completionData.percent >= 100;
+  const isFullyCompleted =
+    completionData.isConfirmed || completionData.percent >= 100;
   if (wrapEl) {
     wrapEl.style.display = "none";
   }
@@ -684,8 +916,15 @@ function syncStudentWorkspaceSections(myApplications, profile, activeEmail) {
   if (!document.getElementById("student-next-steps-list")) return;
 
   renderStudentNextSteps(profile, myApplications, activeEmail);
-  renderStudentUpcomingDeadlines(window.cachedScholarships || [], myApplications);
-  renderStudentRecommendedOpportunities(window.cachedScholarships || [], myApplications, profile);
+  renderStudentUpcomingDeadlines(
+    window.cachedScholarships || [],
+    myApplications,
+  );
+  renderStudentRecommendedOpportunities(
+    window.cachedScholarships || [],
+    myApplications,
+    profile,
+  );
   renderStudentRecentActivity(myApplications, profile, activeEmail);
 }
 
@@ -718,11 +957,14 @@ function renderStudentNextSteps(profile, myApplications, activeEmail) {
     const rawDocs = app.documents || app.uploadedDocuments || [];
     const followUpDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return d.includes("(To Follow Up)");
-      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+      return (
+        d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up"
+      );
     });
 
     if (followUpDocs.length > 0) {
-      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Application";
+      const scholTitle =
+        app.scholarshipTitle || app.title || "Scholarship Application";
       items.push({
         id: `step-doc-${app.id}`,
         badgeClass: "badge-step-action",
@@ -741,7 +983,8 @@ function renderStudentNextSteps(profile, myApplications, activeEmail) {
   (myApplications || []).forEach((app) => {
     const remarks = (app.remarks || app.feedback || app.notes || "").trim();
     if (remarks) {
-      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Application";
+      const scholTitle =
+        app.scholarshipTitle || app.title || "Scholarship Application";
       items.push({
         id: `step-remark-${app.id}`,
         badgeClass: "badge-step-review",
@@ -760,7 +1003,8 @@ function renderStudentNextSteps(profile, myApplications, activeEmail) {
   (myApplications || []).forEach((app) => {
     const rawStatus = (app.status || "").toLowerCase();
     if (rawStatus.includes("approved")) {
-      const scholTitle = app.scholarshipTitle || app.title || "Scholarship Grant";
+      const scholTitle =
+        app.scholarshipTitle || app.title || "Scholarship Grant";
       items.push({
         id: `step-appr-${app.id}`,
         badgeClass: "badge-step-approved",
@@ -827,7 +1071,14 @@ function renderStudentUpcomingDeadlines(scholarships, myApplications) {
     const parts = String(s.deadline).split("/");
     let d = null;
     if (parts.length === 3) {
-      d = new Date(parseInt(parts[2], 10), parseInt(parts[0], 10) - 1, parseInt(parts[1], 10), 23, 59, 59);
+      d = new Date(
+        parseInt(parts[2], 10),
+        parseInt(parts[0], 10) - 1,
+        parseInt(parts[1], 10),
+        23,
+        59,
+        59,
+      );
     } else {
       d = new Date(s.deadline);
     }
@@ -838,7 +1089,9 @@ function renderStudentUpcomingDeadlines(scholarships, myApplications) {
     if (diffDays < 0) return; // Expired
 
     const hasApplied = (myApplications || []).some(
-      (a) => String(a.scholarshipId) === String(s.id) || String(a.id) === String(s.id)
+      (a) =>
+        String(a.scholarshipId) === String(s.id) ||
+        String(a.id) === String(s.id),
     );
 
     deadlineEntries.push({
@@ -846,7 +1099,8 @@ function renderStudentUpcomingDeadlines(scholarships, myApplications) {
       diffDays,
       title: s.title || "Scholarship Opportunity",
       type: hasApplied ? "Application Submitted" : "Application Deadline",
-      statusClass: diffDays <= 5 ? "badge-deadline-urgent" : "badge-deadline-open",
+      statusClass:
+        diffDays <= 5 ? "badge-deadline-urgent" : "badge-deadline-open",
       statusLabel: diffDays === 0 ? "Closing Today" : `Closes in ${diffDays}d`,
       scholId: s.id,
     });
@@ -872,7 +1126,9 @@ function renderStudentUpcomingDeadlines(scholarships, myApplications) {
 
   // Display up to 4 nearest deadlines
   deadlineEntries.slice(0, 4).forEach((item) => {
-    const month = item.dateObj.toLocaleString("en-US", { month: "short" }).toUpperCase();
+    const month = item.dateObj
+      .toLocaleString("en-US", { month: "short" })
+      .toUpperCase();
     const day = item.dateObj.getDate();
 
     const row = document.createElement("div");
@@ -898,11 +1154,17 @@ function renderStudentUpcomingDeadlines(scholarships, myApplications) {
 }
 
 // SECTION 3: RECOMMENDED OPPORTUNITIES
-function renderStudentRecommendedOpportunities(scholarships, myApplications, profile) {
+function renderStudentRecommendedOpportunities(
+  scholarships,
+  myApplications,
+  profile,
+) {
   const container = document.getElementById("student-opportunities-feed");
   if (!container) return;
 
-  const appliedIds = new Set((myApplications || []).map((a) => String(a.scholarshipId || a.id)));
+  const appliedIds = new Set(
+    (myApplications || []).map((a) => String(a.scholarshipId || a.id)),
+  );
   const p = profile || {};
   const studentYear = (p.yearLevel || "").toLowerCase();
   const studentUni = (p.university || "").toLowerCase();
@@ -929,9 +1191,12 @@ function renderStudentRecommendedOpportunities(scholarships, myApplications, pro
     const isApplied = appliedIds.has(String(schol.id));
     const org = schol.providerName || schol.organization || "NEXO";
     const title = schol.title || "Scholarship Program";
-    const typeLabel = schol.typeText || (schol.type === "need" ? "Need-Based" : "Merit-Based");
+    const typeLabel =
+      schol.typeText || (schol.type === "need" ? "Need-Based" : "Merit-Based");
     const deadline = schol.formattedDate || schol.deadline || "Open";
-    const applicants = schol.applicantCount || `${schol.applicantTotal || 1} / ${schol.applicantLimit || 500} Applicants`;
+    const applicants =
+      schol.applicantCount ||
+      `${schol.applicantTotal || 1} / ${schol.applicantLimit || 500} Applicants`;
 
     const desc = (schol.desc || schol.description || "").toLowerCase();
     const hasEligibilityMatch =
@@ -984,7 +1249,8 @@ function renderStudentRecentActivity(myApplications, profile, activeEmail) {
   const activities = [];
 
   (myApplications || []).forEach((app) => {
-    const scholTitle = app.scholarshipTitle || app.title || "Scholarship Program";
+    const scholTitle =
+      app.scholarshipTitle || app.title || "Scholarship Program";
 
     // 1. Status review / update event
     if (app.reviewedAt || app.updatedAt) {
@@ -1002,7 +1268,9 @@ function renderStudentRecentActivity(myApplications, profile, activeEmail) {
     if (app.remarks || app.feedback) {
       activities.push({
         time: (new Date(app.reviewedAt || app.updatedAt).getTime() || 0) + 1,
-        dateFormatted: formatStudentShortDate(app.reviewedAt || app.updatedAt || app.submittedAt),
+        dateFormatted: formatStudentShortDate(
+          app.reviewedAt || app.updatedAt || app.submittedAt,
+        ),
         title: "Provider feedback & remarks posted",
         sub: scholTitle,
         type: "remark",
@@ -1013,8 +1281,12 @@ function renderStudentRecentActivity(myApplications, profile, activeEmail) {
     // 3. Submitted event
     if (app.submittedAt || app.appliedDate || app.date) {
       activities.push({
-        time: new Date(app.submittedAt || app.appliedDate || app.date).getTime() || 0,
-        dateFormatted: formatStudentShortDate(app.submittedAt || app.appliedDate || app.date),
+        time:
+          new Date(app.submittedAt || app.appliedDate || app.date).getTime() ||
+          0,
+        dateFormatted: formatStudentShortDate(
+          app.submittedAt || app.appliedDate || app.date,
+        ),
         title: "Application submitted for committee evaluation",
         sub: scholTitle,
         type: "submission",
@@ -1105,7 +1377,10 @@ function updateStudentGreeting(customName) {
   if (!studentName) {
     try {
       const raw =
-        (currentStudentEmail && localStorage.getItem(`nexo_student_settings_${currentStudentEmail}`)) ||
+        (currentStudentEmail &&
+          localStorage.getItem(
+            `nexo_student_settings_${currentStudentEmail}`,
+          )) ||
         localStorage.getItem("nexo_student_settings");
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -1115,7 +1390,9 @@ function updateStudentGreeting(customName) {
   }
   if (!studentName) {
     try {
-      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      const profiles = JSON.parse(
+        localStorage.getItem("nexo_student_profiles") || "{}",
+      );
       if (currentStudentEmail && profiles[currentStudentEmail]?.fullName) {
         studentName = profiles[currentStudentEmail].fullName;
       }
@@ -1124,7 +1401,9 @@ function updateStudentGreeting(customName) {
   if (!studentName) {
     try {
       const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
-      const matched = users.find((u) => (u.email || "").toLowerCase() === currentStudentEmail);
+      const matched = users.find(
+        (u) => (u.email || "").toLowerCase() === currentStudentEmail,
+      );
       if (matched && (matched.name || matched.fullName)) {
         studentName = matched.name || matched.fullName;
       }
@@ -1153,7 +1432,8 @@ function updateStudentAcademicChips(profile, activeEmail) {
   if (!p) {
     try {
       const cached =
-        (currentEmail && localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
+        (currentEmail &&
+          localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
         localStorage.getItem("nexo_student_settings");
       if (cached) p = JSON.parse(cached);
     } catch (_) {}
@@ -1161,7 +1441,9 @@ function updateStudentAcademicChips(profile, activeEmail) {
 
   if (!p || !p.university || !p.course) {
     try {
-      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      const profiles = JSON.parse(
+        localStorage.getItem("nexo_student_profiles") || "{}",
+      );
       if (currentEmail && profiles[currentEmail]) {
         p = Object.assign({}, profiles[currentEmail], p || {});
       }
@@ -1170,7 +1452,9 @@ function updateStudentAcademicChips(profile, activeEmail) {
   if (!p || !p.university || !p.course) {
     try {
       const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
-      const matched = users.find((u) => (u.email || "").toLowerCase() === currentEmail);
+      const matched = users.find(
+        (u) => (u.email || "").toLowerCase() === currentEmail,
+      );
       if (matched) p = Object.assign({}, matched, p || {});
     } catch (_) {}
   }
@@ -1215,11 +1499,16 @@ function initStudentGreeting() {
   let studentSettings = null;
   try {
     const raw =
-      (currentStudentEmail && localStorage.getItem(`nexo_student_settings_${currentStudentEmail}`)) ||
+      (currentStudentEmail &&
+        localStorage.getItem(`nexo_student_settings_${currentStudentEmail}`)) ||
       localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.email && currentStudentEmail && parsed.email.toLowerCase() === currentStudentEmail) {
+      if (
+        parsed.email &&
+        currentStudentEmail &&
+        parsed.email.toLowerCase() === currentStudentEmail
+      ) {
         studentSettings = parsed;
       } else if (!parsed.email) {
         studentSettings = parsed;
@@ -1289,12 +1578,14 @@ let hasLoadedStudentDataOnce = false;
 
 function renderStudentDashboardSkeletons() {
   // 1. Metric Cards Values Skeleton
-  ["stat-my-apps", "stat-approved", "stat-review", "stat-rejected"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.innerHTML = `<span class="skeleton-bone" style="display: inline-block; width: 34px; height: 26px; border-radius: 6px;" data-skeleton="true"></span>`;
-    }
-  });
+  ["stat-my-apps", "stat-approved", "stat-review", "stat-rejected"].forEach(
+    (id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerHTML = `<span class="skeleton-bone" style="display: inline-block; width: 34px; height: 26px; border-radius: 6px;" data-skeleton="true"></span>`;
+      }
+    },
+  );
 
   // 2. Your Next Steps Skeleton
   const nextStepsList = document.getElementById("student-next-steps-list");
@@ -1456,11 +1747,16 @@ async function loadStudentData() {
   let serverProfile = null;
   try {
     const cachedRaw =
-      (activeStudentEmail && localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`)) ||
+      (activeStudentEmail &&
+        localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`)) ||
       localStorage.getItem("nexo_student_settings");
     if (cachedRaw) {
       const parsed = JSON.parse(cachedRaw);
-      if (!parsed.email || !activeStudentEmail || parsed.email.toLowerCase() === activeStudentEmail) {
+      if (
+        !parsed.email ||
+        !activeStudentEmail ||
+        parsed.email.toLowerCase() === activeStudentEmail
+      ) {
         serverProfile = parsed;
       }
     }
@@ -1505,14 +1801,22 @@ async function loadStudentData() {
       throw new Error("HTTP error " + response.status);
     }
     const data = await response.json();
-    const serverApps = Array.isArray(data.applications) ? data.applications : [];
-    const serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+    const serverApps = Array.isArray(data.applications)
+      ? data.applications
+      : [];
+    const serverSchols = Array.isArray(data.scholarships)
+      ? data.scholarships
+      : [];
     applications = mergeById(serverApps, localApplications);
     window.cachedScholarships = mergeById(serverSchols, localScholarships);
     if (data.settings) window.cachedProviderSettings = data.settings;
 
     // Sync student settings and avatar from server data
-    if (activeStudentEmail && data.studentProfiles && data.studentProfiles[activeStudentEmail]) {
+    if (
+      activeStudentEmail &&
+      data.studentProfiles &&
+      data.studentProfiles[activeStudentEmail]
+    ) {
       serverProfile = data.studentProfiles[activeStudentEmail];
     } else if (
       data.studentSettings &&
@@ -1522,7 +1826,9 @@ async function loadStudentData() {
     ) {
       serverProfile = data.studentSettings;
     } else if (activeStudentEmail && Array.isArray(data.users)) {
-      const u = data.users.find((x) => (x.email || "").toLowerCase() === activeStudentEmail);
+      const u = data.users.find(
+        (x) => (x.email || "").toLowerCase() === activeStudentEmail,
+      );
       if (u) {
         serverProfile = {
           email: u.email,
@@ -1538,20 +1844,37 @@ async function loadStudentData() {
 
     if (serverProfile) {
       try {
-        if (activeStudentEmail && localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+        if (
+          activeStudentEmail &&
+          localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) ===
+            "true"
+        ) {
           serverProfile.profilePicture = "";
         }
         // Preserve locally confirmed or updated settings if server is stale
         if (activeStudentEmail) {
           try {
-            const rawLocal = localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`);
+            const rawLocal = localStorage.getItem(
+              `nexo_student_settings_${activeStudentEmail}`,
+            );
             if (rawLocal) {
               const parsedLocal = JSON.parse(rawLocal);
-              if (parsedLocal && parsedLocal.email && parsedLocal.email.toLowerCase().trim() === activeStudentEmail) {
-                if (parsedLocal.isProfileConfirmed && !serverProfile.isProfileConfirmed) {
+              if (
+                parsedLocal &&
+                parsedLocal.email &&
+                parsedLocal.email.toLowerCase().trim() === activeStudentEmail
+              ) {
+                if (
+                  parsedLocal.isProfileConfirmed &&
+                  !serverProfile.isProfileConfirmed
+                ) {
                   serverProfile = { ...serverProfile, ...parsedLocal };
                 }
-                if (localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+                if (
+                  localStorage.getItem(
+                    "nexo_avatar_removed_" + activeStudentEmail,
+                  ) === "true"
+                ) {
                   serverProfile.profilePicture = "";
                 }
               }
@@ -1614,7 +1937,9 @@ async function loadStudentData() {
             localStorage.removeItem("nexo-student-avatar");
             if (activeStudentEmail) {
               localStorage.removeItem("nexo_avatar_" + activeStudentEmail);
-              localStorage.removeItem("nexo-student-avatar-" + activeStudentEmail);
+              localStorage.removeItem(
+                "nexo-student-avatar-" + activeStudentEmail,
+              );
             }
           } catch (_) {}
         }
@@ -1631,7 +1956,10 @@ async function loadStudentData() {
     // Cache local copy
     try {
       localStorage.setItem("nexo_applications", JSON.stringify(applications));
-      localStorage.setItem("nexo_scholarships", JSON.stringify(window.cachedScholarships));
+      localStorage.setItem(
+        "nexo_scholarships",
+        JSON.stringify(window.cachedScholarships),
+      );
     } catch (_) {}
   } catch (err) {
     let staticApps = [];
@@ -1641,11 +1969,20 @@ async function loadStudentData() {
       const staticRes = await fetch("data.json").catch(() => null);
       if (staticRes && staticRes.ok) {
         const staticData = await staticRes.json();
-        staticApps = Array.isArray(staticData.applications) ? staticData.applications : [];
-        staticSchols = Array.isArray(staticData.scholarships) ? staticData.scholarships : [];
-        if (staticData.settings) window.cachedProviderSettings = staticData.settings;
+        staticApps = Array.isArray(staticData.applications)
+          ? staticData.applications
+          : [];
+        staticSchols = Array.isArray(staticData.scholarships)
+          ? staticData.scholarships
+          : [];
+        if (staticData.settings)
+          window.cachedProviderSettings = staticData.settings;
 
-        if (activeStudentEmail && staticData.studentProfiles && staticData.studentProfiles[activeStudentEmail]) {
+        if (
+          activeStudentEmail &&
+          staticData.studentProfiles &&
+          staticData.studentProfiles[activeStudentEmail]
+        ) {
           serverProfile = staticData.studentProfiles[activeStudentEmail];
         } else if (
           staticData.studentSettings &&
@@ -1655,7 +1992,9 @@ async function loadStudentData() {
         ) {
           serverProfile = staticData.studentSettings;
         } else if (activeStudentEmail && Array.isArray(staticData.users)) {
-          const u = staticData.users.find((x) => (x.email || "").toLowerCase() === activeStudentEmail);
+          const u = staticData.users.find(
+            (x) => (x.email || "").toLowerCase() === activeStudentEmail,
+          );
           if (u) {
             serverProfile = {
               email: u.email,
@@ -1676,13 +2015,24 @@ async function loadStudentData() {
 
     if (serverProfile && activeStudentEmail) {
       try {
-        if (localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+        if (
+          localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) ===
+          "true"
+        ) {
           serverProfile.profilePicture = "";
         }
-        const existingLocal = localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`);
+        const existingLocal = localStorage.getItem(
+          `nexo_student_settings_${activeStudentEmail}`,
+        );
         if (!existingLocal) {
-          localStorage.setItem(`nexo_student_settings_${activeStudentEmail}`, JSON.stringify(serverProfile));
-          localStorage.setItem("nexo_student_settings", JSON.stringify(serverProfile));
+          localStorage.setItem(
+            `nexo_student_settings_${activeStudentEmail}`,
+            JSON.stringify(serverProfile),
+          );
+          localStorage.setItem(
+            "nexo_student_settings",
+            JSON.stringify(serverProfile),
+          );
         }
       } catch (_) {}
     }
@@ -1788,9 +2138,24 @@ async function loadStudentData() {
   };
 
   wireStatCard(cardMyApps, totalCount, "", "View all submitted applications");
-  wireStatCard(cardApproved, approvedCount, "approved", "View approved scholarship grants");
-  wireStatCard(cardReview, reviewCount, "review", "View applications under review");
-  wireStatCard(cardRejected, rejectedCount, "rejected", "View rejected applications");
+  wireStatCard(
+    cardApproved,
+    approvedCount,
+    "approved",
+    "View approved scholarship grants",
+  );
+  wireStatCard(
+    cardReview,
+    reviewCount,
+    "review",
+    "View applications under review",
+  );
+  wireStatCard(
+    cardRejected,
+    rejectedCount,
+    "rejected",
+    "View rejected applications",
+  );
 
   // Update dynamic metric card hints and navigation arrows
   const hintMyApps = document.getElementById("hint-stat-my-apps");
@@ -1802,25 +2167,25 @@ async function loadStudentData() {
     hintMyApps.innerHTML =
       totalCount >= 1
         ? '<span>View all applications</span> <span class="stat-arrow">&rarr;</span>'
-        : '<span>No applications submitted</span>';
+        : "<span>No applications submitted</span>";
   }
   if (hintApproved) {
     hintApproved.innerHTML =
       approvedCount >= 1
         ? '<span>Filter approved</span> <span class="stat-arrow">&rarr;</span>'
-        : '<span>No approvals yet</span>';
+        : "<span>No approvals yet</span>";
   }
   if (hintReview) {
     hintReview.innerHTML =
       reviewCount >= 1
         ? '<span>Filter in review</span> <span class="stat-arrow">&rarr;</span>'
-        : '<span>No applications in review</span>';
+        : "<span>No applications in review</span>";
   }
   if (hintRejected) {
     hintRejected.innerHTML =
       rejectedCount >= 1
         ? '<span>Filter rejected</span> <span class="stat-arrow">&rarr;</span>'
-        : '<span>No rejected applications</span>';
+        : "<span>No rejected applications</span>";
   }
 
   // Ensure name, dynamic greeting, and academic chips reflect serverProfile
@@ -1836,11 +2201,17 @@ async function loadStudentData() {
   updateStudentDashboardProfileOverview(serverProfile, activeStudentEmail);
 
   // Synchronize New Student Workspace Sections (Next Steps, Upcoming Deadlines, Recommended Opportunities, Recent Activity)
-  syncStudentWorkspaceSections(myApplications, serverProfile, activeStudentEmail);
+  syncStudentWorkspaceSections(
+    myApplications,
+    serverProfile,
+    activeStudentEmail,
+  );
 
   // Update Filter Pill Counters (for My Scholarship Submissions)
   const filterCountAll = document.getElementById("filter-count-all");
-  const filterCountSubmitted = document.getElementById("filter-count-submitted");
+  const filterCountSubmitted = document.getElementById(
+    "filter-count-submitted",
+  );
   const filterCountReview = document.getElementById("filter-count-review");
   const filterCountApproved = document.getElementById("filter-count-approved");
   const filterCountRejected = document.getElementById("filter-count-rejected");
@@ -1878,7 +2249,8 @@ async function loadStudentData() {
             String(a.scholarshipId) === String(targetId),
         );
         if (match) {
-          if (window._subModalOpenTimeout) clearTimeout(window._subModalOpenTimeout);
+          if (window._subModalOpenTimeout)
+            clearTimeout(window._subModalOpenTimeout);
           window._subModalOpenTimeout = setTimeout(() => {
             if (!window._subModalUserDismissed) {
               openSubmissionDetailsModal(match);
@@ -1887,7 +2259,11 @@ async function loadStudentData() {
         }
         // Immediately clean URL search query parameters so background sync intervals never loop
         try {
-          window.history.replaceState({}, document.title, window.location.pathname);
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname,
+          );
         } catch (_) {}
       }
     } catch (_) {}
@@ -1900,7 +2276,7 @@ function renderFilteredSubmissions() {
   const appsFeed = document.getElementById("student-apps-feed");
   const hasFilterTools = Boolean(
     document.getElementById("submissions-status-filters") ||
-      document.getElementById("btn-submissions-filter"),
+    document.getElementById("btn-submissions-filter"),
   );
   const viewAllBtn = document.getElementById("student-view-all-link");
 
@@ -1965,7 +2341,10 @@ function renderFilteredSubmissions() {
     const isDesktopSub = window.innerWidth >= 1024;
     const maxInitialSubCards = isDesktopSub ? 6 : 3;
 
-    if (totalMatchingSub > maxInitialSubCards && !window._submissionsShowAllApps) {
+    if (
+      totalMatchingSub > maxInitialSubCards &&
+      !window._submissionsShowAllApps
+    ) {
       listToRender = listToRender.slice(0, maxInitialSubCards);
     }
 
@@ -1991,7 +2370,9 @@ function renderFilteredSubmissions() {
       `;
       appsFeed.appendChild(toggleContainer);
 
-      const toggleBtn = toggleContainer.querySelector("#btn-toggle-submissions-all");
+      const toggleBtn = toggleContainer.querySelector(
+        "#btn-toggle-submissions-all",
+      );
       if (toggleBtn) {
         toggleBtn.addEventListener("click", () => {
           window._submissionsShowAllApps = !window._submissionsShowAllApps;
@@ -2083,7 +2464,9 @@ function renderFilteredSubmissions() {
       if (targetId) {
         window._hasHandledSubScrollDeepLink = true;
         setTimeout(() => {
-          const targetCard = document.querySelector(`[data-app-id="${targetId}"]`);
+          const targetCard = document.querySelector(
+            `[data-app-id="${targetId}"]`,
+          );
           if (targetCard) {
             targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
             targetCard.style.outline = "2.5px solid #8b5cf6";
@@ -2133,10 +2516,9 @@ function renderApplicationCards(applications, container) {
       .toUpperCase();
 
     const resolvedLogo = resolveAppProviderLogo(app);
-    const logoHtml =
-      resolvedLogo
-        ? `<div class="student-app-logo" style="padding: 0; overflow: hidden; flex-shrink: 0;"><img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;" /></div>`
-        : `<div class="student-app-logo">${initials || "NX"}</div>`;
+    const logoHtml = resolvedLogo
+      ? `<div class="student-app-logo" style="padding: 0; overflow: hidden; flex-shrink: 0;"><img src="${resolvedLogo}" alt="${escapeHtml(orgName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;" /></div>`
+      : `<div class="student-app-logo">${initials || "NX"}</div>`;
 
     const title = app.title || app.scholarshipTitle || "Scholarship Program";
     const date =
@@ -2145,11 +2527,17 @@ function renderApplicationCards(applications, container) {
     const rawDocs = app.documents || app.uploadedDocuments || [];
     const attachedDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return !d.includes("(To Follow Up)");
-      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+      return (
+        !d.isFollowUp &&
+        d.status !== "to_follow_up" &&
+        d.type !== "to_follow_up"
+      );
     });
     const followUpDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return d.includes("(To Follow Up)");
-      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+      return (
+        d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up"
+      );
     });
     const hasFeedback = Boolean(app.feedback || app.notes);
 
@@ -2203,17 +2591,21 @@ function renderApplicationCards(applications, container) {
     // 4. Status Explanation Text
     let statusExplanation = "";
     if (rawStatus.includes("approved")) {
-      statusExplanation = "Your application has been approved. Review provider onboarding instructions.";
+      statusExplanation =
+        "Your application has been approved. Review provider onboarding instructions.";
     } else if (rawStatus.includes("rejected")) {
-      statusExplanation = "Your application was not selected. Review provider remarks and feedback.";
+      statusExplanation =
+        "Your application was not selected. Review provider remarks and feedback.";
     } else if (rawStatus.includes("review")) {
       if (followUpDocs.length > 0) {
         statusExplanation = `Under provider review &bull; ${followUpDocs.length} follow-up document${followUpDocs.length === 1 ? "" : "s"} requested.`;
       } else {
-        statusExplanation = "Your application and submitted documents are undergoing committee evaluation.";
+        statusExplanation =
+          "Your application and submitted documents are undergoing committee evaluation.";
       }
     } else {
-      statusExplanation = "Your application has been received and queued for committee review.";
+      statusExplanation =
+        "Your application has been received and queued for committee review.";
     }
 
     // 5. Context-aware Button CTA Text
@@ -2225,7 +2617,8 @@ function renderApplicationCards(applications, container) {
     }
 
     // 6. Last Updated Date
-    const lastUpdateDate = app.reviewedAt || app.updatedAt || app.submittedAt || date;
+    const lastUpdateDate =
+      app.reviewedAt || app.updatedAt || app.submittedAt || date;
     const formattedLastUpdate = formatStudentShortDate(lastUpdateDate);
 
     card.innerHTML = `
@@ -2350,7 +2743,9 @@ function showFileUploadReviewModal(file, reqTitle, onConfirm) {
   const isPdf = file.name.toLowerCase().endsWith(".pdf");
   if (iconEl) {
     iconEl.textContent = isPdf ? "PDF" : "IMG";
-    iconEl.style.background = isPdf ? "rgba(239, 68, 68, 0.12)" : "rgba(105, 65, 198, 0.12)";
+    iconEl.style.background = isPdf
+      ? "rgba(239, 68, 68, 0.12)"
+      : "rgba(105, 65, 198, 0.12)";
     iconEl.style.color = isPdf ? "#ef4444" : "#6941C6";
   }
   const formattedSize =
@@ -2432,6 +2827,7 @@ function showFileUploadSuccessModal(fileName, providerName, onDone) {
 }
 
 // Open the Full Submission Details Modal
+window.openSubmissionDetailsModal = openSubmissionDetailsModal;
 function openSubmissionDetailsModal(app) {
   window._subModalUserDismissed = false;
   window._isSubDetailsModalOpen = true;
@@ -2700,11 +3096,15 @@ function openSubmissionDetailsModal(app) {
 
   const attachedDocs = rawDocs.filter((d) => {
     if (typeof d === "string") return !d.includes("(To Follow Up)");
-    return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+    return (
+      !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up"
+    );
   });
   const followUpDocs = rawDocs.filter((d) => {
     if (typeof d === "string") return d.includes("(To Follow Up)");
-    return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+    return (
+      d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up"
+    );
   });
 
   if (docCountEl) docCountEl.textContent = attachedDocs.length;
@@ -2758,7 +3158,9 @@ function openSubmissionDetailsModal(app) {
         followUpDocs.forEach((doc, fuIdx) => {
           const reqTitle =
             typeof doc === "object"
-              ? doc.requirement || doc.title || (doc.name || "").replace(" (To Follow Up)", "")
+              ? doc.requirement ||
+                doc.title ||
+                (doc.name || "").replace(" (To Follow Up)", "")
               : String(doc).replace(" (To Follow Up)", "");
 
           const fuItem = document.createElement("div");
@@ -2802,7 +3204,9 @@ function openSubmissionDetailsModal(app) {
               if (!file) return;
 
               if (file.size > 5 * 1024 * 1024) {
-                alert("File size exceeds 5MB limit. Please choose a smaller file.");
+                alert(
+                  "File size exceeds 5MB limit. Please choose a smaller file.",
+                );
                 fileInput.value = "";
                 return;
               }
@@ -2839,11 +3243,14 @@ function openSubmissionDetailsModal(app) {
                   };
 
                   try {
-                    const res = await fetch(`${API_BASE}/api/applications/${app.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(followUpPayload),
-                    }).catch(() => null);
+                    const res = await fetch(
+                      `${API_BASE}/api/applications/${app.id}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(followUpPayload),
+                      },
+                    ).catch(() => null);
 
                     if (res && res.ok) {
                       const resData = await res.json();
@@ -2852,8 +3259,13 @@ function openSubmissionDetailsModal(app) {
                       }
                     } else {
                       const updatedDocs = (app.documents || []).map((d) => {
-                        const dName = typeof d === "string" ? d : d.requirement || d.title || d.name || "";
-                        if (dName.toLowerCase().includes(reqTitle.toLowerCase())) {
+                        const dName =
+                          typeof d === "string"
+                            ? d
+                            : d.requirement || d.title || d.name || "";
+                        if (
+                          dName.toLowerCase().includes(reqTitle.toLowerCase())
+                        ) {
                           return {
                             name: file.name,
                             title: reqTitle,
@@ -2868,25 +3280,43 @@ function openSubmissionDetailsModal(app) {
                       });
                       app.documents = updatedDocs;
                       app.uploadedDocuments = updatedDocs
-                        .filter((d) => (typeof d === "string" ? !d.includes("(To Follow Up)") : !d.isFollowUp))
+                        .filter((d) =>
+                          typeof d === "string"
+                            ? !d.includes("(To Follow Up)")
+                            : !d.isFollowUp,
+                        )
                         .map((d) => (typeof d === "string" ? d : d.name));
                     }
                   } catch (err) {
-                    console.warn("Could not patch application follow-up doc:", err);
+                    console.warn(
+                      "Could not patch application follow-up doc:",
+                      err,
+                    );
                   }
 
                   try {
-                    const cached = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
-                    const idx = cached.findIndex((a) => String(a.id) === String(app.id));
+                    const cached = JSON.parse(
+                      localStorage.getItem("nexo_applications") || "[]",
+                    );
+                    const idx = cached.findIndex(
+                      (a) => String(a.id) === String(app.id),
+                    );
                     if (idx !== -1) {
                       cached[idx] = app;
-                      localStorage.setItem("nexo_applications", JSON.stringify(cached));
+                      localStorage.setItem(
+                        "nexo_applications",
+                        JSON.stringify(cached),
+                      );
                     }
                   } catch (_) {}
 
-                  showFileUploadSuccessModal(file.name, app.providerName || app.organization || "NEXO", () => {
-                    openSubmissionDetailsModal(app);
-                  });
+                  showFileUploadSuccessModal(
+                    file.name,
+                    app.providerName || app.organization || "NEXO",
+                    () => {
+                      openSubmissionDetailsModal(app);
+                    },
+                  );
                 };
                 reader.readAsDataURL(file);
               });
@@ -2911,7 +3341,10 @@ function openSubmissionDetailsModal(app) {
   if (nameEl) nameEl.textContent = sName;
 
   if (avatarEl) {
-    const sPic = app.studentProfilePic || localStorage.getItem("nexo-student-avatar") || "";
+    const sPic =
+      app.studentProfilePic ||
+      localStorage.getItem("nexo-student-avatar") ||
+      "";
     if (sPic && sPic.trim()) {
       avatarEl.innerHTML = `<img src="${sPic}" alt="${escapeHtml(sName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
     } else {
@@ -2928,7 +3361,8 @@ function openSubmissionDetailsModal(app) {
   if (courseEl) {
     const c = app.course || "";
     const y = app.yearLevel || "";
-    courseEl.textContent = [c, y].filter(Boolean).join(" - ") || "Undergraduate Scholar";
+    courseEl.textContent =
+      [c, y].filter(Boolean).join(" - ") || "Undergraduate Scholar";
   }
   if (uniEl) {
     uniEl.textContent = app.university || "Batangas State University";
@@ -2955,7 +3389,11 @@ function openSubmissionDetailsModal(app) {
     // Clean any lingering query parameter from the URL address bar
     try {
       if (window.location.search) {
-        window.history.replaceState({}, document.title, window.location.pathname);
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
       }
     } catch (_) {}
 
@@ -2979,7 +3417,9 @@ function openSubmissionDetailsModal(app) {
         typeof openDetailsModal === "function" &&
         Array.isArray(window.allScholarships)
       ) {
-        const match = window.allScholarships.find((s) => String(s.id) === String(targetScholId));
+        const match = window.allScholarships.find(
+          (s) => String(s.id) === String(targetScholId),
+        );
         if (match) {
           openDetailsModal(match);
           return;
@@ -3011,7 +3451,9 @@ function initSubmissionsFiltering() {
   );
   const searchInput = document.getElementById("submissions-search-input");
   const resetBtn = document.getElementById("reset-submissions-filter");
-  const legacyFilterTabs = document.getElementById("submissions-status-filters");
+  const legacyFilterTabs = document.getElementById(
+    "submissions-status-filters",
+  );
 
   if (!filterDropdownBtn && !legacyFilterTabs && !searchInput) return;
 
