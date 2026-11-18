@@ -462,9 +462,7 @@ function initNotificationBell() {
 
   function clampPopoverPosition() {
     if (!popover) return;
-    const isDesktop = window.innerWidth >= 1024;
-    // On desktop, the pre-opened side menu rail is 68px wide on the right edge; offset popover so it never goes underneath the rail
-    popover.style.right = isDesktop ? "52px" : "0";
+    popover.style.right = "0";
     popover.style.left = "auto";
     const rect = popover.getBoundingClientRect();
     if (rect.left < 14) {

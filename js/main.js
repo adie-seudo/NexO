@@ -804,12 +804,7 @@ function hydrateRoleAwareHeader() {
         <span id="draft-badge" style="display:none;background-color:#8b5cf6;color:white;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:auto;">0</span>
       </a>
 
-      <a href="provider-settings.html" class="nav-link" id="nav-settings">
-        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
-        <span class="nav-text">Settings</span>
-      </a>
-
-      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+      <div class="nav-spacer"></div>
 
       <a href="provider-about.html" class="nav-link">
         <img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" />
@@ -826,7 +821,12 @@ function hydrateRoleAwareHeader() {
         <span class="nav-text">Credits</span>
       </a>
 
-      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+      <a href="provider-settings.html" class="nav-link" id="nav-settings">
+        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Settings</span>
+      </a>
+
+      <div class="nav-spacer"></div>
 
       <div class="nav-buttons">
         <a href="index.html" class="btn logout-btn" id="header-logout-btn" style="text-decoration: none !important;">
@@ -852,12 +852,7 @@ function hydrateRoleAwareHeader() {
         <span class="nav-text">View My Submissions</span>
       </a>
 
-      <a href="student-settings.html" class="nav-link">
-        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
-        <span class="nav-text">Settings</span>
-      </a>
-
-      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+      <div class="nav-spacer"></div>
 
       <a href="student-about.html" class="nav-link">
         <img src="assets/about-icon.png" alt="About" class="nav-icon" onerror="this.style.display='none'" />
@@ -874,7 +869,12 @@ function hydrateRoleAwareHeader() {
         <span class="nav-text">Credits</span>
       </a>
 
-      <div class="nav-spacer" style="height: 1px; background: rgba(255,255,255,0.08); margin: 8px 0;"></div>
+      <a href="student-settings.html" class="nav-link">
+        <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display='none'" />
+        <span class="nav-text">Settings</span>
+      </a>
+
+      <div class="nav-spacer"></div>
 
       <div class="nav-buttons">
         <a href="index.html" class="btn logout-btn" id="header-logout-btn" style="text-decoration: none !important;">
@@ -883,6 +883,33 @@ function hydrateRoleAwareHeader() {
         </a>
       </div>
     `;
+  }
+
+  // Ensure notification bell is present in header-actions when logged in as student or provider on shared pages
+  if (role === "student" || role === "provider") {
+    const headerActions = document.querySelector(".header-actions");
+    const navWrapper = document.getElementById("nav-wrapper") || (headerActions && headerActions.querySelector(".nav-wrapper"));
+    if (headerActions && !headerActions.querySelector(".notification-btn")) {
+      const bellBtn = document.createElement("button");
+      bellBtn.className = "icon-btn notification-btn";
+      bellBtn.type = "button";
+      if (role === "student") bellBtn.id = "student-notif-btn";
+      bellBtn.setAttribute("aria-label", "Notifications");
+      bellBtn.setAttribute("aria-expanded", "false");
+      bellBtn.innerHTML = `
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        <span class="notification-dot"${role === "student" ? ' id="student-notif-dot"' : ""}></span>
+      `;
+      if (navWrapper) {
+        headerActions.insertBefore(bellBtn, navWrapper);
+      } else {
+        headerActions.appendChild(bellBtn);
+      }
+      initSharedHeaderNotificationBell(bellBtn, role);
+    }
   }
 
   // Active link highlight
@@ -912,6 +939,160 @@ function hydrateRoleAwareHeader() {
 
   // Global Drafts Badge Sync
   syncGlobalDraftBadge();
+}
+
+function initSharedHeaderNotificationBell(notifBtn, role) {
+  if (!notifBtn || notifBtn.dataset.notifBound === "true") return;
+  notifBtn.dataset.notifBound = "true";
+
+  const dot = notifBtn.querySelector(".notification-dot");
+  let popover = document.getElementById("header-notif-popover");
+  if (!popover) {
+    popover = document.createElement("div");
+    popover.id = "header-notif-popover";
+    popover.className = "notification-popover";
+    popover.setAttribute("role", "dialog");
+    popover.setAttribute("aria-label", "Notifications");
+    popover.innerHTML = `
+      <div class="notif-popover-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h4 class="notif-popover-title">Notifications</h4>
+          <span class="notif-badge-count" id="shared-notif-badge">0 New</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="notif-mark-read-btn" id="shared-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
+        </div>
+      </div>
+      <div class="notif-popover-body" id="shared-notif-body">
+        <div class="notif-empty-box">
+          <div class="notif-empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </div>
+          <p class="notif-empty-heading">No notifications yet</p>
+          <p class="notif-empty-text">You're all caught up! New updates will appear here.</p>
+        </div>
+      </div>
+    `;
+    let container = notifBtn.closest(".notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "notification-container";
+      notifBtn.parentNode.insertBefore(container, notifBtn);
+      container.appendChild(notifBtn);
+    }
+    container.appendChild(popover);
+  }
+
+  function getSharedNotifs() {
+    let all = [];
+    try {
+      all = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+    } catch (_) {}
+    if (!Array.isArray(all)) all = [];
+    let dismissed = [];
+    try {
+      dismissed = JSON.parse(localStorage.getItem("nexo_dismissed_notifs") || "[]");
+    } catch (_) {}
+    if (!Array.isArray(dismissed)) dismissed = [];
+
+    const currentEmail = (
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase().trim();
+
+    return all.filter((n) => {
+      if (dismissed.includes(String(n.id))) return false;
+      const matchRole = !n.recipient || n.recipient === role || n.recipient === "all";
+      if (!matchRole) return false;
+      if (role === "student" && n.recipientEmail && currentEmail) {
+        return String(n.recipientEmail).toLowerCase().trim() === currentEmail;
+      }
+      return true;
+    });
+  }
+
+  function renderSharedNotifs() {
+    const list = getSharedNotifs();
+    const unreadCount = list.filter((n) => !n.read).length;
+    const badgeEl = document.getElementById("shared-notif-badge");
+    const bodyEl = document.getElementById("shared-notif-body");
+    if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
+    if (dot) {
+      dot.classList.toggle("active", unreadCount > 0);
+      notifBtn.classList.toggle("has-unread", unreadCount > 0);
+    }
+    if (!bodyEl) return;
+    if (list.length === 0) return;
+    bodyEl.innerHTML = list
+      .map((n) => {
+        const isUnread = !n.read;
+        const timeStr = n.formattedTime || "Recently";
+        const defaultLink = role === "provider" ? "provider-applications.html" : "student-submissions.html";
+        const linkUrl = n.link || defaultLink;
+        return `
+          <a href="${linkUrl}" class="notif-item ${isUnread ? "unread" : ""}" data-id="${n.id}">
+            <div class="notif-item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </div>
+            <div class="notif-item-content">
+              <h5 class="notif-item-title">${n.title || "Notification"}</h5>
+              <p class="notif-item-msg">${n.message || ""}</p>
+              <span class="notif-item-time">${timeStr}</span>
+            </div>
+          </a>
+        `;
+      })
+      .join("");
+  }
+
+  renderSharedNotifs();
+
+  const markReadBtn = document.getElementById("shared-mark-read");
+  if (markReadBtn) {
+    markReadBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        const cached = JSON.parse(localStorage.getItem("nexo_notifications") || "[]");
+        cached.forEach((n) => {
+          if (!n.recipient || n.recipient === role || n.recipient === "all") n.read = true;
+        });
+        localStorage.setItem("nexo_notifications", JSON.stringify(cached));
+      } catch (_) {}
+      renderSharedNotifs();
+    });
+  }
+
+  notifBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeMobileNav();
+    const willOpen = !popover.classList.contains("open");
+    popover.classList.toggle("open", willOpen);
+    notifBtn.setAttribute("aria-expanded", willOpen ? "true" : "false");
+    if (willOpen) {
+      popover.style.right = "0";
+      popover.style.left = "auto";
+      if (dot) dot.classList.remove("active");
+      notifBtn.classList.remove("has-unread");
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (popover.classList.contains("open") && !popover.contains(e.target) && !notifBtn.contains(e.target)) {
+      popover.classList.remove("open");
+      notifBtn.setAttribute("aria-expanded", "false");
+    }
+  });
 }
 
 function syncGlobalDraftBadge() {
