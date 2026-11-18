@@ -471,9 +471,9 @@ class NexoHandler(BaseHTTPRequestHandler):
 
         if path == "/api/applications":
             target_sid = body.get("scholarshipId", "schol_nexo_tech_01")
-            student_email = body.get("studentEmail") or data.get("studentSettings", {}).get("email", "adrian@batstate-u.edu.ph")
+            student_email = (body.get("studentEmail") or data.get("studentSettings", {}).get("email", "adrian@batstate-u.edu.ph")).strip().lower()
             for a in data.get("applications", []):
-                if str(a.get("scholarshipId")) == str(target_sid) and (not a.get("studentEmail") or a.get("studentEmail") == student_email):
+                if str(a.get("scholarshipId")) == str(target_sid) and (a.get("studentEmail") or "").strip().lower() == student_email:
                     return self._send_json(400, {"success": False, "error": "You have already applied for this scholarship."})
 
             for s in data.get("scholarships", []):

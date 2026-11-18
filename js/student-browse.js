@@ -258,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
           ? fullData.applications
           : [];
 
-        // Sync any local scholarships created while server was offline back to the server
+        // Sync any local scholarships or applications created while server was offline back to the server
         const serverScholIds = new Set(serverScholarships.map((s) => String(s && s.id)));
         (Array.isArray(localScholarships) ? localScholarships : []).forEach((ls) => {
           if (ls && ls.id && !serverScholIds.has(String(ls.id)) && !deletedIds.has(String(ls.id))) {
@@ -266,6 +266,16 @@ document.addEventListener("DOMContentLoaded", () => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(ls),
+            }).catch(() => {});
+          }
+        });
+        const serverAppIds = new Set(serverApplications.map((a) => String(a && a.id)));
+        (Array.isArray(localApplications) ? localApplications : []).forEach((la) => {
+          if (la && la.id && !serverAppIds.has(String(la.id)) && !deletedIds.has(String(la.id))) {
+            fetch(`${API_BASE}/api/applications`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(la),
             }).catch(() => {});
           }
         });
@@ -1337,8 +1347,16 @@ document.addEventListener("DOMContentLoaded", () => {
     activeScholarship = schol;
     if (!modalOverlay || !modalViewDropbox) return;
 
+    const currentStudentEmail = (
+      sessionStorage.getItem("nexo-student-email") ||
+      localStorage.getItem("nexo-student-email") ||
+      ""
+    ).toLowerCase().trim();
+
     const existing = studentApplications.find(
-      (a) => String(a.scholarshipId) === String(schol.id),
+      (a) =>
+        (a.studentEmail || "").toLowerCase().trim() === currentStudentEmail &&
+        String(a.scholarshipId) === String(schol.id),
     );
     if (existing) {
       showToast("You have already applied for this scholarship.", true);
@@ -1376,19 +1394,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     modalOverlay.classList.add("active");
     document.body.style.overflow = "hidden";
+    const sheetEl = document.getElementById("schol-modal-sheet");
+    if (sheetEl) sheetEl.scrollTop = 0;
   }
 
   if (btnOpenDropbox) {
     btnOpenDropbox.addEventListener("click", () => {
       if (!activeScholarship) return;
+      const currentStudentEmail = (
+        sessionStorage.getItem("nexo-student-email") ||
+        localStorage.getItem("nexo-student-email") ||
+        ""
+      ).toLowerCase().trim();
       const existing = studentApplications.find(
-        (a) => String(a.scholarshipId) === String(activeScholarship.id),
+        (a) =>
+          (a.studentEmail || "").toLowerCase().trim() === currentStudentEmail &&
+          String(a.scholarshipId) === String(activeScholarship.id),
       );
       if (existing) {
-        showToast(
-          "You have already submitted an application for this scholarship.",
-          true,
-        );
+        window.location.href = `student-submissions.html?id=${encodeURIComponent(existing.id)}`;
         return;
       }
       if (typeof window.isStudentProfileComplete === "function" && !window.isStudentProfileComplete()) {
@@ -1943,14 +1967,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (_) {}
 
-      const sEmail =
+      const sEmail = (
         sessionStorage.getItem("nexo-student-email") ||
+        localStorage.getItem("nexo-student-email") ||
         (studentSettings && studentSettings.email) ||
-        "student@batstate-u.edu.ph";
+        "student@batstate-u.edu.ph"
+      ).toLowerCase().trim();
       const emailFallback = sEmail.includes("@") ? sEmail.split("@")[0] : "Student Applicant";
       const sName =
         (studentSettings && studentSettings.fullName && studentSettings.fullName.trim()) ||
         (sessionStorage.getItem("nexo-student-name") && sessionStorage.getItem("nexo-student-name").trim()) ||
+        (localStorage.getItem("nexo-student-name") && localStorage.getItem("nexo-student-name").trim()) ||
         emailFallback;
       const sId = (studentSettings && studentSettings.studentId) || "";
       const sSchool =
@@ -2013,7 +2040,7 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadedDocuments: processedAttachedDocs.map((d) => d.name),
       };
 
-      // Save to server
+      // Save to server (or fallback to localStorage if running on Live Server)
       let saveFailed = false;
       try {
         const resp = await fetch(`${API_BASE}/api/applications`, {
@@ -2021,13 +2048,15 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(newApp),
         });
-        if (!resp.ok) {
+        if (!resp.ok && resp.status !== 404 && resp.status !== 405 && resp.status !== 501) {
           const errData = await resp.json().catch(() => ({}));
-          showToast(errData.error || "Failed to submit application", true);
-          saveFailed = true;
+          if (errData && errData.error) {
+            showToast(errData.error, true);
+            saveFailed = true;
+          }
         }
       } catch (err) {
-        console.warn("Could not save to /api/applications:", err);
+        console.warn("Could not save to /api/applications via server, persisting locally:", err);
       }
 
       if (saveFailed) {
