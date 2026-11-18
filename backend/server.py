@@ -10,10 +10,17 @@ import sys
 import json
 import base64
 import time
+import io
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 import mimetypes
+
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
 
 PORT = int(os.environ.get("PORT", 3000))
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -104,6 +111,40 @@ def write_data(data):
     except Exception as e:
         print("Error writing data:", e)
         return False
+
+def compress_base64_image(b64_str, max_dim=800, quality=80):
+    if not HAS_PIL or not b64_str or not isinstance(b64_str, str) or not b64_str.startswith("data:image/"):
+        return b64_str
+    try:
+        header, data = b64_str.split(",", 1)
+        raw = base64.b64decode(data)
+        img = Image.open(io.BytesIO(raw))
+        if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+            fmt = "WEBP"
+        else:
+            fmt = "JPEG"
+            img = img.convert("RGB")
+        w, h = img.size
+        if w > max_dim or h > max_dim:
+            if w >= h:
+                h = int(h * max_dim / w)
+                w = max_dim
+            else:
+                w = int(w * max_dim / h)
+                h = max_dim
+            img = img.resize((w, h), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        if fmt == "WEBP":
+            img.save(buf, format="WEBP", quality=quality)
+            mime = "image/webp"
+        else:
+            img.save(buf, format="JPEG", quality=quality, optimize=True)
+            mime = "image/jpeg"
+        out_b64 = f"data:{mime};base64," + base64.b64encode(buf.getvalue()).decode("utf-8")
+        return out_b64 if len(out_b64) < len(b64_str) else b64_str
+    except Exception as e:
+        print("compress_base64_image error:", e)
+        return b64_str
 
 def save_base64_file(doc, prefix):
     if not doc or not isinstance(doc, dict):
@@ -716,6 +757,10 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {"success": True})
 
         if path == "/api/settings":
+            if "logoImage" in body and body["logoImage"]:
+                body["logoImage"] = compress_base64_image(body["logoImage"], 256, 82)
+            if "bannerImage" in body and body["bannerImage"]:
+                body["bannerImage"] = compress_base64_image(body["bannerImage"], 960, 75)
             target_email = (body.get("email") or query.get("email", [""])[0] or "").strip().lower()
             is_primary = not target_email or target_email in ("admin@admin", "provider@nexo.edu.ph")
             profiles = data.setdefault("providerProfiles", {})
@@ -742,6 +787,11 @@ class NexoHandler(BaseHTTPRequestHandler):
                     if "orgName" in body and body["orgName"]:
                         u["orgName"] = body["orgName"]
                         u["name"] = body["orgName"]
+                    if "bannerImage" in body:
+                        u["bannerImage"] = body["bannerImage"]
+                    if "logoImage" in body:
+                        u["logoImage"] = body["logoImage"]
+                        u["avatar"] = body["logoImage"]
             if "logoImage" in body or "bannerImage" in body or "orgName" in body:
                 for s in data.get("scholarships", []):
                     s_email = (s.get("providerEmail") or "").strip().lower()
@@ -756,6 +806,8 @@ class NexoHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {"success": True, "settings": current})
 
         if path == "/api/student-settings":
+            if "profilePicture" in body and body["profilePicture"]:
+                body["profilePicture"] = compress_base64_image(body["profilePicture"], 256, 82)
             email = (body.get("email") or query.get("email", [""])[0] or data.get("studentSettings", {}).get("email", "")).strip().lower()
             profiles = data.setdefault("studentProfiles", {})
             current = profiles.get(email)

@@ -28,6 +28,43 @@
 })();
 
 // ==========================================
+// 0.05 STORAGE QUOTA SELF-HEALING GUARD
+// Automatically cleans bloated preview keys or redundant cache if localStorage is full
+// ==========================================
+(function checkAndHealStorageQuota() {
+  try {
+    const testKey = "__nexo_quota_test__";
+    localStorage.setItem(testKey, "1");
+    localStorage.removeItem(testKey);
+  } catch (quotaErr) {
+    console.warn("Storage quota full, running self-healing storage cleanup...");
+    try {
+      localStorage.removeItem("provider-banner-preview");
+      localStorage.removeItem("nexo-provider-banner");
+      localStorage.removeItem("nexo-provider-logo");
+      localStorage.removeItem("nexo_settings");
+      localStorage.removeItem("nexo_provider_settings");
+
+      // Slim down any bloated cached scholarships containing redundant base64 banners
+      const rawSchols = localStorage.getItem("nexo_scholarships");
+      if (rawSchols && rawSchols.includes("data:image/")) {
+        try {
+          const parsed = JSON.parse(rawSchols);
+          const slimmed = parsed.map((s) => ({
+            ...s,
+            providerBanner:
+              s.providerBanner && s.providerBanner.length > 50000
+                ? ""
+                : s.providerBanner,
+          }));
+          localStorage.setItem("nexo_scholarships", JSON.stringify(slimmed));
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+})();
+
+// ==========================================
 // 0.1 GLOBAL ASSETS & FALLBACKS (Clean, no default test banners)
 // ==========================================
 window.DEFAULT_PROVIDER_BANNER = "";
@@ -88,18 +125,6 @@ window.API_BASE =
       schols = schols.filter((s) => s && !FAKE_SCHOL_IDS.has(s.id));
       localStorage.setItem("nexo_scholarships", JSON.stringify(schols));
     }
-
-    // Purge old leftover provider test banner from localStorage
-    localStorage.removeItem("nexo-provider-banner");
-    localStorage.removeItem("provider-banner-preview");
-    try {
-      const pSet = JSON.parse(localStorage.getItem("nexo-provider-settings") || "{}");
-      if (pSet && (pSet.bannerImage || pSet.banner)) {
-        pSet.bannerImage = "";
-        pSet.banner = "";
-        localStorage.setItem("nexo-provider-settings", JSON.stringify(pSet));
-      }
-    } catch (_) {}
 
     // Standardize applicant count calculation across cached scholarships
     if (Array.isArray(schols) && schols.length > 0) {

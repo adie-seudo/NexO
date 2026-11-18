@@ -836,8 +836,21 @@ function syncGlobalHeaderAvatar() {
   const avatarBtn = document.querySelector(".logo-container .avatar-btn");
   if (!avatarBtn) return;
 
-  const logo = localStorage.getItem("nexo-provider-logo");
-  const name = localStorage.getItem("nexo-provider-name") || "NEXO";
+  const currentEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase().trim();
+
+  const logo =
+    (currentEmail && (sessionStorage.getItem(`nexo-provider-logo_${currentEmail}`) || localStorage.getItem(`nexo-provider-logo_${currentEmail}`))) ||
+    sessionStorage.getItem("nexo-provider-logo") ||
+    localStorage.getItem("nexo-provider-logo") ||
+    "";
+  const name =
+    sessionStorage.getItem("nexo-provider-name") ||
+    localStorage.getItem("nexo-provider-name") ||
+    "NEXO";
 
   if (logo) {
     avatarBtn.innerHTML = `<img src="${logo}" alt="Logo">`;

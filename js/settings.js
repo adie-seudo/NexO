@@ -14,6 +14,56 @@ let bannerBase64 = null; // null = unchanged, "" = deleted, "data:image..." = ne
 let logoBase64 = null;
 let isDirty = false;
 
+// ==========================================
+// IMAGE COMPRESSION HELPER (Canvas-based, prevents LocalStorage QuotaExceededError)
+// ==========================================
+function compressImageDataUrl(dataUrl, maxDim = 800, quality = 0.8) {
+  return new Promise((resolve) => {
+    if (
+      !dataUrl ||
+      typeof dataUrl !== "string" ||
+      !dataUrl.startsWith("data:image/")
+    ) {
+      resolve(dataUrl || "");
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      try {
+        let width = img.width || maxDim;
+        let height = img.height || maxDim;
+        if (width > maxDim || height > maxDim) {
+          if (width >= height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        let out = canvas.toDataURL("image/webp", quality);
+        if (
+          !out ||
+          out.length > dataUrl.length ||
+          !out.startsWith("data:image/")
+        ) {
+          out = canvas.toDataURL("image/jpeg", quality);
+        }
+        resolve(out && out.length < dataUrl.length ? out : dataUrl);
+      } catch (_) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initSettingsCategories();
   initImageUploads();
@@ -91,8 +141,9 @@ function initImageUploads() {
       }
 
       const reader = new FileReader();
-      reader.onload = function (event) {
-        bannerBase64 = event.target.result;
+      reader.onload = async function (event) {
+        const rawData = event.target.result;
+        bannerBase64 = await compressImageDataUrl(rawData, 960, 0.76);
         bannerPreview.src = bannerBase64;
         bannerPreview.classList.add("has-image");
         if (btnRemoveBanner) btnRemoveBanner.classList.add("visible");
@@ -126,8 +177,9 @@ function initImageUploads() {
       }
 
       const reader = new FileReader();
-      reader.onload = function (event) {
-        logoBase64 = event.target.result;
+      reader.onload = async function (event) {
+        const rawData = event.target.result;
+        logoBase64 = await compressImageDataUrl(rawData, 256, 0.82);
         logoPreview.src = logoBase64;
         logoPreview.classList.add("has-image");
         const logoWrapper = document.querySelector(".brand-logo-wrapper");
@@ -203,18 +255,31 @@ async function loadSettings() {
     const res = await fetch(`${API_BASE}/api/settings${query}`);
     if (res.ok) {
       settings = await res.json();
-      // Cache copy in localStorage for offline & quick navigation
+      // Cache copy in localStorage and sessionStorage for offline & quick navigation
       try {
         if (activeProviderEmail) {
-          localStorage.setItem(
-            `nexo_provider_settings_${activeProviderEmail}`,
-            JSON.stringify(settings),
-          );
+          sessionStorage.setItem(`nexo_provider_settings_${activeProviderEmail}`, JSON.stringify(settings));
+          localStorage.setItem(`nexo_provider_settings_${activeProviderEmail}`, JSON.stringify(settings));
         }
-        localStorage.setItem(
-          "nexo_provider_settings",
-          JSON.stringify(settings),
-        );
+        sessionStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+        localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+
+        if (settings.bannerImage) {
+          sessionStorage.setItem("nexo-provider-banner", settings.bannerImage);
+          if (activeProviderEmail) sessionStorage.setItem(`nexo-provider-banner_${activeProviderEmail}`, settings.bannerImage);
+          try {
+            localStorage.setItem("nexo-provider-banner", settings.bannerImage);
+            if (activeProviderEmail) localStorage.setItem(`nexo-provider-banner_${activeProviderEmail}`, settings.bannerImage);
+          } catch (_) {}
+        }
+        if (settings.logoImage) {
+          sessionStorage.setItem("nexo-provider-logo", settings.logoImage);
+          if (activeProviderEmail) sessionStorage.setItem(`nexo-provider-logo_${activeProviderEmail}`, settings.logoImage);
+          try {
+            localStorage.setItem("nexo-provider-logo", settings.logoImage);
+            if (activeProviderEmail) localStorage.setItem(`nexo-provider-logo_${activeProviderEmail}`, settings.logoImage);
+          } catch (_) {}
+        }
       } catch (_) {}
     }
   } catch (err) {
@@ -490,10 +555,20 @@ async function saveAllSettings(saveBtn = null) {
   if (bannerBase64 !== null) {
     finalBanner = bannerBase64;
   }
+  if (finalBanner && finalBanner.length > 250000) {
+    try {
+      finalBanner = await compressImageDataUrl(finalBanner, 960, 0.76);
+    } catch (_) {}
+  }
 
   let finalLogo = currentSettings.logoImage || "";
   if (logoBase64 !== null) {
     finalLogo = logoBase64;
+  }
+  if (finalLogo && finalLogo.length > 50000) {
+    try {
+      finalLogo = await compressImageDataUrl(finalLogo, 256, 0.82);
+    } catch (_) {}
   }
 
   const payload = {
@@ -541,9 +616,49 @@ async function saveAllSettings(saveBtn = null) {
     currentSettings = payload;
   }
 
-  // Always mirror to localStorage for instant cross-page sync
+  // Always mirror to localStorage and sessionStorage with quota-safe isolation
+  const targetEmailKey = (emailVal || activeProviderEmail).toLowerCase();
   try {
-    const targetEmailKey = (emailVal || activeProviderEmail).toLowerCase();
+    if (orgNameVal) {
+      localStorage.setItem("nexo-provider-name", orgNameVal);
+      sessionStorage.setItem("nexo-provider-name", orgNameVal);
+    }
+    if (targetEmailKey) {
+      localStorage.setItem("nexo-provider-email", targetEmailKey);
+      sessionStorage.setItem("nexo-provider-email", targetEmailKey);
+    }
+  } catch (_) {}
+
+  // 1. Session Storage mirroring (Zero Quota impact on localStorage, persists across tab navigations)
+  try {
+    if (targetEmailKey) {
+      sessionStorage.setItem(
+        `nexo_provider_settings_${targetEmailKey}`,
+        JSON.stringify(currentSettings),
+      );
+    }
+    sessionStorage.setItem(
+      "nexo_provider_settings",
+      JSON.stringify(currentSettings),
+    );
+    if (finalBanner) {
+      sessionStorage.setItem("nexo-provider-banner", finalBanner);
+      if (targetEmailKey) sessionStorage.setItem(`nexo-provider-banner_${targetEmailKey}`, finalBanner);
+    } else {
+      sessionStorage.removeItem("nexo-provider-banner");
+      if (targetEmailKey) sessionStorage.removeItem(`nexo-provider-banner_${targetEmailKey}`);
+    }
+    if (finalLogo) {
+      sessionStorage.setItem("nexo-provider-logo", finalLogo);
+      if (targetEmailKey) sessionStorage.setItem(`nexo-provider-logo_${targetEmailKey}`, finalLogo);
+    } else {
+      sessionStorage.removeItem("nexo-provider-logo");
+      if (targetEmailKey) sessionStorage.removeItem(`nexo-provider-logo_${targetEmailKey}`);
+    }
+  } catch (_) {}
+
+  // 2. Local Storage mirroring
+  try {
     if (targetEmailKey) {
       localStorage.setItem(
         `nexo_provider_settings_${targetEmailKey}`,
@@ -555,11 +670,58 @@ async function saveAllSettings(saveBtn = null) {
       JSON.stringify(currentSettings),
     );
     localStorage.setItem("nexo_settings", JSON.stringify(currentSettings));
-    localStorage.setItem("nexo-provider-name", orgNameVal);
-    sessionStorage.setItem("nexo-provider-name", orgNameVal);
-    localStorage.setItem("nexo-provider-logo", finalLogo);
-    localStorage.setItem("nexo-provider-banner", finalBanner);
 
+    if (finalLogo) {
+      localStorage.setItem("nexo-provider-logo", finalLogo);
+      if (targetEmailKey) localStorage.setItem(`nexo-provider-logo_${targetEmailKey}`, finalLogo);
+    } else {
+      localStorage.removeItem("nexo-provider-logo");
+      if (targetEmailKey) localStorage.removeItem(`nexo-provider-logo_${targetEmailKey}`);
+    }
+
+    if (finalBanner) {
+      localStorage.setItem("nexo-provider-banner", finalBanner);
+      if (targetEmailKey) localStorage.setItem(`nexo-provider-banner_${targetEmailKey}`, finalBanner);
+    } else {
+      localStorage.removeItem("nexo-provider-banner");
+      if (targetEmailKey) localStorage.removeItem(`nexo-provider-banner_${targetEmailKey}`);
+    }
+  } catch (quotaErr) {
+    console.warn(
+      "Storage quota full when saving provider settings, clearing volatile keys...",
+    );
+    try {
+      localStorage.removeItem("provider-banner-preview");
+      if (finalBanner) {
+        localStorage.setItem("nexo-provider-banner", finalBanner);
+      }
+      if (finalLogo) {
+        localStorage.setItem("nexo-provider-logo", finalLogo);
+      }
+      if (targetEmailKey) {
+        localStorage.setItem(
+          `nexo_provider_settings_${targetEmailKey}`,
+          JSON.stringify(currentSettings),
+        );
+      }
+    } catch (_) {
+      // In worst-case quota failure, sessionStorage and server backend preserve the state
+    }
+  }
+
+  // Notify listeners and other components of settings & banner update
+  try {
+    window.dispatchEvent(
+      new CustomEvent("nexo:settings-updated", { detail: currentSettings }),
+    );
+    window.dispatchEvent(
+      new CustomEvent("nexo:banner-updated", {
+        detail: { bannerImage: finalBanner, email: targetEmailKey },
+      }),
+    );
+  } catch (_) {}
+
+  try {
     const wantDark = document.getElementById(
       "pref-provider-dark-mode",
     )?.checked;
@@ -574,10 +736,12 @@ async function saveAllSettings(saveBtn = null) {
         localStorage.setItem("nexo-theme", "light");
       }
     }
+  } catch (_) {}
 
-    // Update matching scholarships in local storage so Directory inherits the updated banner
+  // Update matching scholarships in local storage safely
+  try {
     const cachedSchols = JSON.parse(
-      localStorage.getItem("nexo_scholarships") || "[]"
+      localStorage.getItem("nexo_scholarships") || "[]",
     );
     const isPrimary =
       targetEmailKey === "admin@admin" ||
@@ -592,7 +756,6 @@ async function saveAllSettings(saveBtn = null) {
           s.providerName === orgNameVal ||
           (isPrimary && (!s.providerName || s.providerName === "NEXO"));
         if (emailMatch || nameMatch) {
-          if (finalBanner) s.providerBanner = finalBanner;
           if (finalLogo) s.providerLogo = finalLogo;
           if (orgNameVal) s.providerName = orgNameVal;
         }

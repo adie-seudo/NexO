@@ -452,48 +452,89 @@ function initLoginToggleAndSubmit() {
       if (matchedUser.role === "provider") {
         const provEmailLower = (matchedUser.email || "").toLowerCase().trim();
         const provDisplayName = matchedUser.orgName || matchedUser.name || "NEXO";
+
+        // 1. ALWAYS set essential auth flags FIRST before attempting any large profile/image writes
         try {
-          const lastProvEmail = (localStorage.getItem("nexo-provider-email") || "").toLowerCase().trim();
-          if (lastProvEmail !== provEmailLower) {
-            localStorage.removeItem("nexo_provider_settings");
-            localStorage.removeItem("nexo_settings");
-            localStorage.removeItem("nexo-provider-logo");
-            localStorage.removeItem("nexo-provider-banner");
-            localStorage.removeItem("provider-banner-preview");
-          } else {
-            localStorage.removeItem("nexo-provider-banner");
-            localStorage.removeItem("provider-banner-preview");
-          }
-
-          if (provEmailLower) {
-            const scopedProv = localStorage.getItem(`nexo_provider_settings_${provEmailLower}`);
-            if (scopedProv) {
-              localStorage.setItem("nexo_provider_settings", scopedProv);
-              try {
-                const parsedProv = JSON.parse(scopedProv);
-                if (parsedProv.logoImage) {
-                  localStorage.setItem("nexo-provider-logo", parsedProv.logoImage);
-                } else {
-                  localStorage.removeItem("nexo-provider-logo");
-                }
-                if (parsedProv.bannerImage) {
-                  localStorage.setItem("nexo-provider-banner", parsedProv.bannerImage);
-                }
-              } catch (_) {}
-            } else {
-              localStorage.removeItem("nexo_provider_settings");
-              localStorage.removeItem("nexo_settings");
-              localStorage.removeItem("nexo-provider-logo");
-            }
-          }
-
           sessionStorage.setItem("nexo-logged-in", "provider");
           sessionStorage.setItem("nexo-provider-name", provDisplayName);
           sessionStorage.setItem("nexo-provider-email", matchedUser.email);
+        } catch (_) {}
+
+        try {
           localStorage.setItem("nexo-logged-in", "provider");
           localStorage.setItem("nexo-provider-name", provDisplayName);
           localStorage.setItem("nexo-provider-email", matchedUser.email);
+        } catch (e) {
+          // If localStorage is near or at quota, purge volatile/preview keys and retry
+          try {
+            localStorage.removeItem("provider-banner-preview");
+            localStorage.removeItem("nexo-provider-banner");
+            localStorage.removeItem("nexo-provider-logo");
+            localStorage.setItem("nexo-logged-in", "provider");
+            localStorage.setItem("nexo-provider-name", provDisplayName);
+            localStorage.setItem("nexo-provider-email", matchedUser.email);
+          } catch (_) {}
+        }
+
+        // 2. Clear unsaved banner preview only
+        try {
+          localStorage.removeItem("provider-banner-preview");
+          sessionStorage.removeItem("provider-banner-preview");
         } catch (_) {}
+
+        // 3. Gracefully restore scoped provider settings without crashing auth if quota is exceeded
+        try {
+          if (provEmailLower) {
+            // Restore from scoped storage or matchedUser
+            const scopedProv = localStorage.getItem(`nexo_provider_settings_${provEmailLower}`) || sessionStorage.getItem(`nexo_provider_settings_${provEmailLower}`);
+            let provSettingsObj = null;
+
+            if (scopedProv) {
+              try {
+                provSettingsObj = JSON.parse(scopedProv);
+              } catch (_) {}
+            }
+
+            if (!provSettingsObj) {
+              provSettingsObj = {
+                orgName: provDisplayName,
+                email: provEmailLower,
+                bannerImage: matchedUser.bannerImage || "",
+                logoImage: matchedUser.logoImage || matchedUser.avatar || "",
+                location: matchedUser.location || "",
+                bio: matchedUser.bio || "",
+              };
+            }
+
+            const activeBanner = provSettingsObj.bannerImage || matchedUser.bannerImage || "";
+            const activeLogo = provSettingsObj.logoImage || matchedUser.logoImage || matchedUser.avatar || "";
+
+            if (activeBanner) {
+              try {
+                sessionStorage.setItem("nexo-provider-banner", activeBanner);
+                sessionStorage.setItem(`nexo-provider-banner_${provEmailLower}`, activeBanner);
+                localStorage.setItem("nexo-provider-banner", activeBanner);
+                localStorage.setItem(`nexo-provider-banner_${provEmailLower}`, activeBanner);
+              } catch (_) {}
+            }
+            if (activeLogo) {
+              try {
+                sessionStorage.setItem("nexo-provider-logo", activeLogo);
+                sessionStorage.setItem(`nexo-provider-logo_${provEmailLower}`, activeLogo);
+                localStorage.setItem("nexo-provider-logo", activeLogo);
+                localStorage.setItem(`nexo-provider-logo_${provEmailLower}`, activeLogo);
+              } catch (_) {}
+            }
+
+            try {
+              sessionStorage.setItem("nexo_provider_settings", JSON.stringify(provSettingsObj));
+              sessionStorage.setItem(`nexo_provider_settings_${provEmailLower}`, JSON.stringify(provSettingsObj));
+              localStorage.setItem("nexo_provider_settings", JSON.stringify(provSettingsObj));
+              localStorage.setItem(`nexo_provider_settings_${provEmailLower}`, JSON.stringify(provSettingsObj));
+            } catch (_) {}
+          }
+        } catch (_) {}
+
         window.location.href = "provider-dashboard.html";
         return;
       } else {

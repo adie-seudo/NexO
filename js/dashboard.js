@@ -2497,114 +2497,74 @@ function extractInitials(name) {
 async function initDynamicAvatar() {
   await syncProviderProfile();
 
-  // Real-time synchronization across browser tabs/storage
+  // Real-time synchronization across browser tabs and storage updates
   window.addEventListener("storage", (e) => {
-    if (e.key === "nexo_provider_settings" && e.newValue) {
-      try {
-        syncProviderProfile(JSON.parse(e.newValue));
-      } catch (_) {}
-    } else if (
-      e.key === "nexo-provider-name" ||
-      e.key === "nexo-provider-logo"
+    if (
+      e.key === "nexo_provider_settings" ||
+      (e.key && e.key.startsWith("nexo_provider_settings_")) ||
+      e.key === "nexo-provider-banner" ||
+      (e.key && e.key.startsWith("nexo-provider-banner_")) ||
+      e.key === "nexo-provider-logo" ||
+      (e.key && e.key.startsWith("nexo-provider-logo_")) ||
+      e.key === "nexo-provider-name"
     ) {
+      if (e.key === "nexo_provider_settings" && e.newValue) {
+        try {
+          syncProviderProfile(JSON.parse(e.newValue));
+          return;
+        } catch (_) {}
+      }
       syncProviderProfile();
     }
   });
 
-  // Re-sync on page navigation / back button
+  // Real-time custom event listeners for same-window updates (e.g. settings saved)
+  window.addEventListener("nexo:settings-updated", (e) => {
+    if (e.detail) syncProviderProfile(e.detail);
+    else syncProviderProfile();
+  });
+  window.addEventListener("nexo:banner-updated", () => {
+    syncProviderProfile();
+  });
+
+  // Re-sync on page navigation / back button / tab focus
   window.addEventListener("pageshow", () => {
+    syncProviderProfile();
+  });
+  window.addEventListener("focus", () => {
     syncProviderProfile();
   });
 }
 
-async function syncProviderProfile(incomingSettings = null) {
-  let settings = incomingSettings;
-  const currentProvEmail = (
-    sessionStorage.getItem("nexo-provider-email") ||
-    localStorage.getItem("nexo-provider-email") ||
-    ""
-  ).toLowerCase().trim();
-
-  if (!settings) {
-    try {
-      const cached =
-        (currentProvEmail && localStorage.getItem(`nexo_provider_settings_${currentProvEmail}`)) ||
-        localStorage.getItem("nexo_provider_settings");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (
-          !parsed.email ||
-          !currentProvEmail ||
-          String(parsed.email).toLowerCase().trim() === currentProvEmail
-        ) {
-          settings = parsed;
-        }
-      }
-    } catch (_) {}
+function applyProviderSettingsToDOM(settings, currentProvEmail = "") {
+  if (!currentProvEmail) {
+    currentProvEmail = (
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase().trim();
   }
-
-  if (!settings) {
-    try {
-      const endpoint = currentProvEmail
-        ? `${API_BASE}/api/settings?email=${encodeURIComponent(currentProvEmail)}`
-        : `${API_BASE}/api/settings`;
-      const res = await fetch(endpoint);
-      if (res.ok) {
-        settings = await res.json();
-        try {
-          if (currentProvEmail) {
-            localStorage.setItem(
-              `nexo_provider_settings_${currentProvEmail}`,
-              JSON.stringify(settings),
-            );
-          }
-          localStorage.setItem(
-            "nexo_provider_settings",
-            JSON.stringify(settings),
-          );
-        } catch (_) {}
-      } else {
-        throw new Error("Settings fetch failed");
-      }
-    } catch (_) {
-      try {
-        const dataRes = await fetch("data.json");
-        if (dataRes.ok) {
-          const rawData = await dataRes.json();
-          if (currentProvEmail && rawData && rawData.providerProfiles && rawData.providerProfiles[currentProvEmail]) {
-            settings = rawData.providerProfiles[currentProvEmail];
-          } else if (
-            rawData &&
-            rawData.settings &&
-            (!currentProvEmail ||
-              currentProvEmail === "admin@admin" ||
-              currentProvEmail === "provider@nexo.edu.ph")
-          ) {
-            settings = rawData.settings;
-          }
-          if (settings) {
-            try {
-              localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
-            } catch (_) {}
-          }
-        }
-      } catch (_) {}
-    }
-  }
-
-  window._activeProviderSettings = settings;
 
   const orgName =
     (settings && settings.orgName) ||
     sessionStorage.getItem("nexo-provider-name") ||
     localStorage.getItem("nexo-provider-name") ||
     "NEXO";
+
   const logoImage =
-    (settings && settings.logoImage !== undefined ? settings.logoImage : localStorage.getItem("nexo-provider-logo")) ||
+    (settings && settings.logoImage) ||
+    (currentProvEmail && (sessionStorage.getItem(`nexo-provider-logo_${currentProvEmail}`) || localStorage.getItem(`nexo-provider-logo_${currentProvEmail}`))) ||
+    sessionStorage.getItem("nexo-provider-logo") ||
+    localStorage.getItem("nexo-provider-logo") ||
     "";
+
   const bannerImage =
-    (settings && settings.bannerImage !== undefined ? settings.bannerImage : localStorage.getItem("nexo-provider-banner")) ||
+    (settings && settings.bannerImage) ||
+    (currentProvEmail && (sessionStorage.getItem(`nexo-provider-banner_${currentProvEmail}`) || localStorage.getItem(`nexo-provider-banner_${currentProvEmail}`))) ||
+    sessionStorage.getItem("nexo-provider-banner") ||
+    localStorage.getItem("nexo-provider-banner") ||
     "";
+
   const initials = extractInitials(orgName);
 
   // 1. Update Welcome Title
@@ -2662,6 +2622,104 @@ async function syncProviderProfile(incomingSettings = null) {
       coverPhoto.classList.remove("has-img");
       coverBanner.classList.remove("active");
     }
+  }
+}
+
+async function syncProviderProfile(incomingSettings = null) {
+  let settings = incomingSettings;
+  const currentProvEmail = (
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase().trim();
+
+  // 1. Immediately apply cached/session state if available (prevents layout shift)
+  if (!settings) {
+    try {
+      const cached =
+        (currentProvEmail && (sessionStorage.getItem(`nexo_provider_settings_${currentProvEmail}`) || localStorage.getItem(`nexo_provider_settings_${currentProvEmail}`))) ||
+        sessionStorage.getItem("nexo_provider_settings") ||
+        localStorage.getItem("nexo_provider_settings");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (
+          !parsed.email ||
+          !currentProvEmail ||
+          String(parsed.email).toLowerCase().trim() === currentProvEmail
+        ) {
+          settings = parsed;
+        }
+      }
+    } catch (_) {}
+  }
+
+  applyProviderSettingsToDOM(settings, currentProvEmail);
+
+  // 2. ALWAYS fetch authoritative settings from backend (stale-while-revalidate)
+  try {
+    const endpoint = currentProvEmail
+      ? `${API_BASE}/api/settings?email=${encodeURIComponent(currentProvEmail)}`
+      : `${API_BASE}/api/settings`;
+    const res = await fetch(endpoint);
+    if (res.ok) {
+      const serverSettings = await res.json();
+      if (serverSettings && typeof serverSettings === "object") {
+        settings = serverSettings;
+        window._activeProviderSettings = settings;
+        applyProviderSettingsToDOM(settings, currentProvEmail);
+
+        // Mirror safely to session and local storage
+        try {
+          if (currentProvEmail) {
+            sessionStorage.setItem(`nexo_provider_settings_${currentProvEmail}`, JSON.stringify(settings));
+            localStorage.setItem(`nexo_provider_settings_${currentProvEmail}`, JSON.stringify(settings));
+          }
+          sessionStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+          localStorage.setItem("nexo_provider_settings", JSON.stringify(settings));
+        } catch (_) {}
+
+        if (settings.bannerImage) {
+          try {
+            sessionStorage.setItem("nexo-provider-banner", settings.bannerImage);
+            if (currentProvEmail) sessionStorage.setItem(`nexo-provider-banner_${currentProvEmail}`, settings.bannerImage);
+            localStorage.setItem("nexo-provider-banner", settings.bannerImage);
+            if (currentProvEmail) localStorage.setItem(`nexo-provider-banner_${currentProvEmail}`, settings.bannerImage);
+          } catch (_) {}
+        }
+        if (settings.logoImage) {
+          try {
+            sessionStorage.setItem("nexo-provider-logo", settings.logoImage);
+            if (currentProvEmail) sessionStorage.setItem(`nexo-provider-logo_${currentProvEmail}`, settings.logoImage);
+            localStorage.setItem("nexo-provider-logo", settings.logoImage);
+            if (currentProvEmail) localStorage.setItem(`nexo-provider-logo_${currentProvEmail}`, settings.logoImage);
+          } catch (_) {}
+        }
+      }
+    }
+  } catch (_) {
+    try {
+      const dataRes = await fetch("data.json");
+      if (dataRes.ok) {
+        const rawData = await dataRes.json();
+        let fallbackSettings = null;
+        if (currentProvEmail && rawData && rawData.providerProfiles && rawData.providerProfiles[currentProvEmail]) {
+          fallbackSettings = rawData.providerProfiles[currentProvEmail];
+        } else if (
+          rawData &&
+          rawData.settings &&
+          (!currentProvEmail ||
+            currentProvEmail === "admin@admin" ||
+            currentProvEmail === "provider@nexo.edu.ph")
+        ) {
+          fallbackSettings = rawData.settings;
+        }
+        if (fallbackSettings) {
+          settings = fallbackSettings;
+          window._activeProviderSettings = settings;
+          applyProviderSettingsToDOM(settings, currentProvEmail);
+        }
+      }
+    } catch (_) {}
   }
 }
 
