@@ -851,10 +851,7 @@
             </div>
 
             <div class="input-group">
-              <div class="label-with-counter">
-                <label for="schol-desc">Scholarship Description & Details</label>
-                <span class="char-counter" id="schol-desc-counter">0 / 5,000</span>
-              </div>
+              <label for="schol-desc">Scholarship Description</label>
               <textarea
                 id="schol-desc"
                 rows="6"
@@ -864,128 +861,115 @@
               <p class="error-msg" id="error-schol-desc"></p>
             </div>
 
-            <div class="creation-form-row">
-              <div class="input-group">
-                <label>Scholarship Type</label>
-                <div class="custom-dropdown" id="schol-type-dropdown">
-                  <div class="dropdown-selected" id="schol-type-selected">
-                    <span>Select type</span>
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <path d="M6 9l6 6 6-6"></path>
-                    </svg>
-                  </div>
-                  <ul class="dropdown-options" id="schol-type-options">
-                    <li data-value="merit">Merit-Based</li>
-                    <li data-value="need">Need-Based</li>
-                    <li data-value="athletic">Athletic</li>
-                  </ul>
-                  <input
-                    type="hidden"
-                    id="schol-type"
-                    name="schol-type"
-                    value=""
-                  />
-                </div>
-                <p class="error-msg" id="error-schol-type"></p>
-              </div>
-
-              <div class="input-group">
-                <label for="schol-deadline">Application Deadline</label>
-
-                <!-- Fixed Wrapper: Uses standard block layout so it doesn't break your CSS -->
-                <div style="position: relative; width: 100%">
-                  <!-- Text Input -->
-                  <input
-                    type="text"
-                    id="schol-deadline"
-                    placeholder="MM/DD/YYYY"
-                    maxlength="10"
-                    inputmode="numeric"
-                    style="
-                      width: 100%;
-                      padding-right: 48px;
-                      box-sizing: border-box;
-                    "
-                  />
-
-                  <!-- Fixed Calendar Trigger: Uses showPicker() to guarantee it opens on mobile & desktop -->
-                  <input
-                    type="date"
-                    id="native-date-picker"
-                    onclick="if (this.showPicker) this.showPicker();"
-                    style="
-                      position: absolute;
-                      right: 0;
-                      top: 0;
-                      width: 48px;
-                      height: 100%;
-                      opacity: 0;
-                      cursor: pointer;
-                      z-index: 2;
-                    "
-                  />
-
-                  <!-- Visible Icon -->
+            <div class="input-group">
+              <label>Scholarship Type</label>
+              <div class="custom-dropdown" id="schol-type-dropdown">
+                <div class="dropdown-selected" id="schol-type-selected">
+                  <span>Select type</span>
                   <svg
-                    style="
-                      position: absolute;
-                      right: 14px;
-                      top: 50%;
-                      transform: translateY(-50%);
-                      pointer-events: none;
-                      z-index: 1;
-                    "
                     width="20"
                     height="20"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="#6b7280"
+                    stroke="currentColor"
                     stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
                   >
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <path d="M6 9l6 6 6-6"></path>
                   </svg>
                 </div>
-                <p class="error-msg" id="error-schol-deadline"></p>
+                <ul class="dropdown-options" id="schol-type-options">
+                  <li data-value="merit">Merit-Based</li>
+                  <li data-value="need">Need-Based</li>
+                  <li data-value="athletic">Athletic</li>
+                </ul>
+                <input
+                  type="hidden"
+                  id="schol-type"
+                  name="schol-type"
+                  value=""
+                />
               </div>
+              <p class="error-msg" id="error-schol-type"></p>
+            </div>
 
-              <div class="input-group">
-                <label for="schol-limit">Applicant Limit (Capacity)</label>
-                <div style="position: relative; width: 100%">
-                  <input
-                    type="number"
-                    id="schol-limit"
-                    min="1"
-                    max="10000"
-                    placeholder="e.g. 50, 100, 200"
-                    value="200"
-                    style="width: 100%; box-sizing: border-box"
-                  />
-                </div>
-                <span
+            <div class="input-group">
+              <label for="schol-deadline">Application Deadline</label>
+
+              <!-- Fixed Wrapper: Uses standard block layout so it doesn't break your CSS -->
+              <div style="position: relative; width: 100%">
+                <!-- Text Input -->
+                <input
+                  type="text"
+                  id="schol-deadline"
+                  placeholder="MM/DD/YYYY"
+                  maxlength="10"
+                  inputmode="numeric"
                   style="
-                    font-size: 12px;
-                    color: var(--text-secondary);
-                    margin-top: 4px;
-                    display: block;
+                    width: 100%;
+                    padding-right: 48px;
+                    box-sizing: border-box;
                   "
+                />
+
+                <!-- Fixed Calendar Trigger: Uses showPicker() to guarantee it opens on mobile & desktop -->
+                <input
+                  type="date"
+                  id="native-date-picker"
+                  onclick="if (this.showPicker) this.showPicker();"
+                  style="
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    width: 48px;
+                    height: 100%;
+                    opacity: 0;
+                    cursor: pointer;
+                    z-index: 2;
+                  "
+                />
+
+                <!-- Visible Icon -->
+                <svg
+                  style="
+                    position: absolute;
+                    right: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    pointer-events: none;
+                    z-index: 1;
+                  "
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#6b7280"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                  Maximum number of student applicants accepted for this
-                  scholarship (e.g. 200).
-                </span>
-                <p class="error-msg" id="error-schol-limit"></p>
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
               </div>
+              <p class="error-msg" id="error-schol-deadline"></p>
+            </div>
+
+            <div class="input-group">
+              <label for="schol-limit">Applicant Limit (Capacity)</label>
+              <div style="position: relative; width: 100%">
+                <input
+                  type="number"
+                  id="schol-limit"
+                  min="1"
+                  max="10000"
+                  placeholder="e.g. 50, 100, 200"
+                  value="200"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+              <p class="error-msg" id="error-schol-limit"></p>
             </div>
 
             <div class="modal-actions" id="step-1-normal-actions">
@@ -1071,8 +1055,8 @@
                 </svg>
               </div>
               <div class="req-text">
-                <h4>Certificate of Enrollment</h4>
-                <p>Upload a certificate of enrollment for the current term.</p>
+                <h4>Certificate of Registration (COR)</h4>
+                <p>Upload your Certificate of Registration (COR) or enrollment form.</p>
               </div>
               <button type="button" class="remove-req-btn" aria-label="Remove">
                 &times;

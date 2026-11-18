@@ -199,12 +199,45 @@
     let serverApps = null;
     let serverSchols = null;
 
+    let localApps = [];
+    let localSchols = [];
+    let deletedIds = new Set();
+
+    try {
+      const cached = localStorage.getItem("nexo_applications");
+      const cachedS = localStorage.getItem("nexo_scholarships");
+      const del = localStorage.getItem("nexo_deleted_ids");
+      if (cached) localApps = JSON.parse(cached);
+      if (cachedS) localSchols = JSON.parse(cachedS);
+      if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    } catch (_) {}
+
+    function mergeById(primaryList, secondaryList) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && deletedIds.has(id)) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && (seen.has(id) || deletedIds.has(id))) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      return result;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/data`);
       if (res.ok) {
         const data = await res.json();
-        serverApps = Array.isArray(data.applications) ? data.applications : [];
-        serverSchols = Array.isArray(data.scholarships)
+        const apiApps = Array.isArray(data.applications) ? data.applications : [];
+        const apiSchols = Array.isArray(data.scholarships)
           ? data.scholarships
           : [];
         if (data.studentProfiles) {
@@ -217,6 +250,9 @@
         if (data.studentSettings) {
           studentSettings = data.studentSettings;
         }
+
+        serverApps = mergeById(apiApps, localApps);
+        serverSchols = mergeById(apiSchols, localSchols);
 
         // Cache local copy
         try {
@@ -237,17 +273,11 @@
     }
 
     if (!serverApps) {
-      try {
-        const cached = localStorage.getItem("nexo_applications");
-        if (cached) serverApps = JSON.parse(cached);
-      } catch (_) {}
+      serverApps = mergeById(localApps, []);
     }
 
     if (!serverSchols) {
-      try {
-        const cachedS = localStorage.getItem("nexo_scholarships");
-        if (cachedS) serverSchols = JSON.parse(cachedS);
-      } catch (_) {}
+      serverSchols = mergeById(localSchols, []);
     }
 
     const currentProviderEmail = (

@@ -163,20 +163,62 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   async function loadData() {
     let loadedFromApi = false;
+    let localUsers = [];
+    let localScholarships = [];
+    let localApplications = [];
+    let localDrafts = null;
+    let deletedIds = new Set();
+
+    try {
+      const cu = localStorage.getItem("nexo_users");
+      const cs = localStorage.getItem("nexo_scholarships");
+      const ca = localStorage.getItem("nexo_applications");
+      const cd = localStorage.getItem("nexo_drafts");
+      const del = localStorage.getItem("nexo_deleted_ids");
+      if (cu) localUsers = JSON.parse(cu);
+      if (cs) localScholarships = JSON.parse(cs);
+      if (ca) localApplications = JSON.parse(ca);
+      if (cd !== null) localDrafts = JSON.parse(cd);
+      if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    } catch (_) {}
+
+    function mergeById(primaryList, secondaryList) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || item.email || "");
+        if (id && deletedIds.has(id)) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || item.email || "");
+        if (id && (seen.has(id) || deletedIds.has(id))) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      return result;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/data`, {
         cache: "no-store",
       }).catch(() => null);
       if (res && res.ok) {
         const data = await res.json();
-        users = Array.isArray(data.users) ? data.users : [];
-        scholarships = Array.isArray(data.scholarships)
-          ? data.scholarships
-          : [];
-        applications = Array.isArray(data.applications)
-          ? data.applications
-          : [];
-        drafts = Array.isArray(data.drafts) ? data.drafts : [];
+        users = mergeById(Array.isArray(data.users) ? data.users : [], localUsers);
+        scholarships = mergeById(
+          Array.isArray(data.scholarships) ? data.scholarships : [],
+          localScholarships,
+        );
+        applications = mergeById(
+          Array.isArray(data.applications) ? data.applications : [],
+          localApplications,
+        );
+        const serverDrafts = Array.isArray(data.drafts) ? data.drafts : [];
+        drafts = localDrafts !== null ? mergeById(serverDrafts, localDrafts) : serverDrafts;
         loadedFromApi = true;
 
         // Cache to localStorage for offline resilience
@@ -198,32 +240,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!loadedFromApi) {
-      // Fallback to static data.json if served via static web server
+      // Fallback to localStorage + static data.json if served via static web server
+      let staticData = {};
       try {
         const fallbackRes = await fetch("data.json", {
           cache: "no-store",
         }).catch(() => null);
         if (fallbackRes && fallbackRes.ok) {
-          const data = await fallbackRes.json();
-          users = Array.isArray(data.users) ? data.users : [];
-          scholarships = Array.isArray(data.scholarships)
-            ? data.scholarships
-            : [];
-          applications = Array.isArray(data.applications)
-            ? data.applications
-            : [];
-          drafts = Array.isArray(data.drafts) ? data.drafts : [];
-        } else {
-          users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
-          scholarships = JSON.parse(
-            localStorage.getItem("nexo_scholarships") || "[]",
-          );
-          applications = JSON.parse(
-            localStorage.getItem("nexo_applications") || "[]",
-          );
-          drafts = JSON.parse(localStorage.getItem("nexo_drafts") || "[]");
+          staticData = await fallbackRes.json();
         }
       } catch (_) {}
+
+      users = mergeById(localUsers, staticData.users);
+      scholarships = mergeById(localScholarships, staticData.scholarships);
+      applications = mergeById(localApplications, staticData.applications);
+      drafts =
+        localDrafts !== null
+          ? (Array.isArray(localDrafts)
+              ? localDrafts.filter((d) => d && !deletedIds.has(String(d.id || "")))
+              : [])
+          : Array.isArray(staticData.drafts)
+            ? staticData.drafts
+            : [];
     }
 
     if (liveSyncIndicator) {

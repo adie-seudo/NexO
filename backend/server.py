@@ -423,18 +423,22 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "providerBanner": body.get("providerBanner") or prov_prof.get("bannerImage") or data["settings"].get("bannerImage", ""),
                 "status": body.get("status", "Open"),
             }
-            data.setdefault("scholarships", []).insert(0, new_sch)
-            data.setdefault("notifications", []).insert(0, {
-                "id": f"notif_{int(time.time()*1000)}",
-                "recipient": "student",
-                "title": "New Scholarship Posted",
-                "message": f"{new_sch['providerName']} published \"{new_sch['title']}\". Applications are now open!",
-                "timestamp": datetime.now().isoformat(),
-                "formattedTime": "Just now",
-                "read": False,
-                "link": "student-browse.html",
-                "scholarshipId": new_sch["id"]
-            })
+            existing_s = [i for i, s in enumerate(data.get("scholarships", [])) if str(s.get("id")) == str(new_sch["id"])]
+            if existing_s:
+                data["scholarships"][existing_s[0]] = new_sch
+            else:
+                data.setdefault("scholarships", []).insert(0, new_sch)
+                data.setdefault("notifications", []).insert(0, {
+                    "id": f"notif_{int(time.time()*1000)}",
+                    "recipient": "student",
+                    "title": "New Scholarship Posted",
+                    "message": f"{new_sch['providerName']} published \"{new_sch['title']}\". Applications are now open!",
+                    "timestamp": datetime.now().isoformat(),
+                    "formattedTime": "Just now",
+                    "read": False,
+                    "link": "student-browse.html",
+                    "scholarshipId": new_sch["id"]
+                })
             if body.get("draftId"):
                 data["drafts"] = [d for d in data.get("drafts", []) if str(d.get("id")) != str(body.get("draftId"))]
             write_data(data)

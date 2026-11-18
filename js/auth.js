@@ -355,7 +355,7 @@ function initLoginToggleAndSubmit() {
         }
       } catch (_) {}
 
-      // Fallback to local data.json when running without backend API
+      // Fallback to localStorage + local data.json when running without backend API
       if (!fetchedFromApi) {
         try {
           const fallbackRes = await fetch("data.json", {
@@ -364,7 +364,20 @@ function initLoginToggleAndSubmit() {
           if (fallbackRes && fallbackRes.ok) {
             const fullData = await fallbackRes.json();
             if (fullData && Array.isArray(fullData.users)) {
-              userList = fullData.users;
+              const seenEmails = new Set(
+                (Array.isArray(userList) ? userList : [])
+                  .map((u) => (u && u.email ? u.email.toLowerCase().trim() : ""))
+                  .filter(Boolean),
+              );
+              const mergedUsers = Array.isArray(userList) ? [...userList] : [];
+              fullData.users.forEach((su) => {
+                const em = su && su.email ? su.email.toLowerCase().trim() : "";
+                if (em && !seenEmails.has(em)) {
+                  seenEmails.add(em);
+                  mergedUsers.push(su);
+                }
+              });
+              userList = mergedUsers;
               try {
                 localStorage.setItem("nexo_users", JSON.stringify(userList));
               } catch (_) {}

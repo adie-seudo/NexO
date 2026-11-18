@@ -1476,15 +1476,50 @@ async function loadStudentData() {
     }
   } catch (_) {}
 
+  let localScholarships = [];
+  let localApplications = [];
+  let deletedIds = new Set();
+
+  try {
+    const cs = localStorage.getItem("nexo_scholarships");
+    const ca = localStorage.getItem("nexo_applications");
+    const del = localStorage.getItem("nexo_deleted_ids");
+    if (cs) localScholarships = JSON.parse(cs);
+    if (ca) localApplications = JSON.parse(ca);
+    if (del) deletedIds = new Set(JSON.parse(del).map(String));
+  } catch (_) {}
+
+  function mergeById(primaryList, secondaryList) {
+    const result = [];
+    const seen = new Set();
+    (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+      if (!item) return;
+      const id = String(item.id || "");
+      if (id && deletedIds.has(id)) return;
+      if (id) seen.add(id);
+      result.push(item);
+    });
+    (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+      if (!item) return;
+      const id = String(item.id || "");
+      if (id && (seen.has(id) || deletedIds.has(id))) return;
+      if (id) seen.add(id);
+      result.push(item);
+    });
+    return result;
+  }
+
   try {
     const response = await fetch(`${API_BASE}/api/data`);
     if (!response.ok) {
       throw new Error("HTTP error " + response.status);
     }
     const data = await response.json();
-    applications = Array.isArray(data.applications) ? data.applications : [];
+    const serverApps = Array.isArray(data.applications) ? data.applications : [];
+    const serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+    applications = mergeById(serverApps, localApplications);
+    window.cachedScholarships = mergeById(serverSchols, localScholarships);
     if (data.settings) window.cachedProviderSettings = data.settings;
-    if (Array.isArray(data.scholarships)) window.cachedScholarships = data.scholarships;
 
     // Sync student settings and avatar from server data
     if (activeStudentEmail && data.studentProfiles && data.studentProfiles[activeStudentEmail]) {
@@ -1575,15 +1610,18 @@ async function loadStudentData() {
     // Cache local copy
     try {
       localStorage.setItem("nexo_applications", JSON.stringify(applications));
+      localStorage.setItem("nexo_scholarships", JSON.stringify(window.cachedScholarships));
     } catch (_) {}
   } catch (err) {
+    let staticApps = [];
+    let staticSchols = [];
     try {
       // Fallback to static data.json if API is unreachable (e.g., Live Server)
       const staticRes = await fetch("data.json").catch(() => null);
       if (staticRes && staticRes.ok) {
         const staticData = await staticRes.json();
-        applications = Array.isArray(staticData.applications) ? staticData.applications : [];
-        if (Array.isArray(staticData.scholarships)) window.cachedScholarships = staticData.scholarships;
+        staticApps = Array.isArray(staticData.applications) ? staticData.applications : [];
+        staticSchols = Array.isArray(staticData.scholarships) ? staticData.scholarships : [];
         if (staticData.settings) window.cachedProviderSettings = staticData.settings;
 
         if (activeStudentEmail && staticData.studentProfiles && staticData.studentProfiles[activeStudentEmail]) {
@@ -1612,18 +1650,8 @@ async function loadStudentData() {
       }
     } catch (_) {}
 
-    if (!applications || applications.length === 0) {
-      try {
-        const cached = localStorage.getItem("nexo_applications");
-        if (cached) applications = JSON.parse(cached);
-      } catch (_) {}
-    }
-    if (!window.cachedScholarships || window.cachedScholarships.length === 0) {
-      try {
-        const cachedSchols = localStorage.getItem("nexo_scholarships");
-        if (cachedSchols) window.cachedScholarships = JSON.parse(cachedSchols);
-      } catch (_) {}
-    }
+    applications = mergeById(localApplications, staticApps);
+    window.cachedScholarships = mergeById(localScholarships, staticSchols);
   }
 
   // Ensure skeleton screen is smoothly visible on initial page load

@@ -360,31 +360,77 @@
     let scholarships = [];
     let applications = [];
 
+    let localScholarships = [];
+    let localApplications = [];
+    let deletedIds = new Set();
+
+    try {
+      const cachedS = localStorage.getItem("nexo_scholarships");
+      const cachedA = localStorage.getItem("nexo_applications");
+      const del = localStorage.getItem("nexo_deleted_ids");
+      if (cachedS) localScholarships = JSON.parse(cachedS);
+      if (cachedA) localApplications = JSON.parse(cachedA);
+      if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    } catch (_) {}
+
+    function mergeById(primaryList, secondaryList) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && deletedIds.has(id)) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && (seen.has(id) || deletedIds.has(id))) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      return result;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/data`);
       if (res.ok) {
         const data = await res.json();
-        scholarships = Array.isArray(data.scholarships) ? data.scholarships : [];
-        applications = Array.isArray(data.applications) ? data.applications : [];
+        const serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+        const serverApps = Array.isArray(data.applications) ? data.applications : [];
         if (data.studentProfiles) { studentProfiles = data.studentProfiles; try { localStorage.setItem("nexo_student_profiles", JSON.stringify(studentProfiles)); } catch(_) {} }
         if (Array.isArray(data.users)) users = data.users;
         if (data.studentSettings) studentSettings = data.studentSettings;
+
+        // Sync any local scholarships created while server was offline back to the server
+        const serverScholIds = new Set(serverSchols.map((s) => String(s && s.id)));
+        (Array.isArray(localScholarships) ? localScholarships : []).forEach((ls) => {
+          if (ls && ls.id && !serverScholIds.has(String(ls.id)) && !deletedIds.has(String(ls.id))) {
+            fetch(`${API_BASE}/api/scholarships`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(ls),
+            }).catch(() => {});
+          }
+        });
+
+        scholarships = mergeById(serverSchols, localScholarships);
+        applications = mergeById(serverApps, localApplications);
 
         try {
           localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
           localStorage.setItem("nexo_applications", JSON.stringify(applications));
         } catch (_) {}
+      } else {
+        throw new Error("Status " + res.status);
       }
     } catch (err) {
       if (!isBackground) {
         console.warn("NEXO: Backend not reached directly, falling back to local storage:", err);
       }
-      try {
-        const cachedS = localStorage.getItem("nexo_scholarships");
-        const cachedA = localStorage.getItem("nexo_applications");
-        if (cachedS) scholarships = JSON.parse(cachedS);
-        if (cachedA) applications = JSON.parse(cachedA);
-      } catch (_) {}
+      scholarships = mergeById(localScholarships, []);
+      applications = mergeById(localApplications, []);
     }
 
     const currentProviderEmail = (

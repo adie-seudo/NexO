@@ -597,7 +597,7 @@ async function handleRequest(req, res) {
         );
 
         const newScholarship = {
-          id: makeId("schol"),
+          id: body.id || makeId("schol"),
           title,
           desc: String(body.desc || "").trim(),
           type: body.type || "Other",
@@ -629,7 +629,15 @@ async function handleRequest(req, res) {
           status: body.status || "Open",
         };
 
-        data.scholarships.unshift(newScholarship);
+        data.scholarships = data.scholarships || [];
+        const existingIdx = data.scholarships.findIndex(
+          (s) => s && String(s.id) === String(newScholarship.id),
+        );
+        if (existingIdx >= 0) {
+          data.scholarships[existingIdx] = newScholarship;
+        } else {
+          data.scholarships.unshift(newScholarship);
+        }
 
         data.notifications = data.notifications || [];
         data.notifications.unshift({

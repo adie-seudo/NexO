@@ -213,6 +213,39 @@ document.addEventListener("DOMContentLoaded", () => {
     let combined = [];
     let serverOk = false;
 
+    let localScholarships = [];
+    let localApplications = [];
+    let deletedIds = new Set();
+
+    try {
+      const cs = localStorage.getItem("nexo_scholarships");
+      const ca = localStorage.getItem("nexo_applications");
+      const del = localStorage.getItem("nexo_deleted_ids");
+      if (cs) localScholarships = JSON.parse(cs);
+      if (ca) localApplications = JSON.parse(ca);
+      if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    } catch (_) {}
+
+    function mergeById(primaryList, secondaryList) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && deletedIds.has(id)) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || "");
+        if (id && (seen.has(id) || deletedIds.has(id))) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      return result;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/data`);
       if (res.ok) {
@@ -221,15 +254,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const serverScholarships = Array.isArray(fullData.scholarships)
           ? fullData.scholarships
           : [];
-        combined = serverScholarships;
+        const serverApplications = Array.isArray(fullData.applications)
+          ? fullData.applications
+          : [];
+
+        // Sync any local scholarships created while server was offline back to the server
+        const serverScholIds = new Set(serverScholarships.map((s) => String(s && s.id)));
+        (Array.isArray(localScholarships) ? localScholarships : []).forEach((ls) => {
+          if (ls && ls.id && !serverScholIds.has(String(ls.id)) && !deletedIds.has(String(ls.id))) {
+            fetch(`${API_BASE}/api/scholarships`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(ls),
+            }).catch(() => {});
+          }
+        });
+
+        combined = mergeById(serverScholarships, localScholarships);
+        studentApplications = mergeById(serverApplications, localApplications);
+
         if (fullData.settings) {
           providerSettings = fullData.settings;
         }
         if (fullData.studentSettings) {
           studentSettings = fullData.studentSettings;
-        }
-        if (Array.isArray(fullData.applications)) {
-          studentApplications = fullData.applications;
         }
 
         const currentStudentEmail = (
@@ -255,11 +303,11 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
 
-        // Keep local cache exactly in sync with server
+        // Keep local cache in sync
         try {
           localStorage.setItem(
             "nexo_scholarships",
-            JSON.stringify(serverScholarships),
+            JSON.stringify(combined),
           );
           localStorage.setItem(
             "nexo_applications",
@@ -271,36 +319,28 @@ document.addEventListener("DOMContentLoaded", () => {
       console.warn("Could not fetch /api/data:", e);
     }
 
-    // Fallback to static data.json if server was unreachable (e.g. Live Server)
+    // Fallback to localStorage + static data.json if server was unreachable (e.g. Live Server)
     if (!serverOk) {
+      let staticSchols = [];
+      let staticApps = [];
       try {
         const staticRes = await fetch("data.json");
         if (staticRes.ok) {
-          serverOk = true;
           const staticData = await staticRes.json();
           if (Array.isArray(staticData.scholarships)) {
-            combined = staticData.scholarships;
+            staticSchols = staticData.scholarships;
           }
           if (staticData.settings) {
             providerSettings = staticData.settings;
           }
           if (Array.isArray(staticData.applications)) {
-            studentApplications = staticData.applications;
+            staticApps = staticData.applications;
           }
         }
       } catch (_) {}
-    }
 
-    // Fallback to localStorage if both server and static data.json were unreachable
-    if (!serverOk) {
-      try {
-        combined = JSON.parse(
-          localStorage.getItem("nexo_scholarships") || "[]",
-        );
-        studentApplications = JSON.parse(
-          localStorage.getItem("nexo_applications") || "[]",
-        );
-      } catch (_) {}
+      combined = mergeById(localScholarships, staticSchols);
+      studentApplications = mergeById(localApplications, staticApps);
     }
 
     // Ensure skeleton screen is smoothly visible on initial page load
@@ -377,9 +417,11 @@ document.addEventListener("DOMContentLoaded", () => {
         id: post.id || "schol_" + Date.now(),
         title: post.title || "Scholarship Program",
         providerName: post.providerName || orgName,
+        providerEmail: post.providerEmail || "",
         providerLogo: post.providerLogo || orgLogo,
         providerBanner: post.providerBanner || orgBanner,
         type: post.type || "General",
+        typeText: post.typeText || post.type || "General",
         deadline: post.deadline || "",
         formattedDate: post.formattedDate || "Open Deadline",
         desc:
@@ -1938,6 +1980,9 @@ document.addEventListener("DOMContentLoaded", () => {
         providerName: activeScholarship
           ? activeScholarship.providerName
           : "NEXO",
+        providerEmail: activeScholarship
+          ? activeScholarship.providerEmail || ""
+          : "",
         studentName: sName,
         studentEmail: sEmail,
         studentId: sId,
@@ -1990,13 +2035,29 @@ document.addEventListener("DOMContentLoaded", () => {
       // Update in-memory state and re-render feed
       studentApplications.unshift(newApp);
 
-      // Save application to localStorage
+      // Save application to localStorage (with quota-safe fallback)
       try {
         const cachedApps = JSON.parse(
           localStorage.getItem("nexo_applications") || "[]",
         );
         cachedApps.unshift(newApp);
-        localStorage.setItem("nexo_applications", JSON.stringify(cachedApps));
+        try {
+          localStorage.setItem("nexo_applications", JSON.stringify(cachedApps));
+        } catch (_) {
+          const slimApps = cachedApps.map((a) => ({
+            ...a,
+            studentProfilePic: "",
+            profilePicture: "",
+            documents: Array.isArray(a.documents)
+              ? a.documents.map((d) =>
+                  typeof d === "object" && d !== null
+                    ? { ...d, dataUrl: "", fileUrl: d.fileUrl && !String(d.fileUrl).startsWith("data:") ? d.fileUrl : "" }
+                    : d,
+                )
+              : [],
+          }));
+          localStorage.setItem("nexo_applications", JSON.stringify(slimApps));
+        }
       } catch (_) {}
 
       // Synchronize applicant count in cached scholarships for provider and student POVs

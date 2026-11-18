@@ -2896,30 +2896,9 @@ body.dark-theme .view-all {
   color: var(--text-primary);
 }
 
-/* Label with Character Counter */
-.label-with-counter {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 8px;
-}
-.label-with-counter label {
-  margin-bottom: 0 !important;
-}
-.char-counter {
-  font-size: 12px;
-  color: var(--text-secondary);
-  font-weight: 500;
-  user-select: none;
-}
 
-/* Creation Form Row (Stacked on mobile, 3 columns on tablet/desktop) */
-.creation-form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-}
+
+
 
 .progress-container {
   margin-bottom: 32px;
@@ -2997,10 +2976,25 @@ body.dark-theme .view-all {
   color: var(--text-primary);
 }
 .creation-form .input-group {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   display: flex;
   flex-direction: column;
   text-align: left;
+  width: 100% !important;
+  max-width: 100% !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  gap: 0 !important;
+}
+body.dark-theme .creation-form .input-group {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 .creation-form label {
   font-size: 14px;
@@ -3347,9 +3341,10 @@ body.dark-theme .review-pill {
 .review-desc {
   font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.5;
-  margin: 0;
+  line-height: 1.65;
+  margin: 14px 0 0 0;
   word-break: break-word;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 .review-req-list {
@@ -3431,18 +3426,6 @@ body.dark-theme .review-pill {
 /* =========================================
    14.1 DESKTOP SCHOLARSHIP CREATION WORKSPACE
    ========================================= */
-@media (min-width: 768px) {
-  .creation-form-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    align-items: flex-start;
-  }
-  .creation-form-row .input-group {
-    margin-bottom: 20px;
-  }
-}
-
 @media (min-width: 1024px) {
   .creation-modal {
     background-color: rgba(9, 6, 17, 0.94);
@@ -3460,11 +3443,11 @@ body.dark-theme .review-pill {
   }
 
   .creation-modal-content {
-    max-width: 1060px;
+    max-width: 820px;
     width: 100%;
-    margin: 0 auto;
-    padding: 44px 64px 60px 64px;
-    border-radius: 24px;
+    margin: 20px auto;
+    padding: 40px 48px 48px 48px;
+    border-radius: 20px;
     min-height: auto;
     border: 1.5px solid var(--border-color);
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
@@ -3539,14 +3522,27 @@ body.dark-theme .review-pill {
     margin-bottom: 22px;
   }
 
+  .creation-form .input-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 24px;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
   .creation-form label {
     font-size: 14.5px;
     margin-bottom: 9px;
+    display: block;
+    width: 100%;
   }
 
   .creation-form input,
   .creation-form textarea,
   .creation-form select {
+    width: 100%;
+    box-sizing: border-box;
     padding: 15px 18px;
     font-size: 15px;
     border-radius: 12px;
@@ -3562,7 +3558,7 @@ body.dark-theme .review-pill {
 
   #schol-desc {
     min-height: 180px;
-    line-height: 1.6;
+    line-height: 1.65;
     font-size: 15px;
   }
 
@@ -3621,36 +3617,59 @@ body.dark-theme .review-pill {
 
   .review-desc {
     font-size: 15px;
-    line-height: 1.65;
+    line-height: 1.7;
     margin-top: 18px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .modal-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    align-items: center;
     gap: 16px;
-    margin-top: 36px;
+    width: 100%;
+    max-width: 480px;
+    margin: 36px auto 0 auto;
     padding-bottom: 0;
   }
 
   .modal-actions .btn {
-    flex: initial;
-    min-width: 150px;
+    flex: 1;
+    min-width: 160px;
     padding: 14px 28px;
     font-size: 15px;
+    font-weight: 600;
     border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 
   .modal-actions-column {
-    max-width: 440px;
-    margin: 32px auto 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
     width: 100%;
+    max-width: 480px;
+    margin: 36px auto 0 auto;
+    padding-bottom: 0;
   }
 
   .modal-actions-column .btn {
-    padding: 15px 24px;
+    width: 100%;
+    max-width: 480px;
+    padding: 14px 28px;
     font-size: 15px;
+    font-weight: 600;
     border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
 }
 
@@ -7682,7 +7701,8 @@ body.dark-theme .skeleton-bone {
     flex-direction: column !important;
   }
 
-  .input-group {
+  #login-form .input-group,
+  #register-form .input-group {
     padding: 7px 13px !important;
     gap: 8px !important;
     border-radius: 12px !important;
@@ -7692,23 +7712,27 @@ body.dark-theme .skeleton-bone {
     max-width: 330px !important;
   }
 
-  .input-icon {
+  #login-form .input-icon,
+  #register-form .input-icon {
     width: 16px !important;
     height: 16px !important;
   }
 
-  .input-field {
+  #login-form .input-field,
+  #register-form .input-field {
     margin-left: 6px !important;
   }
 
-  .input-field label {
+  #login-form .input-field label,
+  #register-form .input-field label {
     font-size: 10.5px !important;
     font-weight: 600 !important;
     margin-bottom: 1px !important;
     line-height: 1.2 !important;
   }
 
-  .input-field input {
+  #login-form .input-field input,
+  #register-form .input-field input {
     font-size: 12.5px !important;
     height: 19px !important;
     line-height: 19px !important;

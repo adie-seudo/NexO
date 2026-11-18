@@ -57,14 +57,7 @@ function cacheDOM() {
   DOM.descInput = document.getElementById("schol-desc");
   DOM.descError = document.getElementById("error-schol-desc");
 
-  if (DOM.descInput) {
-    const descCounter = document.getElementById("schol-desc-counter");
-    DOM.descInput.addEventListener("input", () => {
-      if (descCounter) {
-        descCounter.textContent = `${DOM.descInput.value.length.toLocaleString()} / 5,000`;
-      }
-    });
-  }
+
   DOM.typeInput = document.getElementById("schol-type");
   DOM.typeSelected = document.getElementById("schol-type-selected");
   DOM.typeError = document.getElementById("error-schol-type");
@@ -106,8 +99,6 @@ function openNewScholarshipCreationModal() {
 
   const modalTitle = document.getElementById("creation-modal-title");
   if (modalTitle) modalTitle.textContent = "Create Scholarship Opportunity";
-  const descCounter = document.getElementById("schol-desc-counter");
-  if (descCounter) descCounter.textContent = "0 / 5,000";
 
   // Reset the form so it opens fresh
   const step1Form = document.getElementById("step-1-form");
@@ -147,6 +138,19 @@ function openNewScholarshipCreationModal() {
         <div class="req-text">
           <h4>Latest Grades/Transcript</h4>
           <p>Upload your latest grades or official transcript.</p>
+        </div>
+        <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
+      </div>
+      <div class="req-card">
+        <div class="req-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+        </div>
+        <div class="req-text">
+          <h4>Certificate of Registration (COR)</h4>
+          <p>Upload your Certificate of Registration (COR) or enrollment form.</p>
         </div>
         <button type="button" class="remove-req-btn" aria-label="Remove">&times;</button>
       </div>
@@ -1477,13 +1481,20 @@ function renderProviderRecentActivity(myScholarships, myApplications, notificati
 
   // Synthesize from scholarship publishing events
   (Array.isArray(myScholarships) ? myScholarships : []).forEach((s) => {
-    const postDate = s.createdAt || s.postedAt;
+    let postDate = s.createdAt || s.postedAt;
+    if (!postDate && s.id && String(s.id).startsWith("schol_")) {
+      const ts = parseInt(String(s.id).replace("schol_", ""), 10);
+      if (!isNaN(ts) && ts > 1000000000000) {
+        postDate = new Date(ts).toISOString();
+      }
+    }
     events.push({
       type: "schol_publish",
       title: "Scholarship program published",
       desc: `${s.title || "Scholarship"} published to directory`,
       time: postDate || new Date().toISOString(),
       link: `provider-posts.html?scholarshipId=${encodeURIComponent(s.id || s.title || "")}`,
+      idKey: String(s.id || s.title || ""),
     });
   });
 
@@ -1491,7 +1502,7 @@ function renderProviderRecentActivity(myScholarships, myApplications, notificati
   const seen = new Set();
   const uniqueEvents = [];
   events.forEach((e) => {
-    const key = `${e.type}_${e.desc}`;
+    const key = `${e.type}_${e.idKey || e.desc}`;
     if (!seen.has(key)) {
       seen.add(key);
       uniqueEvents.push(e);
@@ -1683,15 +1694,82 @@ async function loadPersistedData() {
   let applications = [];
   let notifications = [];
 
+  let localScholarships = [];
+  let localDrafts = null;
+  let localApplications = [];
+  let localNotifications = [];
+  let deletedIds = new Set();
+
+  try {
+    const cs = localStorage.getItem("nexo_scholarships");
+    if (cs) localScholarships = JSON.parse(cs);
+    const cd = localStorage.getItem("nexo_drafts");
+    if (cd !== null) localDrafts = JSON.parse(cd);
+    const ca = localStorage.getItem("nexo_applications");
+    if (ca) localApplications = JSON.parse(ca);
+    const cn = localStorage.getItem("nexo_notifications");
+    if (cn) localNotifications = JSON.parse(cn);
+    const del = localStorage.getItem("nexo_deleted_ids");
+    if (del) deletedIds = new Set(JSON.parse(del).map(String));
+  } catch (_) {}
+
+  function mergeById(primaryList, secondaryList) {
+    const result = [];
+    const seen = new Set();
+    (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+      if (!item) return;
+      const id = String(item.id || "");
+      if (id && deletedIds.has(id)) return;
+      if (id) seen.add(id);
+      result.push(item);
+    });
+    (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+      if (!item) return;
+      const id = String(item.id || "");
+      if (id && (seen.has(id) || deletedIds.has(id))) return;
+      if (id) seen.add(id);
+      result.push(item);
+    });
+    return result;
+  }
+
   try {
     const res = await fetch(`${API_BASE}/api/data`);
     if (!res.ok) throw new Error("Status " + res.status);
     const data = await res.json();
 
-    scholarships = Array.isArray(data.scholarships) ? data.scholarships : [];
-    drafts = Array.isArray(data.drafts) ? data.drafts : [];
-    applications = Array.isArray(data.applications) ? data.applications : [];
-    notifications = Array.isArray(data.notifications) ? data.notifications : [];
+    const serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
+    const serverDrafts = Array.isArray(data.drafts) ? data.drafts : [];
+    const serverApps = Array.isArray(data.applications) ? data.applications : [];
+    const serverNotifs = Array.isArray(data.notifications) ? data.notifications : [];
+
+    // Sync any local scholarships/drafts created while server was offline back to the server
+    const serverScholIds = new Set(serverSchols.map((s) => String(s && s.id)));
+    (Array.isArray(localScholarships) ? localScholarships : []).forEach((ls) => {
+      if (ls && ls.id && !serverScholIds.has(String(ls.id)) && !deletedIds.has(String(ls.id))) {
+        fetch(`${API_BASE}/api/scholarships`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ls),
+        }).catch(() => {});
+      }
+    });
+
+    const serverDraftIds = new Set(serverDrafts.map((d) => String(d && d.id)));
+    (Array.isArray(localDrafts) ? localDrafts : []).forEach((ld) => {
+      if (ld && ld.id && !serverDraftIds.has(String(ld.id)) && !deletedIds.has(String(ld.id))) {
+        fetch(`${API_BASE}/api/drafts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ld),
+        }).catch(() => {});
+      }
+    });
+
+    scholarships = mergeById(serverSchols, localScholarships);
+    drafts = localDrafts !== null ? mergeById(serverDrafts, localDrafts) : serverDrafts;
+    applications = mergeById(serverApps, localApplications);
+    notifications = mergeById(localNotifications, serverNotifs);
 
     // Cache local copy for offline/Live Server fallback
     try {
@@ -1701,29 +1779,32 @@ async function loadPersistedData() {
       localStorage.setItem("nexo_notifications", JSON.stringify(notifications));
     } catch (_) {}
   } catch (err) {
+    let staticData = {};
     try {
       const dataRes = await fetch("data.json");
       if (dataRes.ok) {
-        const localData = await dataRes.json();
-        scholarships = Array.isArray(localData.scholarships) ? localData.scholarships : [];
-        drafts = Array.isArray(localData.drafts) ? localData.drafts : [];
-        applications = Array.isArray(localData.applications) ? localData.applications : [];
-        notifications = Array.isArray(localData.notifications) ? localData.notifications : [];
-      } else {
-        throw new Error("data.json fallback unavailable");
+        staticData = await dataRes.json();
       }
-    } catch (_) {
-      try {
-        const cachedSchols = localStorage.getItem("nexo_scholarships");
-        const cachedDrafts = localStorage.getItem("nexo_drafts");
-        const cachedApps = localStorage.getItem("nexo_applications");
-        const cachedNotifs = localStorage.getItem("nexo_notifications");
-        if (cachedSchols) scholarships = JSON.parse(cachedSchols);
-        if (cachedDrafts) drafts = JSON.parse(cachedDrafts);
-        if (cachedApps) applications = JSON.parse(cachedApps);
-        if (cachedNotifs) notifications = JSON.parse(cachedNotifs);
-      } catch (_) {}
-    }
+    } catch (_) {}
+
+    scholarships = mergeById(localScholarships, staticData.scholarships);
+    drafts =
+      localDrafts !== null
+        ? (Array.isArray(localDrafts)
+            ? localDrafts.filter((d) => d && !deletedIds.has(String(d.id || "")))
+            : [])
+        : Array.isArray(staticData.drafts)
+          ? staticData.drafts
+          : [];
+    applications = mergeById(localApplications, staticData.applications);
+    notifications = mergeById(localNotifications, staticData.notifications);
+
+    try {
+      localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+      localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
+      localStorage.setItem("nexo_applications", JSON.stringify(applications));
+      localStorage.setItem("nexo_notifications", JSON.stringify(notifications));
+    } catch (_) {}
   }
 
   const currentProviderEmail = (
@@ -1739,6 +1820,7 @@ async function loadPersistedData() {
   ).toLowerCase().trim();
 
   const isPrimaryProvider =
+    !currentProviderEmail ||
     currentProviderEmail === "admin@admin" ||
     currentProviderEmail === "provider@nexo.edu.ph";
 
@@ -1747,9 +1829,18 @@ async function loadPersistedData() {
     if (!currentProviderEmail && !currentProviderName) return true;
     const sEmail = (s.providerEmail || "").toLowerCase().trim();
     const sName = (s.providerName || s.organization || "").toLowerCase().trim();
-    if (currentProviderEmail && sEmail) return sEmail === currentProviderEmail;
-    if (currentProviderName && sName === currentProviderName) return true;
-    if (isPrimaryProvider && (!sEmail && (!sName || sName === "nexo"))) return true;
+    if (currentProviderEmail && sEmail && sEmail === currentProviderEmail) return true;
+    if (currentProviderName && sName && sName === currentProviderName) return true;
+    if (
+      isPrimaryProvider &&
+      (!sEmail ||
+        sEmail === "admin@admin" ||
+        sEmail === "provider@nexo.edu.ph" ||
+        !sName ||
+        sName === "nexo")
+    ) {
+      return true;
+    }
     return false;
   });
 
@@ -1757,10 +1848,19 @@ async function loadPersistedData() {
     const dEmail = (d.providerEmail || "").toLowerCase().trim();
     const dName = (d.providerName || "").toLowerCase().trim();
     if (!currentProviderEmail && !currentProviderName) return true;
-    if (currentProviderEmail && dEmail) return dEmail === currentProviderEmail;
-    if (!dEmail && currentProviderName && dName === currentProviderName) return true;
-    // Only associate unassigned drafts with primary provider admin
-    return isPrimaryProvider && !dEmail;
+    if (currentProviderEmail && dEmail && dEmail === currentProviderEmail) return true;
+    if (currentProviderName && dName && dName === currentProviderName) return true;
+    if (
+      isPrimaryProvider &&
+      (!dEmail ||
+        dEmail === "admin@admin" ||
+        dEmail === "provider@nexo.edu.ph" ||
+        !dName ||
+        dName === "nexo")
+    ) {
+      return true;
+    }
+    return false;
   });
 
   // Filter applications submitted to this provider's scholarships
@@ -1788,7 +1888,8 @@ async function loadPersistedData() {
     return st.includes("review") || st.includes("pending") || st.includes("submitted");
   }).length;
   const ongoingSchols = myScholarships.filter((s) => {
-    return (s.status || "Open").toLowerCase() === "open";
+    const st = (s.status || "Open").toLowerCase();
+    return !st.includes("closed") && !st.includes("full");
   }).length;
 
   updateStatsUI(
@@ -1967,7 +2068,9 @@ function initPublishAndDraft() {
           day: "numeric",
         });
 
+        const newScholId = "schol_" + Date.now();
         const payload = {
+          id: newScholId,
           title,
           desc,
           type: typeVal,
@@ -1975,6 +2078,7 @@ function initPublishAndDraft() {
           deadline: DOM.dateInput ? DOM.dateInput.value : "",
           formattedDate,
           postedAt: now.toISOString(),
+          createdAt: now.toISOString(),
           formattedPostedDate,
           applicantLimit,
           maxApplicants: applicantLimit,
@@ -1989,7 +2093,7 @@ function initPublishAndDraft() {
           draftId: draftIdToDelete,
         };
 
-        let newSchol = { id: "schol_" + Date.now(), ...payload };
+        let newSchol = { ...payload };
 
         try {
           const res = await fetch(`${API_BASE}/api/scholarships`, {
@@ -2009,7 +2113,14 @@ function initPublishAndDraft() {
           const cached = JSON.parse(
             localStorage.getItem("nexo_scholarships") || "[]",
           );
-          cached.unshift(newSchol);
+          const existingIdx = cached.findIndex(
+            (s) => s && String(s.id) === String(newSchol.id),
+          );
+          if (existingIdx >= 0) {
+            cached[existingIdx] = newSchol;
+          } else {
+            cached.unshift(newSchol);
+          }
           localStorage.setItem("nexo_scholarships", JSON.stringify(cached));
           if (draftIdToDelete) {
             const cachedDrafts = JSON.parse(
@@ -2019,6 +2130,15 @@ function initPublishAndDraft() {
               (d) => String(d.id) !== String(draftIdToDelete),
             );
             localStorage.setItem("nexo_drafts", JSON.stringify(filteredDrafts));
+            try {
+              const delIds = JSON.parse(
+                localStorage.getItem("nexo_deleted_ids") || "[]",
+              );
+              if (!delIds.includes(String(draftIdToDelete))) {
+                delIds.push(String(draftIdToDelete));
+                localStorage.setItem("nexo_deleted_ids", JSON.stringify(delIds));
+              }
+            } catch (_) {}
           }
         } catch (_) {}
 
@@ -2051,49 +2171,15 @@ function initPublishAndDraft() {
         // If we just published a draft, remove the old draft from UI
         if (currentEditingDraftCard) {
           currentEditingDraftCard.remove();
-          draftCount = Math.max(0, draftCount - 1);
-          const draftBadge = document.getElementById("draft-badge");
-          if (draftBadge) {
-            draftBadge.textContent = draftCount;
-            if (draftCount <= 0) {
-              draftBadge.style.display = "none";
-              const emptyDraftsCard =
-                document.getElementById("empty-drafts-card");
-              if (emptyDraftsCard) emptyDraftsCard.removeAttribute("style");
-            }
-          }
-          currentEditingDraftCard = null;
-          currentEditingDraftId = null;
-          window.dispatchEvent(new Event("nexo_drafts_updated"));
         }
+        currentEditingDraftCard = null;
+        currentEditingDraftId = null;
 
-        // Hide main home feed empty state
-        const emptyState = document.getElementById("empty-state-card");
-        if (emptyState) emptyState.style.display = "none";
-
-        totalScholarships++;
-        ongoingScholarships++;
-        const statTotal = document.getElementById("stat-total");
-        const statOngoing = document.getElementById("stat-ongoing");
-        if (statTotal) statTotal.textContent = totalScholarships;
-        if (statOngoing) statOngoing.textContent = ongoingScholarships;
-
-        const feed = document.getElementById("scholarships-feed");
-        const allFeed = document.getElementById("all-scholarships-feed");
-
-        if (feed) {
-          feed.prepend(createCompactCard(newSchol));
-          if (allFeed) allFeed.prepend(createCompactCard(newSchol));
-
-          while (feed.children.length > 3) {
-            feed.removeChild(feed.lastChild);
-          }
-
-          const viewAllBtn = document.getElementById("view-all-btn");
-          if (viewAllBtn && ongoingScholarships > 3) {
-            viewAllBtn.style.display = "inline-block";
-          }
-        }
+        // Re-render all dashboard metrics, Recent Scholarships, Upcoming Deadlines, and Recent Activity
+        window._lastScholSig = null;
+        window._forceDraftsRerender = true;
+        await loadPersistedData();
+        window.dispatchEvent(new Event("nexo_drafts_updated"));
 
         if (DOM.creationModal) {
           DOM.creationModal.classList.remove("active");
@@ -2613,6 +2699,13 @@ function initDraftEditing() {
             (d) => String(d.id) !== String(draftId),
           );
           localStorage.setItem("nexo_drafts", JSON.stringify(filtered));
+          const delIds = JSON.parse(
+            localStorage.getItem("nexo_deleted_ids") || "[]",
+          );
+          if (!delIds.includes(String(draftId))) {
+            delIds.push(String(draftId));
+            localStorage.setItem("nexo_deleted_ids", JSON.stringify(delIds));
+          }
           window.dispatchEvent(new Event("nexo_drafts_updated"));
         } catch (_) {}
       }
@@ -2648,13 +2741,7 @@ function initDraftEditing() {
 
       // Populate form fields with saved data
       if (DOM.nameInput) DOM.nameInput.value = continueBtn.dataset.title || "";
-      if (DOM.descInput) {
-        DOM.descInput.value = continueBtn.dataset.desc || "";
-        const descCounter = document.getElementById("schol-desc-counter");
-        if (descCounter) {
-          descCounter.textContent = `${DOM.descInput.value.length.toLocaleString()} / 5,000`;
-        }
-      }
+      if (DOM.descInput) DOM.descInput.value = continueBtn.dataset.desc || "";
       if (DOM.dateInput) DOM.dateInput.value = continueBtn.dataset.date || "";
       if (DOM.limitInput)
         DOM.limitInput.value = continueBtn.dataset.limit || 200;
