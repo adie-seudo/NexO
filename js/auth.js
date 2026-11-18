@@ -518,9 +518,10 @@ function initLoginToggleAndSubmit() {
           localStorage.setItem("nexo-student-email", matchedUser.email);
         } catch (_) {}
 
-        // Restore avatar if this student has one
-        let userAvatar = matchedUser.profilePicture || "";
-        if (!userAvatar && emailLower) {
+        // Restore avatar if this student has one (and has not explicitly removed it)
+        const isRemoved = emailLower && localStorage.getItem("nexo_avatar_removed_" + emailLower) === "true";
+        let userAvatar = isRemoved ? "" : (matchedUser.profilePicture || "");
+        if (!isRemoved && !userAvatar && emailLower) {
           try {
             userAvatar =
               localStorage.getItem("nexo_avatar_" + emailLower) ||
@@ -528,7 +529,7 @@ function initLoginToggleAndSubmit() {
               "";
           } catch (_) {}
         }
-        if (!userAvatar && emailLower) {
+        if (!isRemoved && !userAvatar && emailLower) {
           try {
             const profs = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
             if (profs[emailLower] && profs[emailLower].profilePicture) {
@@ -536,7 +537,7 @@ function initLoginToggleAndSubmit() {
             }
           } catch (_) {}
         }
-        if (!userAvatar && emailLower) {
+        if (!isRemoved && !userAvatar && emailLower) {
           try {
             const scoped = JSON.parse(localStorage.getItem(`nexo_student_settings_${emailLower}`) || "{}");
             if (scoped && scoped.profilePicture) {

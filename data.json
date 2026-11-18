@@ -10,8 +10,8 @@
       "formattedDate": "Dec 15, 2026",
       "applicantLimit": 50,
       "maxApplicants": 50,
-      "applicantTotal": 0,
-      "applicantCount": "0 / 50 Applicants",
+      "applicantTotal": 1,
+      "applicantCount": "1 / 50 Applicants",
       "postedAt": "2026-11-18T04:46:06.272Z",
       "formattedPostedDate": "Nov 18, 2026",
       "createdAt": "2026-11-18T04:46:06.272Z",
@@ -45,8 +45,105 @@
     }
   ],
   "drafts": [],
-  "applications": [],
+  "applications": [
+    {
+      "id": "app_1794980582657",
+      "scholarshipId": "schol_1794977166272",
+      "scholarshipTitle": "BatStateU Academic Excellence Scholarship – 2026",
+      "providerName": "NEXO",
+      "studentName": "James Aldrei De Castro",
+      "studentEmail": "24-06547@g.batstate-u.edu.ph",
+      "studentId": "24-06547",
+      "university": "Batangas State University",
+      "course": "BSIT - Service Management",
+      "yearLevel": "3rd Year",
+      "contactNumber": "09999999999",
+      "studentProfilePic": "",
+      "profilePicture": "",
+      "status": "Submitted",
+      "statusText": "Submitted",
+      "submittedAt": "2026-11-18T05:43:02.657Z",
+      "formattedDate": "Nov 18, 2026",
+      "applicantCount": "1 / 50 Applicants",
+      "documents": [
+        {
+          "name": "Valid School ID (To Follow Up)",
+          "title": "Valid School ID",
+          "requirement": "Valid School ID",
+          "size": 0,
+          "type": "to_follow_up",
+          "fileUrl": "",
+          "uploadedAt": "2026-11-18T13:43:02.822745",
+          "status": "to_follow_up",
+          "isFollowUp": true,
+          "slot": "req_0"
+        },
+        {
+          "name": "Latest Grades/Transcript (To Follow Up)",
+          "title": "Latest Grades/Transcript",
+          "requirement": "Latest Grades/Transcript",
+          "size": 0,
+          "type": "to_follow_up",
+          "fileUrl": "",
+          "uploadedAt": "2026-11-18T13:43:02.825420",
+          "status": "to_follow_up",
+          "isFollowUp": true,
+          "slot": "req_1"
+        },
+        {
+          "name": "Certificate of Registration (COR) (To Follow Up)",
+          "title": "Certificate of Registration (COR)",
+          "requirement": "Certificate of Registration (COR)",
+          "size": 0,
+          "type": "to_follow_up",
+          "fileUrl": "",
+          "uploadedAt": "2026-11-18T13:43:02.825450",
+          "status": "to_follow_up",
+          "isFollowUp": true,
+          "slot": "req_2"
+        },
+        {
+          "name": "Good Moral (To Follow Up)",
+          "title": "Good Moral",
+          "requirement": "Good Moral",
+          "size": 0,
+          "type": "to_follow_up",
+          "fileUrl": "",
+          "uploadedAt": "2026-11-18T13:43:02.825460",
+          "status": "to_follow_up",
+          "isFollowUp": true,
+          "slot": "req_3"
+        },
+        {
+          "name": "Personal Statement (To Follow Up)",
+          "title": "Personal Statement",
+          "requirement": "Personal Statement",
+          "size": 0,
+          "type": "to_follow_up",
+          "fileUrl": "",
+          "uploadedAt": "2026-11-18T13:43:02.825470",
+          "status": "to_follow_up",
+          "isFollowUp": true,
+          "slot": "req_4"
+        }
+      ],
+      "uploadedDocuments": [],
+      "notes": "",
+      "reviewedAt": null
+    }
+  ],
   "notifications": [
+    {
+      "id": "notif_1794980582827",
+      "recipient": "provider",
+      "title": "New Application Received",
+      "message": "James Aldrei De Castro applied for \"BatStateU Academic Excellence Scholarship – 2026\" with 0 document(s) (5 to follow up).",
+      "timestamp": "2026-11-18T13:43:02.827835",
+      "formattedTime": "Just now",
+      "read": false,
+      "link": "provider-applications.html",
+      "appId": "app_1794980582657"
+    },
     {
       "id": "notif_1794977166984",
       "recipient": "student",
@@ -179,15 +276,15 @@
     "updatedAt": "2026-11-11T03:44:45.549Z"
   },
   "studentSettings": {
-    "fullName": "James Aldrei De Castro",
-    "email": "24-06547@g.batstate-u.edu.ph",
-    "university": "Batangas State University",
-    "course": "BSIT - Service Management",
+    "fullName": "Izzy Rosales",
+    "email": "24-04579@g.batstate-u.edu.ph",
+    "university": "Batangas State University - Alangilan Campus",
+    "course": "BS Civil Engineering",
     "yearLevel": "3rd Year",
-    "studentId": "24-06547",
-    "contactNumber": "09999999999",
+    "studentId": "24-04579",
+    "contactNumber": "08888888888",
     "bio": "",
-    "profilePicture": "data:image/webp;base64,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",
+    "profilePicture": "",
     "isProfileConfirmed": true,
     "notifications": {
       "scholarshipMatches": true,
@@ -213,7 +310,7 @@
       "notes": "Created by Developer Admin",
       "university": "Batangas State University",
       "course": "BSIT - Service Management",
-      "profilePicture": "data:image/webp;base64,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"
+      "profilePicture": ""
     },
     {
       "id": "usr_stud_1794977451633",
@@ -225,7 +322,10 @@
       "status": "active",
       "createdAt": "2026-11-18T12:50:51.633565",
       "formattedDate": "Nov 18, 2026",
-      "notes": "Created by Developer Admin"
+      "notes": "Created by Developer Admin",
+      "university": "Batangas State University - Alangilan Campus",
+      "course": "BS Civil Engineering",
+      "profilePicture": ""
     },
     {
       "id": "usr_stud_1794725790102_324e66",
@@ -310,7 +410,28 @@
       "studentId": "24-06547",
       "contactNumber": "09999999999",
       "bio": "",
-      "profilePicture": "data:image/webp;base64,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",
+      "profilePicture": "",
+      "isProfileConfirmed": true,
+      "notifications": {
+        "scholarshipMatches": true,
+        "applicationUpdates": true,
+        "deadlineReminders": true
+      },
+      "preferences": {
+        "theme": "dark"
+      },
+      "updatedAt": "2026-11-15T07:14:47.263Z"
+    },
+    "24-04579@g.batstate-u.edu.ph": {
+      "fullName": "Izzy Rosales",
+      "email": "24-04579@g.batstate-u.edu.ph",
+      "university": "Batangas State University - Alangilan Campus",
+      "course": "BS Civil Engineering",
+      "yearLevel": "3rd Year",
+      "studentId": "24-04579",
+      "contactNumber": "08888888888",
+      "bio": "",
+      "profilePicture": "",
       "isProfileConfirmed": true,
       "notifications": {
         "scholarshipMatches": true,

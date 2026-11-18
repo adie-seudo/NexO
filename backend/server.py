@@ -293,7 +293,7 @@ class NexoHandler(BaseHTTPRequestHandler):
                 profiles = data.setdefault("studentProfiles", {})
                 if query_email in profiles:
                     prof = profiles[query_email]
-                    if not prof.get("profilePicture"):
+                    if "profilePicture" not in prof:
                         matched = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == query_email), None)
                         if matched and matched.get("profilePicture"):
                             prof["profilePicture"] = matched.get("profilePicture")
@@ -695,27 +695,57 @@ class NexoHandler(BaseHTTPRequestHandler):
         if path == "/api/student-settings":
             email = (body.get("email") or query.get("email", [""])[0] or data.get("studentSettings", {}).get("email", "")).strip().lower()
             profiles = data.setdefault("studentProfiles", {})
-            current = profiles.get(email) or data.get("studentSettings", DEFAULT_DATA["studentSettings"]).copy()
+            current = profiles.get(email)
+            if not current:
+                matched_u = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == email), None)
+                current = {
+                    "fullName": (matched_u.get("name") if matched_u else "") or "",
+                    "email": email,
+                    "university": (matched_u.get("university") if matched_u else "") or "",
+                    "course": (matched_u.get("course") if matched_u else "") or "",
+                    "yearLevel": (matched_u.get("yearLevel") if matched_u else "") or "",
+                    "studentId": (matched_u.get("studentId") if matched_u else "") or "",
+                    "contactNumber": (matched_u.get("contactNumber") if matched_u else "") or "",
+                    "bio": (matched_u.get("bio") if matched_u else "") or "",
+                    "profilePicture": (matched_u.get("profilePicture") if matched_u else "") or "",
+                    "isProfileConfirmed": bool(matched_u.get("isProfileConfirmed")) if matched_u else False,
+                    "notifications": {
+                        "scholarshipMatches": True,
+                        "applicationUpdates": True,
+                        "deadlineReminders": True
+                    },
+                    "preferences": {
+                        "theme": "light"
+                    }
+                }
             current.update(body)
             if email:
                 current["email"] = email
                 profiles[email] = current
                 for u in data.get("users", []):
                     if (u.get("email") or "").strip().lower() == email:
-                        if "fullName" in body:
+                        if "fullName" in body and body["fullName"]:
                             u["name"] = body["fullName"]
                         if "university" in body:
                             u["university"] = body["university"]
                         if "course" in body:
                             u["course"] = body["course"]
+                        if "yearLevel" in body:
+                            u["yearLevel"] = body["yearLevel"]
+                        if "studentId" in body:
+                            u["studentId"] = body["studentId"]
+                        if "contactNumber" in body:
+                            u["contactNumber"] = body["contactNumber"]
+                        if "isProfileConfirmed" in body:
+                            u["isProfileConfirmed"] = bool(body["isProfileConfirmed"])
                         if "profilePicture" in body:
-                            u["profilePicture"] = body["profilePicture"]
+                            u["profilePicture"] = body["profilePicture"] or ""
             data["studentSettings"] = current
             if "profilePicture" in body:
                 for app in data.get("applications", []):
-                    if not app.get("studentEmail") or app.get("studentEmail") == current.get("email"):
-                        app["studentProfilePic"] = current.get("profilePicture", "")
-                        app["profilePicture"] = current.get("profilePicture", "")
+                    if (app.get("studentEmail") or "").strip().lower() == email:
+                        app["studentProfilePic"] = current.get("profilePicture", "") or ""
+                        app["profilePicture"] = current.get("profilePicture", "") or ""
             write_data(data)
             return self._send_json(200, {"success": True, "settings": current})
 

@@ -663,18 +663,10 @@ function updateStudentDashboardProfileOverview(profile, activeEmail) {
   // Remove/hide profile percentage complete bar once profile is edited & locked (100%)
   const isFullyCompleted = completionData.isConfirmed || completionData.percent >= 100;
   if (wrapEl) {
-    if (isFullyCompleted) {
-      wrapEl.remove();
-    } else {
-      wrapEl.style.display = "flex";
-    }
+    wrapEl.style.display = "none";
   }
   if (summaryEl) {
-    if (isFullyCompleted) {
-      summaryEl.style.display = "none";
-    } else {
-      summaryEl.style.display = "flex";
-    }
+    summaryEl.style.display = "none";
   }
 
   if (completionLabel && !isFullyCompleted) {
@@ -1548,6 +1540,26 @@ async function loadStudentData() {
 
     if (serverProfile) {
       try {
+        if (activeStudentEmail && localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+          serverProfile.profilePicture = "";
+        }
+        // Preserve locally confirmed or updated settings if server is stale
+        if (activeStudentEmail) {
+          try {
+            const rawLocal = localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`);
+            if (rawLocal) {
+              const parsedLocal = JSON.parse(rawLocal);
+              if (parsedLocal && parsedLocal.email && parsedLocal.email.toLowerCase().trim() === activeStudentEmail) {
+                if (parsedLocal.isProfileConfirmed && !serverProfile.isProfileConfirmed) {
+                  serverProfile = { ...serverProfile, ...parsedLocal };
+                }
+                if (localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+                  serverProfile.profilePicture = "";
+                }
+              }
+            }
+          } catch (_) {}
+        }
         try {
           localStorage.setItem(
             "nexo_student_settings",
@@ -1598,6 +1610,15 @@ async function loadStudentData() {
               );
             }
           } catch (_) {}
+        } else {
+          try {
+            sessionStorage.removeItem("nexo-student-avatar");
+            localStorage.removeItem("nexo-student-avatar");
+            if (activeStudentEmail) {
+              localStorage.removeItem("nexo_avatar_" + activeStudentEmail);
+              localStorage.removeItem("nexo-student-avatar-" + activeStudentEmail);
+            }
+          } catch (_) {}
         }
       } catch (_) {}
     }
@@ -1606,6 +1627,8 @@ async function loadStudentData() {
     if (typeof window.syncGlobalStudentIdentity === "function") {
       window.syncGlobalStudentIdentity();
     }
+    updateStudentGreeting();
+    updateStudentAcademicChips(serverProfile, activeStudentEmail);
 
     // Cache local copy
     try {
@@ -1652,6 +1675,24 @@ async function loadStudentData() {
 
     applications = mergeById(localApplications, staticApps);
     window.cachedScholarships = mergeById(localScholarships, staticSchols);
+
+    if (serverProfile && activeStudentEmail) {
+      try {
+        if (localStorage.getItem("nexo_avatar_removed_" + activeStudentEmail) === "true") {
+          serverProfile.profilePicture = "";
+        }
+        const existingLocal = localStorage.getItem(`nexo_student_settings_${activeStudentEmail}`);
+        if (!existingLocal) {
+          localStorage.setItem(`nexo_student_settings_${activeStudentEmail}`, JSON.stringify(serverProfile));
+          localStorage.setItem("nexo_student_settings", JSON.stringify(serverProfile));
+        }
+      } catch (_) {}
+    }
+    if (typeof window.syncGlobalStudentIdentity === "function") {
+      window.syncGlobalStudentIdentity();
+    }
+    updateStudentGreeting();
+    updateStudentAcademicChips(serverProfile, activeStudentEmail);
   }
 
   // Ensure skeleton screen is smoothly visible on initial page load

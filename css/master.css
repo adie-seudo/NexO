@@ -4117,7 +4117,15 @@ body.dark-theme .student-hero-banner {
   min-height: 76px;
   border-radius: 50% !important;
   overflow: hidden !important;
-  background-color: #ffffff;
+  background-color: #D6BBFB !important;
+  color: #53389E !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  font-family: var(--font-heading) !important;
+  text-transform: uppercase !important;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4145,10 +4153,25 @@ body.dark-theme .student-hero-banner {
   display: block;
 }
 
+.hero-avatar-wrap .student-avatar-initials,
+#student-card-avatar .student-avatar-initials,
+.student-welcome-avatar .student-avatar-initials {
+  color: #53389E !important;
+  font-size: inherit !important;
+  font-weight: 800 !important;
+  font-family: var(--font-heading) !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-avatar-wrap svg,
 #student-card-avatar svg,
 .student-welcome-avatar svg {
-  color: #281747;
+  color: #53389E !important;
 }
 
 .hero-text-wrap {
@@ -8332,6 +8355,7 @@ body.dark-theme .skeleton-bone {
     min-width: 82px !important;
     min-height: 82px !important;
     border-radius: 50% !important;
+    font-size: 28px !important;
   }
 
   .hero-greeting-sub {
@@ -9101,6 +9125,10 @@ body.dark-theme textarea::placeholder {
   flex-direction: column;
   gap: 10px;
   width: 100%;
+}
+
+.student-hero-banner .student-profile-summary {
+  display: none !important;
 }
 
 .student-academic-meta {

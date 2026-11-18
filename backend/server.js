@@ -1499,7 +1499,7 @@ async function handleRequest(req, res) {
           data.studentProfiles = data.studentProfiles || {};
           if (data.studentProfiles[queryEmail]) {
             const prof = data.studentProfiles[queryEmail];
-            if (!prof.profilePicture) {
+            if (prof.profilePicture === undefined) {
               const matched = (data.users || []).find(
                 (u) => String(u.email || "").toLowerCase() === queryEmail,
               );
@@ -1672,9 +1672,9 @@ async function handleRequest(req, res) {
               if (updated.studentId) app.studentId = updated.studentId;
               if (updated.contactNumber) app.contactNumber = updated.contactNumber;
               app.bio = updated.bio || "";
-              if (updated.profilePicture) {
-                app.studentProfilePic = updated.profilePicture;
-                app.profilePicture = updated.profilePicture;
+              if (updated.profilePicture !== undefined) {
+                app.studentProfilePic = updated.profilePicture || "";
+                app.profilePicture = updated.profilePicture || "";
               }
             }
           });

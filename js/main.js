@@ -268,6 +268,14 @@ function isStudentProfileComplete() {
 
 function getStudentAvatar(currentEmail) {
   const email = (currentEmail || "").toLowerCase().trim();
+  if (email) {
+    try {
+      if (localStorage.getItem("nexo_avatar_removed_" + email) === "true") {
+        return "";
+      }
+    } catch (_) {}
+  }
+
   // 1. Session storage (for immediate changes in current tab)
   let pic = "";
   try {
@@ -286,11 +294,13 @@ function getStudentAvatar(currentEmail) {
     if (pic) return pic;
   }
 
-  // 3. Global localStorage avatar
-  try {
-    pic = localStorage.getItem("nexo-student-avatar") || "";
-  } catch (_) {}
-  if (pic) return pic;
+  // 3. Global localStorage avatar (only if no email or matches active student settings email)
+  if (!email) {
+    try {
+      pic = localStorage.getItem("nexo-student-avatar") || "";
+    } catch (_) {}
+    if (pic) return pic;
+  }
 
   // 4. Email-scoped student settings in localStorage
   if (email) {
@@ -298,8 +308,8 @@ function getStudentAvatar(currentEmail) {
       const scopedSettings = JSON.parse(
         localStorage.getItem(`nexo_student_settings_${email}`) || "null",
       );
-      if (scopedSettings && scopedSettings.profilePicture) {
-        return scopedSettings.profilePicture;
+      if (scopedSettings && scopedSettings.profilePicture !== undefined) {
+        return scopedSettings.profilePicture || "";
       }
     } catch (_) {}
   }
@@ -309,8 +319,8 @@ function getStudentAvatar(currentEmail) {
     const raw = localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (!parsed.email || !email || parsed.email.toLowerCase() === email) {
-        if (parsed.profilePicture) return parsed.profilePicture;
+      if (!email || (parsed.email && parsed.email.toLowerCase().trim() === email)) {
+        if (parsed.profilePicture !== undefined) return parsed.profilePicture || "";
       }
     }
   } catch (_) {}
@@ -321,8 +331,8 @@ function getStudentAvatar(currentEmail) {
       const profiles = JSON.parse(
         localStorage.getItem("nexo_student_profiles") || "{}",
       );
-      if (profiles[email] && profiles[email].profilePicture) {
-        return profiles[email].profilePicture;
+      if (profiles[email] && profiles[email].profilePicture !== undefined) {
+        return profiles[email].profilePicture || "";
       }
     } catch (_) {}
   }
@@ -350,7 +360,7 @@ function syncGlobalStudentIdentity() {
     sessionStorage.getItem("nexo-student-email") ||
     localStorage.getItem("nexo-student-email") ||
     ""
-  ).toLowerCase();
+  ).toLowerCase().trim();
 
   const avatarEl = document.getElementById("student-header-avatar");
   const storedName =
@@ -358,26 +368,52 @@ function syncGlobalStudentIdentity() {
     localStorage.getItem("nexo-student-name") ||
     "";
   let studentSettings = null;
-  try {
-    const raw = localStorage.getItem("nexo_student_settings");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (!parsed.email || !currentEmail || parsed.email.toLowerCase() === currentEmail) {
-        studentSettings = parsed;
-      }
-    }
-  } catch (_) {}
-
-  if (!studentSettings && currentEmail) {
+  if (currentEmail) {
     try {
       const rawScoped = localStorage.getItem(`nexo_student_settings_${currentEmail}`);
       if (rawScoped) {
-        studentSettings = JSON.parse(rawScoped);
+        const parsedScoped = JSON.parse(rawScoped);
+        if (!parsedScoped.email || parsedScoped.email.toLowerCase().trim() === currentEmail) {
+          studentSettings = parsedScoped;
+        }
       }
     } catch (_) {}
   }
 
-  const effectiveName = (studentSettings && studentSettings.fullName) || storedName;
+  if (!studentSettings) {
+    try {
+      const raw = localStorage.getItem("nexo_student_settings");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (!currentEmail || (parsed.email && parsed.email.toLowerCase().trim() === currentEmail)) {
+          studentSettings = parsed;
+        }
+      }
+    } catch (_) {}
+  }
+
+  let resolvedName = (studentSettings && studentSettings.fullName) || storedName;
+  if (!resolvedName && currentEmail) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      if (profiles[currentEmail] && profiles[currentEmail].fullName) {
+        resolvedName = profiles[currentEmail].fullName;
+      }
+    } catch (_) {}
+  }
+  if (!resolvedName && currentEmail) {
+    try {
+      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+      if (Array.isArray(users)) {
+        const matched = users.find((u) => (u.email || "").toLowerCase().trim() === currentEmail);
+        if (matched && (matched.name || matched.fullName)) {
+          resolvedName = matched.name || matched.fullName;
+        }
+      }
+    } catch (_) {}
+  }
+
+  const effectiveName = resolvedName || "";
   const avatarPic = getStudentAvatar(currentEmail);
 
   if (avatarPic) {
@@ -412,12 +448,8 @@ function syncGlobalStudentIdentity() {
     if (avatarPic) {
       cardAvatarEl.innerHTML = `<img src="${avatarPic}" alt="${effectiveName || 'Student'}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
     } else {
-      const initials = getDynamicInitials(effectiveName);
-      if (initials) {
-        cardAvatarEl.textContent = initials;
-      } else {
-        cardAvatarEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
-      }
+      const initials = getDynamicInitials(effectiveName) || "JD";
+      cardAvatarEl.innerHTML = `<span class="student-avatar-initials" style="color: #53389E; font-weight: 800; font-family: var(--font-heading); text-transform: uppercase; user-select: none; line-height: 1;">${initials}</span>`;
     }
   }
 
@@ -454,7 +486,10 @@ function syncGlobalStudentIdentity() {
           const queryParam = currentEmail ? `?email=${encodeURIComponent(currentEmail)}` : "";
           const res = await fetch(`${window.API_BASE}/api/student-settings${queryParam}`);
           if (res.ok) {
-            fetchedProfile = await res.json();
+            const candidate = await res.json();
+            if (candidate && (!currentEmail || (candidate.email && candidate.email.toLowerCase().trim() === currentEmail))) {
+              fetchedProfile = candidate;
+            }
           }
         } catch (_) {}
 
@@ -465,11 +500,30 @@ function syncGlobalStudentIdentity() {
               const fullData = await dataRes.json();
               if (currentEmail && fullData.studentProfiles && fullData.studentProfiles[currentEmail]) {
                 fetchedProfile = fullData.studentProfiles[currentEmail];
-              } else if (fullData.studentSettings && fullData.studentSettings.email) {
+              } else if (
+                currentEmail &&
+                fullData.studentSettings &&
+                fullData.studentSettings.email &&
+                fullData.studentSettings.email.toLowerCase().trim() === currentEmail
+              ) {
                 fetchedProfile = fullData.studentSettings;
-              } else if (fullData.studentProfiles) {
-                const keys = Object.keys(fullData.studentProfiles);
-                if (keys.length > 0) fetchedProfile = fullData.studentProfiles[keys[0]];
+              } else if (currentEmail && Array.isArray(fullData.users)) {
+                const matchedU = fullData.users.find(
+                  (u) => (u.email || "").toLowerCase().trim() === currentEmail
+                );
+                if (matchedU) {
+                  fetchedProfile = {
+                    email: matchedU.email,
+                    fullName: matchedU.name || "",
+                    university: matchedU.university || "",
+                    course: matchedU.course || "",
+                    yearLevel: matchedU.yearLevel || "",
+                    studentId: matchedU.studentId || "",
+                    contactNumber: matchedU.contactNumber || "",
+                    profilePicture: matchedU.profilePicture || "",
+                    isProfileConfirmed: Boolean(matchedU.isProfileConfirmed),
+                  };
+                }
               }
             }
           } catch (_) {}
@@ -478,6 +532,19 @@ function syncGlobalStudentIdentity() {
         if (fetchedProfile && (fetchedProfile.email || fetchedProfile.isProfileConfirmed !== undefined)) {
           try {
             const targetEm = (fetchedProfile.email || currentEmail || "").toLowerCase().trim();
+            if (targetEm && localStorage.getItem("nexo_avatar_removed_" + targetEm) === "true") {
+              fetchedProfile.profilePicture = "";
+            }
+            // Do not overwrite locally confirmed profile with stale unconfirmed server data
+            let existingScoped = null;
+            if (targetEm) {
+              try {
+                existingScoped = JSON.parse(localStorage.getItem(`nexo_student_settings_${targetEm}`) || "null");
+              } catch (_) {}
+            }
+            if (existingScoped && existingScoped.isProfileConfirmed) {
+              fetchedProfile = { ...fetchedProfile, ...existingScoped };
+            }
             try {
               localStorage.setItem("nexo_student_settings", JSON.stringify(fetchedProfile));
               if (targetEm) {

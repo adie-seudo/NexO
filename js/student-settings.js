@@ -199,6 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (corePayload.profilePicture !== undefined) {
       try {
         if (corePayload.profilePicture) {
+          if (cleanEmail) {
+            localStorage.removeItem("nexo_avatar_removed_" + cleanEmail);
+          }
           sessionStorage.setItem("nexo-student-avatar", corePayload.profilePicture);
           localStorage.setItem("nexo-student-avatar", corePayload.profilePicture);
           if (cleanEmail) {
@@ -206,6 +209,9 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("nexo-student-avatar-" + cleanEmail, corePayload.profilePicture);
           }
         } else {
+          if (cleanEmail) {
+            localStorage.setItem("nexo_avatar_removed_" + cleanEmail, "true");
+          }
           sessionStorage.removeItem("nexo-student-avatar");
           localStorage.removeItem("nexo-student-avatar");
           if (cleanEmail) {
@@ -390,6 +396,9 @@ document.addEventListener("DOMContentLoaded", () => {
       reader.onload = async (event) => {
         const rawDataUrl = event.target.result;
         currentAvatarBase64 = await compressImageDataUrl(rawDataUrl, 256, 0.84);
+        if (activeStudentSettings) {
+          activeStudentSettings.profilePicture = currentAvatarBase64;
+        }
         setAvatarPreview(currentAvatarBase64);
         updateHeaderAvatar(currentAvatarBase64);
 
@@ -404,6 +413,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Update local/session storage safely without exceeding browser 5MB quota
         try {
+          if (currentEmail) {
+            localStorage.removeItem("nexo_avatar_removed_" + currentEmail);
+          }
           sessionStorage.setItem("nexo-student-avatar", currentAvatarBase64);
           localStorage.setItem("nexo-student-avatar", currentAvatarBase64);
           if (currentEmail) {
@@ -471,6 +483,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (btnRemove) {
     btnRemove.addEventListener("click", async () => {
       currentAvatarBase64 = "";
+      if (activeStudentSettings) {
+        activeStudentSettings.profilePicture = "";
+      }
       if (fileInput) fileInput.value = "";
       setAvatarPreview("");
       updateHeaderAvatar("");
@@ -488,6 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionStorage.removeItem("nexo-student-avatar");
         localStorage.removeItem("nexo-student-avatar");
         if (currentEmail) {
+          localStorage.setItem("nexo_avatar_removed_" + currentEmail, "true");
           localStorage.removeItem("nexo_avatar_" + currentEmail);
           localStorage.removeItem("nexo-student-avatar-" + currentEmail);
         }
@@ -503,6 +519,7 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.getItem(`nexo_student_settings_${currentEmail}`) || "{}",
           );
           scoped.profilePicture = "";
+          scoped.email = currentEmail;
           localStorage.setItem(`nexo_student_settings_${currentEmail}`, JSON.stringify(scoped));
 
           let profiles = {};
@@ -522,11 +539,27 @@ document.addEventListener("DOMContentLoaded", () => {
               localStorage.setItem("nexo_users", JSON.stringify(usersList));
             }
           }
+
+          let appsList = JSON.parse(localStorage.getItem("nexo_applications") || "[]");
+          if (Array.isArray(appsList)) {
+            let appsChanged = false;
+            appsList.forEach((app) => {
+              if ((app.studentEmail || "").toLowerCase().trim() === currentEmail) {
+                app.studentProfilePic = "";
+                app.profilePicture = "";
+                appsChanged = true;
+              }
+            });
+            if (appsChanged) {
+              localStorage.setItem("nexo_applications", JSON.stringify(appsList));
+            }
+          }
         }
       } catch (_) {}
+      updateHeaderAvatar("");
       showToast("Profile image removed");
 
-      if (currentEmail && activeStudentSettings && activeStudentSettings.isProfileConfirmed) {
+      if (currentEmail) {
         try {
           await fetch(`${API_BASE}/api/student-settings`, {
             method: "POST",
@@ -614,7 +647,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
           } catch (_) {}
 
-          if (fetched.profilePicture && fetched.profilePicture.length > 80000) {
+          if (currentEmail && localStorage.getItem("nexo_avatar_removed_" + currentEmail) === "true") {
+            fetched.profilePicture = "";
+          } else if (fetched.profilePicture && fetched.profilePicture.length > 80000) {
             fetched.profilePicture = await compressImageDataUrl(fetched.profilePicture, 256, 0.84);
           }
 
@@ -754,7 +789,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    if (!settings.profilePicture) {
+    const isAvatarExplicitlyRemoved =
+      currentEmail && localStorage.getItem("nexo_avatar_removed_" + currentEmail) === "true";
+
+    if (isAvatarExplicitlyRemoved) {
+      settings.profilePicture = "";
+    } else if (!settings.profilePicture) {
       const fallbackAvatar =
         (typeof window.getStudentAvatar === "function"
           ? window.getStudentAvatar(currentEmail)
@@ -944,8 +984,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ? phoneInput.value.trim()
         : activeStudentSettings?.contactNumber || "",
       bio: bioInput ? bioInput.value.trim() : "",
-      profilePicture:
-        currentAvatarBase64 || activeStudentSettings?.profilePicture || "",
+      profilePicture: currentAvatarBase64 || "",
       isProfileConfirmed: Boolean(isConfirmed),
       notifications: {
         scholarshipMatches: notifMatches ? notifMatches.checked : true,
@@ -990,10 +1029,8 @@ document.addEventListener("DOMContentLoaded", () => {
               if (payload.contactNumber)
                 app.contactNumber = payload.contactNumber;
               app.bio = payload.bio || "";
-              if (payload.profilePicture) {
-                app.studentProfilePic = payload.profilePicture;
-                app.profilePicture = payload.profilePicture;
-              }
+              app.studentProfilePic = payload.profilePicture || "";
+              app.profilePicture = payload.profilePicture || "";
               changed = true;
             }
           });

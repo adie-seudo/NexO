@@ -276,23 +276,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (fullData.settings) {
           providerSettings = fullData.settings;
         }
-        if (fullData.studentSettings) {
-          studentSettings = fullData.studentSettings;
-        }
 
         const currentStudentEmail = (
           sessionStorage.getItem("nexo-student-email") ||
           localStorage.getItem("nexo-student-email") ||
           ""
-        ).toLowerCase();
+        ).toLowerCase().trim();
         if (currentStudentEmail && fullData.studentProfiles && fullData.studentProfiles[currentStudentEmail]) {
           studentSettings = fullData.studentProfiles[currentStudentEmail];
-        } else if (fullData.studentSettings && fullData.studentSettings.email) {
+        } else if (
+          currentStudentEmail &&
+          fullData.studentSettings &&
+          fullData.studentSettings.email &&
+          fullData.studentSettings.email.toLowerCase().trim() === currentStudentEmail
+        ) {
           studentSettings = fullData.studentSettings;
         }
         if (studentSettings) {
           try {
             const targetEm = (studentSettings.email || currentStudentEmail || "").toLowerCase().trim();
+            if (targetEm && localStorage.getItem("nexo_avatar_removed_" + targetEm) === "true") {
+              studentSettings.profilePicture = "";
+            }
             if (targetEm) {
               localStorage.setItem(`nexo_student_settings_${targetEm}`, JSON.stringify(studentSettings));
             }
