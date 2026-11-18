@@ -56,6 +56,15 @@ function cacheDOM() {
   DOM.nameError = document.getElementById("error-schol-name");
   DOM.descInput = document.getElementById("schol-desc");
   DOM.descError = document.getElementById("error-schol-desc");
+
+  if (DOM.descInput) {
+    const descCounter = document.getElementById("schol-desc-counter");
+    DOM.descInput.addEventListener("input", () => {
+      if (descCounter) {
+        descCounter.textContent = `${DOM.descInput.value.length.toLocaleString()} / 5,000`;
+      }
+    });
+  }
   DOM.typeInput = document.getElementById("schol-type");
   DOM.typeSelected = document.getElementById("schol-type-selected");
   DOM.typeError = document.getElementById("error-schol-type");
@@ -94,6 +103,11 @@ function openNewScholarshipCreationModal() {
   maxStepReached = 1;
   const draftBtn = document.getElementById("draft-btn");
   if (draftBtn) draftBtn.textContent = "Save as Draft";
+
+  const modalTitle = document.getElementById("creation-modal-title");
+  if (modalTitle) modalTitle.textContent = "Create Scholarship Opportunity";
+  const descCounter = document.getElementById("schol-desc-counter");
+  if (descCounter) descCounter.textContent = "0 / 5,000";
 
   // Reset the form so it opens fresh
   const step1Form = document.getElementById("step-1-form");
@@ -244,7 +258,23 @@ function goToStep(stepNumber = 1, isEdit = false) {
     document.getElementById("review-desc-text").textContent = DOM.descInput
       ? DOM.descInput.value
       : "";
-    document.getElementById("review-type").textContent = "Admin";
+    const activeProvider = localStorage.getItem("nexo-provider-name") || "Provider";
+    const reviewTypeEl = document.getElementById("review-type");
+    if (reviewTypeEl) reviewTypeEl.textContent = activeProvider;
+
+    const logoPlaceholder = document.getElementById("review-logo-placeholder");
+    const providerLogo = localStorage.getItem("nexo-provider-logo");
+    if (logoPlaceholder) {
+      if (providerLogo) {
+        logoPlaceholder.innerHTML = `<img src="${providerLogo}" alt="Provider Logo">`;
+      } else {
+        logoPlaceholder.innerHTML = `
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>`;
+      }
+    }
 
     const typeSelectedText = DOM.typeSelected
       ? DOM.typeSelected.querySelector("span").textContent
@@ -415,7 +445,7 @@ function validateStep1() {
   }
 
   if (DOM.descInput && !DOM.descInput.value.trim()) {
-    DOM.descError.textContent = "Please provide a short description.";
+    DOM.descError.textContent = "Please provide scholarship details or description.";
     DOM.descError.classList.add("active");
     DOM.descInput.classList.add("input-error");
     isValid = false;
@@ -2613,9 +2643,18 @@ function initDraftEditing() {
       const draftBtn = document.getElementById("draft-btn");
       if (draftBtn) draftBtn.textContent = "Update Draft";
 
+      const modalTitle = document.getElementById("creation-modal-title");
+      if (modalTitle) modalTitle.textContent = "Edit Scholarship Opportunity";
+
       // Populate form fields with saved data
       if (DOM.nameInput) DOM.nameInput.value = continueBtn.dataset.title || "";
-      if (DOM.descInput) DOM.descInput.value = continueBtn.dataset.desc || "";
+      if (DOM.descInput) {
+        DOM.descInput.value = continueBtn.dataset.desc || "";
+        const descCounter = document.getElementById("schol-desc-counter");
+        if (descCounter) {
+          descCounter.textContent = `${DOM.descInput.value.length.toLocaleString()} / 5,000`;
+        }
+      }
       if (DOM.dateInput) DOM.dateInput.value = continueBtn.dataset.date || "";
       if (DOM.limitInput)
         DOM.limitInput.value = continueBtn.dataset.limit || 200;

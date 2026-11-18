@@ -2861,6 +2861,25 @@ body.dark-theme .view-all {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--border-strong);
 }
+.creation-header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.creation-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
+  font-family: var(--font-heading);
+}
+.creation-modal-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
 .close-modal-btn {
   background: none;
   border: none;
@@ -2875,6 +2894,31 @@ body.dark-theme .view-all {
   margin-bottom: 24px;
   text-align: center;
   color: var(--text-primary);
+}
+
+/* Label with Character Counter */
+.label-with-counter {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.label-with-counter label {
+  margin-bottom: 0 !important;
+}
+.char-counter {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  user-select: none;
+}
+
+/* Creation Form Row (Stacked on mobile, 3 columns on tablet/desktop) */
+.creation-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
 }
 
 .progress-container {
@@ -3259,6 +3303,19 @@ body.dark-theme .edit-review-btn {
   height: 60px;
   flex-shrink: 0;
   align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--purple-700);
+}
+.review-logo-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 10px;
 }
 .review-details h4 {
   font-size: 16px;
@@ -3369,6 +3426,232 @@ body.dark-theme .review-pill {
   padding: 14px;
   font-size: 15px;
   font-weight: 600;
+}
+
+/* =========================================
+   14.1 DESKTOP SCHOLARSHIP CREATION WORKSPACE
+   ========================================= */
+@media (min-width: 768px) {
+  .creation-form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .creation-form-row .input-group {
+    margin-bottom: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .creation-modal {
+    background-color: rgba(9, 6, 17, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    padding: 36px 30px;
+    box-sizing: border-box;
+    display: none;
+  }
+
+  .creation-modal.active {
+    display: flex !important;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .creation-modal-content {
+    max-width: 1060px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 44px 64px 60px 64px;
+    border-radius: 24px;
+    min-height: auto;
+    border: 1.5px solid var(--border-color);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+    background-color: var(--bg-surface);
+    box-sizing: border-box;
+  }
+
+  body.dark-theme .creation-modal-content {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  }
+
+  .creation-header {
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+
+  .creation-modal-title {
+    font-size: 26px;
+  }
+
+  .creation-modal-subtitle {
+    font-size: 14.5px;
+  }
+
+  .close-modal-btn {
+    font-size: 34px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .close-modal-btn:hover {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    transform: scale(1.05);
+  }
+
+  .progress-container {
+    margin-bottom: 36px;
+    padding: 0 4px;
+  }
+
+  .progress-header {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .progress-bar-bg {
+    height: 10px;
+    border-radius: 6px;
+    margin-bottom: 24px;
+  }
+
+  .step-indicator {
+    font-size: 13.5px;
+  }
+
+  .step-num {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .form-section-title {
+    font-size: 22px;
+    margin-bottom: 22px;
+  }
+
+  .creation-form label {
+    font-size: 14.5px;
+    margin-bottom: 9px;
+  }
+
+  .creation-form input,
+  .creation-form textarea,
+  .creation-form select {
+    padding: 15px 18px;
+    font-size: 15px;
+    border-radius: 12px;
+    border-width: 1.5px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .creation-form input:focus,
+  .creation-form textarea:focus,
+  .creation-form select:focus {
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+  }
+
+  #schol-desc {
+    min-height: 180px;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  .dropdown-selected {
+    padding: 15px 18px;
+    font-size: 15px;
+    border-radius: 12px;
+    border-width: 1.5px;
+  }
+
+  .dropdown-options {
+    border-radius: 12px;
+  }
+
+  .dropdown-options li {
+    padding: 14px 18px;
+    font-size: 14.5px;
+  }
+
+  .requirements-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .req-card {
+    padding: 16px 20px;
+    border-radius: 14px;
+  }
+
+  .req-card.custom-edit-mode {
+    grid-column: 1 / -1;
+  }
+
+  .form-section-subtitle {
+    font-size: 15px;
+    margin-bottom: 24px;
+  }
+
+  #add-custom-req-btn {
+    padding: 14px 20px;
+    font-size: 15px;
+    border-radius: 14px;
+    margin-top: 20px;
+  }
+
+  .review-card {
+    padding: 28px 32px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+  }
+
+  .review-details h4 {
+    font-size: 20px;
+  }
+
+  .review-desc {
+    font-size: 15px;
+    line-height: 1.65;
+    margin-top: 18px;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 36px;
+    padding-bottom: 0;
+  }
+
+  .modal-actions .btn {
+    flex: initial;
+    min-width: 150px;
+    padding: 14px 28px;
+    font-size: 15px;
+    border-radius: 9999px;
+  }
+
+  .modal-actions-column {
+    max-width: 440px;
+    margin: 32px auto 0 auto;
+    width: 100%;
+  }
+
+  .modal-actions-column .btn {
+    padding: 15px 24px;
+    font-size: 15px;
+    border-radius: 9999px;
+  }
 }
 
 /* Custom Confirmation Modal */
