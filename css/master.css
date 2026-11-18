@@ -2896,10 +2896,6 @@ body.dark-theme .view-all {
   color: var(--text-primary);
 }
 
-
-
-
-
 .progress-container {
   margin-bottom: 32px;
 }
@@ -3481,7 +3477,10 @@ body.dark-theme .review-pill {
     align-items: center;
     justify-content: center;
     border-radius: 12px;
-    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
   }
 
   .close-modal-btn:hover {
@@ -3547,7 +3546,9 @@ body.dark-theme .review-pill {
     font-size: 15px;
     border-radius: 12px;
     border-width: 1.5px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .creation-form input:focus,
@@ -4060,7 +4061,9 @@ body.dark-theme .view-details-btn:hover {
   box-sizing: border-box;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 body.dark-theme .student-hero-banner {
@@ -4077,7 +4080,12 @@ body.dark-theme .student-hero-banner {
   right: 2%;
   width: 520px;
   height: 200%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.14) 0%, rgba(139, 92, 246, 0.04) 40%, transparent 68%);
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.14) 0%,
+    rgba(139, 92, 246, 0.04) 40%,
+    transparent 68%
+  );
   pointer-events: none;
   z-index: 1;
 }
@@ -4117,8 +4125,8 @@ body.dark-theme .student-hero-banner {
   min-height: 76px;
   border-radius: 50% !important;
   overflow: hidden !important;
-  background-color: #D6BBFB !important;
-  color: #53389E !important;
+  background-color: #d6bbfb !important;
+  color: #53389e !important;
   font-size: 26px !important;
   font-weight: 800 !important;
   font-family: var(--font-heading) !important;
@@ -4133,7 +4141,9 @@ body.dark-theme .student-hero-banner {
   border: 2.5px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
   position: relative;
 }
 
@@ -4156,7 +4166,7 @@ body.dark-theme .student-hero-banner {
 .hero-avatar-wrap .student-avatar-initials,
 #student-card-avatar .student-avatar-initials,
 .student-welcome-avatar .student-avatar-initials {
-  color: #53389E !important;
+  color: #53389e !important;
   font-size: inherit !important;
   font-weight: 800 !important;
   font-family: var(--font-heading) !important;
@@ -4171,7 +4181,7 @@ body.dark-theme .student-hero-banner {
 .hero-avatar-wrap svg,
 #student-card-avatar svg,
 .student-welcome-avatar svg {
-  color: #53389E !important;
+  color: #53389e !important;
 }
 
 .hero-text-wrap {
@@ -4236,7 +4246,9 @@ body.dark-theme .hero-greeting-sub {
   overflow: hidden;
   text-overflow: ellipsis;
   backdrop-filter: blur(4px);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .hero-chip:hover {
@@ -4301,7 +4313,10 @@ body.dark-theme .hero-greeting-sub {
   text-decoration: none;
   cursor: pointer;
   box-shadow: 0 4px 16px rgba(191, 165, 252, 0.35);
-  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
   white-space: nowrap;
   box-sizing: border-box;
 }
@@ -4350,7 +4365,10 @@ body.dark-theme .hero-greeting-sub {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   position: relative;
   user-select: none;
 }
@@ -9761,8 +9779,12 @@ body.dark-theme .student-app-status-note {
 
 /* Empty states in Scholarship Directory & My Scholarship Submissions extend toward footer without touching it */
 .browse-page-main #browse-empty-state,
-.student-dash-main:not(:has(.student-bottom-grid)) .student-apps-section #student-empty-apps,
-.student-dash-main:not(:has(.student-bottom-grid)) .student-apps-section #student-filter-empty {
+.student-dash-main:not(:has(.student-bottom-grid))
+  .student-apps-section
+  #student-empty-apps,
+.student-dash-main:not(:has(.student-bottom-grid))
+  .student-apps-section
+  #student-filter-empty {
   flex: 1;
   min-height: 360px;
   margin-top: 4px !important;

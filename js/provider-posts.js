@@ -31,7 +31,7 @@
 
   function resolveStudentInfo(app) {
     const email = (app.studentEmail || "").toLowerCase().trim();
-    
+
     // 1. In-memory studentProfiles
     let profile = (studentProfiles && studentProfiles[email]) || {};
 
@@ -83,25 +83,12 @@
         "Student Applicant",
       email: profile.email || app.studentEmail || matchedUser.email || "",
       university:
-        profile.university ||
-        matchedUser.university ||
-        app.university ||
-        "",
-      course:
-        profile.course ||
-        matchedUser.course ||
-        app.course ||
-        "",
+        profile.university || matchedUser.university || app.university || "",
+      course: profile.course || matchedUser.course || app.course || "",
       yearLevel:
-        profile.yearLevel ||
-        matchedUser.yearLevel ||
-        app.yearLevel ||
-        "",
+        profile.yearLevel || matchedUser.yearLevel || app.yearLevel || "",
       studentId:
-        profile.studentId ||
-        matchedUser.studentId ||
-        app.studentId ||
-        "",
+        profile.studentId || matchedUser.studentId || app.studentId || "",
       contactNumber:
         profile.contactNumber ||
         matchedUser.contactNumber ||
@@ -111,8 +98,8 @@
         profile.bio !== undefined && profile.bio !== ""
           ? profile.bio
           : matchedUser.bio !== undefined && matchedUser.bio !== ""
-          ? matchedUser.bio
-          : app.bio || "",
+            ? matchedUser.bio
+            : app.bio || "",
       profilePicture:
         profile.profilePicture ||
         matchedUser.profilePicture ||
@@ -210,7 +197,9 @@
     postsCountLabelEl = document.getElementById("posts-count-label");
 
     postApplicantsFeedEl = document.getElementById("post-applicants-feed");
-    postApplicantsEmptyEl = document.getElementById("post-applicants-empty-state");
+    postApplicantsEmptyEl = document.getElementById(
+      "post-applicants-empty-state",
+    );
     appSearchInputEl = document.getElementById("applicant-search-input");
 
     scholModalEl = document.getElementById("view-details-modal");
@@ -230,7 +219,8 @@
       btnViewCriteria.addEventListener("click", () => {
         if (currentActivePost) {
           const apps = getPostApplications(currentActivePost);
-          const limit = parseInt(currentActivePost.applicantLimit || 200, 10) || 200;
+          const limit =
+            parseInt(currentActivePost.applicantLimit || 200, 10) || 200;
           openScholarshipModal(currentActivePost, apps.length, limit);
         }
       });
@@ -273,8 +263,11 @@
 
   function formatScholarshipType(schol) {
     if (!schol) return "General";
-    if (schol.typeText && String(schol.typeText).trim()) return String(schol.typeText).trim();
-    const raw = String(schol.type || "").trim().toLowerCase();
+    if (schol.typeText && String(schol.typeText).trim())
+      return String(schol.typeText).trim();
+    const raw = String(schol.type || "")
+      .trim()
+      .toLowerCase();
     if (raw === "merit" || raw === "merit-based") return "Merit-Based";
     if (raw === "need" || raw === "need-based") return "Need-Based";
     if (raw === "athletic") return "Athletic";
@@ -303,8 +296,13 @@
       (settings && settings.orgName) ||
       localStorage.getItem("nexo-provider-name") ||
       "NEXO";
-    const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
-    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+    const itemOrg =
+      schol && schol.providerName ? schol.providerName.trim() : "";
+    if (
+      !itemOrg ||
+      itemOrg.toLowerCase() === activeOrgName.toLowerCase() ||
+      itemOrg.toLowerCase() === "nexo"
+    ) {
       const settingsBanner =
         (settings && settings.bannerImage) ||
         localStorage.getItem("nexo-provider-banner") ||
@@ -339,8 +337,13 @@
       (settings && settings.orgName) ||
       localStorage.getItem("nexo-provider-name") ||
       "NEXO";
-    const itemOrg = (schol && schol.providerName ? schol.providerName.trim() : "");
-    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
+    const itemOrg =
+      schol && schol.providerName ? schol.providerName.trim() : "";
+    if (
+      !itemOrg ||
+      itemOrg.toLowerCase() === activeOrgName.toLowerCase() ||
+      itemOrg.toLowerCase() === "nexo"
+    ) {
       const settingsLogo =
         (settings && settings.logoImage) ||
         localStorage.getItem("nexo-provider-logo") ||
@@ -357,7 +360,10 @@
     const clean = name.trim();
     if (clean.toUpperCase().startsWith("NEXO")) return "NX";
     const parts = clean.split(/\s+/);
-    if (parts.length === 1) return parts[0].length > 1 ? parts[0].substring(0, 2).toUpperCase() : parts[0].toUpperCase();
+    if (parts.length === 1)
+      return parts[0].length > 1
+        ? parts[0].substring(0, 2).toUpperCase()
+        : parts[0].toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
@@ -368,7 +374,13 @@
 
   async function loadData(isBackground = false) {
     const postsFeed = document.getElementById("posts-feed");
-    if (!hasLoadedPostsOnce && !isBackground && typeof window.renderSkeletonCards === "function" && postsFeed && postsFeed.children.length === 0) {
+    if (
+      !hasLoadedPostsOnce &&
+      !isBackground &&
+      typeof window.renderSkeletonCards === "function" &&
+      postsFeed &&
+      postsFeed.children.length === 0
+    ) {
       window.renderSkeletonCards(postsFeed);
     }
 
@@ -412,37 +424,67 @@
       const res = await fetch(`${API_BASE}/api/data`);
       if (res.ok) {
         const data = await res.json();
-        const serverSchols = Array.isArray(data.scholarships) ? data.scholarships : [];
-        const serverApps = Array.isArray(data.applications) ? data.applications : [];
-        if (data.studentProfiles) { studentProfiles = data.studentProfiles; try { localStorage.setItem("nexo_student_profiles", JSON.stringify(studentProfiles)); } catch(_) {} }
+        const serverSchols = Array.isArray(data.scholarships)
+          ? data.scholarships
+          : [];
+        const serverApps = Array.isArray(data.applications)
+          ? data.applications
+          : [];
+        if (data.studentProfiles) {
+          studentProfiles = data.studentProfiles;
+          try {
+            localStorage.setItem(
+              "nexo_student_profiles",
+              JSON.stringify(studentProfiles),
+            );
+          } catch (_) {}
+        }
         if (Array.isArray(data.users)) users = data.users;
         if (data.studentSettings) studentSettings = data.studentSettings;
 
         // Sync any local scholarships created while server was offline back to the server
-        const serverScholIds = new Set(serverSchols.map((s) => String(s && s.id)));
-        (Array.isArray(localScholarships) ? localScholarships : []).forEach((ls) => {
-          if (ls && ls.id && !serverScholIds.has(String(ls.id)) && !deletedIds.has(String(ls.id))) {
-            fetch(`${API_BASE}/api/scholarships`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(ls),
-            }).catch(() => {});
-          }
-        });
+        const serverScholIds = new Set(
+          serverSchols.map((s) => String(s && s.id)),
+        );
+        (Array.isArray(localScholarships) ? localScholarships : []).forEach(
+          (ls) => {
+            if (
+              ls &&
+              ls.id &&
+              !serverScholIds.has(String(ls.id)) &&
+              !deletedIds.has(String(ls.id))
+            ) {
+              fetch(`${API_BASE}/api/scholarships`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(ls),
+              }).catch(() => {});
+            }
+          },
+        );
 
         scholarships = mergeById(serverSchols, localScholarships);
         applications = mergeById(serverApps, localApplications);
 
         try {
-          localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
-          localStorage.setItem("nexo_applications", JSON.stringify(applications));
+          localStorage.setItem(
+            "nexo_scholarships",
+            JSON.stringify(scholarships),
+          );
+          localStorage.setItem(
+            "nexo_applications",
+            JSON.stringify(applications),
+          );
         } catch (_) {}
       } else {
         throw new Error("Status " + res.status);
       }
     } catch (err) {
       if (!isBackground) {
-        console.warn("NEXO: Backend not reached directly, falling back to local storage:", err);
+        console.warn(
+          "NEXO: Backend not reached directly, falling back to local storage:",
+          err,
+        );
       }
       scholarships = mergeById(localScholarships, []);
       applications = mergeById(localApplications, []);
@@ -465,7 +507,10 @@
 
     // Filter scholarships and applications by the logged-in provider (matches provider-dashboard.html)
     allScholarships = (scholarships || []).filter((s) => {
-      if (isPrimaryProvider && (!s.providerEmail || s.providerName === "NEXO")) {
+      if (
+        isPrimaryProvider &&
+        (!s.providerEmail || s.providerName === "NEXO")
+      ) {
         return true;
       }
       if (
@@ -535,7 +580,11 @@
       } catch (_) {}
     }
 
-    if (currentActivePost && postApplicantsViewEl && postApplicantsViewEl.style.display !== "none") {
+    if (
+      currentActivePost &&
+      postApplicantsViewEl &&
+      postApplicantsViewEl.style.display !== "none"
+    ) {
       renderActivePostHeader(currentActivePost);
       renderPostApplicantsFeed();
     } else {
@@ -557,16 +606,25 @@
         closed: "Closed",
       };
       const titleStr = statusMap[activeStatus] || "Status";
-      filterBtn.title = activeStatus === "all" ? "Filter by status" : `Filter: ${titleStr}`;
+      filterBtn.title =
+        activeStatus === "all" ? "Filter by status" : `Filter: ${titleStr}`;
     }
     if (filterMenu) {
-      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
-        item.classList.toggle("active", (item.dataset.filter || "all") === activeStatus);
-      });
+      filterMenu
+        .querySelectorAll(".directory-dropdown-item")
+        .forEach((item) => {
+          item.classList.toggle(
+            "active",
+            (item.dataset.filter || "all") === activeStatus,
+          );
+        });
     }
     const tabs = document.querySelectorAll(".posts-tab");
     tabs.forEach((tab) => {
-      tab.classList.toggle("active", (tab.dataset.filter || "all") === activeStatus);
+      tab.classList.toggle(
+        "active",
+        (tab.dataset.filter || "all") === activeStatus,
+      );
     });
   }
 
@@ -582,7 +640,9 @@
 
     const filterBtn = document.getElementById("btn-posts-filter");
     const filterMenu = document.getElementById("menu-posts-filter");
-    const filterWrapper = document.getElementById("dropdown-wrapper-posts-filter");
+    const filterWrapper = document.getElementById(
+      "dropdown-wrapper-posts-filter",
+    );
 
     if (filterBtn && filterMenu) {
       filterBtn.addEventListener("click", (e) => {
@@ -593,19 +653,21 @@
         if (filterWrapper) filterWrapper.classList.toggle("is-open", !isOpen);
       });
 
-      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
-        item.addEventListener("click", function (e) {
-          e.stopPropagation();
-          postFilterTab = this.dataset.filter || "all";
-          isPostsExpanded = false;
-          lastPostsSig = null;
-          updatePostFilterUI(postFilterTab);
-          filterMenu.classList.remove("show");
-          filterBtn.setAttribute("aria-expanded", "false");
-          if (filterWrapper) filterWrapper.classList.remove("is-open");
-          renderPostsFeed();
+      filterMenu
+        .querySelectorAll(".directory-dropdown-item")
+        .forEach((item) => {
+          item.addEventListener("click", function (e) {
+            e.stopPropagation();
+            postFilterTab = this.dataset.filter || "all";
+            isPostsExpanded = false;
+            lastPostsSig = null;
+            updatePostFilterUI(postFilterTab);
+            filterMenu.classList.remove("show");
+            filterBtn.setAttribute("aria-expanded", "false");
+            if (filterWrapper) filterWrapper.classList.remove("is-open");
+            renderPostsFeed();
+          });
         });
-      });
 
       document.addEventListener("click", (e) => {
         if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
@@ -633,7 +695,11 @@
     try {
       const urlParams = new URLSearchParams(window.location.search);
       const urlFilter = (urlParams.get("filter") || "").toLowerCase();
-      if (urlFilter === "open" || urlFilter === "closed" || urlFilter === "all") {
+      if (
+        urlFilter === "open" ||
+        urlFilter === "closed" ||
+        urlFilter === "all"
+      ) {
         postFilterTab = urlFilter;
         updatePostFilterUI(urlFilter);
       }
@@ -762,7 +828,9 @@
     const isDesktop = window.innerWidth >= 1024;
     const maxInitialCards = isDesktop ? 6 : 3;
     const totalMatching = filtered.length;
-    const visiblePosts = isPostsExpanded ? filtered : filtered.slice(0, maxInitialCards);
+    const visiblePosts = isPostsExpanded
+      ? filtered
+      : filtered.slice(0, maxInitialCards);
 
     visiblePosts.forEach((schol) => {
       postsFeedEl.appendChild(createPostCard(schol));
@@ -821,13 +889,21 @@
   function getPostApplications(schol) {
     if (!schol) return [];
     const targetId = String(schol.id || "").trim();
-    const targetTitle = String(schol.title || "").trim().toLowerCase();
+    const targetTitle = String(schol.title || "")
+      .trim()
+      .toLowerCase();
 
     const related = allApplications.filter((app) => {
-      if (app.scholarshipId && targetId && String(app.scholarshipId).trim() === targetId) {
+      if (
+        app.scholarshipId &&
+        targetId &&
+        String(app.scholarshipId).trim() === targetId
+      ) {
         return true;
       }
-      const appScholTitle = String(app.scholarshipTitle || app.title || "").trim().toLowerCase();
+      const appScholTitle = String(app.scholarshipTitle || app.title || "")
+        .trim()
+        .toLowerCase();
       if (targetTitle && appScholTitle && appScholTitle === targetTitle) {
         return true;
       }
@@ -876,7 +952,8 @@
 
     const providerName = schol.providerName || "NEXO Provider";
     const deadlineText = schol.formattedDate || schol.deadline || "No Deadline";
-    const postedDate = schol.formattedPostedDate || schol.postedDate || "Recently";
+    const postedDate =
+      schol.formattedPostedDate || schol.postedDate || "Recently";
     const typeText = formatScholarshipType(schol);
 
     card.innerHTML = `
@@ -988,12 +1065,20 @@
         rejected: "Rejected",
       };
       const titleStr = labelMap[activeFilter] || "All Applicants";
-      filterBtn.title = activeFilter === "all" ? "Filter applicants by status" : `Filter: ${titleStr}`;
+      filterBtn.title =
+        activeFilter === "all"
+          ? "Filter applicants by status"
+          : `Filter: ${titleStr}`;
     }
     if (filterMenu) {
-      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
-        item.classList.toggle("active", (item.dataset.applicantFilter || "all") === activeFilter);
-      });
+      filterMenu
+        .querySelectorAll(".directory-dropdown-item")
+        .forEach((item) => {
+          item.classList.toggle(
+            "active",
+            (item.dataset.applicantFilter || "all") === activeFilter,
+          );
+        });
     }
   }
 
@@ -1008,7 +1093,9 @@
 
     const filterBtn = document.getElementById("btn-applicant-filter");
     const filterMenu = document.getElementById("menu-applicant-filter");
-    const filterWrapper = document.getElementById("dropdown-wrapper-applicant-filter");
+    const filterWrapper = document.getElementById(
+      "dropdown-wrapper-applicant-filter",
+    );
 
     if (filterBtn && filterMenu) {
       filterBtn.addEventListener("click", (e) => {
@@ -1022,19 +1109,21 @@
         if (filterWrapper) filterWrapper.classList.toggle("is-open", !isOpen);
       });
 
-      filterMenu.querySelectorAll(".directory-dropdown-item").forEach((item) => {
-        item.addEventListener("click", function (e) {
-          e.stopPropagation();
-          const selected = this.dataset.applicantFilter || "all";
-          appFilterTab = selected;
-          isPostAppsExpanded = false;
-          updateApplicantFilterUI(selected);
-          filterMenu.classList.remove("show");
-          filterBtn.setAttribute("aria-expanded", "false");
-          if (filterWrapper) filterWrapper.classList.remove("is-open");
-          renderPostApplicantsFeed();
+      filterMenu
+        .querySelectorAll(".directory-dropdown-item")
+        .forEach((item) => {
+          item.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const selected = this.dataset.applicantFilter || "all";
+            appFilterTab = selected;
+            isPostAppsExpanded = false;
+            updateApplicantFilterUI(selected);
+            filterMenu.classList.remove("show");
+            filterBtn.setAttribute("aria-expanded", "false");
+            if (filterWrapper) filterWrapper.classList.remove("is-open");
+            renderPostApplicantsFeed();
+          });
         });
-      });
 
       document.addEventListener("click", (e) => {
         if (!filterMenu.contains(e.target) && !filterBtn.contains(e.target)) {
@@ -1051,8 +1140,12 @@
     const cleanId = String(scholId).trim().toLowerCase();
     const target = allScholarships.find(
       (s) =>
-        String(s.id || "").trim().toLowerCase() === cleanId ||
-        String(s.title || "").trim().toLowerCase() === cleanId,
+        String(s.id || "")
+          .trim()
+          .toLowerCase() === cleanId ||
+        String(s.title || "")
+          .trim()
+          .toLowerCase() === cleanId,
     );
     if (!target) return;
 
@@ -1102,7 +1195,8 @@
     const appsCountEl = document.getElementById("post-view-applicants");
 
     const relatedApps = getPostApplications(schol);
-    const limit = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+    const limit =
+      parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
     const isOpen = (schol.status || "Open").toLowerCase() !== "closed";
 
     if (titleEl) titleEl.textContent = schol.title || "Untitled Scholarship";
@@ -1111,12 +1205,16 @@
       statusPill.textContent = isOpen ? "Open" : "Closed";
     }
     if (typeEl) typeEl.textContent = formatScholarshipType(schol);
-    if (deadlineEl) deadlineEl.textContent = schol.formattedDate || schol.deadline || "No Deadline";
-    if (appsCountEl) appsCountEl.textContent = `${relatedApps.length} / ${limit} Applicants`;
+    if (deadlineEl)
+      deadlineEl.textContent =
+        schol.formattedDate || schol.deadline || "No Deadline";
+    if (appsCountEl)
+      appsCountEl.textContent = `${relatedApps.length} / ${limit} Applicants`;
   }
 
   function renderPostApplicantsFeed() {
-    if (!postApplicantsFeedEl || !postApplicantsEmptyEl || !currentActivePost) return;
+    if (!postApplicantsFeedEl || !postApplicantsEmptyEl || !currentActivePost)
+      return;
 
     const baseApps = getPostApplications(currentActivePost);
 
@@ -1242,13 +1340,18 @@
       `;
       postApplicantsFeedEl.appendChild(toggleContainer);
 
-      const toggleBtn = toggleContainer.querySelector("#btn-toggle-post-apps-all");
+      const toggleBtn = toggleContainer.querySelector(
+        "#btn-toggle-post-apps-all",
+      );
       if (toggleBtn) {
         toggleBtn.addEventListener("click", () => {
           isPostAppsExpanded = !isPostAppsExpanded;
           renderPostApplicantsFeed();
           if (!isPostAppsExpanded) {
-            postApplicantsFeedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            postApplicantsFeedEl.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
           }
         });
       }
@@ -1377,7 +1480,9 @@
   function initModals() {
     // 1. Scholarship Criteria Modal
     const closeScholBtn = document.getElementById("close-details-btn");
-    const closeScholActionBtn = document.getElementById("view-modal-close-action-btn");
+    const closeScholActionBtn = document.getElementById(
+      "view-modal-close-action-btn",
+    );
 
     const closeScholModal = () => {
       if (scholModalEl) {
@@ -1389,7 +1494,8 @@
     window.closeScholarshipModal = closeScholModal;
 
     if (closeScholBtn) closeScholBtn.addEventListener("click", closeScholModal);
-    if (closeScholActionBtn) closeScholActionBtn.addEventListener("click", closeScholModal);
+    if (closeScholActionBtn)
+      closeScholActionBtn.addEventListener("click", closeScholModal);
     if (scholModalEl) {
       scholModalEl.addEventListener("click", (e) => {
         if (e.target === scholModalEl) closeScholModal();
@@ -1399,15 +1505,27 @@
     // Keyboard Escape listener for modals
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
-        if (docPreviewModalEl && docPreviewModalEl.classList.contains("active")) {
+        if (
+          docPreviewModalEl &&
+          docPreviewModalEl.classList.contains("active")
+        ) {
           closeDocPreview();
-        } else if (confirmModalEl && confirmModalEl.classList.contains("active")) {
+        } else if (
+          confirmModalEl &&
+          confirmModalEl.classList.contains("active")
+        ) {
           closeDecisionConfirmModal();
         } else if (scholModalEl && scholModalEl.classList.contains("active")) {
           closeScholModal();
-        } else if (reviewModalEl && reviewModalEl.classList.contains("active")) {
+        } else if (
+          reviewModalEl &&
+          reviewModalEl.classList.contains("active")
+        ) {
           closeReviewModal();
-        } else if (postApplicantsViewEl && postApplicantsViewEl.style.display !== "none") {
+        } else if (
+          postApplicantsViewEl &&
+          postApplicantsViewEl.style.display !== "none"
+        ) {
           backToPostsList();
         }
       }
@@ -1415,9 +1533,13 @@
 
     // 2. Review Application Modal
     const closeReviewBtn = document.getElementById("close-review-modal");
-    if (closeReviewBtn) closeReviewBtn.addEventListener("click", closeReviewModal);
-    const closeReviewBottomBtn = document.getElementById("modal-btn-close-bottom");
-    if (closeReviewBottomBtn) closeReviewBottomBtn.addEventListener("click", closeReviewModal);
+    if (closeReviewBtn)
+      closeReviewBtn.addEventListener("click", closeReviewModal);
+    const closeReviewBottomBtn = document.getElementById(
+      "modal-btn-close-bottom",
+    );
+    if (closeReviewBottomBtn)
+      closeReviewBottomBtn.addEventListener("click", closeReviewModal);
     if (reviewModalEl) {
       reviewModalEl.addEventListener("click", (e) => {
         if (e.target === reviewModalEl) closeReviewModal();
@@ -1429,9 +1551,18 @@
     const btnUnderReview = document.getElementById("modal-btn-review");
     const btnReject = document.getElementById("modal-btn-reject");
 
-    if (btnApprove) btnApprove.addEventListener("click", () => openDecisionConfirmModal("Approved"));
-    if (btnUnderReview) btnUnderReview.addEventListener("click", () => openDecisionConfirmModal("Under Review"));
-    if (btnReject) btnReject.addEventListener("click", () => openDecisionConfirmModal("Rejected"));
+    if (btnApprove)
+      btnApprove.addEventListener("click", () =>
+        openDecisionConfirmModal("Approved"),
+      );
+    if (btnUnderReview)
+      btnUnderReview.addEventListener("click", () =>
+        openDecisionConfirmModal("Under Review"),
+      );
+    if (btnReject)
+      btnReject.addEventListener("click", () =>
+        openDecisionConfirmModal("Rejected"),
+      );
 
     // Save notes button
     const btnSaveNotes = document.getElementById("modal-btn-save-notes");
@@ -1439,8 +1570,14 @@
       btnSaveNotes.addEventListener("click", async () => {
         if (!currentActiveApp) return;
 
-        if (currentActiveApp.status === "Approved" || currentActiveApp.status === "Rejected") {
-          showToast("This decision has already been finalized and cannot be modified.", true);
+        if (
+          currentActiveApp.status === "Approved" ||
+          currentActiveApp.status === "Rejected"
+        ) {
+          showToast(
+            "This decision has already been finalized and cannot be modified.",
+            true,
+          );
           return;
         }
 
@@ -1450,7 +1587,8 @@
 
         if (!notes) {
           if (errEl) {
-            errEl.textContent = "Feedback cannot be empty. Please enter notes or feedback before saving.";
+            errEl.textContent =
+              "Feedback cannot be empty. Please enter notes or feedback before saving.";
             errEl.style.display = "block";
           }
           if (notesInput) notesInput.focus();
@@ -1471,12 +1609,19 @@
         currentActiveApp.feedback = notes;
         currentActiveApp.remarks = notes;
 
-        const successBanner = document.getElementById("modal-feedback-success-banner");
-        const successMsg = document.getElementById("modal-feedback-success-msg");
+        const successBanner = document.getElementById(
+          "modal-feedback-success-banner",
+        );
+        const successMsg = document.getElementById(
+          "modal-feedback-success-msg",
+        );
         if (successBanner && successMsg) {
-          successMsg.textContent = "Notes and feedback were successfully updated and dispatched to the student's portal!";
+          successMsg.textContent =
+            "Notes and feedback were successfully updated and dispatched to the student's portal!";
           successBanner.style.display = "block";
-          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          const container = reviewModalEl.querySelector(
+            ".nexo-modal-container",
+          );
           if (container) container.scrollTo({ top: 0, behavior: "smooth" });
         }
       });
@@ -1501,7 +1646,9 @@
       btnFullscreen.addEventListener("click", () => {
         const isFull = previewContainer.classList.toggle("is-fullscreen");
         if (fullscreenText) {
-          fullscreenText.textContent = isFull ? "Exit Full Screen" : "Full Screen";
+          fullscreenText.textContent = isFull
+            ? "Exit Full Screen"
+            : "Full Screen";
         }
       });
     }
@@ -1545,8 +1692,12 @@
     if (typeEl) typeEl.textContent = formattedType;
 
     const isClosed =
-      String(schol.status || "").toLowerCase().includes("closed") ||
-      String(schol.status || "").toLowerCase().includes("quota");
+      String(schol.status || "")
+        .toLowerCase()
+        .includes("closed") ||
+      String(schol.status || "")
+        .toLowerCase()
+        .includes("quota");
     if (statusEl) {
       statusEl.textContent = isClosed ? "Closed" : "Active";
       statusEl.style.background = isClosed
@@ -1557,7 +1708,8 @@
 
     // Dates
     const deadlineText = schol.formattedDate || schol.deadline || "No Deadline";
-    const postedDate = schol.formattedPostedDate || schol.postedDate || "Recently";
+    const postedDate =
+      schol.formattedPostedDate || schol.postedDate || "Recently";
     if (dateEl) dateEl.textContent = deadlineText;
     if (postedEl) postedEl.textContent = postedDate;
 
@@ -1699,11 +1851,14 @@
     const closeBtn = document.getElementById("close-decision-confirm");
     const cancelBtn = document.getElementById("btn-cancel-decision-confirm");
     const submitBtn = document.getElementById("btn-submit-decision-confirm");
-    const resetDefaultBtn = document.getElementById("btn-reset-default-remarks");
+    const resetDefaultBtn = document.getElementById(
+      "btn-reset-default-remarks",
+    );
     const textarea = document.getElementById("confirm-remarks-textarea");
 
     if (closeBtn) closeBtn.addEventListener("click", closeDecisionConfirmModal);
-    if (cancelBtn) cancelBtn.addEventListener("click", closeDecisionConfirmModal);
+    if (cancelBtn)
+      cancelBtn.addEventListener("click", closeDecisionConfirmModal);
     confirmModalEl.addEventListener("click", (e) => {
       if (e.target === confirmModalEl) closeDecisionConfirmModal();
     });
@@ -1711,7 +1866,8 @@
     if (resetDefaultBtn) {
       resetDefaultBtn.addEventListener("click", () => {
         if (!pendingDecision) return;
-        const defaultText = DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "";
+        const defaultText =
+          DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "";
         if (textarea) {
           textarea.value = defaultText;
           textarea.focus();
@@ -1730,7 +1886,9 @@
         if (errEl) errEl.style.display = "none";
 
         if (!remarks && pendingDecision) {
-          remarks = DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] || "Application status updated.";
+          remarks =
+            DEFAULT_AUTOMATED_REMARKS[pendingDecision.status] ||
+            "Application status updated.";
         }
 
         submitBtn.disabled = true;
@@ -1769,19 +1927,29 @@
         }
 
         // Show prominent on-screen feedback success notifier
-        const successBanner = document.getElementById("modal-feedback-success-banner");
-        const successMsg = document.getElementById("modal-feedback-success-msg");
+        const successBanner = document.getElementById(
+          "modal-feedback-success-banner",
+        );
+        const successMsg = document.getElementById(
+          "modal-feedback-success-msg",
+        );
         if (successBanner && successMsg) {
           successMsg.textContent = `Application decision marked as "${targetStatus}" and remarks have been successfully saved and dispatched to the student's portal!`;
           successBanner.style.display = "block";
-          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          const container = reviewModalEl.querySelector(
+            ".nexo-modal-container",
+          );
           if (container) container.scrollTo({ top: 0, behavior: "smooth" });
         }
 
         // If Approved or Rejected, lock the decision controls permanently
         if (targetStatus === "Approved" || targetStatus === "Rejected") {
-          const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
-          const finalizedLabel = document.getElementById("modal-finalized-status-label");
+          const finalizedNotice = document.getElementById(
+            "modal-decision-finalized-notice",
+          );
+          const finalizedLabel = document.getElementById(
+            "modal-finalized-status-label",
+          );
           if (finalizedNotice) {
             finalizedNotice.style.display = "block";
             if (finalizedLabel) finalizedLabel.textContent = targetStatus;
@@ -1805,8 +1973,14 @@
   function openDecisionConfirmModal(status) {
     if (!currentActiveApp) return;
 
-    if (currentActiveApp.status === "Approved" || currentActiveApp.status === "Rejected") {
-      showToast("This application decision has already been finalized and cannot be modified.", true);
+    if (
+      currentActiveApp.status === "Approved" ||
+      currentActiveApp.status === "Rejected"
+    ) {
+      showToast(
+        "This application decision has already been finalized and cannot be modified.",
+        true,
+      );
       return;
     }
 
@@ -1824,7 +1998,8 @@
 
     if (errEl) errEl.style.display = "none";
 
-    const currentNotes = document.getElementById("modal-review-notes")?.value?.trim() || "";
+    const currentNotes =
+      document.getElementById("modal-review-notes")?.value?.trim() || "";
     const defaultRemark = DEFAULT_AUTOMATED_REMARKS[status] || "";
 
     if (textarea) {
@@ -1894,7 +2069,9 @@
     currentActiveApp = app;
     isModalOpen = true;
 
-    const successBanner = document.getElementById("modal-feedback-success-banner");
+    const successBanner = document.getElementById(
+      "modal-feedback-success-banner",
+    );
     const saveNotesErr = document.getElementById("modal-save-notes-error");
     if (successBanner) successBanner.style.display = "none";
     if (saveNotesErr) saveNotesErr.style.display = "none";
@@ -1923,7 +2100,8 @@
     const nameEl = document.getElementById("modal-student-name");
     if (nameEl) nameEl.textContent = studentName;
     const emailEl = document.getElementById("modal-student-email");
-    if (emailEl) emailEl.textContent = info.email || app.studentEmail || "Not Specified";
+    if (emailEl)
+      emailEl.textContent = info.email || app.studentEmail || "Not Specified";
     const idEl = document.getElementById("modal-student-id");
     if (idEl) idEl.textContent = info.studentId || "Not Specified";
     const schoolEl = document.getElementById("modal-student-school");
@@ -1933,7 +2111,8 @@
     const yearEl = document.getElementById("modal-student-year");
     if (yearEl) yearEl.textContent = info.yearLevel || "Not Specified";
     const contactEl = document.getElementById("modal-student-contact");
-    if (contactEl) contactEl.textContent = info.contactNumber || "Not Specified";
+    if (contactEl)
+      contactEl.textContent = info.contactNumber || "Not Specified";
     const bioEl = document.getElementById("modal-student-bio");
     if (bioEl) {
       if (info.bio && info.bio.trim()) {
@@ -1987,9 +2166,13 @@
       notesInput.value = app.remarks || app.feedback || app.notes || "";
     }
 
-    const isFinalized = (app.status === "Approved" || app.status === "Rejected");
-    const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
-    const finalizedLabel = document.getElementById("modal-finalized-status-label");
+    const isFinalized = app.status === "Approved" || app.status === "Rejected";
+    const finalizedNotice = document.getElementById(
+      "modal-decision-finalized-notice",
+    );
+    const finalizedLabel = document.getElementById(
+      "modal-finalized-status-label",
+    );
     const btnApprove = document.getElementById("modal-btn-approve");
     const btnUnderReview = document.getElementById("modal-btn-review");
     const btnReject = document.getElementById("modal-btn-reject");
@@ -2052,18 +2235,24 @@
       if (typeof doc === "string") {
         docName = doc;
         isFollowUp = doc.includes("(To Follow Up)");
-        if (!isFollowUp && (doc.startsWith("data:") || doc.startsWith("http") || doc.startsWith("/"))) {
+        if (
+          !isFollowUp &&
+          (doc.startsWith("data:") ||
+            doc.startsWith("http") ||
+            doc.startsWith("/"))
+        ) {
           docUrl = doc;
         }
       } else if (doc && typeof doc === "object") {
-        docName = doc.requirement || doc.title || doc.name || doc.filename || docName;
+        docName =
+          doc.requirement || doc.title || doc.name || doc.filename || docName;
         docUrl = doc.data || doc.url || doc.fileUrl || doc.dataUrl || "";
         docSize = doc.size ? formatFileSize(doc.size) : "";
         isFollowUp = Boolean(
           doc.isFollowUp ||
           doc.status === "to_follow_up" ||
           doc.type === "to_follow_up" ||
-          (doc.name && doc.name.includes("(To Follow Up)"))
+          (doc.name && doc.name.includes("(To Follow Up)")),
         );
       }
 
@@ -2097,7 +2286,8 @@
 
         const isPdf =
           cleanDocName.toLowerCase().endsWith(".pdf") ||
-          (typeof docUrl === "string" && docUrl.startsWith("data:application/pdf"));
+          (typeof docUrl === "string" &&
+            docUrl.startsWith("data:application/pdf"));
         docItem.innerHTML = `
           <div class="modal-doc-info">
             <div class="modal-doc-icon" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
@@ -2191,8 +2381,7 @@
           fileUrl.startsWith("data:image/"));
       const isPdf =
         fileUrl &&
-        (/\.pdf$/i.test(fileUrl) ||
-          fileUrl.startsWith("data:application/pdf"));
+        (/\.pdf$/i.test(fileUrl) || fileUrl.startsWith("data:application/pdf"));
 
       if (isImg) {
         bodyEl.innerHTML = `
@@ -2204,7 +2393,11 @@
         bodyEl.innerHTML = `
           <iframe src="${fileUrl}" style="width: 100%; height: 72vh; border: none; border-radius: 8px;"></iframe>
         `;
-      } else if (fileUrl && fileUrl !== "#" && (fileUrl.startsWith("data:") || fileUrl.startsWith("http"))) {
+      } else if (
+        fileUrl &&
+        fileUrl !== "#" &&
+        (fileUrl.startsWith("data:") || fileUrl.startsWith("http"))
+      ) {
         bodyEl.innerHTML = `
           <div style="display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.03); border-radius: 8px; padding: 14px; min-height: 320px;">
             <img src="${fileUrl}" alt="${escapeHtml(fileName)}" style="max-width: 100%; max-height: 70vh; border-radius: 6px; object-fit: contain;" />
@@ -2247,7 +2440,9 @@
   // -------------------------------------------------------------
   async function updateApplicationStatus(appId, newStatus, notes = "") {
     // 1. Optimistic UI update
-    const idx = allApplications.findIndex((a) => String(a.id) === String(appId));
+    const idx = allApplications.findIndex(
+      (a) => String(a.id) === String(appId),
+    );
     if (idx >= 0) {
       allApplications[idx].status = newStatus;
       allApplications[idx].statusText = newStatus;
@@ -2258,7 +2453,10 @@
     }
 
     try {
-      localStorage.setItem("nexo_applications", JSON.stringify(allApplications));
+      localStorage.setItem(
+        "nexo_applications",
+        JSON.stringify(allApplications),
+      );
     } catch (_) {}
 
     try {
@@ -2279,7 +2477,10 @@
 
       showToast(`Decision "${newStatus}" saved & sent to student portal!`);
     } catch (err) {
-      console.warn("Could not sync application status directly with backend:", err);
+      console.warn(
+        "Could not sync application status directly with backend:",
+        err,
+      );
       showToast(`Application marked as ${newStatus} (Saved locally)`);
     }
   }

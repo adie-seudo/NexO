@@ -166,7 +166,10 @@
         border-radius: 16px;
         padding: 20px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -354,7 +357,9 @@
         text-decoration: none !important;
         border: none;
         cursor: pointer;
-        transition: background 0.2s ease, transform 0.1s ease;
+        transition:
+          background 0.2s ease,
+          transform 0.1s ease;
       }
 
       .btn-view-apps:hover {
@@ -371,7 +376,7 @@
         font-size: 13px;
         font-weight: 600;
         background: var(--bg-surface, #ffffff);
-        border: 1.5px solid var(--border-color, #D0D5DD);
+        border: 1.5px solid var(--border-color, #d0d5dd);
         color: var(--text-secondary, #344054);
         cursor: pointer;
         text-decoration: none !important;
@@ -381,17 +386,17 @@
       }
 
       .btn-view-details-sub:hover {
-        background-color: var(--bg-canvas, #F9FAFB);
-        border-color: #98A2B3;
+        background-color: var(--bg-canvas, #f9fafb);
+        border-color: #98a2b3;
         color: var(--text-primary);
         text-decoration: none !important;
         transform: translateY(-1px);
       }
 
       .dark-theme .btn-view-details-sub {
-        background: var(--bg-surface, #1E1B2E);
+        background: var(--bg-surface, #1e1b2e);
         border-color: rgba(255, 255, 255, 0.15);
-        color: var(--text-primary, #F3F4F6);
+        color: var(--text-primary, #f3f4f6);
       }
 
       .dark-theme .btn-view-details-sub:hover {
@@ -403,7 +408,11 @@
       /* APPLICANTS MANAGEMENT VIEW (SUB-VIEW)     */
       /* ========================================= */
       .active-post-detail-card {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(168, 85, 247, 0.05));
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.12),
+          rgba(168, 85, 247, 0.05)
+        );
         border: 1px solid rgba(139, 92, 246, 0.35);
         border-radius: 16px;
         padding: 18px 20px;
@@ -413,7 +422,11 @@
         gap: 10px;
       }
       .dark-theme .active-post-detail-card {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(30, 27, 75, 0.4));
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.22),
+          rgba(30, 27, 75, 0.4)
+        );
         border-color: rgba(139, 92, 246, 0.5);
       }
       .active-post-badge-row {
@@ -550,7 +563,10 @@
         border-radius: 14px;
         padding: 16px 18px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
       }
       .provider-app-card:hover {
         transform: translateY(-2px);
@@ -687,7 +703,10 @@
         font-weight: 600;
         border-radius: 9999px;
         cursor: pointer;
-        transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+        transition:
+          background 0.2s ease,
+          transform 0.15s ease,
+          box-shadow 0.2s ease;
       }
       .btn-review-app:hover {
         transform: translateY(-1px);
@@ -707,7 +726,9 @@
         z-index: 9999;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.25s ease, visibility 0.25s ease;
+        transition:
+          opacity 0.25s ease,
+          visibility 0.25s ease;
       }
       .nexo-modal-overlay.active {
         opacity: 1;
@@ -873,7 +894,10 @@
         align-items: center;
         justify-content: center;
         gap: 7px;
-        transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
       }
       .decision-btn:hover:not(:disabled) {
         transform: translateY(-1px);
@@ -924,7 +948,10 @@
         font-family: inherit;
         resize: vertical;
         box-sizing: border-box;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
       }
       .review-notes-textarea:focus {
         outline: none;
@@ -956,7 +983,8 @@
       }
 
       /* Empty State - Sized identically to Application Page blank state */
-      .empty-state, .posts-empty-card {
+      .empty-state,
+      .posts-empty-card {
         background: var(--card-bg, #ffffff);
         border: 1.5px dashed var(--border-color, #e5e7eb);
         border-radius: 16px;
@@ -970,7 +998,8 @@
         justify-content: center;
         box-sizing: border-box;
       }
-      .dark-theme .empty-state, .dark-theme .posts-empty-card {
+      .dark-theme .empty-state,
+      .dark-theme .posts-empty-card {
         background: #181d27;
         border-color: #272f3d;
       }
@@ -986,7 +1015,8 @@
         justify-content: center;
       }
       @media (min-width: 1024px) {
-        .empty-state, .posts-empty-card {
+        .empty-state,
+        .posts-empty-card {
           padding: 56px 28px;
           border-radius: 20px;
         }
@@ -1003,18 +1033,30 @@
         <a
           href="provider-about.html"
           class="nexo-brand-link"
-          style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+          "
           title="About Us"
         >
           <img
             src="assets/logo.png"
             alt="NEXO Logo"
             class="nexo-brand-logo"
-            style="width: 34px; height: 34px; object-fit: contain;"
+            style="width: 34px; height: 34px; object-fit: contain"
           />
           <span
             class="nexo-brand-text"
-            style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; line-height: 1;"
+            style="
+              font-family: var(--font-heading);
+              font-size: 20px;
+              font-weight: 800;
+              color: var(--text-primary);
+              letter-spacing: -0.4px;
+              line-height: 1;
+            "
             >NEXO</span
           >
         </a>
@@ -1034,7 +1076,12 @@
           />
         </label>
 
-        <button class="icon-btn notification-btn" type="button" aria-label="Notifications" aria-expanded="false">
+        <button
+          class="icon-btn notification-btn"
+          type="button"
+          aria-label="Notifications"
+          aria-expanded="false"
+        >
           <svg
             width="22"
             height="22"
@@ -1049,11 +1096,7 @@
           <span class="notification-dot"></span>
         </button>
 
-        <div
-          class="nav-wrapper"
-          id="nav-wrapper"
-          style="margin-left: 4px"
-        >
+        <div class="nav-wrapper" id="nav-wrapper" style="margin-left: 4px">
           <button
             class="hamburger-btn"
             id="avatar-menu-btn"
@@ -1078,7 +1121,11 @@
               <span class="nav-text">Home</span>
             </a>
 
-            <a href="provider-posts.html" class="nav-link active" id="nav-posts">
+            <a
+              href="provider-posts.html"
+              class="nav-link active"
+              id="nav-posts"
+            >
               <img
                 src="assets/application-icon.png"
                 alt="Posted Scholarships"
@@ -1208,14 +1255,23 @@
           <h1 class="posts-title">Posted Scholarships</h1>
         </div>
         <p class="posts-subtitle">
-          Manage your published scholarship opportunities, monitor submissions, and review applicants.
+          Manage your published scholarship opportunities, monitor submissions,
+          and review applicants.
         </p>
 
         <!-- Search & Status Filter Section (Oblong search bar with filter button on right) -->
-        <div class="submissions-search-filter-row" style="margin-bottom: 24px;">
+        <div class="submissions-search-filter-row" style="margin-bottom: 24px">
           <!-- Search Bar (Oblong pill design matching student POV) -->
-          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
-            <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0">
+            <svg
+              class="browse-search-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -1229,7 +1285,10 @@
           </div>
 
           <!-- Status Filter Dropdown on Right Side -->
-          <div class="directory-filter-dropdown" id="dropdown-wrapper-posts-filter">
+          <div
+            class="directory-filter-dropdown"
+            id="dropdown-wrapper-posts-filter"
+          >
             <button
               type="button"
               class="directory-filter-icon-btn"
@@ -1239,20 +1298,49 @@
               aria-label="Filter posts by status"
               title="Filter by status"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon
+                  points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+                ></polygon>
               </svg>
             </button>
-            <div class="directory-dropdown-menu" id="menu-posts-filter" role="menu" style="min-width: 200px; right: 0; left: auto;">
-              <button type="button" class="directory-dropdown-item active" data-filter="all" role="menuitem">
+            <div
+              class="directory-dropdown-menu"
+              id="menu-posts-filter"
+              role="menu"
+              style="min-width: 200px; right: 0; left: auto"
+            >
+              <button
+                type="button"
+                class="directory-dropdown-item active"
+                data-filter="all"
+                role="menuitem"
+              >
                 <span>All Scholarships</span>
                 <span class="sub-filter-badge" id="filter-count-all">0</span>
               </button>
-              <button type="button" class="directory-dropdown-item" data-filter="open" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-filter="open"
+                role="menuitem"
+              >
                 <span>Active / Open</span>
                 <span class="sub-filter-badge" id="filter-count-open">0</span>
               </button>
-              <button type="button" class="directory-dropdown-item" data-filter="closed" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-filter="closed"
+                role="menuitem"
+              >
                 <span>Closed</span>
                 <span class="sub-filter-badge" id="filter-count-closed">0</span>
               </button>
@@ -1266,21 +1354,51 @@
         </div>
 
         <!-- Empty State -->
-        <div class="posts-empty-card" id="posts-empty-state" style="display: none;">
+        <div
+          class="posts-empty-card"
+          id="posts-empty-state"
+          style="display: none"
+        >
           <div class="posts-empty-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              <path
+                d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+              ></path>
             </svg>
           </div>
-          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">No Posted Scholarships Yet</h3>
-          <p style="font-size: 14px; color: var(--text-secondary, #6b7280); max-width: 420px; margin: 0 auto 20px;">
-            You haven't posted any scholarship opportunities yet. Create a new scholarship to start receiving student applications.
+          <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px">
+            No Posted Scholarships Yet
+          </h3>
+          <p
+            style="
+              font-size: 14px;
+              color: var(--text-secondary, #6b7280);
+              max-width: 420px;
+              margin: 0 auto 20px;
+            "
+          >
+            You haven't posted any scholarship opportunities yet. Create a new
+            scholarship to start receiving student applications.
           </p>
           <a
             href="provider-dashboard.html?action=create#open-create"
             class="btn btn-primary"
-            style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; text-decoration: none;"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 10px 20px;
+              border-radius: 10px;
+              text-decoration: none;
+            "
           >
             + Create New Scholarship
           </a>
@@ -1288,34 +1406,113 @@
       </div>
 
       <!-- 2B. POST APPLICANTS MANAGEMENT VIEW (IN-PAGE VIEW FOR THAT SPECIFIC POST) -->
-      <div id="post-applicants-view" style="display: none;">
+      <div id="post-applicants-view" style="display: none">
         <!-- Header row: "Managing Applicants for" title on left, student-POV X button on right -->
-        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 22px;">
-          <div style="flex: 1; min-width: 0;">
-            <span style="font-size: 13px; font-weight: 700; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px;">
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 22px;
+          "
+        >
+          <div style="flex: 1; min-width: 0">
+            <span
+              style="
+                font-size: 13px;
+                font-weight: 700;
+                color: #8b5cf6;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: block;
+                margin-bottom: 6px;
+              "
+            >
               Managing Applicants for
             </span>
-            <h1 class="posts-title" id="post-view-title" style="margin: 0 0 12px; line-height: 1.25; font-size: 24px; word-break: break-word;">
+            <h1
+              class="posts-title"
+              id="post-view-title"
+              style="
+                margin: 0 0 12px;
+                line-height: 1.25;
+                font-size: 24px;
+                word-break: break-word;
+              "
+            >
               Scholarship Title
             </h1>
-            
+
             <!-- Metadata: Open pill, Type pill, Deadline, Applicants count with clear hierarchy & breathing room -->
-            <div class="post-view-meta-row" style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px 22px;">
-              <div style="display: inline-flex; align-items: center; gap: 8px;">
-                <span class="post-status-badge open" id="post-view-status-pill">Open</span>
-                <span class="directory-type-pill" id="post-view-type">Need-Based</span>
+            <div
+              class="post-view-meta-row"
+              style="
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 12px 22px;
+              "
+            >
+              <div style="display: inline-flex; align-items: center; gap: 8px">
+                <span class="post-status-badge open" id="post-view-status-pill"
+                  >Open</span
+                >
+                <span class="directory-type-pill" id="post-view-type"
+                  >Need-Based</span
+                >
               </div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.8; flex-shrink: 0;">
+              <div
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 13px;
+                  color: var(--text-secondary);
+                "
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  style="opacity: 0.8; flex-shrink: 0"
+                >
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                   <line x1="16" y1="2" x2="16" y2="6"></line>
                   <line x1="8" y1="2" x2="8" y2="6"></line>
                   <line x1="3" y1="10" x2="21" y2="10"></line>
                 </svg>
-                <span>Deadline: <strong id="post-view-deadline" style="color: var(--text-primary); font-weight: 600;">No Deadline</strong></span>
+                <span
+                  >Deadline:
+                  <strong
+                    id="post-view-deadline"
+                    style="color: var(--text-primary); font-weight: 600"
+                    >No Deadline</strong
+                  ></span
+                >
               </div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #8b5cf6;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;">
+              <div
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 6px;
+                  font-size: 13px;
+                  font-weight: 700;
+                  color: #8b5cf6;
+                "
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  style="flex-shrink: 0"
+                >
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                   <circle cx="9" cy="7" r="4"></circle>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -1333,9 +1530,18 @@
             id="btn-back-to-posts"
             aria-label="Back to Posted Scholarships"
             title="Close and return to posted scholarships"
-            style="flex-shrink: 0; margin-top: 2px;"
+            style="flex-shrink: 0; margin-top: 2px"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -1343,10 +1549,18 @@
         </div>
 
         <!-- Search & Filter Section (Oblong search bar with filter button on right) -->
-        <div class="submissions-search-filter-row" style="margin-bottom: 24px;">
+        <div class="submissions-search-filter-row" style="margin-bottom: 24px">
           <!-- Search Bar (Oblong pill design matching student POV) -->
-          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
-            <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0">
+            <svg
+              class="browse-search-icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
@@ -1360,7 +1574,10 @@
           </div>
 
           <!-- Status Filter Dropdown on Right Side -->
-          <div class="directory-filter-dropdown" id="dropdown-wrapper-applicant-filter">
+          <div
+            class="directory-filter-dropdown"
+            id="dropdown-wrapper-applicant-filter"
+          >
             <button
               type="button"
               class="directory-filter-icon-btn"
@@ -1370,30 +1587,79 @@
               aria-label="Filter applicants by status"
               title="Filter applicants by status"
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polygon
+                  points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+                ></polygon>
               </svg>
             </button>
-            <div class="directory-dropdown-menu" id="menu-applicant-filter" role="menu" style="min-width: 210px; right: 0; left: auto;">
-              <button type="button" class="directory-dropdown-item active" data-applicant-filter="all" role="menuitem">
+            <div
+              class="directory-dropdown-menu"
+              id="menu-applicant-filter"
+              role="menu"
+              style="min-width: 210px; right: 0; left: auto"
+            >
+              <button
+                type="button"
+                class="directory-dropdown-item active"
+                data-applicant-filter="all"
+                role="menuitem"
+              >
                 <span>All Applicants</span>
-                <span class="sub-filter-badge" id="app-filter-count-all">0</span>
+                <span class="sub-filter-badge" id="app-filter-count-all"
+                  >0</span
+                >
               </button>
-              <button type="button" class="directory-dropdown-item" data-applicant-filter="submitted" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-applicant-filter="submitted"
+                role="menuitem"
+              >
                 <span>Submitted</span>
-                <span class="sub-filter-badge" id="app-filter-count-submitted">0</span>
+                <span class="sub-filter-badge" id="app-filter-count-submitted"
+                  >0</span
+                >
               </button>
-              <button type="button" class="directory-dropdown-item" data-applicant-filter="under_review" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-applicant-filter="under_review"
+                role="menuitem"
+              >
                 <span>Under Review</span>
-                <span class="sub-filter-badge" id="app-filter-count-review">0</span>
+                <span class="sub-filter-badge" id="app-filter-count-review"
+                  >0</span
+                >
               </button>
-              <button type="button" class="directory-dropdown-item" data-applicant-filter="approved" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-applicant-filter="approved"
+                role="menuitem"
+              >
                 <span>Approved</span>
-                <span class="sub-filter-badge" id="app-filter-count-approved">0</span>
+                <span class="sub-filter-badge" id="app-filter-count-approved"
+                  >0</span
+                >
               </button>
-              <button type="button" class="directory-dropdown-item" data-applicant-filter="rejected" role="menuitem">
+              <button
+                type="button"
+                class="directory-dropdown-item"
+                data-applicant-filter="rejected"
+                role="menuitem"
+              >
                 <span>Rejected</span>
-                <span class="sub-filter-badge" id="app-filter-count-rejected">0</span>
+                <span class="sub-filter-badge" id="app-filter-count-rejected"
+                  >0</span
+                >
               </button>
             </div>
           </div>
@@ -1405,9 +1671,26 @@
         </div>
 
         <!-- Empty State for Post Applicants -->
-        <div class="empty-state" id="post-applicants-empty-state" style="display: none; padding: 40px 20px;">
-          <h3 style="font-size: 17px; font-weight: 700; margin-bottom: 6px;" id="post-apps-empty-title">No Applicants Found</h3>
-          <p style="font-size: 13.5px; color: var(--text-secondary); max-width: 420px; margin: 0 auto;" id="post-apps-empty-desc">
+        <div
+          class="empty-state"
+          id="post-applicants-empty-state"
+          style="display: none; padding: 40px 20px"
+        >
+          <h3
+            style="font-size: 17px; font-weight: 700; margin-bottom: 6px"
+            id="post-apps-empty-title"
+          >
+            No Applicants Found
+          </h3>
+          <p
+            style="
+              font-size: 13.5px;
+              color: var(--text-secondary);
+              max-width: 420px;
+              margin: 0 auto;
+            "
+            id="post-apps-empty-desc"
+          >
             No students have applied to this scholarship opportunity yet.
           </p>
         </div>
@@ -1419,9 +1702,15 @@
     <!-- ========================================= -->
     <div id="view-details-modal" class="schol-modal-overlay" aria-hidden="true">
       <div class="schol-modal-sheet" id="view-details-sheet">
-        
         <!-- Modal Top Bar: Clean X Close Button -->
-        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+        <div
+          style="
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 12px;
+          "
+        >
           <button
             type="button"
             id="close-details-btn"
@@ -1430,7 +1719,16 @@
             title="Close"
             onclick="closeScholarshipModal()"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -1440,7 +1738,13 @@
         <!-- Hero Cover Banner & Overlapping Logo -->
         <div class="details-cover-wrap" id="view-modal-cover-wrap">
           <div class="details-cover-inner">
-            <img src="" alt="Cover" class="details-cover-img" id="view-modal-cover-img" style="display: none;">
+            <img
+              src=""
+              alt="Cover"
+              class="details-cover-img"
+              id="view-modal-cover-img"
+              style="display: none"
+            />
           </div>
           <div class="details-provider-avatar" id="view-modal-schol-logo">
             NX
@@ -1448,99 +1752,289 @@
         </div>
 
         <!-- 1. Scholarship Title -->
-        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;" id="view-modal-title">
+        <h2
+          style="
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 4px 0;
+            line-height: 1.3;
+          "
+          id="view-modal-title"
+        >
           Scholarship Program
         </h2>
 
         <!-- 2. Scholarship Provider Name under the Scholarship Title -->
-        <p style="font-size: 14.5px; font-weight: 600; color: var(--text-secondary); margin: 0 0 10px 0;" id="view-modal-provider">
+        <p
+          style="
+            font-size: 14.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin: 0 0 10px 0;
+          "
+          id="view-modal-provider"
+        >
           NEXO
         </p>
 
         <!-- 3. Followed by Scholarship Type and Status -->
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
-          <span class="directory-type-pill" id="view-modal-type">Need-Based</span>
-          <span id="view-modal-status" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+          "
+        >
+          <span class="directory-type-pill" id="view-modal-type"
+            >Need-Based</span
+          >
+          <span
+            id="view-modal-status"
+            style="
+              font-size: 11.5px;
+              font-weight: 700;
+              padding: 4px 10px;
+              border-radius: 6px;
+              background: rgba(16, 185, 129, 0.12);
+              color: #10b981;
+            "
+          >
             Active
           </span>
         </div>
 
         <!-- Scholarship Key Metadata (Applicants, Posted Date, Deadline / Expiration) -->
-        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 18px;
+          "
+        >
           <!-- Row 1: Applicants -->
           <div>
-            <span id="view-modal-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span
+              id="view-modal-applicants-wrap"
+              style="
+                color: #8b5cf6;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                font-weight: 700;
+                font-size: 13px;
+              "
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
               <span id="view-modal-applicants">0 / 200 Applicants</span>
             </span>
           </div>
 
           <!-- Row 2: Posted & Expires Together -->
-          <div class="directory-dates-row" style="font-size: 12.5px;">
+          <div class="directory-dates-row" style="font-size: 12.5px">
             <span class="directory-date-item">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-              <span>Posted: <strong id="view-modal-posted" style="color: var(--text-primary);">Recently</strong></span>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+              </svg>
+              <span
+                >Posted:
+                <strong
+                  id="view-modal-posted"
+                  style="color: var(--text-primary)"
+                  >Recently</strong
+                ></span
+              >
             </span>
             <span class="directory-date-dot">&bull;</span>
             <span class="directory-date-item">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              <span>Deadline: <strong id="view-modal-date" style="color: var(--text-primary);">No Deadline</strong></span>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span
+                >Deadline:
+                <strong id="view-modal-date" style="color: var(--text-primary)"
+                  >No Deadline</strong
+                ></span
+              >
             </span>
           </div>
         </div>
 
         <!-- About the Scholarship -->
-        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">About the Scholarship</h4>
-        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 20px; white-space: pre-line;" id="view-modal-desc">
+        <h4
+          style="
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 6px 0;
+          "
+        >
+          About the Scholarship
+        </h4>
+        <p
+          style="
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin-bottom: 20px;
+            white-space: pre-line;
+          "
+          id="view-modal-desc"
+        >
           Scholarship description...
         </p>
 
         <!-- Required Documents Checklist -->
-        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0;">Required Documents</h4>
-        <div id="view-modal-reqs" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px;">
+        <h4
+          style="
+            font-size: 14.5px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+          "
+        >
+          Required Documents
+        </h4>
+        <div
+          id="view-modal-reqs"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 26px;
+          "
+        >
           <!-- Rendered dynamically -->
         </div>
 
         <!-- Actions: Provider Controls -->
-        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 8px;">
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-top: 8px;
+          "
+        >
           <button
             type="button"
             class="btn btn-primary"
             id="view-modal-manage-btn"
-            style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+            style="
+              width: 100%;
+              padding: 13px;
+              font-size: 14.5px;
+              font-weight: 700;
+              border-radius: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            "
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="flex-shrink: 0"
+            >
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              ></path>
               <polyline points="14 2 14 8 20 8"></polyline>
               <line x1="16" y1="13" x2="8" y2="13"></line>
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
-            <span id="view-modal-manage-text">Manage Applications for this post</span>
+            <span id="view-modal-manage-text"
+              >Manage Applications for this post</span
+            >
           </button>
           <button
             type="button"
             class="btn btn-secondary"
             id="view-modal-close-action-btn"
             onclick="closeScholarshipModal()"
-            style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 600; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+            style="
+              width: 100%;
+              padding: 11px;
+              font-size: 13.5px;
+              font-weight: 600;
+              border-radius: 20px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+            "
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="flex-shrink: 0"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
             <span>Close Details</span>
           </button>
         </div>
-
       </div>
     </div>
 
     <!-- ========================================= -->
     <!-- 4. REVIEW & DECISION MODAL FOR APPLICANTS -->
     <!-- ========================================= -->
-    <div class="nexo-modal-overlay" id="review-application-modal" role="dialog" aria-modal="true">
-      <div class="nexo-modal-container" style="position: relative;">
+    <div
+      class="nexo-modal-overlay"
+      id="review-application-modal"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="nexo-modal-container" style="position: relative">
         <!-- Clean Circular X Close Button (Consistent with other modals) -->
         <button
           type="button"
@@ -1548,54 +2042,136 @@
           id="close-review-modal"
           aria-label="Close modal"
           title="Close"
-          style="position: absolute; top: 18px; right: 18px; z-index: 10;"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
 
         <!-- Student Header: Avatar, Name, Email, and Status Badge placed cleanly under email -->
-        <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; padding-right: 48px;">
-          <div id="modal-student-avatar" class="provider-app-avatar" style="width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; font-weight: 700; font-size: 16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-right: 48px;
+          "
+        >
+          <div
+            id="modal-student-avatar"
+            class="provider-app-avatar"
+            style="
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              flex-shrink: 0;
+              font-weight: 700;
+              font-size: 16px;
+            "
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
           </div>
-          <div style="flex: 1; min-width: 0;">
-            <h2 style="font-size: 19px; font-weight: 700; margin: 0 0 2px; line-height: 1.25; word-break: break-word;" id="modal-student-name">Student Name</h2>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; word-break: break-all;" id="modal-student-email">student@university.edu.ph</div>
+          <div style="flex: 1; min-width: 0">
+            <h2
+              style="
+                font-size: 19px;
+                font-weight: 700;
+                margin: 0 0 2px;
+                line-height: 1.25;
+                word-break: break-word;
+              "
+              id="modal-student-name"
+            >
+              Student Name
+            </h2>
+            <div
+              style="
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+                word-break: break-all;
+              "
+              id="modal-student-email"
+            >
+              student@university.edu.ph
+            </div>
             <div>
-              <span class="provider-app-badge" id="modal-status-badge">Submitted</span>
+              <span class="provider-app-badge" id="modal-status-badge"
+                >Submitted</span
+              >
             </div>
           </div>
         </div>
 
         <!-- Section: Student Profile Details (Title outside the card, no icon) -->
-        <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--text-primary);">
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 10px 0;
+              color: var(--text-primary);
+            "
+          >
             Student Profile Information &amp; Academic Credentials
           </h4>
-          <div class="modal-info-card" style="margin: 0;">
+          <div class="modal-info-card" style="margin: 0">
             <div class="modal-info-grid">
               <div class="modal-info-cell">
                 <div class="modal-info-label">University / Institution</div>
-                <div class="modal-info-value" id="modal-student-school">Not Specified</div>
+                <div class="modal-info-value" id="modal-student-school">
+                  Not Specified
+                </div>
               </div>
               <div class="modal-info-cell">
                 <div class="modal-info-label">Course / Degree Program</div>
-                <div class="modal-info-value" id="modal-student-course">Not Specified</div>
+                <div class="modal-info-value" id="modal-student-course">
+                  Not Specified
+                </div>
               </div>
               <div class="modal-info-cell">
                 <div class="modal-info-label">Academic Year Level</div>
-                <div class="modal-info-value" id="modal-student-year">Not Specified</div>
+                <div class="modal-info-value" id="modal-student-year">
+                  Not Specified
+                </div>
               </div>
               <div class="modal-info-cell">
                 <div class="modal-info-label">Student ID Number</div>
-                <div class="modal-info-value" id="modal-student-id">Not Specified</div>
+                <div class="modal-info-value" id="modal-student-id">
+                  Not Specified
+                </div>
               </div>
               <div class="modal-info-cell">
                 <div class="modal-info-label">Contact Number</div>
-                <div class="modal-info-value" id="modal-student-contact">Not Specified</div>
+                <div class="modal-info-value" id="modal-student-contact">
+                  Not Specified
+                </div>
               </div>
               <div class="modal-info-cell">
                 <div class="modal-info-label">Date Submitted</div>
@@ -1603,15 +2179,33 @@
               </div>
               <div class="modal-info-cell full-width">
                 <div class="modal-info-label">Bio / Applicant Summary</div>
-                <div class="modal-info-value" id="modal-student-bio" style="font-weight: 500; font-style: italic; color: var(--text-secondary); line-height: 1.45;">No applicant bio provided.</div>
+                <div
+                  class="modal-info-value"
+                  id="modal-student-bio"
+                  style="
+                    font-weight: 500;
+                    font-style: italic;
+                    color: var(--text-secondary);
+                    line-height: 1.45;
+                  "
+                >
+                  No applicant bio provided.
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Section: Attached Documents (Title outside, no icon) -->
-        <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 10px 0; color: var(--text-primary);">
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 10px 0;
+              color: var(--text-primary);
+            "
+          >
             Attached Documents
           </h4>
           <div id="modal-documents-list">
@@ -1620,33 +2214,100 @@
         </div>
 
         <!-- Section: Provider Decision (Title outside the card, no icon) -->
-        <div style="margin-bottom: 20px;">
-          <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary);">
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 4px 0;
+              color: var(--text-primary);
+            "
+          >
             Provider Decision
           </h4>
-          <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 10px 0;">
+          <p
+            style="
+              font-size: 12.5px;
+              color: var(--text-secondary);
+              margin: 0 0 10px 0;
+            "
+          >
             Add remarks and choose a decision to notify the student.
           </p>
 
-          <div class="provider-decision-panel" style="margin-top: 0;">
+          <div class="provider-decision-panel" style="margin-top: 0">
             <!-- Live Feedback Success Notifier (Shortened, check icon removed) -->
-            <div id="modal-feedback-success-banner" style="display: none; background: rgba(16, 185, 129, 0.12); border: 1.5px solid rgba(16, 185, 129, 0.35); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;">
-              <strong style="color: #10B981; font-size: 12.5px; display: block;">Decision Sent</strong>
-              <p id="modal-feedback-success-msg" style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-primary);">
+            <div
+              id="modal-feedback-success-banner"
+              style="
+                display: none;
+                background: rgba(16, 185, 129, 0.12);
+                border: 1.5px solid rgba(16, 185, 129, 0.35);
+                border-radius: 8px;
+                padding: 8px 12px;
+                margin-bottom: 12px;
+              "
+            >
+              <strong style="color: #10b981; font-size: 12.5px; display: block"
+                >Decision Sent</strong
+              >
+              <p
+                id="modal-feedback-success-msg"
+                style="
+                  margin: 2px 0 0 0;
+                  font-size: 12px;
+                  color: var(--text-primary);
+                "
+              >
                 Saved and sent to student.
               </p>
             </div>
 
             <!-- Finalized Permanent Notice in Review Modal -->
-            <div id="modal-decision-finalized-notice" style="display: none; background: rgba(16, 185, 129, 0.08); border: 1.5px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;">
-              <strong style="color: #10B981; font-size: 12.5px; display: block;">Decision Finalized</strong>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
-                This application is permanently marked as <strong id="modal-finalized-status-label" style="color: var(--text-primary);">Approved</strong> and can no longer be modified.
+            <div
+              id="modal-decision-finalized-notice"
+              style="
+                display: none;
+                background: rgba(16, 185, 129, 0.08);
+                border: 1.5px solid rgba(16, 185, 129, 0.3);
+                border-radius: 10px;
+                padding: 10px 14px;
+                margin-bottom: 14px;
+              "
+            >
+              <strong style="color: #10b981; font-size: 12.5px; display: block"
+                >Decision Finalized</strong
+              >
+              <p
+                style="
+                  margin: 2px 0 0 0;
+                  font-size: 12px;
+                  color: var(--text-primary);
+                  line-height: 1.4;
+                "
+              >
+                This application is permanently marked as
+                <strong
+                  id="modal-finalized-status-label"
+                  style="color: var(--text-primary)"
+                  >Approved</strong
+                >
+                and can no longer be modified.
               </p>
             </div>
 
             <div>
-              <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; color: var(--text-secondary);">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  margin-bottom: 6px;
+                  color: var(--text-secondary);
+                "
+              >
                 Remarks
               </label>
               <textarea
@@ -1656,21 +2317,72 @@
               ></textarea>
             </div>
 
-            <div style="margin-top: 14px;">
-              <label style="display: block; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 8px;">
+            <div style="margin-top: 14px">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  color: var(--text-secondary);
+                  margin-bottom: 8px;
+                "
+              >
                 Submit Decision:
               </label>
               <div class="decision-btn-group" id="modal-decision-btn-group">
-                <button type="button" class="decision-btn decision-approve" id="modal-btn-approve">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <button
+                  type="button"
+                  class="decision-btn decision-approve"
+                  id="modal-btn-approve"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
                   Approve
                 </button>
-                <button type="button" class="decision-btn decision-review" id="modal-btn-review">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 16 14"></polyline></svg>
+                <button
+                  type="button"
+                  class="decision-btn decision-review"
+                  id="modal-btn-review"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 16 14"></polyline>
+                  </svg>
                   Under Review
                 </button>
-                <button type="button" class="decision-btn decision-reject" id="modal-btn-reject">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <button
+                  type="button"
+                  class="decision-btn decision-reject"
+                  id="modal-btn-reject"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
                   Reject
                 </button>
               </div>
@@ -1679,9 +2391,20 @@
         </div>
 
         <!-- Bottom Close Button (Clean exit without cut/dashed line) -->
-        <div style="margin-top: 20px; display: flex; justify-content: center;">
-          <button type="button" class="modal-bottom-close-btn" id="modal-btn-close-bottom">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <div style="margin-top: 20px; display: flex; justify-content: center">
+          <button
+            type="button"
+            class="modal-bottom-close-btn"
+            id="modal-btn-close-bottom"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -1694,8 +2417,22 @@
     <!-- ========================================= -->
     <!-- 5. ON-SCREEN CONFIRMATION MODAL           -->
     <!-- ========================================= -->
-    <div class="nexo-modal-overlay" id="decision-confirm-modal" role="dialog" aria-modal="true" style="z-index: 10500;">
-      <div class="nexo-modal-container" style="max-width: 520px; border-radius: 16px; padding: 24px; position: relative;">
+    <div
+      class="nexo-modal-overlay"
+      id="decision-confirm-modal"
+      role="dialog"
+      aria-modal="true"
+      style="z-index: 10500"
+    >
+      <div
+        class="nexo-modal-container"
+        style="
+          max-width: 520px;
+          border-radius: 16px;
+          padding: 24px;
+          position: relative;
+        "
+      >
         <!-- Clean Circular X Close Button (Consistent with other modals) -->
         <button
           type="button"
@@ -1703,54 +2440,201 @@
           id="close-decision-confirm"
           aria-label="Close confirmation"
           title="Close"
-          style="position: absolute; top: 18px; right: 18px; z-index: 10;"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
 
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-right: 40px;">
-          <div id="confirm-status-icon" style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-right: 40px;
+          "
+        >
+          <div
+            id="confirm-status-icon"
+            style="
+              width: 38px;
+              height: 38px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(139, 92, 246, 0.15);
+              color: #8b5cf6;
+            "
+          >
             <!-- Dynamic icon -->
           </div>
           <div>
-            <h3 id="confirm-modal-heading" style="font-size: 17px; font-weight: 800; margin: 0; color: var(--text-primary);">Confirm Decision</h3>
-            <span id="confirm-modal-subheading" style="font-size: 12px; color: var(--text-secondary);">Application for Student Scholar</span>
+            <h3
+              id="confirm-modal-heading"
+              style="
+                font-size: 17px;
+                font-weight: 800;
+                margin: 0;
+                color: var(--text-primary);
+              "
+            >
+              Confirm Decision
+            </h3>
+            <span
+              id="confirm-modal-subheading"
+              style="font-size: 12px; color: var(--text-secondary)"
+              >Application for Student Scholar</span
+            >
           </div>
         </div>
 
         <!-- Permanence Warning Notice (for Approved and Rejected) -->
-        <div id="confirm-permanence-alert" style="background: rgba(239, 68, 68, 0.08); border: 1.5px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: none;">
-          <strong style="color: #ef4444; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <div
+          id="confirm-permanence-alert"
+          style="
+            background: rgba(239, 68, 68, 0.08);
+            border: 1.5px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: none;
+          "
+        >
+          <strong
+            style="
+              color: #ef4444;
+              font-size: 12.5px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              ></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
             Permanent Decision
           </strong>
-          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
-            Once submitted, <strong id="confirm-action-name">this decision</strong> is final and cannot be undone. Your remarks will be sent directly to the student.
+          <p
+            style="
+              margin: 3px 0 0 0;
+              font-size: 12px;
+              color: var(--text-primary);
+              line-height: 1.4;
+            "
+          >
+            Once submitted,
+            <strong id="confirm-action-name">this decision</strong> is final and
+            cannot be undone. Your remarks will be sent directly to the student.
           </p>
         </div>
 
         <!-- Under Review Info Notice -->
-        <div id="confirm-review-alert" style="background: rgba(139, 92, 246, 0.08); border: 1.5px solid rgba(139, 92, 246, 0.3); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; display: none;">
-          <strong style="color: #8b5cf6; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <div
+          id="confirm-review-alert"
+          style="
+            background: rgba(139, 92, 246, 0.08);
+            border: 1.5px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: none;
+          "
+        >
+          <strong
+            style="
+              color: #8b5cf6;
+              font-size: 12.5px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
             Under Review Status
           </strong>
-          <p style="margin: 3px 0 0 0; font-size: 12px; color: var(--text-primary); line-height: 1.4;">
-            This decision is not permanent. The student will be notified of your remarks and you can update their status later.
+          <p
+            style="
+              margin: 3px 0 0 0;
+              font-size: 12px;
+              color: var(--text-primary);
+              line-height: 1.4;
+            "
+          >
+            This decision is not permanent. The student will be notified of your
+            remarks and you can update their status later.
           </p>
         </div>
 
         <!-- Remarks Input Field -->
-        <div style="margin-bottom: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <label for="confirm-remarks-textarea" style="font-size: 12.5px; font-weight: 700; color: var(--text-primary);">
+        <div style="margin-bottom: 16px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 6px;
+            "
+          >
+            <label
+              for="confirm-remarks-textarea"
+              style="
+                font-size: 12.5px;
+                font-weight: 700;
+                color: var(--text-primary);
+              "
+            >
               Remarks
             </label>
-            <button type="button" class="btn-reset-remarks" id="btn-reset-default-remarks" style="border-radius: 20px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <button
+              type="button"
+              class="btn-reset-remarks"
+              id="btn-reset-default-remarks"
+              style="border-radius: 20px"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              >
                 <polyline points="1 4 1 10 7 10"></polyline>
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
               </svg>
@@ -1762,17 +2646,47 @@
             class="review-notes-textarea"
             placeholder="Enter feedback or follow-up instructions for the student..."
           ></textarea>
-          <div id="confirm-remarks-error" style="color: #ef4444; font-size: 12px; font-weight: 600; margin-top: 4px; display: none;">
-            Remarks cannot be empty. Please provide feedback or instructions for the student.
+          <div
+            id="confirm-remarks-error"
+            style="
+              color: #ef4444;
+              font-size: 12px;
+              font-weight: 600;
+              margin-top: 4px;
+              display: none;
+            "
+          >
+            Remarks cannot be empty. Please provide feedback or instructions for
+            the student.
           </div>
         </div>
 
         <!-- Buttons with 20px border radius -->
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" class="btn btn-secondary" id="btn-cancel-decision-confirm" style="padding: 10px 18px; font-size: 13px; font-weight: 600; border-radius: 20px;">
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="btn-cancel-decision-confirm"
+            style="
+              padding: 10px 18px;
+              font-size: 13px;
+              font-weight: 600;
+              border-radius: 20px;
+            "
+          >
             Back to Review
           </button>
-          <button type="button" class="btn btn-primary" id="btn-submit-decision-confirm" style="padding: 10px 22px; font-size: 13px; font-weight: 700; border-radius: 20px;">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="btn-submit-decision-confirm"
+            style="
+              padding: 10px 22px;
+              font-size: 13px;
+              font-weight: 700;
+              border-radius: 20px;
+            "
+          >
             Confirm &amp; Send Decision
           </button>
         </div>
@@ -1782,29 +2696,112 @@
     <!-- ========================================= -->
     <!-- 6. DOCUMENT PREVIEW MODAL                 -->
     <!-- ========================================= -->
-    <div class="nexo-modal-overlay" id="doc-preview-modal" role="dialog" aria-modal="true">
-      <div class="nexo-modal-container" id="doc-preview-container" style="max-width: 720px; transition: max-width 0.25s ease, width 0.25s ease;">
-        <button type="button" class="modal-close-btn" id="close-doc-preview" aria-label="Close document preview">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+    <div
+      class="nexo-modal-overlay"
+      id="doc-preview-modal"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="nexo-modal-container"
+        id="doc-preview-container"
+        style="
+          max-width: 720px;
+          transition:
+            max-width 0.25s ease,
+            width 0.25s ease;
+        "
+      >
+        <button
+          type="button"
+          class="modal-close-btn"
+          id="close-doc-preview"
+          aria-label="Close document preview"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+          >
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
 
-        <div style="display: flex; align-items: center; justify-content: space-between; padding-right: 32px; margin-bottom: 14px; gap: 10px; flex-wrap: wrap;">
-          <h3 id="doc-preview-title" style="font-size: 16px; margin: 0; font-weight: 700; flex: 1; min-width: 140px;">Document Preview</h3>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" class="btn btn-secondary" id="doc-preview-fullscreen" title="Toggle Fullscreen" style="padding: 6px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; border-radius: 8px; cursor: pointer;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-right: 32px;
+            margin-bottom: 14px;
+            gap: 10px;
+            flex-wrap: wrap;
+          "
+        >
+          <h3
+            id="doc-preview-title"
+            style="
+              font-size: 16px;
+              margin: 0;
+              font-weight: 700;
+              flex: 1;
+              min-width: 140px;
+            "
+          >
+            Document Preview
+          </h3>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="doc-preview-fullscreen"
+              title="Toggle Fullscreen"
+              style="
+                padding: 6px 12px;
+                font-size: 12.5px;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 8px;
+                cursor: pointer;
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                ></path>
+              </svg>
               <span id="fullscreen-btn-text">Full Screen</span>
             </button>
-            <button type="button" class="btn btn-primary" id="doc-preview-download" style="padding: 6px 14px; font-size: 12.5px; border-radius: 8px; cursor: pointer; opacity: 0.95;">
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="doc-preview-download"
+              style="
+                padding: 6px 14px;
+                font-size: 12.5px;
+                border-radius: 8px;
+                cursor: pointer;
+                opacity: 0.95;
+              "
+            >
               Download
             </button>
           </div>
         </div>
 
-        <div id="doc-preview-body" style="min-height: 250px;">
+        <div id="doc-preview-body" style="min-height: 250px">
           <!-- Embed or Image inserted dynamically -->
         </div>
       </div>
@@ -1812,7 +2809,10 @@
 
     <!-- Global Footer -->
     <footer class="global-footer">
-      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <p>
+        Copyright 2026 Batangas State University &bull; Alangilan Campus &bull;
+        CICS
+      </p>
       <div class="footer-links">
         <a href="privacy.html">Privacy Policy</a>
         <a href="terms.html">Terms of Service</a>
