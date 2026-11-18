@@ -132,6 +132,16 @@
     window.addEventListener("focus", () => {
       if (!isModalOpen) loadApplicationsData(true);
     });
+
+    // Re-evaluate 2x3 (6 on desktop, 3 on mobile) card grid limit on resize
+    let lastWasDesktop = window.innerWidth >= 1024;
+    window.addEventListener("resize", () => {
+      const nowDesktop = window.innerWidth >= 1024;
+      if (nowDesktop !== lastWasDesktop) {
+        lastWasDesktop = nowDesktop;
+        renderApplicationsList();
+      }
+    });
   });
 
   function initDOMElements() {
@@ -552,6 +562,7 @@
     if (searchInputEl) {
       searchInputEl.addEventListener("input", (e) => {
         activeSearchQuery = e.target.value.trim().toLowerCase();
+        isAppsExpanded = false;
         renderApplicationsList();
       });
     }
@@ -585,6 +596,7 @@
       item.addEventListener("click", function (e) {
         e.stopPropagation();
         activeFilterTab = this.dataset.statusFilter || "all";
+        isAppsExpanded = false;
         const triggerLabel = document.getElementById("status-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         statusItems.forEach((si) => si.classList.remove("selected"));
@@ -601,6 +613,7 @@
       item.addEventListener("click", function (e) {
         e.stopPropagation();
         activeDocFilter = this.dataset.docFilter || "all";
+        isAppsExpanded = false;
         const triggerLabel = document.getElementById("doc-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         docItems.forEach((di) => di.classList.remove("selected"));
@@ -620,6 +633,7 @@
         activeProgramFilter = "all";
         activeDocFilter = "all";
         activeSearchQuery = "";
+        isAppsExpanded = false;
         if (searchInputEl) searchInputEl.value = "";
 
         const statusLabel = document.getElementById("status-filter-label");
@@ -715,6 +729,7 @@
       item.addEventListener("click", function (e) {
         e.stopPropagation();
         activeProgramFilter = this.dataset.program || "all";
+        isAppsExpanded = false;
         const triggerLabel = document.getElementById(
           "scholarship-filter-label",
         );

@@ -24,6 +24,7 @@
   let allScholarships = [];
   let allApplications = [];
   let isPostsExpanded = false;
+  let isPostAppsExpanded = false;
   let studentSettings = null;
   let studentProfiles = {};
   let users = [];
@@ -182,6 +183,20 @@
     // Refresh when window regains focus
     window.addEventListener("focus", () => {
       if (!isModalOpen) loadData(true);
+    });
+
+    // Re-evaluate 2x3 (6 on desktop, 3 on mobile) card grid limit on resize
+    let lastWasDesktop = window.innerWidth >= 1024;
+    window.addEventListener("resize", () => {
+      const nowDesktop = window.innerWidth >= 1024;
+      if (nowDesktop !== lastWasDesktop) {
+        lastWasDesktop = nowDesktop;
+        lastPostsSig = null;
+        renderPostsFeed();
+        if (currentActivePost) {
+          renderPostApplicantsFeed();
+        }
+      }
     });
   });
 
@@ -559,6 +574,8 @@
     if (postSearchInputEl) {
       postSearchInputEl.addEventListener("input", (e) => {
         postSearchQuery = e.target.value.trim().toLowerCase();
+        isPostsExpanded = false;
+        lastPostsSig = null;
         renderPostsFeed();
       });
     }
@@ -580,6 +597,8 @@
         item.addEventListener("click", function (e) {
           e.stopPropagation();
           postFilterTab = this.dataset.filter || "all";
+          isPostsExpanded = false;
+          lastPostsSig = null;
           updatePostFilterUI(postFilterTab);
           filterMenu.classList.remove("show");
           filterBtn.setAttribute("aria-expanded", "false");
@@ -603,6 +622,8 @@
         tabs.forEach((t) => t.classList.remove("active"));
         this.classList.add("active");
         postFilterTab = this.dataset.filter || "all";
+        isPostsExpanded = false;
+        lastPostsSig = null;
         updatePostFilterUI(postFilterTab);
         renderPostsFeed();
       });
@@ -980,6 +1001,7 @@
     if (appSearchInputEl) {
       appSearchInputEl.addEventListener("input", (e) => {
         appSearchQuery = e.target.value.trim().toLowerCase();
+        isPostAppsExpanded = false;
         renderPostApplicantsFeed();
       });
     }
@@ -1005,6 +1027,7 @@
           e.stopPropagation();
           const selected = this.dataset.applicantFilter || "all";
           appFilterTab = selected;
+          isPostAppsExpanded = false;
           updateApplicantFilterUI(selected);
           filterMenu.classList.remove("show");
           filterBtn.setAttribute("aria-expanded", "false");
@@ -1036,6 +1059,7 @@
     currentActivePost = target;
     appFilterTab = "all";
     appSearchQuery = "";
+    isPostAppsExpanded = false;
     if (appSearchInputEl) appSearchInputEl.value = "";
     updateApplicantFilterUI("all");
 
@@ -1184,14 +1208,51 @@
     }
 
     postApplicantsEmptyEl.style.display = "none";
-    postApplicantsFeedEl.style.display = "flex";
+    postApplicantsFeedEl.style.display = "grid";
     postApplicantsFeedEl.innerHTML = "";
 
-    filtered.forEach((app) => {
+    const isDesktop = window.innerWidth >= 1024;
+    const maxInitialCards = isDesktop ? 6 : 3;
+    const totalMatching = filtered.length;
+    const visibleApps = isPostAppsExpanded
+      ? filtered
+      : filtered.slice(0, maxInitialCards);
+
+    visibleApps.forEach((app) => {
       // Find original queue index among all baseApps for FCFS display
       const queueIndex = baseApps.indexOf(app) + 1;
       postApplicantsFeedEl.appendChild(createApplicantCard(app, queueIndex));
     });
+
+    if (totalMatching > maxInitialCards) {
+      const toggleContainer = document.createElement("div");
+      toggleContainer.className = "applications-view-all-container";
+      toggleContainer.style.cssText =
+        "display: flex; justify-content: center; margin-top: 18px; margin-bottom: 8px; width: 100%; grid-column: 1 / -1;";
+      toggleContainer.innerHTML = `
+        <button type="button" id="btn-toggle-post-apps-all" class="btn btn-outline" style="border-radius: 100px; padding: 10px 24px; font-size: 13.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary); cursor: pointer; transition: all 0.2s ease;">
+          ${
+            isPostAppsExpanded
+              ? `<span>Show Less</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`
+              : `<span>View All Applications (${totalMatching})</span>
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`
+          }
+        </button>
+      `;
+      postApplicantsFeedEl.appendChild(toggleContainer);
+
+      const toggleBtn = toggleContainer.querySelector("#btn-toggle-post-apps-all");
+      if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+          isPostAppsExpanded = !isPostAppsExpanded;
+          renderPostApplicantsFeed();
+          if (!isPostAppsExpanded) {
+            postApplicantsFeedEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+    }
   }
 
   function createApplicantCard(app, queueNumber) {

@@ -301,10 +301,11 @@
       /* PROVIDER APPLICATION CARDS & FEED         */
       /* ========================================= */
       .applications-feed {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        margin-top: 10px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        margin-top: 0;
+        width: 100%;
       }
 
       .provider-app-card {
@@ -1119,7 +1120,7 @@
       </div>
 
       <!-- Search & Filter Section (Oblong search bar with filter button on right) -->
-      <div class="submissions-search-filter-row" style="margin-bottom: 22px;">
+      <div class="submissions-search-filter-row" style="margin-bottom: 24px;">
         <!-- Search Bar (Oblong pill design matching student POV) -->
         <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
           <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

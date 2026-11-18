@@ -8111,15 +8111,21 @@ body.dark-theme .skeleton-bone {
   .posts-search-wrapper,
   .posts-search-input,
   .posts-feed,
+  #posts-feed,
   .apps-search-filter-row,
   .apps-search-wrapper,
   .apps-feed,
+  .applications-feed,
+  #applications-feed,
+  #post-applicants-view,
+  #post-applicants-feed,
   .settings-header,
   .settings-tabs-wrapper,
   .settings-tab-panel,
   .settings-category-group,
   .settings-card,
   .scholarship-card,
+  .post-card,
   .draft-card,
   .directory-card,
   .student-app-card,
@@ -8595,20 +8601,21 @@ body.dark-theme .skeleton-bone {
 
   .submissions-search-filter-row {
     max-width: 100% !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 24px !important;
   }
 
   .student-apps-section {
     margin-top: 4px !important;
   }
 
-  /* 3-Column Scholarship Directory Grid on Desktop (up to 2x3 = 6 cards) */
+  /* 3-Column Scholarship Directory & Provider Feeds Grid on Desktop (up to 2x3 = 6 cards) */
   .browse-feed,
   #browse-scholarships-feed,
   .posts-grid,
   #posts-feed,
   .applications-feed,
   #applications-feed,
+  #post-applicants-feed,
   .drafts-feed,
   #drafts-feed {
     display: grid !important;
@@ -8617,12 +8624,32 @@ body.dark-theme .skeleton-bone {
     align-items: stretch !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    margin-top: 8px !important;
+    margin-top: 0 !important;
   }
 
-  #browse-scholarships-feed:empty {
+  #browse-scholarships-feed:empty,
+  #posts-feed:empty,
+  #applications-feed:empty,
+  #post-applicants-feed:empty {
     display: none !important;
     margin-top: 0 !important;
+  }
+
+  .post-card,
+  .provider-app-card {
+    padding: 20px 22px !important;
+    border-radius: 20px !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+  }
+
+  .provider-app-card .provider-app-actions-row,
+  .post-card .post-actions-row {
+    margin-top: auto !important;
+    padding-top: 14px !important;
   }
 
   .directory-card {

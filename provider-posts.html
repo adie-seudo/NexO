@@ -150,11 +150,14 @@
         color: #ffffff;
       }
 
-      /* Scholarship Post Cards */
-      .posts-grid {
-        display: flex;
-        flex-direction: column;
+      /* Scholarship Post Cards & Applicant Feed */
+      .posts-grid,
+      .applications-feed {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
         gap: 16px;
+        margin-top: 0;
+        width: 100%;
       }
 
       .post-card {
@@ -1209,7 +1212,7 @@
         </p>
 
         <!-- Search & Status Filter Section (Oblong search bar with filter button on right) -->
-        <div class="submissions-search-filter-row" style="margin-bottom: 22px;">
+        <div class="submissions-search-filter-row" style="margin-bottom: 24px;">
           <!-- Search Bar (Oblong pill design matching student POV) -->
           <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
             <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1340,7 +1343,7 @@
         </div>
 
         <!-- Search & Filter Section (Oblong search bar with filter button on right) -->
-        <div class="submissions-search-filter-row" style="margin-bottom: 22px;">
+        <div class="submissions-search-filter-row" style="margin-bottom: 24px;">
           <!-- Search Bar (Oblong pill design matching student POV) -->
           <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
             <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1396,8 +1399,8 @@
           </div>
         </div>
 
-        <!-- Applicants Feed -->
-        <div id="post-applicants-feed" style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- Applicants Feed (3x2 Desktop Grid, 1-Column Mobile Stack) -->
+        <div class="applications-feed" id="post-applicants-feed">
           <!-- Dynamically inserted applicant cards in FCFS order -->
         </div>
 
