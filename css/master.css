@@ -3743,184 +3743,383 @@ body.dark-theme .view-details-btn:hover {
   flex-direction: column;
 }
 
-/* Modern Student Welcome Rectangular Hero Card */
-.student-welcome-card {
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-color);
-  border-radius: 18px;
-  padding: 16px 18px;
-  margin-bottom: 22px; /* Slightly more separated from the 4 cards below */
+/* Modern Student Main Profile Hero Banner (Full-Width Rectangle) */
+.student-hero-banner {
+  position: relative;
+  width: 100%;
+  background: linear-gradient(135deg, #1b102e 0%, #29154a 45%, #180e2a 100%);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 20px;
+  padding: 24px 26px;
+  margin-bottom: 24px;
   display: flex;
-  align-items: center;
-  gap: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  flex-direction: column;
+  gap: 20px;
   box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-body.dark-theme .student-welcome-card {
-  background: var(--bg-surface);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Squircle Avatar Box on Dashboard Welcome Card (Square shape with smooth radius & subtle border) */
-.student-welcome-avatar,
-.student-welcome-card .student-avatar-box {
-  width: 62px;
-  height: 62px;
-  border-radius: 16px;
-  border: 1.5px solid rgba(139, 92, 246, 0.25);
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.12),
-    rgba(99, 102, 241, 0.16)
-  );
-  color: #7c3aed;
+body.dark-theme .student-hero-banner {
+  background: linear-gradient(135deg, #180e2a 0%, #251244 45%, #140b24 100%);
+  border-color: rgba(139, 92, 246, 0.32);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
+}
+
+/* Subtle background concentric wave watermark */
+.student-hero-banner::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: 2%;
+  width: 520px;
+  height: 200%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.14) 0%, rgba(139, 92, 246, 0.04) 40%, transparent 68%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hero-left-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .student-hero-banner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+  }
+  .hero-left-wrap {
+    flex-direction: row;
+    align-items: center;
+    gap: 22px;
+  }
+}
+
+/* Clean circular avatar (No small badge beside or underneath it!) */
+.hero-avatar-wrap,
+#student-card-avatar,
+.student-welcome-avatar {
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  min-height: 76px;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background-color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 800;
   flex-shrink: 0;
-  overflow: hidden;
-  user-select: none;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
-  box-sizing: border-box;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
-}
-.student-welcome-avatar img,
-.student-welcome-card .student-avatar-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 14px;
-  display: block;
-}
-body.dark-theme .student-welcome-avatar,
-body.dark-theme .student-welcome-card .student-avatar-box {
-  border-color: rgba(167, 139, 250, 0.3);
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.2),
-    rgba(99, 102, 241, 0.25)
-  );
-  color: #c084fc;
+  border: 2.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  position: relative;
 }
 
-.student-welcome-content {
+.hero-avatar-wrap:hover,
+#student-card-avatar:hover {
+  transform: scale(1.04);
+  border-color: rgba(191, 165, 252, 0.8);
+}
+
+.hero-avatar-wrap img,
+#student-card-avatar img,
+.student-welcome-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  display: block;
+}
+
+.hero-avatar-wrap svg,
+#student-card-avatar svg,
+.student-welcome-avatar svg {
+  color: #281747;
+}
+
+.hero-text-wrap {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
-.student-greeting-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 2px;
-}
-.student-greeting-time {
-  font-size: 15px;
-  font-weight: 600;
-  color: #8b5cf6;
-  letter-spacing: -0.2px;
-  line-height: 1.3;
-  margin-bottom: 3px;
-  display: block;
-}
-body.dark-theme .student-greeting-time {
-  color: #a78bfa;
-}
-.student-name-title {
+
+.hero-greeting-sub {
   font-family: var(--font-heading);
-  font-size: 19px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin: 0;
-  letter-spacing: -0.3px;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.student-motto,
-.settings-subtitle {
-  font-size: 13.5px;
-  color: var(--text-secondary);
-  line-height: 1.65;
-  margin: 5px 0 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #a594c9;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  line-height: 1.3;
 }
 
-/* 2x2 Metric Cards Grid (Consistent design system) */
-.student-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 24px;
+body.dark-theme .hero-greeting-sub {
+  color: #c4b5fd;
 }
-.student-stat-card {
-  background: var(--bg-surface);
-  border: 1.5px solid var(--border-color);
-  border-radius: 16px;
-  padding: 13px 15px;
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+
+.hero-subtitle {
+  font-size: 13.5px;
+  color: #c4b5fd;
+  margin: 0 0 14px 0;
+  line-height: 1.45;
+}
+
+/* Academic Pills / Chips */
+.hero-academic-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e9d7fe;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(4px);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Right Wrap */
+.hero-right-wrap {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 74px;
+  align-items: stretch;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .hero-right-wrap {
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+    margin-left: 20px;
+  }
+}
+
+.hero-chapter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #d6bbfb;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  user-select: none;
+  align-self: flex-start;
+}
+
+@media (min-width: 768px) {
+  .hero-chapter-pill {
+    align-self: auto;
+  }
+}
+
+.hero-view-apps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 26px;
+  background: #bfa5fc;
+  color: #160d2b;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(191, 165, 252, 0.35);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+}
+
+.hero-view-apps-btn:hover {
+  background: #d6bbfb;
+  color: #120924;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(191, 165, 252, 0.5);
+}
+
+.hero-view-apps-btn:active {
+  transform: translateY(0);
+}
+
+/* =============================================================
+   STUDENT 4 STATISTICS CARDS IN ONE HORIZONTAL ROW
+   ============================================================= */
+.student-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .student-stats-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 440px) {
+  .student-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.student-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
   user-select: none;
 }
-.student-stat-card.is-clickable {
-  cursor: pointer;
-}
-.student-stat-card.is-clickable:hover {
-  transform: translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.45);
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.12);
-}
-.student-stat-card.is-clickable:active {
-  transform: scale(0.98);
-}
-.student-stat-card.is-disabled {
-  cursor: default;
-}
-.student-stat-card.is-disabled:hover {
-  transform: none;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  border-color: var(--border-color);
-}
+
 body.dark-theme .student-stat-card {
   background: var(--bg-surface);
   border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
+
+.student-stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
 .student-stat-label {
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #94a3b8);
   margin: 0;
 }
-body.dark-theme .student-stat-label {
-  color: var(--text-secondary);
+
+.student-stat-icon-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
+
+.badge-icon-apps {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.badge-icon-approved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.badge-icon-review {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.badge-icon-rejected {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
 .student-stat-value {
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 32px;
   font-weight: 800;
-  color: var(--text-primary);
-  margin: 4px 0 0 0;
-  line-height: 1;
+  color: var(--text-primary, #ffffff);
+  line-height: 1.1;
+  margin: 6px 0 10px 0;
 }
-body.dark-theme .student-stat-value {
-  color: var(--text-primary);
+
+.student-stat-hint {
+  font-size: 12px;
+  color: var(--text-secondary, #94a3b8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.student-stat-hint .stat-arrow {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+.student-stat-card.is-clickable {
+  cursor: pointer;
+}
+
+.student-stat-card.is-clickable:hover {
+  transform: translateY(-3px);
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.student-stat-card.is-clickable:hover .student-stat-hint {
+  color: #c4b5fd;
+}
+
+.student-stat-card.is-disabled {
+  cursor: default;
 }
 
 /* My Scholarship Applications Section */
@@ -7796,88 +7995,118 @@ body.dark-theme .skeleton-bone {
 
   /* -------------------------------------------------------------
      4. STUDENT ACCOUNT DESKTOP REDESIGN
-     - Top overview: Greeting card on the left, 2x2 metrics grid on the right
+     - Main profile banner: Full-width long rectangle card
+     - 4 statistics cards in one horizontal row directly under the profile card
      - My Scholarship Applications: 3-column grid (up to 3x3 = 9 cards max before View All)
      - Skeleton loading screen: Matches 3-column desktop card layout & sizing
      - Scaled-up typography, avatars, pills, and buttons for desktop resolution
      ------------------------------------------------------------- */
-  .student-top-overview-row {
-    display: grid !important;
-    grid-template-columns: 1.25fr 1fr !important;
-    gap: 20px !important;
-    align-items: stretch !important;
-    margin-bottom: 32px !important;
+  .student-hero-banner {
     width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  .student-top-overview-row .student-welcome-card {
-    margin-bottom: 0 !important;
-    height: 100% !important;
-    padding: 28px 30px !important;
+    padding: 30px 36px !important;
     border-radius: 20px !important;
-    gap: 22px !important;
+    margin-bottom: 24px !important;
+    display: flex !important;
+    flex-direction: row !important;
     align-items: center !important;
+    justify-content: space-between !important;
   }
 
-  .student-welcome-avatar,
-  .student-welcome-card .student-avatar-box {
-    width: 84px !important;
-    height: 84px !important;
-    border-radius: 20px !important;
-    font-size: 28px !important;
+  .hero-left-wrap {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 24px !important;
   }
 
-  .student-welcome-avatar svg {
-    width: 34px !important;
-    height: 34px !important;
+  .hero-avatar-wrap,
+  #student-card-avatar {
+    width: 82px !important;
+    height: 82px !important;
+    min-width: 82px !important;
+    min-height: 82px !important;
+    border-radius: 50% !important;
   }
 
-  .student-welcome-avatar img,
-  .student-welcome-card .student-avatar-box img {
-    border-radius: 18px !important;
-  }
-
-  .student-greeting-time {
-    font-size: 16.5px !important;
+  .hero-greeting-sub {
+    font-size: 11px !important;
+    letter-spacing: 0.8px !important;
     margin-bottom: 4px !important;
   }
 
-  .student-name-title {
-    font-size: 26px !important;
+  .hero-title {
+    font-size: 28px !important;
     line-height: 1.25 !important;
+    margin-bottom: 6px !important;
   }
 
-  .student-motto {
-    font-size: 15px !important;
-    line-height: 1.6 !important;
-    margin-top: 8px !important;
+  .hero-subtitle {
+    font-size: 14px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .hero-academic-chips {
+    gap: 9px !important;
+  }
+
+  .hero-chip {
+    padding: 5px 15px !important;
+    font-size: 12.5px !important;
+  }
+
+  .hero-right-wrap {
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: space-between !important;
+    gap: 32px !important;
+    margin-left: 24px !important;
+  }
+
+  .hero-chapter-pill {
+    padding: 6px 16px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.8px !important;
+  }
+
+  .hero-view-apps-btn {
+    padding: 12px 28px !important;
+    font-size: 14px !important;
+  }
+
+  .student-stats-row {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    width: 100% !important;
+    margin-bottom: 24px !important;
   }
 
   .student-stats-grid {
     display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    grid-template-rows: repeat(2, 1fr) !important;
-    gap: 14px !important;
-    margin-bottom: 0 !important;
-    height: 100% !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 16px !important;
+    margin-bottom: 24px !important;
+    height: auto !important;
   }
 
   .student-stat-card {
-    padding: 18px 22px !important;
+    padding: 20px 22px !important;
     border-radius: 18px !important;
-    min-height: 92px !important;
+    min-height: 104px !important;
     justify-content: space-between !important;
   }
 
   .student-stat-label {
-    font-size: 14px !important;
-    font-weight: 650 !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
   }
 
   .student-stat-value {
-    font-size: 28px !important;
-    margin-top: 8px !important;
+    font-size: 32px !important;
+    margin: 4px 0 10px 0 !important;
+  }
+
+  .student-stat-hint {
+    font-size: 12px !important;
   }
 
   /* My Scholarship Applications Header on Desktop */

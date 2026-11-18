@@ -195,117 +195,148 @@
     <!-- 2. MAIN STUDENT DASHBOARD CONTENT         -->
     <!-- ========================================= -->
     <main class="student-dash-main">
-      <!-- TOP ROW: GREETING HERO (LEFT ON DESKTOP) + 2x2 METRICS GRID (RIGHT ON DESKTOP) -->
-      <div class="student-top-overview-row">
-        <!-- A. STUDENT WELCOME RECTANGULAR HERO CARD -->
-        <section class="student-welcome-card" id="student-welcome-card">
-          <!-- Squircle Avatar Container -->
-          <div class="student-welcome-avatar" id="student-card-avatar" title="View Account Settings" tabindex="0" role="button" aria-label="View Account Settings">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <!-- A. STUDENT MAIN PROFILE HERO BANNER (LONG HORIZONTAL RECTANGLE) -->
+      <section class="student-hero-banner" id="student-hero-banner">
+        <!-- Left Side: Profile Picture Avatar + Text Content + Academic Chips -->
+        <div class="hero-left-wrap">
+          <!-- Circular Profile Avatar Container (Clean circle, no small badge) -->
+          <div
+            class="hero-avatar-wrap"
+            id="student-card-avatar"
+            title="View Account Settings"
+            tabindex="0"
+            role="button"
+            aria-label="View Account Settings"
+          >
+            <!-- Rendered dynamically by syncGlobalStudentIdentity / student.js -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
           </div>
 
-          <!-- Student Dynamic Greetings, Name, Tagline & Profile Summary -->
-          <div class="student-welcome-content">
-            <div class="student-greeting-row">
-              <span class="student-greeting-time" id="student-greeting-sub">Welcome back,</span>
-            </div>
-            <h1 class="student-name-title" id="student-name-title">Student Scholar</h1>
-            <p class="student-motto" id="student-motto">
-              Here's what's happening with your scholarship journey.
-            </p>
+          <div class="hero-text-wrap">
+            <span class="hero-greeting-sub" id="student-greeting-sub">GOOD MORNING, ADRIAN DEL MUNDO</span>
+            <h1 class="hero-title" id="student-hero-title">One step closer to your future.</h1>
+            <p class="hero-subtitle" id="student-hero-subtitle">Here's what's happening with your scholarship journey.</p>
+            <span id="student-name-title" style="display: none;">Adrian Del Mundo</span>
 
-            <!-- Student Profile & Academic Summary Bar (Auto-hidden when 100% complete) -->
-            <div class="student-profile-summary" id="student-profile-summary" style="display: none;">
-              <!-- Profile Completion Progress & Quick Action (Auto-hidden when 100% complete) -->
-              <div class="student-profile-completion-wrap" id="student-profile-completion-wrap" style="display: none;">
-                <div class="completion-meta-row">
-                  <div class="completion-label-group">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                    </svg>
-                    <span class="completion-text" id="student-profile-completion-label">Profile 100% Complete</span>
-                  </div>
-                  <a href="student-settings.html" class="completion-action-link" id="student-profile-action-link">Edit Profile &rarr;</a>
-                </div>
-                <div class="student-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
-                  <div class="student-progress-fill" id="student-profile-progress-fill" style="width: 100%;"></div>
-                </div>
-              </div>
+            <!-- Real Academic Profile Chips (University, Course, Year) -->
+            <div class="hero-academic-chips" id="hero-academic-chips">
+              <span class="hero-chip" id="chip-university">Batangas State University</span>
+              <span class="hero-chip" id="chip-course">BS Nursing</span>
+              <span class="hero-chip" id="chip-year">3rd Year</span>
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- B. 2x2 METRIC CARDS GRID -->
-        <section class="student-stats-grid">
-          <!-- Metric 1: My Applications -->
-          <div class="student-stat-card is-disabled" id="card-stat-my-apps" role="button" tabindex="0" aria-label="My Applications metric">
-            <div class="student-stat-card-header">
-              <p class="student-stat-label">My Applications</p>
-              <div class="student-stat-icon-badge badge-icon-apps">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-              </div>
-            </div>
-            <h2 class="student-stat-value" id="stat-my-apps">0</h2>
-            <div class="student-stat-hint" id="hint-stat-my-apps">View all &rarr;</div>
-          </div>
+        <!-- Right Side: Chapter Tag & View My Applications Button -->
+        <div class="hero-right-wrap">
+          <span class="hero-chapter-pill">YOUR NEXT CHAPTER</span>
+          <a
+            href="student-submissions.html"
+            class="hero-view-apps-btn"
+            id="hero-view-apps-btn"
+            aria-label="View my applications"
+          >
+            <span>View my applications</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
 
-          <!-- Metric 2: Approved -->
-          <div class="student-stat-card is-disabled" id="card-stat-approved" role="button" tabindex="0" aria-label="Approved applications metric">
-            <div class="student-stat-card-header">
-              <p class="student-stat-label">Approved</p>
-              <div class="student-stat-icon-badge badge-icon-approved">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-            </div>
-            <h2 class="student-stat-value" id="stat-approved">0</h2>
-            <div class="student-stat-hint" id="hint-stat-approved">Filter approved &rarr;</div>
-          </div>
+        <!-- Hidden hooks for profile overview synchronization if referenced -->
+        <div class="student-profile-summary" id="student-profile-summary" style="display: none;">
+          <div class="student-profile-completion-wrap" id="student-profile-completion-wrap" style="display: none;"></div>
+        </div>
+      </section>
 
-          <!-- Metric 3: Under Review -->
-          <div class="student-stat-card is-disabled" id="card-stat-review" role="button" tabindex="0" aria-label="Under review applications metric">
-            <div class="student-stat-card-header">
-              <p class="student-stat-label">Under Review</p>
-              <div class="student-stat-icon-badge badge-icon-review">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-              </div>
+      <!-- B. 4 STATISTICS CARDS DIRECTLY UNDER THE MAIN PROFILE CARD -->
+      <section class="student-stats-row student-stats-grid" id="student-stats-row">
+        <!-- Metric 1: My applications -->
+        <div class="student-stat-card is-disabled" id="card-stat-my-apps" role="button" tabindex="0" aria-label="My applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">My applications</p>
+            <div class="student-stat-icon-badge badge-icon-apps">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
             </div>
-            <h2 class="student-stat-value" id="stat-review">0</h2>
-            <div class="student-stat-hint" id="hint-stat-review">Filter in review &rarr;</div>
           </div>
+          <h2 class="student-stat-value" id="stat-my-apps">0</h2>
+          <div class="student-stat-hint" id="hint-stat-my-apps">
+            <span>No applications submitted</span>
+          </div>
+        </div>
 
-          <!-- Metric 4: Rejected -->
-          <div class="student-stat-card is-disabled" id="card-stat-rejected" role="button" tabindex="0" aria-label="Rejected applications metric">
-            <div class="student-stat-card-header">
-              <p class="student-stat-label">Rejected</p>
-              <div class="student-stat-icon-badge badge-icon-rejected">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                </svg>
-              </div>
+        <!-- Metric 2: Approved -->
+        <div class="student-stat-card is-disabled" id="card-stat-approved" role="button" tabindex="0" aria-label="Approved applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Approved</p>
+            <div class="student-stat-icon-badge badge-icon-approved">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
             </div>
-            <h2 class="student-stat-value" id="stat-rejected">0</h2>
-            <div class="student-stat-hint" id="hint-stat-rejected">Filter rejected &rarr;</div>
           </div>
-        </section>
-      </div>
+          <h2 class="student-stat-value" id="stat-approved">0</h2>
+          <div class="student-stat-hint" id="hint-stat-approved">
+            <span>No approvals yet</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Under review -->
+        <div class="student-stat-card is-disabled" id="card-stat-review" role="button" tabindex="0" aria-label="Under review applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Under review</p>
+            <div class="student-stat-icon-badge badge-icon-review">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-review">0</h2>
+          <div class="student-stat-hint" id="hint-stat-review">
+            <span>Filter in review</span>
+            <span class="stat-arrow">&rarr;</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Rejected -->
+        <div class="student-stat-card is-disabled" id="card-stat-rejected" role="button" tabindex="0" aria-label="Rejected applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Rejected</p>
+            <div class="student-stat-icon-badge badge-icon-rejected">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-rejected">0</h2>
+          <div class="student-stat-hint" id="hint-stat-rejected">
+            <span>No rejected applications</span>
+          </div>
+        </div>
+      </section>
 
       <!-- MIDDLE WORKSPACE ROW: YOUR NEXT STEPS (LEFT) + UPCOMING DEADLINES (RIGHT) -->
       <div class="student-workspace-grid">

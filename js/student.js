@@ -1092,20 +1092,110 @@ function renderStudentRecentActivity(myApplications, profile, activeEmail) {
 function getDynamicGreeting() {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) {
-    return "Good morning,";
+    return "GOOD MORNING";
   } else if (hour >= 12 && hour < 18) {
-    return "Good afternoon,";
+    return "GOOD AFTERNOON";
   } else {
     // 6:00 PM to 4:59 AM
-    return "Good evening,";
+    return "GOOD EVENING";
   }
 }
 
-function updateStudentGreeting() {
+function updateStudentGreeting(customName) {
   const greetingSub = document.getElementById("student-greeting-sub");
-  if (greetingSub) {
-    greetingSub.textContent = getDynamicGreeting();
+  if (!greetingSub) return;
+
+  const currentStudentEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
+  let studentName = customName || "";
+  if (!studentName) {
+    try {
+      const raw =
+        (currentStudentEmail && localStorage.getItem(`nexo_student_settings_${currentStudentEmail}`)) ||
+        localStorage.getItem("nexo_student_settings");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.fullName) studentName = parsed.fullName;
+      }
+    } catch (_) {}
   }
+  if (!studentName) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      if (currentStudentEmail && profiles[currentStudentEmail]?.fullName) {
+        studentName = profiles[currentStudentEmail].fullName;
+      }
+    } catch (_) {}
+  }
+  if (!studentName) {
+    try {
+      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+      const matched = users.find((u) => (u.email || "").toLowerCase() === currentStudentEmail);
+      if (matched && (matched.name || matched.fullName)) {
+        studentName = matched.name || matched.fullName;
+      }
+    } catch (_) {}
+  }
+  if (!studentName) {
+    studentName =
+      sessionStorage.getItem("nexo-student-name") ||
+      localStorage.getItem("nexo-student-name") ||
+      "Adrian Del Mundo";
+  }
+
+  const timeGreeting = getDynamicGreeting();
+  greetingSub.textContent = `${timeGreeting}, ${studentName.toUpperCase()}`;
+}
+
+function updateStudentAcademicChips(profile, activeEmail) {
+  let p = profile;
+  const currentEmail = (
+    activeEmail ||
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase();
+
+  if (!p) {
+    try {
+      const cached =
+        (currentEmail && localStorage.getItem(`nexo_student_settings_${currentEmail}`)) ||
+        localStorage.getItem("nexo_student_settings");
+      if (cached) p = JSON.parse(cached);
+    } catch (_) {}
+  }
+
+  if (!p || !p.university || !p.course) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+      if (currentEmail && profiles[currentEmail]) {
+        p = Object.assign({}, profiles[currentEmail], p || {});
+      }
+    } catch (_) {}
+  }
+  if (!p || !p.university || !p.course) {
+    try {
+      const users = JSON.parse(localStorage.getItem("nexo_users") || "[]");
+      const matched = users.find((u) => (u.email || "").toLowerCase() === currentEmail);
+      if (matched) p = Object.assign({}, matched, p || {});
+    } catch (_) {}
+  }
+
+  const universityEl = document.getElementById("chip-university");
+  const courseEl = document.getElementById("chip-course");
+  const yearEl = document.getElementById("chip-year");
+
+  const universityVal = (p && p.university) || "Batangas State University";
+  const courseVal = (p && (p.course || p.program)) || "BS Nursing";
+  const yearVal = (p && p.yearLevel) || "3rd Year";
+
+  if (universityEl) universityEl.textContent = universityVal;
+  if (courseEl) courseEl.textContent = courseVal;
+  if (yearEl) yearEl.textContent = yearVal;
 }
 
 function initStudentGreeting() {
@@ -1116,7 +1206,7 @@ function initStudentGreeting() {
   updateStudentGreeting();
 
   // Periodically re-check greeting every minute (e.g. 11:59 AM -> 12:00 PM transition)
-  setInterval(updateStudentGreeting, 60000);
+  setInterval(() => updateStudentGreeting(), 60000);
 
   // Also update when user switches back to this tab
   document.addEventListener("visibilitychange", () => {
@@ -1134,10 +1224,14 @@ function initStudentGreeting() {
 
   let studentSettings = null;
   try {
-    const raw = localStorage.getItem("nexo_student_settings");
+    const raw =
+      (currentStudentEmail && localStorage.getItem(`nexo_student_settings_${currentStudentEmail}`)) ||
+      localStorage.getItem("nexo_student_settings");
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.email && currentStudentEmail && parsed.email.toLowerCase() === currentStudentEmail) {
+        studentSettings = parsed;
+      } else if (!parsed.email) {
         studentSettings = parsed;
       }
     }
@@ -1155,6 +1249,7 @@ function initStudentGreeting() {
 
   // Update profile completion and academic chips on welcome card
   updateStudentDashboardProfileOverview(studentSettings, currentStudentEmail);
+  updateStudentAcademicChips(studentSettings, currentStudentEmail);
 
   // Set header initials or avatar photo dynamically
   if (typeof window.syncGlobalStudentIdentity === "function") {
@@ -1167,6 +1262,15 @@ function initStudentGreeting() {
     cardAvatar.title = "View Account Settings";
     cardAvatar.onclick = () => {
       window.location.href = "student-settings.html";
+    };
+  }
+
+  // Wire View My Applications hero button
+  const viewAppsBtn = document.getElementById("hero-view-apps-btn");
+  if (viewAppsBtn) {
+    viewAppsBtn.onclick = (e) => {
+      e.preventDefault();
+      window.location.href = "student-submissions.html";
     };
   }
 
@@ -1621,11 +1725,47 @@ async function loadStudentData() {
   wireStatCard(cardReview, reviewCount, "review", "View applications under review");
   wireStatCard(cardRejected, rejectedCount, "rejected", "View rejected applications");
 
-  // Ensure name and profile overview reflect serverProfile
-  if (serverProfile && serverProfile.fullName) {
-    const nameTitleEl = document.getElementById("student-name-title");
-    if (nameTitleEl) nameTitleEl.textContent = serverProfile.fullName;
+  // Update dynamic metric card hints and navigation arrows
+  const hintMyApps = document.getElementById("hint-stat-my-apps");
+  const hintApproved = document.getElementById("hint-stat-approved");
+  const hintReview = document.getElementById("hint-stat-review");
+  const hintRejected = document.getElementById("hint-stat-rejected");
+
+  if (hintMyApps) {
+    hintMyApps.innerHTML =
+      totalCount >= 1
+        ? '<span>View all applications</span> <span class="stat-arrow">&rarr;</span>'
+        : '<span>No applications submitted</span>';
   }
+  if (hintApproved) {
+    hintApproved.innerHTML =
+      approvedCount >= 1
+        ? '<span>Filter approved</span> <span class="stat-arrow">&rarr;</span>'
+        : '<span>No approvals yet</span>';
+  }
+  if (hintReview) {
+    hintReview.innerHTML =
+      reviewCount >= 1
+        ? '<span>Filter in review</span> <span class="stat-arrow">&rarr;</span>'
+        : '<span>No applications in review</span>';
+  }
+  if (hintRejected) {
+    hintRejected.innerHTML =
+      rejectedCount >= 1
+        ? '<span>Filter rejected</span> <span class="stat-arrow">&rarr;</span>'
+        : '<span>No rejected applications</span>';
+  }
+
+  // Ensure name, dynamic greeting, and academic chips reflect serverProfile
+  if (serverProfile && (serverProfile.fullName || serverProfile.name)) {
+    const sName = serverProfile.fullName || serverProfile.name;
+    const nameTitleEl = document.getElementById("student-name-title");
+    if (nameTitleEl) nameTitleEl.textContent = sName;
+    updateStudentGreeting(sName);
+  } else {
+    updateStudentGreeting();
+  }
+  updateStudentAcademicChips(serverProfile, activeStudentEmail);
   updateStudentDashboardProfileOverview(serverProfile, activeStudentEmail);
 
   // Synchronize New Student Workspace Sections (Next Steps, Upcoming Deadlines, Recommended Opportunities, Recent Activity)
