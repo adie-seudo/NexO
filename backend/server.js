@@ -2211,6 +2211,23 @@ async function handleRequest(req, res) {
         });
       }
 
+      if (body.action === "clear_scholarships") {
+        const count = (data.scholarships || []).length;
+        cleanupUploadedFilesForApplications(data.applications);
+        data.scholarships = [];
+        data.applications = [];
+        if (!writeData(data)) {
+          return sendJson(res, 500, {
+            success: false,
+            error: "Failed to clear scholarships.",
+          });
+        }
+        return sendJson(res, 200, {
+          success: true,
+          message: `Successfully cleared all ${count} scholarship posts from data.json.`,
+        });
+      }
+
       if (body.action === "delete_scholarship" && body.id) {
         const targetId = String(body.id);
         data.scholarships = (data.scholarships || []).filter(

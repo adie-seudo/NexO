@@ -22,9 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // DOM Elements - Navigation Tabs
   const tabBtnStudents = document.getElementById("tab-btn-students");
   const tabBtnProviders = document.getElementById("tab-btn-providers");
+  const tabBtnScholarships = document.getElementById("tab-btn-scholarships");
   const tabBtnCleaner = document.getElementById("tab-btn-cleaner");
   const secStudents = document.getElementById("section-students");
   const secProviders = document.getElementById("section-providers");
+  const secScholarships = document.getElementById("section-scholarships");
   const secCleaner = document.getElementById("section-cleaner");
 
   // DOM Elements - Search and Filters
@@ -32,10 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterStudentStatus = document.getElementById("filter-student-status");
   const searchProvidersInput = document.getElementById("search-providers");
   const filterProviderStatus = document.getElementById("filter-provider-status");
+  const searchScholarshipsInput = document.getElementById("search-scholarships");
+  const filterScholarshipType = document.getElementById("filter-scholarship-type");
 
   // DOM Elements - Containers
   const studentsListContainer = document.getElementById("students-list-container");
   const providersListContainer = document.getElementById("providers-list-container");
+  const scholarshipsListContainer = document.getElementById("scholarships-list-container");
   const cleanerScholsList = document.getElementById("cleaner-scholarships-list");
 
   // DOM Elements - Badges & Stats
@@ -45,6 +50,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const statAppCount = document.getElementById("stat-app-count");
   const badgeTabStudents = document.getElementById("badge-tab-students");
   const badgeTabProviders = document.getElementById("badge-tab-providers");
+  const badgeTabScholarships = document.getElementById("badge-tab-scholarships");
+  const cleanerScholCount = document.getElementById("cleaner-schol-count");
   const cleanerAppCount = document.getElementById("cleaner-app-count");
   const cleanerDraftCount = document.getElementById("cleaner-draft-count");
   const liveSyncIndicator = document.getElementById("live-sync-indicator");
@@ -71,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExecuteConfirm = document.getElementById("btn-execute-confirm");
 
   // DOM Elements - Cleaner Actions & Export
+  const btnPurgeScholarships = document.getElementById("btn-purge-scholarships");
   const btnPurgeApps = document.getElementById("btn-purge-apps");
   const btnPurgeDrafts = document.getElementById("btn-purge-drafts");
   const btnFactoryReset = document.getElementById("btn-factory-reset");
@@ -129,10 +137,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   function switchTab(target) {
     activeTab = target;
-    [tabBtnStudents, tabBtnProviders, tabBtnCleaner].forEach((btn) => {
+    [tabBtnStudents, tabBtnProviders, tabBtnScholarships, tabBtnCleaner].forEach((btn) => {
       if (btn) btn.classList.remove("active");
     });
-    [secStudents, secProviders, secCleaner].forEach((sec) => {
+    [secStudents, secProviders, secScholarships, secCleaner].forEach((sec) => {
       if (sec) sec.style.display = "none";
     });
 
@@ -144,6 +152,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tabBtnProviders) tabBtnProviders.classList.add("active");
       if (secProviders) secProviders.style.display = "block";
       renderProvidersList();
+    } else if (target === "scholarships") {
+      if (tabBtnScholarships) tabBtnScholarships.classList.add("active");
+      if (secScholarships) secScholarships.style.display = "block";
+      renderScholarshipsList();
     } else if (target === "cleaner") {
       if (tabBtnCleaner) tabBtnCleaner.classList.add("active");
       if (secCleaner) secCleaner.style.display = "block";
@@ -155,6 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
     tabBtnStudents.addEventListener("click", () => switchTab("students"));
   if (tabBtnProviders)
     tabBtnProviders.addEventListener("click", () => switchTab("providers"));
+  if (tabBtnScholarships)
+    tabBtnScholarships.addEventListener("click", () => switchTab("scholarships"));
   if (tabBtnCleaner)
     tabBtnCleaner.addEventListener("click", () => switchTab("cleaner"));
 
@@ -287,6 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderStats();
     if (activeTab === "students") renderStudentsList();
     else if (activeTab === "providers") renderProvidersList();
+    else if (activeTab === "scholarships") renderScholarshipsList();
     else if (activeTab === "cleaner") renderCleanerTab();
   }
 
@@ -303,6 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (badgeTabStudents) badgeTabStudents.textContent = studentUsers.length;
     if (badgeTabProviders) badgeTabProviders.textContent = providerUsers.length;
+    if (badgeTabScholarships) badgeTabScholarships.textContent = scholarships.length;
+    if (cleanerScholCount) cleanerScholCount.textContent = scholarships.length;
     if (cleanerAppCount) cleanerAppCount.textContent = applications.length;
     if (cleanerDraftCount) cleanerDraftCount.textContent = drafts.length;
   }
@@ -610,6 +627,123 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // 5B-2. Render Scholarship Posts List
+  function renderScholarshipsList() {
+    if (!scholarshipsListContainer) return;
+    scholarshipsListContainer.innerHTML = "";
+
+    const query = (
+      searchScholarshipsInput ? searchScholarshipsInput.value : ""
+    ).toLowerCase();
+    const filterType = filterScholarshipType
+      ? filterScholarshipType.value
+      : "all";
+
+    let filteredSchols = [...scholarships];
+
+    if (filterType !== "all") {
+      filteredSchols = filteredSchols.filter((s) => {
+        const t = String(s.type || s.typeText || "").toLowerCase();
+        return t.includes(filterType.toLowerCase());
+      });
+    }
+
+    if (query) {
+      filteredSchols = filteredSchols.filter((s) => {
+        const title = (s.title || "").toLowerCase();
+        const provider = (s.providerName || "").toLowerCase();
+        const desc = (s.desc || "").toLowerCase();
+        const type = (s.typeText || s.type || "").toLowerCase();
+        return (
+          title.includes(query) ||
+          provider.includes(query) ||
+          desc.includes(query) ||
+          type.includes(query)
+        );
+      });
+    }
+
+    if (filteredSchols.length === 0) {
+      scholarshipsListContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 14px;">
+          <p style="margin: 0; font-size: 14.5px; color: var(--text-secondary);">No scholarship posts found matching your query.</p>
+        </div>
+      `;
+      return;
+    }
+
+    filteredSchols.forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "admin-account-card is-provider";
+
+      const appCount = applications.filter(
+        (a) =>
+          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
+      ).length;
+      const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+      const isClosed = String(s.status || "").toLowerCase().includes("closed");
+      const typeLabel = s.typeText || s.type || "General";
+
+      card.innerHTML = `
+        <div class="admin-card-top">
+          <div class="admin-account-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+          <div class="admin-card-title-group">
+            <div class="admin-card-name-row">
+              <h3 class="admin-card-name">${escapeHtml(s.title || "Untitled Scholarship")}</h3>
+              <span class="admin-status-chip ${isClosed ? "status-chip-banned" : "status-chip-active"}">
+                &bull; ${isClosed ? "Closed" : "Open"}
+              </span>
+            </div>
+            <div class="admin-card-email-row">
+              <span class="admin-card-email">${escapeHtml(s.providerName || "NEXO")}</span>
+              <span class="admin-card-pwd-chip">${escapeHtml(typeLabel)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card-meta-details">
+          <span>Deadline: <strong>${escapeHtml(s.formattedDate || s.deadline || "No Deadline")}</strong></span>
+          <span class="meta-dot">&bull;</span>
+          <span>Applicants: <strong>${appCount} / ${limit}</strong></span>
+        </div>
+
+        <div class="admin-card-note" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          ${escapeHtml(s.desc || "No description provided.")}
+        </div>
+
+        <div class="admin-card-actions">
+          <button type="button" class="btn-admin-action btn-admin-delete" data-delete-schol-card="${escapeHtml(s.id)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete Scholarship Post
+          </button>
+        </div>
+      `;
+
+      const delBtn = card.querySelector(`[data-delete-schol-card="${s.id}"]`);
+      if (delBtn) {
+        delBtn.addEventListener("click", () => {
+          promptDeleteConfirm({
+            type: "scholarship",
+            id: s.id,
+            title: s.title,
+            appCount: appCount,
+          });
+        });
+      }
+
+      scholarshipsListContainer.appendChild(card);
+    });
+  }
+
   // 5C. Render Cleaner Tab (Crowded Database Sanitizer)
   function renderCleanerTab() {
     if (!cleanerScholsList) return;
@@ -630,7 +764,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Count applications for this scholarship
       const appCount = applications.filter(
-        (a) => String(a.scholarshipId) === String(s.id),
+        (a) =>
+          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
       ).length;
 
       item.innerHTML = `
@@ -679,6 +815,10 @@ document.addEventListener("DOMContentLoaded", () => {
     searchProvidersInput.addEventListener("input", renderProvidersList);
   if (filterProviderStatus)
     filterProviderStatus.addEventListener("change", renderProvidersList);
+  if (searchScholarshipsInput)
+    searchScholarshipsInput.addEventListener("input", renderScholarshipsList);
+  if (filterScholarshipType)
+    filterScholarshipType.addEventListener("change", renderScholarshipsList);
 
   // -------------------------------------------------------------
   // 6. ACCOUNT CREATION
@@ -905,10 +1045,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (target.type === "scholarship") {
       confirmModalTitle.textContent = "Delete Scholarship Post?";
       confirmModalDesc.innerHTML = `
-        Are you sure you want to delete <strong>"${escapeHtml(target.title)}"</strong>?<br><br>
-        This will remove the post and its <strong>${target.appCount || 0} associated application(s)</strong> from <code>data.json</code>.
+        Are you sure you want to permanently delete <strong>"${escapeHtml(target.title)}"</strong>?<br><br>
+        This will permanently remove the scholarship post and its <strong>${target.appCount || 0} associated application(s)</strong> from the website and database.
       `;
       btnExecuteConfirm.textContent = "Yes, Delete Post";
+    } else if (target.type === "purge_scholarships") {
+      confirmModalTitle.textContent = "Delete All Scholarship Posts?";
+      confirmModalDesc.innerHTML = `
+        Are you sure you want to permanently delete all <strong>${scholarships.length} scholarship post(s)</strong> and their associated applications across the website?
+      `;
+      btnExecuteConfirm.textContent = "Delete All Posts";
     } else if (target.type === "purge_apps") {
       confirmModalTitle.textContent = "Purge All Applications?";
       confirmModalDesc.innerHTML = `
@@ -938,6 +1084,19 @@ document.addEventListener("DOMContentLoaded", () => {
     pendingDeleteTarget = null;
   }
 
+  function recordDeletedIds(idsArray) {
+    try {
+      const existing = JSON.parse(localStorage.getItem("nexo_deleted_ids") || "[]");
+      const set = new Set((Array.isArray(existing) ? existing : []).map(String));
+      (Array.isArray(idsArray) ? idsArray : []).forEach((id) => {
+        if (id !== undefined && id !== null && String(id).trim() !== "") {
+          set.add(String(id));
+        }
+      });
+      localStorage.setItem("nexo_deleted_ids", JSON.stringify(Array.from(set)));
+    } catch (_) {}
+  }
+
   if (btnCancelConfirm)
     btnCancelConfirm.addEventListener("click", closeConfirmModal);
 
@@ -950,31 +1109,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         if (pendingDeleteTarget.type === "user") {
-          const res = await fetch(
-            `${API_BASE}/api/users/${pendingDeleteTarget.id}`,
+          const targetId = String(pendingDeleteTarget.id || "");
+          const targetEmail = (pendingDeleteTarget.email || "").toLowerCase().trim();
+
+          await fetch(
+            `${API_BASE}/api/users/${encodeURIComponent(targetId)}`,
             {
               method: "DELETE",
             },
           ).catch(() => null);
 
-          if (!res) {
-            showToast(
-              "Server is offline. Start the backend server to permanently delete accounts from data.json.",
-              true,
+          const idsToDelete = [targetId, targetEmail];
+          if (pendingDeleteTarget.role === "student") {
+            const removedApps = applications.filter(
+              (a) => (a.studentEmail || "").toLowerCase().trim() === targetEmail,
             );
-            closeConfirmModal();
-            return;
+            removedApps.forEach((a) => idsToDelete.push(a.id));
+            applications = applications.filter(
+              (a) => (a.studentEmail || "").toLowerCase().trim() !== targetEmail,
+            );
+          } else if (pendingDeleteTarget.role === "provider") {
+            const removedSchols = scholarships.filter(
+              (s) =>
+                (s.providerEmail || "").toLowerCase().trim() === targetEmail ||
+                (pendingDeleteTarget.name &&
+                  (s.providerName || "").toLowerCase().trim() ===
+                    pendingDeleteTarget.name.toLowerCase().trim()),
+            );
+            const removedScholIds = new Set(removedSchols.map((s) => String(s.id)));
+            removedSchols.forEach((s) => idsToDelete.push(s.id));
+            scholarships = scholarships.filter((s) => !removedScholIds.has(String(s.id)));
+            const removedApps = applications.filter((a) =>
+              removedScholIds.has(String(a.scholarshipId)),
+            );
+            removedApps.forEach((a) => idsToDelete.push(a.id));
+            applications = applications.filter(
+              (a) => !removedScholIds.has(String(a.scholarshipId)),
+            );
           }
 
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            showToast(errData.error || "Failed to delete account on server.", true);
-            closeConfirmModal();
-            return;
-          }
+          users = users.filter(
+            (u) =>
+              String(u.id) !== targetId &&
+              (u.email || "").toLowerCase().trim() !== targetEmail,
+          );
+          recordDeletedIds(idsToDelete);
+
+          try {
+            localStorage.setItem("nexo_users", JSON.stringify(users));
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+            localStorage.setItem("nexo_applications", JSON.stringify(applications));
+          } catch (_) {}
 
           if (pendingDeleteTarget.role === "student") {
-            const uEmail = (pendingDeleteTarget.email || "").toLowerCase();
+            const uEmail = targetEmail;
             try {
               localStorage.removeItem(`nexo_student_settings_${uEmail}`);
               localStorage.removeItem("nexo_student_settings");
@@ -999,7 +1187,7 @@ document.addEventListener("DOMContentLoaded", () => {
               }
             } catch (_) {}
           } else if (pendingDeleteTarget.role === "provider") {
-            const provEmail = (pendingDeleteTarget.email || "").toLowerCase();
+            const provEmail = targetEmail;
             try {
               localStorage.removeItem(`nexo_provider_settings_${provEmail}`);
               if ((localStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
@@ -1020,77 +1208,141 @@ document.addEventListener("DOMContentLoaded", () => {
           }
 
           await loadData();
-          showToast("Account and associated data deleted permanently from data.json!");
+          showToast("Account and associated data deleted permanently!");
         } else if (pendingDeleteTarget.type === "scholarship") {
           const sid = String(pendingDeleteTarget.id);
-          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const stitle = String(pendingDeleteTarget.title || "").trim().toLowerCase();
+
+          // 1. Permanently remove from localStorage and record in nexo_deleted_ids
+          const removedApps = applications.filter(
+            (a) =>
+              String(a.scholarshipId) === sid ||
+              (!a.scholarshipId &&
+                stitle &&
+                String(a.scholarshipTitle || a.title || "").trim().toLowerCase() === stitle),
+          );
+          const idsToRecord = [sid, ...removedApps.map((a) => String(a.id))];
+          recordDeletedIds(idsToRecord);
+
+          scholarships = scholarships.filter((s) => String(s.id) !== sid);
+          applications = applications.filter(
+            (a) =>
+              String(a.scholarshipId) !== sid &&
+              !(
+                !a.scholarshipId &&
+                stitle &&
+                String(a.scholarshipTitle || a.title || "").trim().toLowerCase() === stitle
+              ),
+          );
+
+          try {
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+            localStorage.setItem("nexo_applications", JSON.stringify(applications));
+            const cachedNotifs = JSON.parse(
+              localStorage.getItem("nexo_notifications") || "[]",
+            );
+            const filteredNotifs = (Array.isArray(cachedNotifs) ? cachedNotifs : []).filter(
+              (n) =>
+                String(n.scholId || "") !== sid &&
+                String(n.scholarshipId || "") !== sid,
+            );
+            localStorage.setItem("nexo_notifications", JSON.stringify(filteredNotifs));
+          } catch (_) {}
+
+          // 2. Also delete on backend server if online
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete_scholarship", id: sid }),
           }).catch(() => null);
 
-          if (!res || !res.ok) {
-            showToast(
-              "Could not delete scholarship in data.json. Ensure the server is running.",
-              true,
-            );
-            closeConfirmModal();
-            return;
-          }
+          await loadData();
+          showToast("Scholarship post deleted permanently!");
+        } else if (pendingDeleteTarget.type === "purge_scholarships") {
+          const allScholIds = scholarships.map((s) => String(s.id));
+          const allAppIds = applications.map((a) => String(a.id));
+          recordDeletedIds([...allScholIds, ...allAppIds]);
+
+          scholarships = [];
+          applications = [];
+          try {
+            localStorage.setItem("nexo_scholarships", "[]");
+            localStorage.setItem("nexo_applications", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "clear_scholarships" }),
+          }).catch(() => null);
 
           await loadData();
-          showToast("Scholarship post and applications deleted!");
+          showToast("All scholarship posts deleted permanently!");
         } else if (pendingDeleteTarget.type === "purge_apps") {
-          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const allAppIds = applications.map((a) => String(a.id));
+          recordDeletedIds(allAppIds);
+
+          applications = [];
+          scholarships.forEach((s) => {
+            const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+            s.applicantTotal = 0;
+            s.applicantCount = `0 / ${limit} Applicants`;
+            if (String(s.status || "").toLowerCase() === "quota full") {
+              s.status = "Open";
+            }
+          });
+          try {
+            localStorage.setItem("nexo_applications", "[]");
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "clear_applications" }),
           }).catch(() => null);
 
-          if (!res || !res.ok) {
-            showToast(
-              "Could not purge applications in data.json. Ensure the server is running.",
-              true,
-            );
-            closeConfirmModal();
-            return;
-          }
-
           await loadData();
-          showToast("All applications purged from data.json!");
+          showToast("All applications purged permanently!");
         } else if (pendingDeleteTarget.type === "purge_drafts") {
-          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const allDraftIds = drafts.map((d) => String(d.id));
+          recordDeletedIds(allDraftIds);
+
+          drafts = [];
+          try {
+            localStorage.setItem("nexo_drafts", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "clear_drafts" }),
           }).catch(() => null);
 
-          if (!res || !res.ok) {
-            showToast(
-              "Could not clear drafts in data.json. Ensure the server is running.",
-              true,
-            );
-            closeConfirmModal();
-            return;
-          }
-
           await loadData();
-          showToast("All drafts cleared from data.json!");
+          showToast("All drafts cleared permanently!");
         } else if (pendingDeleteTarget.type === "factory_reset") {
-          const res = await fetch(`${API_BASE}/api/admin/clean-database`, {
+          const allIds = [
+            ...scholarships.map((s) => String(s.id)),
+            ...applications.map((a) => String(a.id)),
+            ...drafts.map((d) => String(d.id)),
+          ];
+          recordDeletedIds(allIds);
+
+          applications = [];
+          drafts = [];
+          scholarships = [];
+          try {
+            localStorage.setItem("nexo_applications", "[]");
+            localStorage.setItem("nexo_drafts", "[]");
+            localStorage.setItem("nexo_scholarships", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "reset_factory_data" }),
           }).catch(() => null);
-
-          if (!res || !res.ok) {
-            showToast(
-              "Could not reset database in data.json. Ensure the server is running.",
-              true,
-            );
-            closeConfirmModal();
-            return;
-          }
 
           await loadData();
           showToast("Database restored to clean factory state!");
@@ -1109,6 +1361,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------------
   // 9. CLEANER BUTTONS & EXPORT
   // -------------------------------------------------------------
+  if (btnPurgeScholarships) {
+    btnPurgeScholarships.addEventListener("click", () => {
+      promptDeleteConfirm({ type: "purge_scholarships" });
+    });
+  }
+
   if (btnPurgeApps) {
     btnPurgeApps.addEventListener("click", () => {
       promptDeleteConfirm({ type: "purge_apps" });

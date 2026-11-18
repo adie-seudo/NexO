@@ -942,6 +942,29 @@
         <button
           type="button"
           class="admin-tab-btn"
+          data-tab="scholarships"
+          id="tab-btn-scholarships"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          Scholarship Posts
+          <span class="admin-tab-count" id="badge-tab-scholarships">0</span>
+        </button>
+
+        <button
+          type="button"
+          class="admin-tab-btn"
           data-tab="cleaner"
           id="tab-btn-cleaner"
           style="color: #f59e0b"
@@ -1047,6 +1070,50 @@
       </section>
 
       <!-- ======================================================== -->
+      <!-- TAB 2.5: SCHOLARSHIP POSTS                               -->
+      <!-- ======================================================== -->
+      <section
+        id="section-scholarships"
+        class="admin-tab-content"
+        style="display: none"
+      >
+        <div class="admin-filters-bar">
+          <div class="admin-search-wrap">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--text-secondary)"
+              stroke-width="2"
+              style="position: absolute; left: 14px; pointer-events: none"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="search-scholarships"
+              class="admin-search-input"
+              placeholder="Search scholarship posts by title, provider, or type..."
+            />
+          </div>
+
+          <select id="filter-scholarship-type" class="admin-filter-select">
+            <option value="all">All Types</option>
+            <option value="merit">Merit-Based</option>
+            <option value="need">Need-Based</option>
+            <option value="athletic">Athletic</option>
+          </select>
+        </div>
+
+        <!-- Scholarship Posts Container -->
+        <div id="scholarships-list-container">
+          <!-- Populated dynamically by admin.js -->
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
       <!-- TAB 3: CROWDED DATABASE CLEANER                          -->
       <!-- ======================================================== -->
       <section
@@ -1103,6 +1170,41 @@
 
         <!-- Cleaner Actions List (Mobile-First Stacked) -->
         <div class="admin-clean-actions-list">
+          <!-- Action 0: Delete All Scholarship Posts -->
+          <div class="admin-clean-card">
+            <h4>Delete All Scholarship Posts</h4>
+            <p>
+              Permanently deletes all published scholarship posts and their
+              associated applications across the website and
+              <code>data.json</code>.
+            </p>
+            <button
+              type="button"
+              class="btn-admin-action"
+              id="btn-purge-scholarships"
+              style="
+                color: #ef4444;
+                border-color: rgba(239, 68, 68, 0.4);
+                background: rgba(239, 68, 68, 0.06);
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+              </svg>
+              Delete All Scholarship Posts (<span id="cleaner-schol-count">0</span>)
+            </button>
+          </div>
+
           <!-- Action 1: Clear All Applications -->
           <div class="admin-clean-card">
             <h4>Purge All Student Applications</h4>

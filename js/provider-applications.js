@@ -18,7 +18,7 @@
 
   function resolveStudentInfo(app) {
     const email = (app.studentEmail || "").toLowerCase().trim();
-    
+
     // 1. In-memory studentProfiles
     let profile = (studentProfiles && studentProfiles[email]) || {};
 
@@ -70,25 +70,12 @@
         "Student Applicant",
       email: profile.email || app.studentEmail || matchedUser.email || "",
       university:
-        profile.university ||
-        matchedUser.university ||
-        app.university ||
-        "",
-      course:
-        profile.course ||
-        matchedUser.course ||
-        app.course ||
-        "",
+        profile.university || matchedUser.university || app.university || "",
+      course: profile.course || matchedUser.course || app.course || "",
       yearLevel:
-        profile.yearLevel ||
-        matchedUser.yearLevel ||
-        app.yearLevel ||
-        "",
+        profile.yearLevel || matchedUser.yearLevel || app.yearLevel || "",
       studentId:
-        profile.studentId ||
-        matchedUser.studentId ||
-        app.studentId ||
-        "",
+        profile.studentId || matchedUser.studentId || app.studentId || "",
       contactNumber:
         profile.contactNumber ||
         matchedUser.contactNumber ||
@@ -98,8 +85,8 @@
         profile.bio !== undefined && profile.bio !== ""
           ? profile.bio
           : matchedUser.bio !== undefined && matchedUser.bio !== ""
-          ? matchedUser.bio
-          : app.bio || "",
+            ? matchedUser.bio
+            : app.bio || "",
       profilePicture:
         profile.profilePicture ||
         matchedUser.profilePicture ||
@@ -190,7 +177,13 @@
   async function loadApplicationsData(isBackground = false) {
     const appsFeed = document.getElementById("applications-feed");
     const emptyState = document.getElementById("apps-empty-state");
-    if (!hasLoadedAppsOnce && !isBackground && typeof window.renderSkeletonCards === "function" && appsFeed && appsFeed.children.length === 0) {
+    if (
+      !hasLoadedAppsOnce &&
+      !isBackground &&
+      typeof window.renderSkeletonCards === "function" &&
+      appsFeed &&
+      appsFeed.children.length === 0
+    ) {
       if (emptyState) emptyState.style.display = "none";
       window.renderSkeletonCards(appsFeed);
       appsFeed.style.display = "";
@@ -236,13 +229,20 @@
       const res = await fetch(`${API_BASE}/api/data`);
       if (res.ok) {
         const data = await res.json();
-        const apiApps = Array.isArray(data.applications) ? data.applications : [];
+        const apiApps = Array.isArray(data.applications)
+          ? data.applications
+          : [];
         const apiSchols = Array.isArray(data.scholarships)
           ? data.scholarships
           : [];
         if (data.studentProfiles) {
           studentProfiles = data.studentProfiles;
-          try { localStorage.setItem("nexo_student_profiles", JSON.stringify(studentProfiles)); } catch(_) {}
+          try {
+            localStorage.setItem(
+              "nexo_student_profiles",
+              JSON.stringify(studentProfiles),
+            );
+          } catch (_) {}
         }
         if (Array.isArray(data.users)) {
           users = data.users;
@@ -296,7 +296,10 @@
       currentProviderEmail === "provider@nexo.edu.ph";
 
     allScholarships = (serverSchols || []).filter((s) => {
-      if (isPrimaryProvider && (!s.providerEmail || s.providerName === "NEXO")) {
+      if (
+        isPrimaryProvider &&
+        (!s.providerEmail || s.providerName === "NEXO")
+      ) {
         return true;
       }
       if (
@@ -350,7 +353,9 @@
       window._initialUrlParamsHandled = true;
       const targetAppId = urlParams.get("appId");
       if (targetAppId) {
-        const targetApp = allApplications.find((a) => String(a.id) === String(targetAppId));
+        const targetApp = allApplications.find(
+          (a) => String(a.id) === String(targetAppId),
+        );
         if (targetApp) {
           setTimeout(() => {
             if (typeof window.openReviewModalByAppId === "function") {
@@ -367,7 +372,8 @@
           if (triggerLabel) triggerLabel.textContent = "Under Review";
           const statusItems = document.querySelectorAll("[data-status-filter]");
           statusItems.forEach((si) => {
-            if (si.dataset.statusFilter === "review") si.classList.add("selected");
+            if (si.dataset.statusFilter === "review")
+              si.classList.add("selected");
             else si.classList.remove("selected");
           });
           updateFilterIndicator();
@@ -381,14 +387,16 @@
   // SCOPED SCHOLARSHIP HELPERS
   // -------------------------------------------------------------
   const urlParams = new URLSearchParams(window.location.search);
-  const scopedScholId = urlParams.get("scholarshipId") || urlParams.get("scholId");
+  const scopedScholId =
+    urlParams.get("scholarshipId") || urlParams.get("scholId");
 
   function getTargetScholarship() {
     if (!scopedScholId) return null;
     return allScholarships.find(
       (s) =>
         String(s.id) === String(scopedScholId) ||
-        String(s.title || "").toLowerCase() === String(scopedScholId).toLowerCase(),
+        String(s.title || "").toLowerCase() ===
+          String(scopedScholId).toLowerCase(),
     );
   }
 
@@ -396,7 +404,10 @@
     if (!scopedScholId) return allApplications;
     const target = getTargetScholarship();
     return allApplications.filter((app) => {
-      if (app.scholarshipId && String(app.scholarshipId) === String(scopedScholId)) {
+      if (
+        app.scholarshipId &&
+        String(app.scholarshipId) === String(scopedScholId)
+      ) {
         return true;
       }
       if (
@@ -530,7 +541,9 @@
       activeProgramFilter !== "all" ||
       activeDocFilter !== "all";
     filterBtn.classList.toggle("is-filtered", isFiltered);
-    if (!document.getElementById("menu-apps-filter")?.classList.contains("show")) {
+    if (
+      !document.getElementById("menu-apps-filter")?.classList.contains("show")
+    ) {
       filterBtn.classList.toggle("active", isFiltered);
     }
   }
@@ -550,7 +563,10 @@
       filterBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         const isOpen = filterMenu.classList.toggle("show");
-        filterBtn.classList.toggle("active", isOpen || filterBtn.classList.contains("is-filtered"));
+        filterBtn.classList.toggle(
+          "active",
+          isOpen || filterBtn.classList.contains("is-filtered"),
+        );
       });
 
       document.addEventListener("click", (e) => {
@@ -699,9 +715,13 @@
       item.addEventListener("click", function (e) {
         e.stopPropagation();
         activeProgramFilter = this.dataset.program || "all";
-        const triggerLabel = document.getElementById("scholarship-filter-label");
+        const triggerLabel = document.getElementById(
+          "scholarship-filter-label",
+        );
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
-        listEl.querySelectorAll(".nexo-dropdown-item").forEach((it) => it.classList.remove("selected"));
+        listEl
+          .querySelectorAll(".nexo-dropdown-item")
+          .forEach((it) => it.classList.remove("selected"));
         this.classList.add("selected");
         this.closest(".nexo-dropdown")?.classList.remove("active");
         updateFilterIndicator();
@@ -778,11 +798,19 @@
         const rawDocs = app.documents || app.uploadedDocuments || [];
         const attached = rawDocs.filter((d) => {
           if (typeof d === "string") return !d.includes("(To Follow Up)");
-          return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+          return (
+            !d.isFollowUp &&
+            d.status !== "to_follow_up" &&
+            d.type !== "to_follow_up"
+          );
         });
         const followUps = rawDocs.filter((d) => {
           if (typeof d === "string") return d.includes("(To Follow Up)");
-          return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+          return (
+            d.isFollowUp ||
+            d.status === "to_follow_up" ||
+            d.type === "to_follow_up"
+          );
         });
         return attached.length > 0 && followUps.length === 0;
       });
@@ -791,11 +819,19 @@
         const rawDocs = app.documents || app.uploadedDocuments || [];
         const attached = rawDocs.filter((d) => {
           if (typeof d === "string") return !d.includes("(To Follow Up)");
-          return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+          return (
+            !d.isFollowUp &&
+            d.status !== "to_follow_up" &&
+            d.type !== "to_follow_up"
+          );
         });
         const followUps = rawDocs.filter((d) => {
           if (typeof d === "string") return d.includes("(To Follow Up)");
-          return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+          return (
+            d.isFollowUp ||
+            d.status === "to_follow_up" ||
+            d.type === "to_follow_up"
+          );
         });
         return followUps.length > 0 || attached.length === 0;
       });
@@ -820,7 +856,8 @@
       const emptyTitle = emptyStateEl.querySelector("h3");
       const emptyDesc = emptyStateEl.querySelector("p");
       if (scopedScholId && baseApps.length === 0) {
-        if (emptyTitle) emptyTitle.textContent = "No Applications For This Scholarship";
+        if (emptyTitle)
+          emptyTitle.textContent = "No Applications For This Scholarship";
         if (emptyDesc)
           emptyDesc.textContent =
             "No student applications have been submitted for this specific scholarship opportunity yet.";
@@ -845,7 +882,9 @@
     const isDesktop = window.innerWidth >= 1024;
     const maxInitialCards = isDesktop ? 6 : 3;
     const totalMatching = filtered.length;
-    const visibleApps = isAppsExpanded ? filtered : filtered.slice(0, maxInitialCards);
+    const visibleApps = isAppsExpanded
+      ? filtered
+      : filtered.slice(0, maxInitialCards);
 
     visibleApps.forEach((app) => {
       appsFeedEl.appendChild(createApplicationCard(app));
@@ -1017,9 +1056,9 @@
   // 6. APPLICATION REVIEW & DECISION MODAL
   // -------------------------------------------------------------
   const DEFAULT_AUTOMATED_REMARKS = {
-    "Approved":
+    Approved:
       "Congratulations! Your scholarship application has been officially approved. Please check your registered email or phone for onboarding and disbursement instructions outside of NexO.",
-    "Rejected":
+    Rejected:
       "Thank you for your application and interest. After careful evaluation of all candidates, we regret to inform you that your application was not selected for this scholarship cycle. We encourage you to apply for future opportunities.",
     "Under Review":
       "Your application and verification documents are currently under evaluation. Please keep your contact information active and check back for updates.",
@@ -1111,12 +1150,16 @@
         const successBanner = document.getElementById(
           "modal-feedback-success-banner",
         );
-        const successMsg = document.getElementById("modal-feedback-success-msg");
+        const successMsg = document.getElementById(
+          "modal-feedback-success-msg",
+        );
         if (successBanner && successMsg) {
           successMsg.textContent =
             "Notes and feedback were successfully updated and dispatched to the student's portal!";
           successBanner.style.display = "block";
-          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          const container = reviewModalEl.querySelector(
+            ".nexo-modal-container",
+          );
           if (container) container.scrollTo({ top: 0, behavior: "smooth" });
         }
       });
@@ -1133,11 +1176,14 @@
     const closeBtn = document.getElementById("close-decision-confirm");
     const cancelBtn = document.getElementById("btn-cancel-decision-confirm");
     const submitBtn = document.getElementById("btn-submit-decision-confirm");
-    const resetDefaultBtn = document.getElementById("btn-reset-default-remarks");
+    const resetDefaultBtn = document.getElementById(
+      "btn-reset-default-remarks",
+    );
     const textarea = document.getElementById("confirm-remarks-textarea");
 
     if (closeBtn) closeBtn.addEventListener("click", closeDecisionConfirmModal);
-    if (cancelBtn) cancelBtn.addEventListener("click", closeDecisionConfirmModal);
+    if (cancelBtn)
+      cancelBtn.addEventListener("click", closeDecisionConfirmModal);
 
     confirmModal.addEventListener("click", (e) => {
       if (e.target === confirmModal) {
@@ -1212,11 +1258,15 @@
         const successBanner = document.getElementById(
           "modal-feedback-success-banner",
         );
-        const successMsg = document.getElementById("modal-feedback-success-msg");
+        const successMsg = document.getElementById(
+          "modal-feedback-success-msg",
+        );
         if (successBanner && successMsg) {
           successMsg.textContent = `Application decision marked as "${targetStatus}" and remarks have been successfully saved and dispatched to the student's portal!`;
           successBanner.style.display = "block";
-          const container = reviewModalEl.querySelector(".nexo-modal-container");
+          const container = reviewModalEl.querySelector(
+            ".nexo-modal-container",
+          );
           if (container) container.scrollTo({ top: 0, behavior: "smooth" });
         }
 
@@ -1347,15 +1397,17 @@
     currentActiveApp = app;
     isModalOpen = true;
 
-  window.openReviewModalByAppId = function (id) {
-    const target = allApplications.find((a) => String(a.id) === String(id));
-    if (target) {
-      openReviewModal(target);
-    }
-  };
+    window.openReviewModalByAppId = function (id) {
+      const target = allApplications.find((a) => String(a.id) === String(id));
+      if (target) {
+        openReviewModal(target);
+      }
+    };
 
     // Reset feedback success banner and error messages
-    const successBanner = document.getElementById("modal-feedback-success-banner");
+    const successBanner = document.getElementById(
+      "modal-feedback-success-banner",
+    );
     const saveNotesErr = document.getElementById("modal-save-notes-error");
     if (successBanner) successBanner.style.display = "none";
     if (saveNotesErr) saveNotesErr.style.display = "none";
@@ -1385,7 +1437,8 @@
     const nameEl = document.getElementById("modal-student-name");
     if (nameEl) nameEl.textContent = studentName;
     const emailEl = document.getElementById("modal-student-email");
-    if (emailEl) emailEl.textContent = info.email || app.studentEmail || "Not Specified";
+    if (emailEl)
+      emailEl.textContent = info.email || app.studentEmail || "Not Specified";
     const idEl = document.getElementById("modal-student-id");
     if (idEl) idEl.textContent = info.studentId || "Not Specified";
     const schoolEl = document.getElementById("modal-student-school");
@@ -1395,7 +1448,8 @@
     const yearEl = document.getElementById("modal-student-year");
     if (yearEl) yearEl.textContent = info.yearLevel || "Not Specified";
     const contactEl = document.getElementById("modal-student-contact");
-    if (contactEl) contactEl.textContent = info.contactNumber || "Not Specified";
+    if (contactEl)
+      contactEl.textContent = info.contactNumber || "Not Specified";
     const bioEl = document.getElementById("modal-student-bio");
     if (bioEl) {
       if (info.bio && info.bio.trim()) {
@@ -1449,9 +1503,13 @@
       notesInput.value = app.remarks || app.feedback || app.notes || "";
     }
 
-    const isFinalized = (app.status === "Approved" || app.status === "Rejected");
-    const finalizedNotice = document.getElementById("modal-decision-finalized-notice");
-    const finalizedLabel = document.getElementById("modal-finalized-status-label");
+    const isFinalized = app.status === "Approved" || app.status === "Rejected";
+    const finalizedNotice = document.getElementById(
+      "modal-decision-finalized-notice",
+    );
+    const finalizedLabel = document.getElementById(
+      "modal-finalized-status-label",
+    );
     const btnApprove = document.getElementById("modal-btn-approve");
     const btnUnderReview = document.getElementById("modal-btn-review");
     const btnReject = document.getElementById("modal-btn-reject");
@@ -1501,11 +1559,17 @@
 
     const attachedDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return !d.includes("(To Follow Up)");
-      return !d.isFollowUp && d.status !== "to_follow_up" && d.type !== "to_follow_up";
+      return (
+        !d.isFollowUp &&
+        d.status !== "to_follow_up" &&
+        d.type !== "to_follow_up"
+      );
     });
     const followUpDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return d.includes("(To Follow Up)");
-      return d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up";
+      return (
+        d.isFollowUp || d.status === "to_follow_up" || d.type === "to_follow_up"
+      );
     });
 
     if (attachedDocs.length === 0 && followUpDocs.length === 0) {
@@ -1539,16 +1603,23 @@
           typeof doc === "string" ? doc : doc.name || `Document_${idx + 1}`;
         const docUrl =
           typeof doc === "object"
-            ? (doc.data || doc.url || doc.fileUrl || doc.dataUrl || "")
-            : (typeof doc === "string" ? doc : "");
+            ? doc.data || doc.url || doc.fileUrl || doc.dataUrl || ""
+            : typeof doc === "string"
+              ? doc
+              : "";
         const docSize =
           typeof doc === "object" && doc.size
             ? typeof doc.size === "number"
               ? (doc.size / 1024).toFixed(0) + " KB"
               : doc.size
             : "1.2 MB";
-        const cleanDocName = docName.replace(/\s*\(To Follow Up\)/gi, "").trim();
-        const isPdf = cleanDocName.toLowerCase().endsWith(".pdf") || (typeof docUrl === "string" && docUrl.startsWith("data:application/pdf"));
+        const cleanDocName = docName
+          .replace(/\s*\(To Follow Up\)/gi, "")
+          .trim();
+        const isPdf =
+          cleanDocName.toLowerCase().endsWith(".pdf") ||
+          (typeof docUrl === "string" &&
+            docUrl.startsWith("data:application/pdf"));
         const reqTag =
           typeof doc === "object" && (doc.requirement || doc.title)
             ? `<span style="font-size: 11px; font-weight: 600; color: #8b5cf6; background: rgba(139, 92, 246, 0.12); padding: 2px 7px; border-radius: 4px; margin-left: 6px; display: inline-block;">${escapeHtml(doc.requirement || doc.title)}</span>`
@@ -1612,7 +1683,9 @@
 
         const reqTitle =
           typeof doc === "object"
-            ? doc.requirement || doc.title || (doc.name || "").replace(/\s*\(To Follow Up\)/gi, "")
+            ? doc.requirement ||
+              doc.title ||
+              (doc.name || "").replace(/\s*\(To Follow Up\)/gi, "")
             : String(doc).replace(/\s*\(To Follow Up\)/gi, "");
 
         itemEl.innerHTML = `
@@ -1660,7 +1733,9 @@
       btnFullscreen.addEventListener("click", () => {
         const isFull = previewContainer.classList.toggle("is-fullscreen");
         if (fullscreenText) {
-          fullscreenText.textContent = isFull ? "Exit Full Screen" : "Full Screen";
+          fullscreenText.textContent = isFull
+            ? "Exit Full Screen"
+            : "Full Screen";
         }
       });
     }
@@ -1693,13 +1768,21 @@
     const targetUrl = fileUrl || base64Data;
     const isPdf =
       fileName.toLowerCase().endsWith(".pdf") ||
-      (typeof targetUrl === "string" && targetUrl.startsWith("data:application/pdf"));
+      (typeof targetUrl === "string" &&
+        targetUrl.startsWith("data:application/pdf"));
     const isImg =
       typeof targetUrl === "string" &&
-      (targetUrl.startsWith("data:image/") || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(targetUrl));
+      (targetUrl.startsWith("data:image/") ||
+        /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(targetUrl));
 
     if (bodyEl) {
-      if (targetUrl && (isImg || isPdf || targetUrl.startsWith("data:") || targetUrl.startsWith("http"))) {
+      if (
+        targetUrl &&
+        (isImg ||
+          isPdf ||
+          targetUrl.startsWith("data:") ||
+          targetUrl.startsWith("http"))
+      ) {
         if (isPdf) {
           bodyEl.innerHTML = `<iframe src="${targetUrl}" style="width:100%; height:72vh; border:none; border-radius:8px;"></iframe>`;
         } else {

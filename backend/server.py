@@ -776,6 +776,13 @@ class NexoHandler(BaseHTTPRequestHandler):
                 data["drafts"] = []
                 write_data(data)
                 return self._send_json(200, {"success": True, "message": f"Cleared all {count} drafts."})
+
+            if action == "clear_scholarships":
+                count = len(data.get("scholarships", []))
+                data["scholarships"] = []
+                data["applications"] = []
+                write_data(data)
+                return self._send_json(200, {"success": True, "message": f"Cleared all {count} scholarship posts."})
             
             if action == "delete_scholarship" and body.get("id"):
                 target_id = str(body["id"])
