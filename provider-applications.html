@@ -1,0 +1,2278 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Applications - Provider</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("nexo-theme");
+        if (
+          t === "dark" ||
+          (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+
+    <style>
+      /* ========================================= */
+      /* APPLICATIONS PAGE SPECIFIC LAYOUT         */
+      /* ========================================= */
+      .apps-container {
+        padding: 72px 20px 40px;
+        max-width: 680px;
+        margin: 0 auto;
+        color: var(--text-primary);
+        min-height: calc(100vh - 165px);
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+      }
+      @media (min-width: 1024px) {
+        .apps-container {
+          max-width: 100% !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding-left: 24px !important;
+          padding-right: 24px !important;
+          box-sizing: border-box !important;
+        }
+      }
+      .apps-title {
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 20px;
+        letter-spacing: -0.3px;
+      }
+
+      /* Prominent Scholarship Tag for Application Card in Unified View (Full readable title, mobile-first) */
+      .provider-app-scholarship-tag {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 13px;
+        border-radius: 9px;
+        background: rgba(139, 92, 246, 0.09);
+        border: 1px solid rgba(139, 92, 246, 0.22);
+        color: #7c3aed;
+        font-size: 13.5px;
+        font-weight: 700;
+        margin: 10px 0 14px;
+        width: 100%;
+        box-sizing: border-box;
+        line-height: 1.45;
+      }
+      .provider-app-scholarship-tag svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+        color: #8b5cf6;
+      }
+      .provider-app-scholarship-tag span {
+        white-space: normal;
+        word-break: break-word;
+        overflow: visible;
+        flex: 1;
+      }
+      body.dark-theme .provider-app-scholarship-tag {
+        background: rgba(139, 92, 246, 0.22);
+        border-color: rgba(139, 92, 246, 0.45);
+        color: #c4b5fd;
+      }
+      body.dark-theme .provider-app-scholarship-tag svg {
+        color: #c4b5fd;
+      }
+
+      /* Filter Tabs */
+      .filter-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .filter-tab {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-secondary, #6b7280);
+        font-size: 14px;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .filter-tab:hover {
+        border-color: #8b5cf6;
+        color: #8b5cf6;
+        background-color: #f5f3ff;
+      }
+      .filter-tab.active {
+        border-color: #8b5cf6;
+        background-color: #8b5cf6;
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      .dark-theme .filter-tab {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .dark-theme .filter-tab:hover {
+        background-color: #374151;
+      }
+      .dark-theme .filter-tab.active {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+        color: #ffffff;
+      }
+
+      /* Search Bar & Filter Button Alignment */
+      .search-bar-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .search-input-wrapper {
+        flex: 1;
+        position: relative;
+      }
+      .search-input {
+        width: 100%;
+        padding: 10px 10px 10px 36px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        color: var(--text-primary);
+      }
+      .dark-theme .search-input {
+        background: #1f2937;
+        border-color: #374151;
+      }
+      .search-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.5;
+      }
+
+      .filter-icon-btn {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: var(--card-bg, #ffffff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .dark-theme .filter-icon-btn {
+        background: #1f2937;
+        border-color: #374151;
+      }
+
+      /* Empty State - Sized identically to Posted Scholarships for clean footer placement */
+      .empty-state,
+      .posts-empty-card {
+        background: var(--card-bg, #ffffff);
+        border: 1.5px dashed var(--border-color, #e5e7eb);
+        border-radius: 16px;
+        padding: 48px 24px;
+        text-align: center;
+        margin-top: 20px !important;
+        min-height: 380px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+      }
+      .dark-theme .empty-state,
+      .dark-theme .posts-empty-card {
+        background: #181d27;
+        border-color: #272f3d;
+      }
+      .posts-empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        border-radius: 50%;
+        background: rgba(139, 92, 246, 0.1);
+        color: #8b5cf6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      @media (min-width: 1024px) {
+        .empty-state,
+        .posts-empty-card {
+          padding: 56px 28px;
+          border-radius: 20px;
+        }
+      }
+      /* ========================================= */
+      /* CUSTOM IN-MENU DROPDOWNS (No OS Prompts)  */
+      /* ========================================= */
+      .nexo-dropdown {
+        position: relative;
+        width: 100%;
+        user-select: none;
+      }
+      .nexo-dropdown-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background-color: #f9fafb;
+        color: var(--text-primary);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .nexo-dropdown-trigger:hover {
+        border-color: #d1d5db;
+      }
+
+      /* Active state when opened */
+      .nexo-dropdown.active .nexo-dropdown-trigger {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+
+      .nexo-dropdown-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 100%;
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        z-index: 120;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-5px);
+        transition: all 0.2s ease;
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+      .nexo-dropdown.active .nexo-dropdown-list {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .nexo-dropdown-item {
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .nexo-dropdown-item:hover {
+        background-color: #f5f3ff;
+        color: #8b5cf6;
+      }
+
+      /* Dark Theme */
+      body.dark-theme .nexo-dropdown-trigger {
+        background-color: #111827;
+        border-color: #374151;
+        color: #f3f4f6;
+      }
+      body.dark-theme .nexo-dropdown-trigger:hover {
+        border-color: #4b5563;
+      }
+      body.dark-theme .nexo-dropdown-list {
+        background: #1f2937;
+        border-color: #374151;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      }
+      body.dark-theme .nexo-dropdown-item {
+        color: #f3f4f6;
+      }
+      body.dark-theme .nexo-dropdown-item:hover {
+        background-color: #374151;
+        color: #8b5cf6;
+      }
+
+      /* ========================================= */
+      /* PROVIDER APPLICATION CARDS & FEED         */
+      /* ========================================= */
+      .applications-feed {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        margin-top: 0;
+        width: 100%;
+      }
+
+      .provider-app-card {
+        background: var(--card-bg, #ffffff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          border-color 0.2s ease;
+        cursor: pointer;
+      }
+      .provider-app-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .dark-theme .provider-app-card {
+        background: #1f2937;
+        border-color: #374151;
+      }
+
+      .provider-app-main-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .provider-app-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #8b5cf6, #6941c6);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 15px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(105, 65, 198, 0.25);
+      }
+
+      .provider-app-details {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .provider-app-header-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .provider-app-student-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .provider-app-badge {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+      }
+      .badge-status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+      .badge-status-review {
+        background-color: #ede9fe;
+        color: #6d28d9;
+      }
+      .badge-status-approved {
+        background-color: #dcfce7;
+        color: #166534;
+      }
+      .badge-status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+      }
+      .dark-theme .badge-status-pending {
+        background-color: #78350f;
+        color: #fde68a;
+      }
+      .dark-theme .badge-status-review {
+        background-color: #4c1d95;
+        color: #ddd6fe;
+      }
+      .dark-theme .badge-status-approved {
+        background-color: #14532d;
+        color: #bbf7d0;
+      }
+      .dark-theme .badge-status-rejected {
+        background-color: #7f1d1d;
+        color: #fecaca;
+      }
+
+      .provider-app-program {
+        margin: 2px 0 4px;
+        font-size: 13.5px;
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .program-tag {
+        color: #8b5cf6;
+      }
+
+      .provider-app-school {
+        font-size: 12.5px;
+        color: var(--text-secondary, #6b7280);
+        margin: 0 0 8px;
+      }
+
+      .provider-app-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        font-size: 12px;
+        color: var(--text-secondary, #6b7280);
+      }
+      .provider-app-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .provider-app-actions-row {
+        display: flex;
+        align-items: center;
+        margin-top: 14px;
+        padding-top: 0;
+        border-top: none;
+        width: 100%;
+      }
+      .dark-theme .provider-app-actions-row {
+        border-top: none;
+      }
+
+      .btn-review-app {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 13.5px;
+        font-weight: 600;
+        border-radius: 9999px;
+        cursor: pointer;
+        transition:
+          background 0.2s ease,
+          transform 0.15s ease,
+          box-shadow 0.2s ease;
+      }
+      .btn-review-app:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.28);
+      }
+
+      .provider-app-quick-btns {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-quick-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .btn-quick-approve {
+        color: #16a34a;
+      }
+      .btn-quick-approve:hover {
+        background-color: #dcfce7;
+        border-color: #16a34a;
+      }
+      .btn-quick-review {
+        color: #8b5cf6;
+      }
+      .btn-quick-review:hover {
+        background-color: #ede9fe;
+        border-color: #8b5cf6;
+      }
+      .btn-quick-reject {
+        color: #ef4444;
+      }
+      .btn-quick-reject:hover {
+        background-color: #fee2e2;
+        border-color: #ef4444;
+      }
+
+      /* ========================================= */
+      /* MODAL SYSTEM (REVIEW & PREVIEW)           */
+      /* ========================================= */
+      .nexo-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.25s ease,
+          visibility 0.25s ease;
+      }
+      .nexo-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .nexo-modal-container {
+        background: var(--card-bg, #ffffff);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 580px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+        padding: 24px;
+        transform: translateY(20px) scale(0.98);
+        transition: transform 0.25s ease;
+        position: relative;
+      }
+      .nexo-modal-overlay.active .nexo-modal-container {
+        transform: translateY(0) scale(1);
+      }
+      .dark-theme .nexo-modal-container {
+        background: #1f2937;
+        border: 1px solid #374151;
+      }
+
+      .modal-close-btn {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 8px;
+      }
+      .modal-close-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+
+      .modal-info-card {
+        background: var(--bg-hover, rgba(139, 92, 246, 0.03));
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 16px 0;
+      }
+      .dark-theme .modal-info-card {
+        background: #151b28;
+        border-color: #2e384d;
+      }
+
+      .modal-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px 24px;
+        font-size: 13.5px;
+        margin-top: 12px;
+      }
+      @media (max-width: 600px) {
+        .modal-info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .modal-info-cell {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 0;
+      }
+      .dark-theme .modal-info-cell {
+        background: transparent;
+        border-color: transparent;
+      }
+      .modal-info-cell.full-width {
+        grid-column: 1 / -1;
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+      }
+      .dark-theme .modal-info-cell.full-width {
+        border-color: #2e384d;
+      }
+      .modal-info-label {
+        color: var(--text-secondary, #6b7280);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-bottom: 2px;
+      }
+      .modal-info-value {
+        color: var(--text-primary);
+        font-size: 13.5px;
+        font-weight: 600;
+        word-break: break-word;
+      }
+      .provider-decision-panel {
+        background: var(--bg-hover, rgba(139, 92, 246, 0.03));
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-top: 18px;
+      }
+      .dark-theme .provider-decision-panel {
+        background: #151b28;
+        border-color: #2e384d;
+      }
+      .decision-btn-group {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 500px) {
+        .decision-btn-group {
+          grid-template-columns: 1fr;
+        }
+      }
+      .decision-btn {
+        padding: 11px 16px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
+      }
+      .decision-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+      }
+      .decision-approve {
+        background: #16a34a;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+      }
+      .decision-approve:hover:not(:disabled) {
+        background: #15803d;
+        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
+      }
+      .decision-review {
+        background: #8b5cf6;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
+      }
+      .decision-review:hover:not(:disabled) {
+        background: #7c3aed;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+      }
+      .decision-reject {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+      }
+      .decision-reject:hover:not(:disabled) {
+        background: #dc2626;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+      }
+      .decision-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed !important;
+        filter: grayscale(40%);
+        pointer-events: none;
+      }
+
+      .modal-doc-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        background: var(--card-bg, #ffffff);
+      }
+      .dark-theme .modal-doc-item {
+        background: #111827;
+        border-color: #374151;
+      }
+
+      .modal-doc-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .modal-doc-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .modal-doc-name {
+        margin: 0;
+        font-size: 13.5px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 240px;
+      }
+      .modal-doc-size {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+      }
+
+      .btn-doc-view {
+        padding: 6px 12px;
+        font-size: 12.5px;
+        border-radius: 6px;
+        border: 1px solid #8b5cf6;
+        background: #f5f3ff;
+        color: #8b5cf6;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+      }
+      .btn-doc-view:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+      .dark-theme .btn-doc-view {
+        background: #3730a3;
+        color: #e0e7ff;
+      }
+
+      .review-notes-textarea {
+        width: 100%;
+        min-height: 96px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--border-color, #e2e8f0);
+        background: #f8fafc;
+        color: var(--text-primary, #0f172a);
+        font-size: 13.5px;
+        line-height: 1.5;
+        font-family: inherit;
+        resize: vertical;
+        box-sizing: border-box;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
+      }
+      .review-notes-textarea:focus {
+        outline: none;
+        background: #ffffff;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+      }
+      .review-notes-textarea::placeholder {
+        color: #94a3b8;
+      }
+      html.dark-theme .review-notes-textarea,
+      body.dark-theme .review-notes-textarea,
+      .dark-theme .review-notes-textarea {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+      }
+      html.dark-theme .review-notes-textarea:focus,
+      body.dark-theme .review-notes-textarea:focus,
+      .dark-theme .review-notes-textarea:focus {
+        background: #0f172a !important;
+        border-color: #a78bfa !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3) !important;
+      }
+      html.dark-theme .review-notes-textarea::placeholder,
+      body.dark-theme .review-notes-textarea::placeholder,
+      .dark-theme .review-notes-textarea::placeholder {
+        color: #64748b !important;
+      }
+
+      /* Scoped Scholarship Filter Banner */
+      .scoped-scholarship-card {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.12),
+          rgba(168, 85, 247, 0.05)
+        );
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        border-radius: 14px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .dark-theme .scoped-scholarship-card {
+        background: linear-gradient(
+          135deg,
+          rgba(139, 92, 246, 0.2),
+          rgba(30, 27, 75, 0.4)
+        );
+        border-color: rgba(139, 92, 246, 0.45);
+      }
+      .scoped-badge-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .scoped-tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        background: #8b5cf6;
+        color: #ffffff;
+        padding: 3px 8px;
+        border-radius: 6px;
+      }
+      .scoped-status-pill {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 99px;
+      }
+      .scoped-status-pill.open {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+      }
+      .scoped-status-pill.closed {
+        background: rgba(156, 163, 175, 0.2);
+        color: #9ca3af;
+      }
+      .scoped-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+        line-height: 1.3;
+      }
+      .scoped-meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--text-secondary, #6b7280);
+      }
+      .scoped-card-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .scoped-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 8px;
+        text-decoration: none !important;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        background: var(--card-bg, #ffffff);
+        color: #8b5cf6;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .scoped-btn:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+      .dark-theme .scoped-btn {
+        background: #1f2937;
+        color: #c4b5fd;
+        border-color: rgba(139, 92, 246, 0.4);
+      }
+      .dark-theme .scoped-btn:hover {
+        background: #8b5cf6;
+        color: #ffffff;
+      }
+    </style>
+  </head>
+
+  <body class="dashboard-body">
+    <!-- ========================================= -->
+    <!-- 1. HARDCODED PROVIDER HEADER              -->
+    <!-- ========================================= -->
+    <header class="global-header">
+      <div class="logo-container">
+        <a
+          href="provider-about.html"
+          class="nexo-brand-link"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            text-decoration: none;
+          "
+          title="About Us"
+        >
+          <img
+            src="assets/logo.png"
+            alt="NEXO Logo"
+            class="nexo-brand-logo"
+            style="width: 34px; height: 34px; object-fit: contain"
+          />
+          <span
+            class="nexo-brand-text"
+            style="
+              font-family: var(--font-heading);
+              font-size: 20px;
+              font-weight: 800;
+              color: var(--text-primary);
+              letter-spacing: -0.4px;
+              line-height: 1;
+            "
+            >NEXO</span
+          >
+        </a>
+      </div>
+
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <button
+          class="icon-btn notification-btn"
+          type="button"
+          aria-label="Notifications"
+          aria-expanded="false"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot"></span>
+        </button>
+
+        <!-- Nav Wrapper -->
+        <div class="nav-wrapper" id="nav-wrapper" style="margin-left: 4px">
+          <!-- Hamburger Button -->
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- The Provider Menu -->
+          <nav class="nav-menu" id="nav-menu">
+            <!-- Dashboard / Home -->
+            <a href="provider-dashboard.html" class="nav-link">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Posted Scholarships -->
+            <a href="provider-posts.html" class="nav-link" id="nav-posts">
+              <img
+                src="assets/application-icon.png"
+                alt="Posted Scholarships"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Posted Scholarships</span>
+            </a>
+
+            <!-- Applications (Active Link!) -->
+            <a href="provider-applications.html" class="nav-link active">
+              <img
+                src="assets/human-icon.png"
+                alt="Applications"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Applications</span>
+            </a>
+
+            <!-- Provider Drafts -->
+            <a
+              href="provider-dashboard.html?view=drafts"
+              class="nav-link"
+              id="nav-drafts"
+            >
+              <img
+                src="assets/draft-icon.png"
+                alt="Drafts"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Drafts</span>
+              <span
+                id="draft-badge"
+                style="
+                  display: none;
+                  background-color: #8b5cf6;
+                  color: white;
+                  font-size: 12px;
+                  font-weight: 700;
+                  padding: 2px 8px;
+                  border-radius: 99px;
+                  margin-left: auto;
+                "
+                >0</span
+              >
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <a href="provider-about.html" class="nav-link">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="privacy.html" class="nav-link">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+
+            <a href="credits.html" class="nav-link">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <a href="provider-settings.html" class="nav-link">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                style="text-decoration: none !important"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="
+                    color: white;
+                    margin: 0;
+                    font-weight: 600;
+                    text-decoration: none !important;
+                  "
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. APPLICATIONS CONTENT                   -->
+    <!-- ========================================= -->
+    <main class="apps-container">
+      <div id="scoped-scholarship-banner" style="display: none"></div>
+
+      <div class="apps-header-row" style="margin-bottom: 20px">
+        <h1 class="apps-title" id="apps-page-title" style="margin-bottom: 0">
+          Applications
+        </h1>
+      </div>
+
+      <!-- Search & Filter Section (Oblong search bar with filter button on right) -->
+      <div class="submissions-search-filter-row" style="margin-bottom: 24px">
+        <!-- Search Bar (Oblong pill design matching student POV) -->
+        <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0">
+          <svg
+            class="browse-search-icon"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="applicant-search-input"
+            class="browse-search-input directory-search-input search-input"
+            placeholder="Search applicants by student name, email, course, or scholarship..."
+            aria-label="Search applications"
+          />
+        </div>
+
+        <!-- Filter Dropdown on Right Side -->
+        <div
+          class="directory-filter-dropdown"
+          id="dropdown-wrapper-apps-filter"
+        >
+          <button
+            type="button"
+            class="directory-filter-icon-btn"
+            id="btn-apps-filter"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="Filter applications"
+            title="Filter applications"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon
+                points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"
+              ></polygon>
+            </svg>
+          </button>
+
+          <!-- Floating Filter Menu -->
+          <div
+            class="filter-dropdown directory-dropdown-menu"
+            id="menu-apps-filter"
+            role="menu"
+            style="
+              min-width: 290px;
+              max-width: 330px;
+              right: 0;
+              left: auto;
+              padding: 16px;
+              border-radius: 14px;
+            "
+            onclick="event.stopPropagation()"
+          >
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid var(--border-color, #e5e7eb);
+              "
+            >
+              <h4
+                style="
+                  margin: 0;
+                  font-size: 13.5px;
+                  font-weight: 700;
+                  color: var(--text-primary);
+                "
+              >
+                Filter Applications
+              </h4>
+              <button
+                type="button"
+                id="btn-reset-filters"
+                style="
+                  background: none;
+                  border: none;
+                  font-size: 12px;
+                  font-weight: 600;
+                  color: #8b5cf6;
+                  cursor: pointer;
+                  padding: 2px 4px;
+                "
+              >
+                Reset All
+              </button>
+            </div>
+
+            <!-- 1. Application Status -->
+            <div class="filter-group" style="margin-bottom: 12px">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  color: var(--text-secondary);
+                  margin-bottom: 6px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                "
+                >Status</label
+              >
+              <div class="nexo-dropdown" id="dropdown-status-filter">
+                <div class="nexo-dropdown-trigger">
+                  <span class="nexo-dropdown-value" id="status-filter-label"
+                    >All Statuses</span
+                  >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list">
+                  <div
+                    class="nexo-dropdown-item selected"
+                    data-status-filter="all"
+                  >
+                    All Statuses
+                  </div>
+                  <div class="nexo-dropdown-item" data-status-filter="pending">
+                    Pending
+                  </div>
+                  <div class="nexo-dropdown-item" data-status-filter="reviewed">
+                    Under Review
+                  </div>
+                  <div class="nexo-dropdown-item" data-status-filter="approved">
+                    Approved
+                  </div>
+                  <div class="nexo-dropdown-item" data-status-filter="rejected">
+                    Rejected
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Dynamic Scholarship Filter -->
+            <div class="filter-group" style="margin-bottom: 12px">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  color: var(--text-secondary);
+                  margin-bottom: 6px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                "
+                >Scholarship Post</label
+              >
+              <div class="nexo-dropdown" id="dropdown-program-filter">
+                <div class="nexo-dropdown-trigger">
+                  <span
+                    class="nexo-dropdown-value"
+                    id="scholarship-filter-label"
+                    >All Scholarships</span
+                  >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list" id="filter-scholarships-list">
+                  <div class="nexo-dropdown-item selected" data-program="all">
+                    All Scholarships
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Documents / Attachments -->
+            <div class="filter-group" style="margin-bottom: 14px">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  color: var(--text-secondary);
+                  margin-bottom: 6px;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                "
+                >Attachments</label
+              >
+              <div class="nexo-dropdown" id="dropdown-doc-filter">
+                <div class="nexo-dropdown-trigger">
+                  <span class="nexo-dropdown-value" id="doc-filter-label"
+                    >All Applications</span
+                  >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <div class="nexo-dropdown-list">
+                  <div
+                    class="nexo-dropdown-item selected"
+                    data-doc-filter="all"
+                  >
+                    All Applications
+                  </div>
+                  <div class="nexo-dropdown-item" data-doc-filter="complete">
+                    100% Complete
+                  </div>
+                  <div class="nexo-dropdown-item" data-doc-filter="missing">
+                    Missing / Incomplete
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="apply-filters-btn"
+              style="
+                width: 100%;
+                padding: 10px;
+                font-size: 13.5px;
+                font-weight: 700;
+                border-radius: 20px;
+              "
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State Canvas (Sized matching Posted Scholarships blank state) -->
+      <div class="empty-state posts-empty-card" id="apps-empty-state">
+        <div class="posts-empty-icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            ></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px">
+          No Applications Yet
+        </h3>
+        <p
+          style="
+            font-size: 14px;
+            color: var(--text-secondary, #6b7280);
+            max-width: 440px;
+            margin: 0 auto;
+            line-height: 1.5;
+          "
+        >
+          Once students begin applying to your published scholarship posts,
+          their applications will appear here for review.
+        </p>
+      </div>
+
+      <!-- Applications Feed Container (Populated by js/provider-applications.js) -->
+      <div
+        class="applications-feed"
+        id="applications-feed"
+        style="display: none"
+      ></div>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- 3. REVIEW & DECISION MODAL                -->
+    <!-- ========================================= -->
+    <div
+      class="nexo-modal-overlay"
+      id="review-application-modal"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="nexo-modal-container">
+        <!-- Clean Circular X Close Button (Consistent with other modals) -->
+        <button
+          type="button"
+          class="modal-close-icon-btn"
+          id="close-review-modal"
+          aria-label="Close modal"
+          title="Close"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Student Header: Avatar, Name, Email, and Status Badge placed cleanly under email -->
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 20px;
+            padding-right: 48px;
+          "
+        >
+          <div
+            id="modal-student-avatar"
+            class="provider-app-avatar"
+            style="
+              width: 48px;
+              height: 48px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              overflow: hidden;
+              flex-shrink: 0;
+              font-weight: 700;
+              font-size: 16px;
+            "
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <h2
+              style="
+                font-size: 19px;
+                font-weight: 700;
+                margin: 0 0 2px;
+                line-height: 1.25;
+                word-break: break-word;
+              "
+              id="modal-student-name"
+            >
+              Student Name
+            </h2>
+            <div
+              style="
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 6px;
+                word-break: break-all;
+              "
+              id="modal-student-email"
+            >
+              student@university.edu.ph
+            </div>
+            <div>
+              <span class="provider-app-badge" id="modal-status-badge"
+                >Submitted</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Student Profile Details (Title outside the card, no icon) -->
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 10px 0;
+              color: var(--text-primary);
+            "
+          >
+            Student Profile Information &amp; Academic Credentials
+          </h4>
+          <div class="modal-info-card" style="margin: 0">
+            <div class="modal-info-grid">
+              <div class="modal-info-cell">
+                <div class="modal-info-label">University / Institution</div>
+                <div class="modal-info-value" id="modal-student-school">
+                  Not Specified
+                </div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Course / Degree Program</div>
+                <div class="modal-info-value" id="modal-student-course">
+                  Not Specified
+                </div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Academic Year Level</div>
+                <div class="modal-info-value" id="modal-student-year">
+                  Not Specified
+                </div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Student ID Number</div>
+                <div class="modal-info-value" id="modal-student-id">
+                  Not Specified
+                </div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Contact Number</div>
+                <div class="modal-info-value" id="modal-student-contact">
+                  Not Specified
+                </div>
+              </div>
+              <div class="modal-info-cell">
+                <div class="modal-info-label">Date Submitted</div>
+                <div class="modal-info-value" id="modal-app-date">Recently</div>
+              </div>
+              <div class="modal-info-cell full-width">
+                <div class="modal-info-label">Bio / Applicant Summary</div>
+                <div
+                  class="modal-info-value"
+                  id="modal-student-bio"
+                  style="
+                    font-weight: 500;
+                    font-style: italic;
+                    color: var(--text-secondary);
+                    line-height: 1.45;
+                  "
+                >
+                  No applicant bio provided.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Attached Documents (Title outside, no icon) -->
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 10px 0;
+              color: var(--text-primary);
+            "
+          >
+            Attached Documents
+          </h4>
+          <div id="modal-documents-list">
+            <!-- Dynamic documents inserted here -->
+          </div>
+        </div>
+
+        <!-- Section: Provider Decision (Title outside the card, no icon) -->
+        <div style="margin-bottom: 20px">
+          <h4
+            style="
+              font-size: 14px;
+              font-weight: 700;
+              margin: 0 0 4px 0;
+              color: var(--text-primary);
+            "
+          >
+            Provider Decision
+          </h4>
+          <p
+            style="
+              font-size: 12.5px;
+              color: var(--text-secondary);
+              margin: 0 0 10px 0;
+            "
+          >
+            Add remarks and choose a decision to notify the student.
+          </p>
+
+          <div class="provider-decision-panel" style="margin-top: 0">
+            <!-- Live Feedback Success Notifier (Shortened, check icon removed) -->
+            <div
+              id="modal-feedback-success-banner"
+              style="
+                display: none;
+                background: rgba(16, 185, 129, 0.12);
+                border: 1.5px solid rgba(16, 185, 129, 0.35);
+                border-radius: 8px;
+                padding: 8px 12px;
+                margin-bottom: 12px;
+              "
+            >
+              <strong style="color: #10b981; font-size: 12.5px; display: block"
+                >Decision Sent</strong
+              >
+              <p
+                id="modal-feedback-success-msg"
+                style="
+                  margin: 2px 0 0 0;
+                  font-size: 12px;
+                  color: var(--text-primary);
+                "
+              >
+                Saved and sent to student.
+              </p>
+            </div>
+
+            <!-- Finalized Permanent Notice in Review Modal -->
+            <div
+              id="modal-decision-finalized-notice"
+              style="
+                display: none;
+                background: rgba(16, 185, 129, 0.08);
+                border: 1.5px solid rgba(16, 185, 129, 0.3);
+                border-radius: 10px;
+                padding: 10px 14px;
+                margin-bottom: 14px;
+              "
+            >
+              <strong style="color: #10b981; font-size: 12.5px; display: block"
+                >Decision Finalized</strong
+              >
+              <p
+                style="
+                  margin: 2px 0 0 0;
+                  font-size: 12px;
+                  color: var(--text-primary);
+                  line-height: 1.4;
+                "
+              >
+                This application is permanently marked as
+                <strong
+                  id="modal-finalized-status-label"
+                  style="color: var(--text-primary)"
+                  >Approved</strong
+                >
+                and can no longer be modified.
+              </p>
+            </div>
+
+            <div>
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  margin-bottom: 6px;
+                  color: var(--text-secondary);
+                "
+              >
+                Remarks
+              </label>
+              <textarea
+                id="modal-review-notes"
+                class="review-notes-textarea"
+                placeholder="e.g. Congratulations! Please submit your registration receipt... (Leave blank to use official automated remark)"
+              ></textarea>
+            </div>
+
+            <div style="margin-top: 14px">
+              <label
+                style="
+                  display: block;
+                  font-size: 11.5px;
+                  font-weight: 700;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  color: var(--text-secondary);
+                  margin-bottom: 8px;
+                "
+              >
+                Submit Decision:
+              </label>
+              <div class="decision-btn-group" id="modal-decision-btn-group">
+                <button
+                  type="button"
+                  class="decision-btn decision-approve"
+                  id="modal-btn-approve"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  class="decision-btn decision-review"
+                  id="modal-btn-review"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 16 14"></polyline>
+                  </svg>
+                  Under Review
+                </button>
+                <button
+                  type="button"
+                  class="decision-btn decision-reject"
+                  id="modal-btn-reject"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Close Button (Clean exit without cut/dashed line) -->
+        <div style="margin-top: 20px; display: flex; justify-content: center">
+          <button
+            type="button"
+            class="modal-bottom-close-btn"
+            id="modal-btn-close-bottom"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Close Application Review</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- On-Screen Decision & Remarks Confirmation Modal -->
+    <div
+      class="nexo-modal-overlay"
+      id="decision-confirm-modal"
+      role="dialog"
+      aria-modal="true"
+      style="z-index: 10500"
+    >
+      <div
+        class="nexo-modal-container"
+        style="
+          max-width: 520px;
+          border-radius: 16px;
+          padding: 24px;
+          position: relative;
+        "
+      >
+        <!-- Clean Circular X Close Button (Consistent with other modals) -->
+        <button
+          type="button"
+          class="modal-close-icon-btn"
+          id="close-decision-confirm"
+          aria-label="Close confirmation"
+          title="Close"
+          style="position: absolute; top: 18px; right: 18px; z-index: 10"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-right: 40px;
+          "
+        >
+          <div
+            id="confirm-status-icon"
+            style="
+              width: 38px;
+              height: 38px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(139, 92, 246, 0.15);
+              color: #8b5cf6;
+            "
+          >
+            <!-- Dynamic icon -->
+          </div>
+          <div>
+            <h3
+              id="confirm-modal-heading"
+              style="
+                font-size: 17px;
+                font-weight: 800;
+                margin: 0;
+                color: var(--text-primary);
+              "
+            >
+              Confirm Decision
+            </h3>
+            <span
+              id="confirm-modal-subheading"
+              style="font-size: 12px; color: var(--text-secondary)"
+              >Application for Student Scholar</span
+            >
+          </div>
+        </div>
+
+        <!-- Permanence Warning Notice (Conditional: for Approved and Rejected) -->
+        <div
+          id="confirm-permanence-alert"
+          style="
+            background: rgba(239, 68, 68, 0.08);
+            border: 1.5px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: none;
+          "
+        >
+          <strong
+            style="
+              color: #ef4444;
+              font-size: 12.5px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+              ></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Permanent Decision
+          </strong>
+          <p
+            style="
+              margin: 3px 0 0 0;
+              font-size: 12px;
+              color: var(--text-primary);
+              line-height: 1.4;
+            "
+          >
+            Once submitted,
+            <strong id="confirm-action-name">this decision</strong> is final and
+            cannot be undone. Your remarks will be sent directly to the student.
+          </p>
+        </div>
+
+        <!-- Under Review Info Notice -->
+        <div
+          id="confirm-review-alert"
+          style="
+            background: rgba(139, 92, 246, 0.08);
+            border: 1.5px solid rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: none;
+          "
+        >
+          <strong
+            style="
+              color: #8b5cf6;
+              font-size: 12.5px;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            "
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Under Review Status
+          </strong>
+          <p
+            style="
+              margin: 3px 0 0 0;
+              font-size: 12px;
+              color: var(--text-primary);
+              line-height: 1.4;
+            "
+          >
+            This decision is not permanent. The student will be notified of your
+            remarks and you can update their status later.
+          </p>
+        </div>
+
+        <!-- Remarks Input Field -->
+        <div style="margin-bottom: 16px">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 6px;
+            "
+          >
+            <label
+              for="confirm-remarks-textarea"
+              style="
+                font-size: 12.5px;
+                font-weight: 700;
+                color: var(--text-primary);
+              "
+            >
+              Remarks
+            </label>
+            <button
+              type="button"
+              class="btn-reset-remarks"
+              id="btn-reset-default-remarks"
+              style="border-radius: 20px"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+              >
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>Reset to Default</span>
+            </button>
+          </div>
+          <textarea
+            id="confirm-remarks-textarea"
+            class="review-notes-textarea"
+            placeholder="Enter feedback or follow-up instructions for the student..."
+          ></textarea>
+          <div
+            id="confirm-remarks-error"
+            style="
+              color: #ef4444;
+              font-size: 12px;
+              font-weight: 600;
+              margin-top: 4px;
+              display: none;
+            "
+          >
+            Remarks cannot be empty. Please provide feedback or instructions for
+            the student.
+          </div>
+        </div>
+
+        <!-- Buttons with 20px border radius -->
+        <div style="display: flex; gap: 10px; justify-content: flex-end">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="btn-cancel-decision-confirm"
+            style="
+              padding: 10px 18px;
+              font-size: 13px;
+              font-weight: 600;
+              border-radius: 20px;
+            "
+          >
+            Back to Review
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="btn-submit-decision-confirm"
+            style="
+              padding: 10px 22px;
+              font-size: 13px;
+              font-weight: 700;
+              border-radius: 20px;
+            "
+          >
+            Confirm &amp; Send Decision
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Document Preview Modal -->
+    <div
+      class="nexo-modal-overlay"
+      id="doc-preview-modal"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="nexo-modal-container"
+        id="doc-preview-container"
+        style="
+          max-width: 720px;
+          transition:
+            max-width 0.25s ease,
+            width 0.25s ease;
+        "
+      >
+        <button
+          type="button"
+          class="modal-close-btn"
+          id="close-doc-preview"
+          aria-label="Close document preview"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+          >
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-right: 32px;
+            margin-bottom: 14px;
+            gap: 10px;
+            flex-wrap: wrap;
+          "
+        >
+          <h3
+            id="doc-preview-title"
+            style="
+              font-size: 16px;
+              margin: 0;
+              font-weight: 700;
+              flex: 1;
+              min-width: 140px;
+            "
+          >
+            Document Preview
+          </h3>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="doc-preview-fullscreen"
+              title="Toggle Fullscreen"
+              style="
+                padding: 6px 12px;
+                font-size: 12.5px;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                border-radius: 8px;
+                cursor: pointer;
+              "
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                ></path>
+              </svg>
+              <span id="fullscreen-btn-text">Full Screen</span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="doc-preview-download"
+              style="
+                padding: 6px 14px;
+                font-size: 12.5px;
+                border-radius: 8px;
+                cursor: pointer;
+                opacity: 0.95;
+              "
+            >
+              Download
+            </button>
+          </div>
+        </div>
+
+        <div id="doc-preview-body" style="min-height: 250px">
+          <!-- Embed or Image inserted dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>
+        Copyright 2026 Batangas State University &bull; Alangilan Campus &bull;
+        CICS
+      </p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <!-- 4. JAVASCRIPT -->
+    <script src="js/main.js"></script>
+    <script src="js/provider.js"></script>
+    <script src="js/provider-applications.js"></script>
+  </body>
+</html>

@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Submissions - Student - NEXO</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function() {
+        var t = localStorage.getItem("nexo-theme");
+        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+  <body class="dashboard-body">
+    <!-- GLOBAL UNIVERSAL HEADER -->
+    <header class="global-header">
+      <div class="logo-container">
+        <a href="student-about.html" class="nexo-brand-link" style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;" title="About Us">
+          <img src="assets/logo.png" alt="NEXO" class="nexo-brand-logo" style="width: 34px; height: 34px; object-fit: contain;" />
+          <span class="nexo-brand-text" style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; line-height: 1;">NEXO</span>
+        </a>
+      </div>
+
+      <div class="header-actions" style="display: flex; align-items: center; gap: 8px">
+        <label class="theme-toggle-container">
+          <input id="theme-toggle" class="theme-toggle" type="checkbox" aria-label="Toggle Dark Mode" />
+        </label>
+
+        <button class="icon-btn notification-btn" id="student-notif-btn" type="button" aria-label="Notifications" aria-expanded="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot" id="student-notif-dot"></span>
+        </button>
+
+        <div class="nav-wrapper" id="nav-wrapper" style="margin-left: 4px">
+          <button class="hamburger-btn" id="avatar-menu-btn" type="button" aria-label="Open Menu" onclick="handleMenuToggle(event)">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <nav class="nav-menu" id="nav-menu">
+            <a href="student-dashboard.html" class="nav-link">
+              <img src="assets/home-icon.png" alt="Home" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">Home</span>
+            </a>
+            <a href="student-browse.html" class="nav-link" id="nav-browse">
+              <img src="assets/draft-icon.png" alt="Browse" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">Browse Scholarships</span>
+            </a>
+            <a href="student-submissions.html" class="nav-link active" id="nav-submissions">
+              <img src="assets/policy-icon.png" alt="Submissions" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">View My Submissions</span>
+            </a>
+            <div class="nav-spacer"></div>
+            <a href="student-about.html" class="nav-link">
+              <img src="assets/about-icon.png" alt="About Us" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">About Us</span>
+            </a>
+            <a href="privacy.html" class="nav-link">
+              <img src="assets/policy-icon.png" alt="Policy" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">Policy</span>
+            </a>
+            <a href="credits.html" class="nav-link">
+              <img src="assets/credits-icon.png" alt="Credits" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">Credits</span>
+            </a>
+            <a href="student-settings.html" class="nav-link">
+              <img src="assets/settings-icon.png" alt="Settings" class="nav-icon" onerror="this.style.display = 'none'" />
+              <span class="nav-text">Settings</span>
+            </a>
+            <div class="nav-spacer"></div>
+            <div class="nav-buttons">
+              <a href="index.html" class="btn logout-btn" id="student-logout-btn" style="text-decoration: none !important;">
+                <img src="assets/logout-icon.png" alt="Logout" class="nav-icon" onerror="this.style.display = 'none'" />
+                <span class="nav-text" style="color: white; margin: 0; font-weight: 600;">Log Out</span>
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN SUBMISSIONS CONTENT -->
+    <main class="student-dash-main" style="padding-top: 72px;">
+      <section class="student-greeting-section" style="margin-bottom: 20px;">
+        <h1 class="student-name-title" style="font-size: 24px; margin-top: 0; margin-bottom: 4px;">My Scholarship Submissions</h1>
+        <p class="settings-subtitle">
+          Track the live status of all your applications.
+        </p>
+      </section>
+
+      <!-- SEARCH & STATUS FILTER SECTION -->
+      <section class="submissions-search-filter-section" id="submissions-filter-section" style="margin-bottom: 10px;">
+        <div class="submissions-search-filter-row">
+          <!-- Search Bar (Pill design matching Scholarship Directory) -->
+          <div class="browse-search-wrapper" style="flex: 1; margin-bottom: 0;">
+            <svg class="browse-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              id="submissions-search-input"
+              class="browse-search-input directory-search-input"
+              placeholder="Search by scholarship title, provider..."
+              aria-label="Search submissions"
+            />
+          </div>
+
+          <!-- Status Filter Dropdown on Right Side -->
+          <div class="directory-filter-dropdown" id="dropdown-wrapper-submissions-filter">
+            <button
+              type="button"
+              class="directory-filter-icon-btn"
+              id="btn-submissions-filter"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Filter submissions by status"
+              title="Filter by status"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+            </button>
+            <div class="directory-dropdown-menu" id="menu-submissions-filter" role="menu" style="min-width: 200px; right: 0; left: auto;">
+              <button type="button" class="directory-dropdown-item active" data-filter="all" role="menuitem">
+                <span>All Submissions</span>
+                <span class="sub-filter-badge" id="filter-count-all">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="submitted" role="menuitem">
+                <span>Submitted</span>
+                <span class="sub-filter-badge" id="filter-count-submitted">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="review" role="menuitem">
+                <span>Under Review</span>
+                <span class="sub-filter-badge" id="filter-count-review">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="approved" role="menuitem">
+                <span>Approved</span>
+                <span class="sub-filter-badge" id="filter-count-approved">0</span>
+              </button>
+              <button type="button" class="directory-dropdown-item" data-filter="rejected" role="menuitem">
+                <span>Rejected</span>
+                <span class="sub-filter-badge" id="filter-count-rejected">0</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SUBMISSIONS FEED -->
+      <section class="student-apps-section" style="margin-top: 4px;">
+        <!-- General Empty State (No applications at all) -->
+        <div class="student-empty-card" id="student-empty-apps">
+          <div class="student-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+          <h4 class="student-empty-title">No submissions found</h4>
+          <p class="student-empty-desc">
+            You haven’t submitted any applications yet. Explore available opportunities to apply!
+          </p>
+          <a href="student-browse.html" class="btn btn-primary" style="display: inline-block; padding: 10px 22px; font-size: 13.5px; text-decoration: none;">
+            Browse Scholarships
+          </a>
+        </div>
+
+        <!-- Filter-Specific Empty State (Filtered results empty) -->
+        <div class="student-empty-card" id="student-filter-empty" style="display: none;">
+          <div class="student-empty-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+          </div>
+          <h4 class="student-empty-title">No matching applications</h4>
+          <p class="student-empty-desc">
+            No submissions match your active status filter or search criteria.
+          </p>
+          <button type="button" class="btn btn-secondary" id="reset-submissions-filter" style="padding: 8px 18px; font-size: 13px;">
+            Reset Filters
+          </button>
+        </div>
+
+        <!-- Dynamic Applications Feed -->
+        <div class="student-apps-feed" id="student-apps-feed" style="display: none"></div>
+      </section>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- VIEW FULL DETAILS MODAL                   -->
+    <!-- ========================================= -->
+    <div id="student-sub-modal-overlay" class="schol-modal-overlay" aria-hidden="true">
+      <div class="schol-modal-sheet" id="student-sub-modal-sheet" style="max-width: 560px;">
+        <!-- Modal Top Bar: Consistent Clean X Close Button -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+          <button
+            type="button"
+            id="close-student-sub-modal"
+            class="modal-close-icon-btn"
+            aria-label="Close details"
+            title="Close"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Program & Provider Header -->
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 18px;">
+          <div id="modal-sub-logo" class="student-app-logo" style="width: 52px; height: 52px; min-width: 52px; min-height: 52px; max-width: 52px; max-height: 52px; font-size: 16px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">NX</div>
+          <div style="flex: 1; min-width: 0;">
+            <h4 id="modal-sub-title" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;">Scholarship Program</h4>
+            <p id="modal-sub-provider" style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provider Organization</p>
+          </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div id="modal-sub-status-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; background: rgba(139, 92, 246, 0.08); border: 1px solid rgba(139, 92, 246, 0.2);">
+          <div>
+            <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 2px;">Status</span>
+            <span id="modal-sub-status-text" style="font-size: 15px; font-weight: 800; color: #8b5cf6;">Under Review</span>
+          </div>
+          <div id="modal-sub-badge-wrap">
+            <span class="student-app-status-badge badge-status-review" id="modal-sub-badge">Under Review</span>
+          </div>
+        </div>
+
+        <!-- PROVIDER FOLLOW-UP MESSAGE & FEEDBACK BOX -->
+        <div style="margin-bottom: 22px;">
+          <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Provider Remarks &amp; Follow-Up Message
+          </h5>
+          <div id="modal-sub-feedback-box" style="padding: 14px 16px; border-radius: 12px; background: var(--bg-canvas); border: 1px solid var(--border-color); font-size: 13.5px; line-height: 1.55; color: var(--text-primary);">
+            <!-- Dynamic provider message injected here -->
+          </div>
+        </div>
+
+        <!-- SUBMISSION METADATA (Clearer Date Submitted, Grant Capacity Removed) -->
+        <div style="padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span style="font-size: 12.5px; font-weight: 600; color: var(--text-secondary);">Date Submitted</span>
+          </div>
+          <strong id="modal-sub-date" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary);">Nov 8, 2026</strong>
+        </div>
+
+        <!-- ATTACHED DOCUMENTS LIST -->
+        <div style="margin-bottom: 24px;">
+          <h5 style="font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+            </svg>
+            Attached Verification Documents (<span id="modal-sub-doc-count">0</span>)
+          </h5>
+          <div id="modal-sub-doc-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Document items dynamically injected -->
+          </div>
+        </div>
+
+        <!-- VERIFIED APPLICANT IDENTITY (Redesigned Modern Structured Layout) -->
+        <div class="sub-identity-card">
+          <!-- Identity Header: Avatar + Student Name + Verified Pill -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+              <div id="modal-sub-student-avatar" style="width: 42px; height: 42px; border-radius: 50%; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; overflow: hidden; border: 1.5px solid rgba(105, 65, 198, 0.25);">
+                ST
+              </div>
+              <div style="min-width: 0;">
+                <span style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-secondary); display: block;">Verified Applicant Identity</span>
+                <h4 id="modal-sub-student-name" style="margin: 2px 0 0 0; font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Student Scholar</h4>
+              </div>
+            </div>
+            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 100px; background: rgba(16, 185, 129, 0.12); color: #10B981; font-size: 11.5px; font-weight: 700; flex-shrink: 0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Verified
+            </span>
+          </div>
+
+          <!-- Information Grid: 2 columns, aligned, no dots -->
+          <div class="sub-identity-grid">
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Degree &amp; Year</span>
+              <strong id="modal-sub-student-course" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">BSIT - Service Management</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Institution</span>
+              <strong id="modal-sub-student-uni" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">Batangas State University</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Student ID / SR-Code</span>
+              <strong id="modal-sub-student-id" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35;">24-02924</strong>
+            </div>
+
+            <div>
+              <span style="font-size: 11px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 2px;">Institutional Email</span>
+              <strong id="modal-sub-student-email" style="font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; line-height: 1.35; word-break: break-word;">student@batstate-u.edu.ph</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL BOTTOM ACTIONS: 1) View Scholarship Post Details, 2) Close Application Details -->
+        <div class="sub-modal-actions">
+          <button
+            type="button"
+            id="btn-sub-view-post"
+            class="btn-sub-modal-view-post"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>View Scholarship Post</span>
+          </button>
+          <button
+            type="button"
+            id="btn-close-sub-modal"
+            class="btn-sub-modal-close-secondary"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Close Application Details</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- UPLOAD REVIEW & CONFIRMATION MODAL -->
+    <!-- ========================================= -->
+    <div id="fu-review-modal-overlay" class="fu-modal-overlay" aria-hidden="true">
+      <div class="fu-modal-sheet">
+        <!-- Top bar with title and close X -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h3 style="margin: 0; font-size: 16.5px; font-weight: 700; color: var(--text-primary);">Review Document Submission</h3>
+          </div>
+          <button type="button" id="btn-close-fu-review" class="modal-close-icon-btn" aria-label="Cancel upload">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Target Requirement -->
+        <div style="margin-bottom: 14px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); display: block; margin-bottom: 4px;">Requirement</span>
+          <p id="fu-review-req-title" style="margin: 0; font-size: 14px; font-weight: 700; color: #6941C6;"></p>
+        </div>
+
+        <!-- Selected File Preview Card -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); margin-bottom: 16px;">
+          <div id="fu-review-file-icon" style="width: 38px; height: 38px; border-radius: 8px; background: rgba(105, 65, 198, 0.12); color: #6941C6; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">
+            FILE
+          </div>
+          <div style="min-width: 0; flex: 1;">
+            <p id="fu-review-file-name" style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">filename.pdf</p>
+            <span id="fu-review-file-size" style="font-size: 11.5px; color: var(--text-secondary);">1.2 MB</span>
+          </div>
+        </div>
+
+        <!-- Permanent Upload Warning Notice -->
+        <div style="padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, 0.08); border-left: 4px solid #D97706; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <strong style="font-size: 12.5px; color: #D97706;">Permanent Submission Notice</strong>
+          </div>
+          <p style="margin: 0; font-size: 12.5px; color: var(--text-primary); line-height: 1.5;">
+            Once confirmed and uploaded, this document is locked on your scholarship application record and will be immediately submitted to the scholarship committee. It cannot be deleted or replaced. Please confirm you have selected the correct, legible document.
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 10px;">
+          <button type="button" id="btn-cancel-fu-review" class="btn-sub-modal-close-secondary" style="flex: 1;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Cancel</span>
+          </button>
+          <button type="button" id="btn-confirm-fu-upload" class="btn-sub-modal-view-post" style="flex: 1.3;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <span>Confirm &amp; Upload</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- UPLOAD SUCCESS MODAL -->
+    <!-- ========================================= -->
+    <div id="fu-success-modal-overlay" class="fu-modal-overlay" aria-hidden="true">
+      <div class="fu-modal-sheet" style="text-align: center; max-width: 440px;">
+        <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10B981; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">Document Submitted Successfully!</h3>
+        <p id="fu-success-message" style="margin: 0 0 22px 0; font-size: 13.5px; color: var(--text-secondary); line-height: 1.5;"></p>
+        <button type="button" id="btn-done-fu-success" class="btn-sub-modal-view-post" style="width: 100%;">
+          <span>Done</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/student.js"></script>
+  </body>
+</html>

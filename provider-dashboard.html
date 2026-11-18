@@ -1,0 +1,1477 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Provider Dashboard - NEXO</title>
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("nexo-theme");
+        if (
+          t === "dark" ||
+          (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))
+        ) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="dashboard-body">
+    <!-- 1. GLOBAL UNIVERSAL HEADER -->
+    <header class="global-header">
+      <!-- Universal NEXO Brand Logo & Name (Clicking navigates to About Us) -->
+      <div class="logo-container">
+        <a
+          href="provider-about.html"
+          class="nexo-brand-link"
+          style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;"
+          title="About Us"
+        >
+          <img
+            src="assets/logo.png"
+            alt="NEXO Logo"
+            class="nexo-brand-logo"
+            style="width: 34px; height: 34px; object-fit: contain;"
+          />
+          <span
+            class="nexo-brand-text"
+            style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; line-height: 1;"
+            >NEXO</span
+          >
+        </a>
+      </div>
+
+      <!-- Action buttons container -->
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <!-- The Dark Mode Toggle -->
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <!-- Notification Bell -->
+        <button class="icon-btn notification-btn" type="button" aria-label="Notifications" aria-expanded="false">
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot"></span>
+        </button>
+
+        <!-- Nav Wrapper (High z-index to sit above the page) -->
+        <div
+          class="nav-wrapper"
+          id="nav-wrapper"
+          style="margin-left: 4px"
+        >
+          <!-- Hamburger Button -->
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- The Provider Menu -->
+          <nav class="nav-menu" id="nav-menu">
+            <!-- Dashboard / Home (Active) -->
+            <a href="provider-dashboard.html" class="nav-link active">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Posted Scholarships -->
+            <a href="provider-posts.html" class="nav-link" id="nav-posts">
+              <img
+                src="assets/application-icon.png"
+                alt="Posted Scholarships"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Posted Scholarships</span>
+            </a>
+
+            <!-- Applications -->
+            <a href="provider-applications.html" class="nav-link">
+              <img
+                src="assets/human-icon.png"
+                alt="Applications"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Applications</span>
+            </a>
+
+            <!-- Provider Drafts -->
+            <a href="#!" class="nav-link" id="nav-drafts">
+              <img
+                src="assets/draft-icon.png"
+                alt="Drafts"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Drafts</span>
+              <span
+                id="draft-badge"
+                style="
+                  display: none;
+                  background-color: #8b5cf6;
+                  color: white;
+                  font-size: 12px;
+                  font-weight: 700;
+                  padding: 2px 8px;
+                  border-radius: 99px;
+                  margin-left: auto;
+                "
+                >0</span
+              >
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <!-- Provider Info Pages -->
+            <a href="provider-about.html" class="nav-link">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="privacy.html" class="nav-link">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+            <a href="credits.html" class="nav-link">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <a href="provider-settings.html" class="nav-link">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <!-- Secure Provider Logout -->
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                style="text-decoration: none !important"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="
+                    color: white;
+                    margin: 0;
+                    font-weight: 600;
+                    text-decoration: none !important;
+                  "
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. HERO COVER PHOTO (Top Edge-to-Edge)    -->
+    <!-- ========================================= -->
+    <div class="dash-hero-cover-container" id="dash-cover-banner">
+      <img
+        id="dash-cover-photo"
+        class="dash-hero-cover-img"
+        src=""
+        alt="Organization Cover"
+      />
+      <!-- Soft Bottom Fade Gradient -->
+      <div class="dash-hero-cover-fade"></div>
+    </div>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="dash-main">
+      <!-- 1. Redesigned Premium Provider Welcome & Identity Section -->
+      <section class="provider-welcome-hero" id="provider-welcome-section">
+        <div class="provider-welcome-left">
+          <!-- Overlapping/Elevated Profile Picture (Clickable to Brand Settings) -->
+          <a
+            href="provider-settings.html?tab=panel-brand"
+            class="provider-avatar-box"
+            id="welcome-avatar-wrapper"
+            aria-label="Customize Brand & Profile in Settings"
+            title="Change Organization Logo & Profile in Settings"
+          >
+            <img id="welcome-avatar-img" src="" alt="Organization Logo" />
+            <span id="welcome-avatar-initials" class="provider-avatar-initials">NX</span>
+          </a>
+
+          <!-- Organization & Account Identity Details -->
+          <div class="provider-welcome-info">
+            <div class="provider-welcome-badge-row">
+              <span class="provider-badge-org">Scholarship Provider</span>
+              <span class="provider-verified-chip">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Verified Institution
+              </span>
+            </div>
+            <h1 class="provider-org-title" id="dash-welcome-title">NEXO Scholarship Committee</h1>
+            <p class="provider-welcome-subtitle">
+              Manage your scholarship programs, track student applications, and evaluate grants.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary provider-header-cta open-create-modal-btn"
+          id="provider-top-create-btn"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Create Scholarship</span>
+        </button>
+      </section>
+
+      <!-- 2. Redesigned 4-Card Provider Statistics Layout -->
+      <section class="provider-stats-four-grid">
+        <!-- Metric 1: Total Scholarships -->
+        <div
+          class="provider-stat-box"
+          id="card-stat-total"
+          onclick="window.location.href = 'provider-posts.html'"
+          title="View all posted scholarship programs"
+          role="button"
+          tabindex="0"
+        >
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Total Scholarships</p>
+            <div class="provider-stat-icon-wrap stat-icon-purple">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-total">0</h2>
+          <p class="provider-stat-desc">
+            <span>Published programs</span>
+            <span class="stat-link">View all &rarr;</span>
+          </p>
+        </div>
+
+        <!-- Metric 2: Total Applicants -->
+        <div
+          class="provider-stat-box"
+          id="card-stat-applicants"
+          onclick="window.location.href = 'provider-applications.html'"
+          title="View all student submissions"
+          role="button"
+          tabindex="0"
+        >
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Total Applicants</p>
+            <div class="provider-stat-icon-wrap stat-icon-blue">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-applicants">0</h2>
+          <p class="provider-stat-desc">
+            <span>Registered candidates</span>
+            <span class="stat-link">Review &rarr;</span>
+          </p>
+        </div>
+
+        <!-- Metric 3: Pending Review -->
+        <div
+          class="provider-stat-box"
+          id="card-stat-pending"
+          onclick="window.location.href = 'provider-applications.html?filter=review'"
+          title="Filter applications awaiting review"
+          role="button"
+          tabindex="0"
+        >
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Pending Review</p>
+            <div class="provider-stat-icon-wrap stat-icon-amber">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-pending">1</h2>
+          <p class="provider-stat-desc">
+            <span>Requires evaluation</span>
+            <span class="stat-link">Action &rarr;</span>
+          </p>
+        </div>
+
+        <!-- Metric 4: Ongoing Scholarships -->
+        <div
+          class="provider-stat-box"
+          id="card-stat-ongoing"
+          onclick="window.location.href = 'provider-posts.html?filter=open'"
+          title="View active, open scholarship opportunities"
+          role="button"
+          tabindex="0"
+        >
+          <div class="provider-stat-top">
+            <p class="provider-stat-heading">Ongoing Scholarships</p>
+            <div class="provider-stat-icon-wrap stat-icon-green">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="provider-stat-num" id="stat-ongoing">0</h2>
+          <p class="provider-stat-desc">
+            <span>Accepting submissions</span>
+            <span class="stat-link">Manage &rarr;</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- 3. Two-Column Provider Workspace Layout on Desktop -->
+      <div class="provider-main-grid">
+        <!-- LEFT COLUMN: Primary Administration & Evaluation -->
+        <div class="provider-col-left">
+          <!-- SECTION 1: Applications Requiring Attention (Clean Table) -->
+          <section class="provider-card" id="provider-attention-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">
+                  <span>Applications Requiring Attention</span>
+                  <span id="provider-attention-badge" class="badge-status-pill badge-status-action" style="font-size: 11px;">1 Pending</span>
+                </h3>
+                <p class="provider-card-subtext">Recent student submissions waiting for committee verification or document review</p>
+              </div>
+              <a href="provider-applications.html" class="provider-action-link" id="attention-view-all-link" style="display: none;">View All Applications &rarr;</a>
+            </div>
+
+            <div class="provider-table-wrapper">
+              <table class="provider-attention-table" aria-label="Applications requiring attention">
+                <thead>
+                  <tr>
+                    <th>Applicant Name</th>
+                    <th>Scholarship Title</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="provider-attention-tbody">
+                  <!-- Realistic Mock Row (Adrian Del Mundo application from JSON database) -->
+                  <tr>
+                    <td>
+                      <div class="attention-applicant-cell">
+                        <div class="applicant-avatar-mini">AD</div>
+                        <div>
+                          <span class="applicant-name-text">Adrian Del Mundo</span>
+                          <span class="applicant-course-text">BSIT &bull; 3rd Year</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="attention-schol-title" title="BatStateU Academic Excellence Scholarship – 2026">
+                        BatStateU Academic Excellence Scholarship – 2026
+                      </span>
+                    </td>
+                    <td style="color: var(--text-secondary); white-space: nowrap;">Nov 11, 2026</td>
+                    <td>
+                      <span class="badge-status-pill badge-status-review">
+                        <span style="width: 6px; height: 6px; border-radius: 50%; background: #f59e0b;"></span>
+                        Under Review
+                      </span>
+                    </td>
+                    <td style="text-align: right;">
+                      <a href="provider-applications.html?appId=app_1794360837793_9d1509" class="btn btn-secondary btn-table-review">
+                        <span>Review</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- SECTION 2: Recent Scholarships (Horizontal Cards) -->
+          <section class="provider-card" id="provider-recent-schol-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Recent Scholarships</h3>
+                <p class="provider-card-subtext">Active programs and grants managed by your institution</p>
+              </div>
+              <a href="provider-posts.html" class="provider-action-link" id="view-all-btn" style="display: none;">View All Posts &rarr;</a>
+            </div>
+
+            <!-- Empty State Fallback -->
+            <div class="empty-state-card" id="empty-state-card" style="display: none;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-secondary); margin-bottom: 8px;">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">No active scholarships</h4>
+              <p style="margin: 0 0 12px 0;">Create and publish your first scholarship program to begin receiving student applications.</p>
+              <button type="button" class="btn btn-primary open-create-modal-btn" style="padding: 7px 18px; font-size: 13px; border-radius: 20px;">
+                + Create Scholarship
+              </button>
+            </div>
+
+            <!-- Horizontal Mini Scholarship Cards Container -->
+            <div class="provider-scholarships-cards" id="scholarships-feed">
+              <!-- Initial Realistic Card Mock -->
+              <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
+                <div class="mini-schol-left">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                    <h4 class="mini-schol-title">BatStateU Academic Excellence Scholarship – 2026</h4>
+                    <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">Ongoing</span>
+                  </div>
+                  <p class="mini-schol-meta">Merit-Based &bull; Closes Dec 15, 2026</p>
+                </div>
+                <div class="mini-schol-right">
+                  <span class="mini-schol-counts">1 / 500 Applicants</span>
+                  <button type="button" class="mini-schol-manage-btn">
+                    <span>Manage</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Second Illustrative Card -->
+              <div class="provider-mini-schol-card" onclick="window.location.href='provider-posts.html'">
+                <div class="mini-schol-left">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
+                    <h4 class="mini-schol-title">CICS Technology Leadership Grant – Batch 2026</h4>
+                    <span class="badge-status-pill" style="background: rgba(16, 185, 129, 0.12); color: #059669; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">Ongoing</span>
+                  </div>
+                  <p class="mini-schol-meta">Need &amp; Merit &bull; Closes Jan 30, 2027</p>
+                </div>
+                <div class="mini-schol-right">
+                  <span class="mini-schol-counts">0 / 250 Applicants</span>
+                  <button type="button" class="mini-schol-manage-btn">
+                    <span>Manage</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- RIGHT COLUMN: Deadlines, Quick Actions, and Audit Activity -->
+        <div class="provider-col-right">
+          <!-- SECTION 3: Upcoming Deadlines (Compact Vertical List) -->
+          <section class="provider-card" id="provider-deadlines-section">
+            <div class="provider-card-header">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Upcoming Deadlines</h3>
+                <p class="provider-card-subtext">Application closures and review milestones</p>
+              </div>
+              <a href="provider-posts.html" class="provider-action-link">Calendar &rarr;</a>
+            </div>
+
+            <div class="provider-deadlines-list" id="provider-deadlines-list">
+              <!-- Item 1 -->
+              <div class="provider-deadline-item" onclick="window.location.href='provider-posts.html'">
+                <div class="deadline-calendar-badge">
+                  <span class="deadline-cal-month">DEC</span>
+                  <span class="deadline-cal-day">15</span>
+                </div>
+                <div class="deadline-text-group">
+                  <h4 class="deadline-text-title" title="BatStateU Academic Excellence Scholarship">Academic Excellence Scholarship</h4>
+                  <div class="deadline-sub-row">
+                    <span>Program Closing Date</span>
+                    <span class="badge-status-pill" style="background: rgba(59, 130, 246, 0.1); color: #2563eb; font-size: 10.5px; padding: 2px 7px;">In 30 Days</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Item 2 -->
+              <div class="provider-deadline-item" onclick="window.location.href='provider-applications.html?filter=review'">
+                <div class="deadline-calendar-badge">
+                  <span class="deadline-cal-month">NOV</span>
+                  <span class="deadline-cal-day">20</span>
+                </div>
+                <div class="deadline-text-group">
+                  <h4 class="deadline-text-title" title="Committee Evaluation Period">Committee Evaluation Period</h4>
+                  <div class="deadline-sub-row">
+                    <span>First Round Review</span>
+                    <span class="badge-status-pill" style="background: rgba(245, 158, 11, 0.12); color: #d97706; font-size: 10.5px; padding: 2px 7px;">Priority</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 4: Quick Actions Grid (Replaces Oversized Full-Width Buttons) -->
+          <section class="provider-card" id="provider-quick-actions-section">
+            <div class="provider-card-header" style="margin-bottom: 14px;">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Quick Actions</h3>
+                <p class="provider-card-subtext">Frequent administration tasks</p>
+              </div>
+            </div>
+
+            <div class="provider-actions-grid">
+              <!-- Action 1: Create Scholarship (Primary) -->
+              <div
+                class="provider-action-tile tile-primary open-create-modal-btn"
+                id="open-create-modal"
+                role="button"
+                tabindex="0"
+                title="Publish a new scholarship opportunity"
+              >
+                <div class="action-tile-icon-wrap tile-icon-purple">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Create Scholarship</h4>
+                <p class="action-tile-desc">Draft and launch a new grant program</p>
+              </div>
+
+              <!-- Action 2: Review Applicants -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-applications.html'"
+                role="button"
+                tabindex="0"
+                title="Review incoming student submissions"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <polyline points="17 11 19 13 23 9"></polyline>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Review Applicants</h4>
+                <p class="action-tile-desc">Inspect candidates and submitted files</p>
+              </div>
+
+              <!-- Action 3: Manage Scholarships -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-posts.html'"
+                role="button"
+                tabindex="0"
+                title="Manage active scholarship postings"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Manage Programs</h4>
+                <p class="action-tile-desc">Edit criteria, deadlines, and limits</p>
+              </div>
+
+              <!-- Action 4: Organization Brand Settings -->
+              <div
+                class="provider-action-tile"
+                onclick="window.location.href='provider-settings.html?tab=panel-brand'"
+                role="button"
+                tabindex="0"
+                title="Customize institution logo, banner, and bio"
+              >
+                <div class="action-tile-icon-wrap tile-icon-subtle">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </div>
+                <h4 class="action-tile-title">Brand Settings</h4>
+                <p class="action-tile-desc">Update logo, cover image, and contacts</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- SECTION 5: Recent Activity (Compact Timeline) -->
+          <section class="provider-card" id="provider-recent-activity-section">
+            <div class="provider-card-header" style="margin-bottom: 14px;">
+              <div class="provider-card-title-group">
+                <h3 class="provider-card-title">Recent Activity</h3>
+                <p class="provider-card-subtext">Audit log of system and committee events</p>
+              </div>
+            </div>
+
+            <div class="provider-activity-timeline" id="provider-activity-list">
+              <!-- Event 1 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse activity-dot-amber"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">Application under committee evaluation</h5>
+                    <span class="activity-timestamp">2d ago</span>
+                  </div>
+                  <p class="activity-text-desc">Adrian Del Mundo &bull; BatStateU Academic Excellence Scholarship</p>
+                </div>
+              </div>
+
+              <!-- Event 2 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse activity-dot-green"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">New application received</h5>
+                    <span class="activity-timestamp">3d ago</span>
+                  </div>
+                  <p class="activity-text-desc">Candidate submission registered for Academic Excellence Scholarship</p>
+                </div>
+              </div>
+
+              <!-- Event 3 -->
+              <div class="provider-activity-row">
+                <div class="activity-node-col">
+                  <span class="activity-dot-pulse"></span>
+                </div>
+                <div class="activity-body-wrap">
+                  <div class="activity-line-top">
+                    <h5 class="activity-text-title">Scholarship program published</h5>
+                    <span class="activity-timestamp">4d ago</span>
+                  </div>
+                  <p class="activity-text-desc">BatStateU Academic Excellence Scholarship – 2026 published to student directory</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- DRAFTS SECTION -->
+      <section id="dash-drafts-section" style="display: none; padding-top: 80px; width: 100%; margin: 0 auto;">
+        <div
+          class="section-header"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+          "
+        >
+          <h3 class="drafts-section-title" style="font-size: 24px; margin: 0">
+            Saved Drafts
+          </h3>
+          <button
+            type="button"
+            class="btn btn-primary open-create-modal-btn"
+            style="padding: 8px 18px; font-size: 14px; border-radius: 20px;"
+          >
+            + New Scholarship
+          </button>
+        </div>
+
+        <div class="empty-state-card" id="empty-drafts-card">
+          <p>No drafts saved yet.</p>
+        </div>
+
+        <style>
+          body.dark-theme .draft-card h3 {
+            color: #ffffff !important;
+          }
+          body.dark-theme .draft-card p {
+            color: #e5e7eb !important;
+          }
+        </style>
+
+        <div
+          id="drafts-feed"
+          class="drafts-feed"
+        ></div>
+      </section>
+
+      <!-- ALL SCHOLARSHIPS FULL FEED SECTION -->
+      <section id="dash-all-scholarships-section" style="display: none">
+        <div
+          class="section-header"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+          "
+        >
+          <h3 style="font-size: 24px; margin: 0">All Posted Scholarships</h3>
+          <button
+            type="button"
+            class="btn-back-nav"
+            id="back-to-dash-btn"
+            style="margin-bottom: 0;"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back to Dashboard
+          </button>
+        </div>
+
+        <div
+          id="all-scholarships-feed"
+          style="display: flex; flex-direction: column; gap: 16px"
+        ></div>
+      </section>
+    </main>
+
+    <!-- ========================================= -->
+    <!-- CREATE SCHOLARSHIP FULL-SCREEN MODAL -->
+    <!-- ========================================= -->
+    <div
+      id="create-scholarship-modal"
+      class="creation-modal"
+      aria-hidden="true"
+    >
+      <div class="creation-modal-content">
+        <!-- Modal Header -->
+        <div class="creation-header">
+          <div class="creation-header-title-group">
+            <h2 class="creation-modal-title" id="creation-modal-title">Create Scholarship Opportunity</h2>
+            <p class="creation-modal-subtitle">Publish a new scholarship program for student applicants</p>
+          </div>
+          <button
+            type="button"
+            class="close-modal-btn"
+            id="cancel-creation-icon"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <!-- Progress/Percentage Bar -->
+        <div class="progress-container">
+          <div class="progress-header">
+            <span class="progress-text">Completion Progress</span>
+            <span class="progress-percentage">33%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 33%"></div>
+          </div>
+          <div class="step-indicator">
+            <span class="step active"
+              ><span class="step-num">1</span> Details</span
+            >
+            <span class="step-line"></span>
+            <span class="step inactive"
+              ><span class="step-num">2</span> Requirements</span
+            >
+            <span class="step-line"></span>
+            <span class="step inactive"
+              ><span class="step-num">3</span> Review</span
+            >
+          </div>
+        </div>
+
+        <!-- Step 1 Container -->
+        <div id="step-1-container" class="step-container active">
+          <form id="step-1-form" class="creation-form">
+            <h3 class="form-section-title">Scholarship Details</h3>
+
+            <div class="input-group">
+              <label for="schol-name">Scholarship Title</label>
+              <input
+                type="text"
+                id="schol-name"
+                placeholder="e.g. Tech for Tomorrow Scholarship"
+                maxlength="150"
+              />
+              <p class="error-msg" id="error-schol-name"></p>
+            </div>
+
+            <div class="input-group">
+              <label for="schol-desc">Scholarship Description</label>
+              <textarea
+                id="schol-desc"
+                rows="6"
+                placeholder="Provide complete scholarship details, eligibility guidelines, benefits, criteria, and post caption..."
+                maxlength="5000"
+              ></textarea>
+              <p class="error-msg" id="error-schol-desc"></p>
+            </div>
+
+            <div class="input-group">
+              <label>Scholarship Type</label>
+              <div class="custom-dropdown" id="schol-type-dropdown">
+                <div class="dropdown-selected" id="schol-type-selected">
+                  <span>Select type</span>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path d="M6 9l6 6 6-6"></path>
+                  </svg>
+                </div>
+                <ul class="dropdown-options" id="schol-type-options">
+                  <li data-value="merit">Merit-Based</li>
+                  <li data-value="need">Need-Based</li>
+                  <li data-value="athletic">Athletic</li>
+                </ul>
+                <input
+                  type="hidden"
+                  id="schol-type"
+                  name="schol-type"
+                  value=""
+                />
+              </div>
+              <p class="error-msg" id="error-schol-type"></p>
+            </div>
+
+            <div class="input-group">
+              <label for="schol-deadline">Application Deadline</label>
+
+              <!-- Fixed Wrapper: Uses standard block layout so it doesn't break your CSS -->
+              <div style="position: relative; width: 100%">
+                <!-- Text Input -->
+                <input
+                  type="text"
+                  id="schol-deadline"
+                  placeholder="MM/DD/YYYY"
+                  maxlength="10"
+                  inputmode="numeric"
+                  style="
+                    width: 100%;
+                    padding-right: 48px;
+                    box-sizing: border-box;
+                  "
+                />
+
+                <!-- Fixed Calendar Trigger: Uses showPicker() to guarantee it opens on mobile & desktop -->
+                <input
+                  type="date"
+                  id="native-date-picker"
+                  onclick="if (this.showPicker) this.showPicker();"
+                  style="
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    width: 48px;
+                    height: 100%;
+                    opacity: 0;
+                    cursor: pointer;
+                    z-index: 2;
+                  "
+                />
+
+                <!-- Visible Icon -->
+                <svg
+                  style="
+                    position: absolute;
+                    right: 14px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    pointer-events: none;
+                    z-index: 1;
+                  "
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#6b7280"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+              <p class="error-msg" id="error-schol-deadline"></p>
+            </div>
+
+            <div class="input-group">
+              <label for="schol-limit">Applicant Limit (Capacity)</label>
+              <div style="position: relative; width: 100%">
+                <input
+                  type="number"
+                  id="schol-limit"
+                  min="1"
+                  max="10000"
+                  placeholder="e.g. 50, 100, 200"
+                  value="200"
+                  style="width: 100%; box-sizing: border-box"
+                />
+              </div>
+              <p class="error-msg" id="error-schol-limit"></p>
+            </div>
+
+            <div class="modal-actions" id="step-1-normal-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancel-creation-btn-1"
+              >
+                Cancel
+              </button>
+              <button type="button" class="btn btn-primary" id="go-to-step-2">
+                Next
+              </button>
+            </div>
+
+            <div
+              class="modal-actions"
+              id="step-1-edit-actions"
+              style="display: none"
+            >
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancel-edit-1"
+              >
+                Cancel
+              </button>
+              <button type="button" class="btn btn-primary" id="done-edit-1">
+                Done
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Step 2 Container -->
+        <div id="step-2-container" class="step-container">
+          <h3 class="form-section-title">Scholarship Requirements</h3>
+          <p class="form-section-subtitle">
+            Add the documents students need to submit in order to apply for this
+            scholarship.
+          </p>
+          <div id="requirements-list" class="requirements-list">
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                  <circle cx="9" cy="10" r="2"></circle>
+                  <line x1="15" y1="8" x2="17" y2="8"></line>
+                  <line x1="15" y1="12" x2="17" y2="12"></line>
+                  <line x1="7" y1="16" x2="17" y2="16"></line>
+                </svg>
+              </div>
+              <div class="req-text">
+                <h4>Valid School ID</h4>
+                <p>Upload a clear photo of your student ID.</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">
+                &times;
+              </button>
+            </div>
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </div>
+              <div class="req-text">
+                <h4>Latest Grades/Transcript</h4>
+                <p>Upload your latest grades or official transcript.</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">
+                &times;
+              </button>
+            </div>
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+              </div>
+              <div class="req-text">
+                <h4>Certificate of Registration (COR)</h4>
+                <p>Upload your Certificate of Registration (COR) or enrollment form.</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">
+                &times;
+              </button>
+            </div>
+            <div class="req-card">
+              <div class="req-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </div>
+              <div class="req-text">
+                <h4>Personal Statement</h4>
+                <p>Write a short letter about your goals and aspirations.</p>
+              </div>
+              <button type="button" class="remove-req-btn" aria-label="Remove">
+                &times;
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="add-custom-req-btn"
+            class="btn btn-outline"
+            style="
+              width: 100%;
+              margin-top: 16px;
+              border: 2px dashed #8b5cf6;
+              color: #8b5cf6;
+              background: transparent;
+            "
+          >
+            + Add Custom Requirement
+          </button>
+          <p
+            class="error-msg"
+            id="error-step-2"
+            style="text-align: center; margin-top: 16px"
+          ></p>
+          <div
+            class="modal-actions"
+            id="step-2-normal-actions"
+            style="margin-top: 24px"
+          >
+            <button type="button" class="btn btn-secondary" id="go-to-step-1">
+              Back
+            </button>
+            <button type="button" class="btn btn-primary" id="go-to-step-3">
+              Next
+            </button>
+          </div>
+          <div
+            class="modal-actions"
+            id="step-2-edit-actions"
+            style="display: none; margin-top: 24px"
+          >
+            <button type="button" class="btn btn-secondary" id="cancel-edit-2">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-primary" id="done-edit-2">
+              Done
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3 Container -->
+        <div id="step-3-container" class="step-container">
+          <div class="review-card">
+            <div class="review-header">
+              <h3 class="form-section-title" style="margin: 0">
+                Scholarship Summary
+              </h3>
+              <button type="button" class="edit-review-btn" id="edit-step-1">
+                Edit
+              </button>
+            </div>
+            <div class="review-content">
+              <div class="review-logo-placeholder" id="review-logo-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="review-placeholder-icon" style="color: var(--purple-700);">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+              </div>
+              <div class="review-details">
+                <h4 id="review-title">Tech for Tomorrow Scholarship</h4>
+                <div style="display: flex; gap: 8px; margin-bottom: 8px">
+                  <span class="review-pill" id="review-type">Admin</span>
+                  <span
+                    class="review-pill"
+                    id="review-category"
+                    style="background-color: #f3f4f6; color: #4b5563"
+                    >Merit-Based</span
+                  >
+                </div>
+                <p
+                  class="review-deadline"
+                  style="display: flex; align-items: center"
+                >
+                  <!-- Brand new SVG Calendar matching the input field -->
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6b7280"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="margin-right: 6px"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                    ></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+
+                  <strong style="margin-right: 4px">Deadline:</strong>
+                  <span id="review-date">Nov 10, 2026</span>
+                </p>
+                <p
+                  class="review-limit"
+                  style="display: flex; align-items: center; margin-top: 4px"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6b7280"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="margin-right: 6px"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                  <strong style="margin-right: 4px">Applicant Limit:</strong>
+                  <span id="review-limit">200 Applicants</span>
+                </p>
+              </div>
+            </div>
+            <p class="review-desc" id="review-desc-text">
+              This scholarship aims to support outstanding students pursuing
+              degrees in STEM.
+            </p>
+          </div>
+
+          <div class="review-card">
+            <div class="review-header">
+              <h3 class="form-section-title" style="margin: 0">
+                Required Documents
+              </h3>
+              <button type="button" class="edit-review-btn" id="edit-step-2">
+                Edit
+              </button>
+            </div>
+            <ul class="review-req-list">
+              <li>Valid School ID</li>
+              <li>Latest Grades/Transcript</li>
+              <li>Certificate of Enrollment</li>
+              <li>Personal Statement</li>
+            </ul>
+          </div>
+
+          <label class="confirm-checkbox-container">
+            <input type="checkbox" id="confirm-info" />
+            <span class="custom-checkmark"
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="3"
+              >
+                <path d="M20 6L9 17l-5-5"></path></svg
+            ></span>
+            <span class="confirm-text"
+              >I confirm that all information provided is true and
+              correct.</span
+            >
+          </label>
+
+          <p
+            class="error-msg"
+            id="error-step-3"
+            style="margin-bottom: 16px; margin-top: 4px"
+          ></p>
+
+          <div class="modal-actions-column">
+            <button
+              type="button"
+              class="btn btn-primary confirm-action-btn"
+              id="publish-btn"
+            >
+              Publish Scholarship
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline confirm-action-btn"
+              id="draft-btn"
+              style="
+                border: 2px solid #8b5cf6;
+                color: #8b5cf6;
+                background: transparent;
+              "
+            >
+              Save as Draft
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="back-to-step-2"
+              style="margin-top: 8px"
+            >
+              Back
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- VIEW FULL DETAILS MODAL (Student POV Match) -->
+    <!-- ========================================= -->
+    <div id="view-details-modal" class="schol-modal-overlay" aria-hidden="true">
+      <div class="schol-modal-sheet" id="view-details-sheet">
+        
+        <!-- Modal Top Bar: Clean X Close Button -->
+        <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 12px;">
+          <button
+            type="button"
+            id="close-view-details-btn"
+            class="modal-close-icon-btn"
+            aria-label="Close details"
+            title="Close"
+            onclick="closeProviderDetailsModal()"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Hero Cover Banner & Overlapping Logo -->
+        <div class="details-cover-wrap" id="view-modal-cover-wrap">
+          <div class="details-cover-inner">
+            <img src="" alt="Cover" class="details-cover-img" id="view-modal-cover-img" style="display: none;">
+          </div>
+          <div class="details-provider-avatar" id="view-modal-schol-logo">
+            NX
+          </div>
+        </div>
+
+        <!-- 1. Scholarship Title -->
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin: 0 0 4px 0; line-height: 1.3;" id="view-modal-title">
+          Scholarship Program
+        </h2>
+
+        <!-- 2. Scholarship Provider Name under the Scholarship Title -->
+        <p style="font-size: 14.5px; font-weight: 600; color: var(--text-secondary); margin: 0 0 10px 0;" id="view-modal-provider">
+          NEXO
+        </p>
+
+        <!-- 3. Followed by Scholarship Type and Status -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+          <span class="modal-type-badge" id="view-modal-type">Merit-Based</span>
+          <span id="view-modal-status" style="font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.12); color: #10b981;">
+            Active
+          </span>
+        </div>
+
+        <!-- Scholarship Key Metadata (Applicants, Posted Date, Deadline / Expiration) -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;">
+          <!-- Row 1: Applicants -->
+          <div>
+            <span id="view-modal-applicants-wrap" style="color: #8b5cf6; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 13px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span id="view-modal-applicants">0 / 200 Applicants</span>
+            </span>
+          </div>
+
+          <!-- Row 2: Posted & Expires Together -->
+          <div class="directory-dates-row" style="font-size: 12.5px;">
+            <span class="directory-date-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <span>Posted: <strong id="view-modal-posted" style="color: var(--text-primary);">Recently</strong></span>
+            </span>
+            <span class="directory-date-dot">&bull;</span>
+            <span class="directory-date-item">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>Deadline: <strong id="view-modal-date" style="color: var(--text-primary);">No Deadline</strong></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- About the Scholarship -->
+        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px 0;">About the Scholarship</h4>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 20px; white-space: pre-line;" id="view-modal-desc">
+          Scholarship description...
+        </p>
+
+        <!-- Required Documents Checklist -->
+        <h4 style="font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0;">Required Documents</h4>
+        <div id="view-modal-reqs" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px;">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Actions: Provider Controls -->
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 8px;">
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="view-modal-manage-btn"
+            style="width: 100%; padding: 13px; font-size: 14.5px; font-weight: 700; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span id="view-modal-manage-text">Manage Applications</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            id="view-modal-close-action-btn"
+            onclick="closeProviderDetailsModal()"
+            style="width: 100%; padding: 11px; font-size: 13.5px; font-weight: 600; border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            <span>Close Details</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CUSTOM CONFIRMATION MODAL -->
+    <div id="cancel-confirm-modal" class="confirm-modal-overlay">
+      <div class="confirm-modal-box">
+        <h3 class="confirm-modal-title">Discard Progress?</h3>
+        <p class="confirm-modal-desc">
+          Are you sure you want to cancel? All your entered details and
+          requirements will be lost.
+        </p>
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn btn-secondary" id="stay-editing-btn" style="border-radius: 20px;">
+            Keep Editing
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="confirm-discard-btn"
+            style="background-color: #ef4444; border-color: #ef4444; border-radius: 20px;"
+          >
+            Discard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE DRAFT CONFIRMATION MODAL -->
+    <div id="delete-draft-confirm-modal" class="confirm-modal-overlay">
+      <div class="confirm-modal-box">
+        <h3 class="confirm-modal-title">Delete Draft?</h3>
+        <p class="confirm-modal-desc">
+          Are you sure you want to delete this scholarship draft? This action cannot be undone.
+        </p>
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-delete-draft-btn" style="border-radius: 20px;">
+            Keep Draft
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="confirm-delete-draft-btn"
+            style="background-color: #ef4444; border-color: #ef4444; border-radius: 20px;"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>
+        Copyright 2026 Batangas State University &bull; Alangilan Campus &bull;
+        CICS
+      </p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/provider.js"></script>
+    <script src="js/dashboard.js"></script>
+  </body>
+</html>

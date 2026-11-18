@@ -1,0 +1,9 @@
+#!/bin/bash
+if command -v node >/dev/null 2>&1 && [ "$(command -v node)" != "$0" ]; then
+  exec node "$@"
+elif [ -x /usr/share/code/code ]; then
+  ELECTRON_RUN_AS_NODE=1 exec /usr/share/code/code "$@"
+else
+  echo "Error: Node.js runtime not found." >&2
+  exit 1
+fi

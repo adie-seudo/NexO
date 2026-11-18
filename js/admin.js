@@ -1,0 +1,1414 @@
+// ==========================================================================
+// NEXO DEVELOPER ADMIN CONSOLE ENGINE
+// Standalone developer portal for account creation, student/provider management,
+// cascade account deletion/banning, and JSON database cleaning.
+// ==========================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  const API_BASE =
+    window.location.origin && window.location.origin.includes(":3000")
+      ? ""
+      : "http://localhost:3000";
+
+  // State
+  let users = [];
+  let scholarships = [];
+  let applications = [];
+  let drafts = [];
+  let activeTab = "students";
+  let activeRoleSelection = "student";
+  let pendingDeleteTarget = null; // { type: 'user' | 'scholarship' | 'all_apps' | 'all_drafts' | 'factory', id, name, role }
+
+  // DOM Elements - Navigation Tabs
+  const tabBtnStudents = document.getElementById("tab-btn-students");
+  const tabBtnProviders = document.getElementById("tab-btn-providers");
+  const tabBtnScholarships = document.getElementById("tab-btn-scholarships");
+  const tabBtnCleaner = document.getElementById("tab-btn-cleaner");
+  const secStudents = document.getElementById("section-students");
+  const secProviders = document.getElementById("section-providers");
+  const secScholarships = document.getElementById("section-scholarships");
+  const secCleaner = document.getElementById("section-cleaner");
+
+  // DOM Elements - Search and Filters
+  const searchStudentsInput = document.getElementById("search-students");
+  const filterStudentStatus = document.getElementById("filter-student-status");
+  const searchProvidersInput = document.getElementById("search-providers");
+  const filterProviderStatus = document.getElementById("filter-provider-status");
+  const searchScholarshipsInput = document.getElementById("search-scholarships");
+  const filterScholarshipType = document.getElementById("filter-scholarship-type");
+
+  // DOM Elements - Containers
+  const studentsListContainer = document.getElementById("students-list-container");
+  const providersListContainer = document.getElementById("providers-list-container");
+  const scholarshipsListContainer = document.getElementById("scholarships-list-container");
+  const cleanerScholsList = document.getElementById("cleaner-scholarships-list");
+
+  // DOM Elements - Badges & Stats
+  const statStudentCount = document.getElementById("stat-student-count");
+  const statProviderCount = document.getElementById("stat-provider-count");
+  const statScholCount = document.getElementById("stat-schol-count");
+  const statAppCount = document.getElementById("stat-app-count");
+  const badgeTabStudents = document.getElementById("badge-tab-students");
+  const badgeTabProviders = document.getElementById("badge-tab-providers");
+  const badgeTabScholarships = document.getElementById("badge-tab-scholarships");
+  const cleanerScholCount = document.getElementById("cleaner-schol-count");
+  const cleanerAppCount = document.getElementById("cleaner-app-count");
+  const cleanerDraftCount = document.getElementById("cleaner-draft-count");
+  const liveSyncIndicator = document.getElementById("live-sync-indicator");
+
+  // DOM Elements - Modals
+  const createModal = document.getElementById("admin-create-modal");
+  const confirmModal = document.getElementById("admin-confirm-modal");
+  const btnOpenCreate = document.getElementById("btn-open-create-user");
+  const btnCloseCreate = document.getElementById("close-create-modal");
+  const btnCancelCreate = document.getElementById("btn-cancel-create");
+  const formCreateAccount = document.getElementById("form-create-account");
+  const roleBtnStudent = document.getElementById("role-btn-student");
+  const roleBtnProvider = document.getElementById("role-btn-provider");
+  const inputUserEmail = document.getElementById("input-user-email");
+  const inputUserName = document.getElementById("input-user-name");
+  const inputUserPassword = document.getElementById("input-user-password");
+  const labelUserName = document.getElementById("label-user-name");
+  const emailHint = document.getElementById("email-hint");
+  const selectUserStatus = document.getElementById("select-user-status");
+
+  const confirmModalTitle = document.getElementById("confirm-modal-title");
+  const confirmModalDesc = document.getElementById("confirm-modal-desc");
+  const btnCancelConfirm = document.getElementById("btn-cancel-confirm");
+  const btnExecuteConfirm = document.getElementById("btn-execute-confirm");
+
+  // DOM Elements - Cleaner Actions & Export
+  const btnPurgeScholarships = document.getElementById("btn-purge-scholarships");
+  const btnPurgeApps = document.getElementById("btn-purge-apps");
+  const btnPurgeDrafts = document.getElementById("btn-purge-drafts");
+  const btnFactoryReset = document.getElementById("btn-factory-reset");
+  const btnExportJson = document.getElementById("btn-export-json");
+  const btnAdminTheme = document.getElementById("btn-admin-theme");
+
+  // -------------------------------------------------------------
+  // 1. TOAST FEEDBACK NOTIFIER
+  // -------------------------------------------------------------
+  const adminToast = document.getElementById("admin-toast");
+  const adminToastText = document.getElementById("admin-toast-text");
+  let toastTimeout = null;
+
+  function showToast(message, isError = false) {
+    if (!adminToast || !adminToastText) return;
+    adminToastText.textContent = message;
+    adminToast.style.borderColor = isError
+      ? "rgba(239, 68, 68, 0.5)"
+      : "rgba(16, 185, 129, 0.5)";
+    adminToast.style.background = isError ? "#3b1111" : "#112e1f";
+    adminToast.style.opacity = "1";
+    adminToast.style.transform = "translateY(0)";
+    adminToast.style.pointerEvents = "auto";
+
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+      adminToast.style.opacity = "0";
+      adminToast.style.transform = "translateY(100px)";
+      adminToast.style.pointerEvents = "none";
+    }, 3200);
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  // -------------------------------------------------------------
+  // 2. THEME TOGGLE
+  // -------------------------------------------------------------
+  if (btnAdminTheme) {
+    btnAdminTheme.addEventListener("click", () => {
+      const isDark = document.body.classList.toggle("dark-theme");
+      document.documentElement.classList.toggle("dark-theme", isDark);
+      localStorage.setItem("nexo-theme", isDark ? "dark" : "light");
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 3. TAB NAVIGATION
+  // -------------------------------------------------------------
+  function switchTab(target) {
+    activeTab = target;
+    [tabBtnStudents, tabBtnProviders, tabBtnScholarships, tabBtnCleaner].forEach((btn) => {
+      if (btn) btn.classList.remove("active");
+    });
+    [secStudents, secProviders, secScholarships, secCleaner].forEach((sec) => {
+      if (sec) sec.style.display = "none";
+    });
+
+    if (target === "students") {
+      if (tabBtnStudents) tabBtnStudents.classList.add("active");
+      if (secStudents) secStudents.style.display = "block";
+      renderStudentsList();
+    } else if (target === "providers") {
+      if (tabBtnProviders) tabBtnProviders.classList.add("active");
+      if (secProviders) secProviders.style.display = "block";
+      renderProvidersList();
+    } else if (target === "scholarships") {
+      if (tabBtnScholarships) tabBtnScholarships.classList.add("active");
+      if (secScholarships) secScholarships.style.display = "block";
+      renderScholarshipsList();
+    } else if (target === "cleaner") {
+      if (tabBtnCleaner) tabBtnCleaner.classList.add("active");
+      if (secCleaner) secCleaner.style.display = "block";
+      renderCleanerTab();
+    }
+  }
+
+  if (tabBtnStudents)
+    tabBtnStudents.addEventListener("click", () => switchTab("students"));
+  if (tabBtnProviders)
+    tabBtnProviders.addEventListener("click", () => switchTab("providers"));
+  if (tabBtnScholarships)
+    tabBtnScholarships.addEventListener("click", () => switchTab("scholarships"));
+  if (tabBtnCleaner)
+    tabBtnCleaner.addEventListener("click", () => switchTab("cleaner"));
+
+  // -------------------------------------------------------------
+  // 4. FETCH DATA FROM LOCAL BACKEND (File Handling Engine)
+  // -------------------------------------------------------------
+  async function loadData() {
+    let loadedFromApi = false;
+    let localUsers = [];
+    let localScholarships = [];
+    let localApplications = [];
+    let localDrafts = null;
+    let deletedIds = new Set();
+
+    try {
+      const cu = localStorage.getItem("nexo_users");
+      const cs = localStorage.getItem("nexo_scholarships");
+      const ca = localStorage.getItem("nexo_applications");
+      const cd = localStorage.getItem("nexo_drafts");
+      const del = localStorage.getItem("nexo_deleted_ids");
+      if (cu) localUsers = JSON.parse(cu);
+      if (cs) localScholarships = JSON.parse(cs);
+      if (ca) localApplications = JSON.parse(ca);
+      if (cd !== null) localDrafts = JSON.parse(cd);
+      if (del) deletedIds = new Set(JSON.parse(del).map(String));
+    } catch (_) {}
+
+    function mergeById(primaryList, secondaryList) {
+      const result = [];
+      const seen = new Set();
+      (Array.isArray(primaryList) ? primaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || item.email || "");
+        if (id && deletedIds.has(id)) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      (Array.isArray(secondaryList) ? secondaryList : []).forEach((item) => {
+        if (!item) return;
+        const id = String(item.id || item.email || "");
+        if (id && (seen.has(id) || deletedIds.has(id))) return;
+        if (id) seen.add(id);
+        result.push(item);
+      });
+      return result;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/data`, {
+        cache: "no-store",
+      }).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        users = mergeById(Array.isArray(data.users) ? data.users : [], localUsers);
+        scholarships = mergeById(
+          Array.isArray(data.scholarships) ? data.scholarships : [],
+          localScholarships,
+        );
+        applications = mergeById(
+          Array.isArray(data.applications) ? data.applications : [],
+          localApplications,
+        );
+        const serverDrafts = Array.isArray(data.drafts) ? data.drafts : [];
+        drafts = localDrafts !== null ? mergeById(serverDrafts, localDrafts) : serverDrafts;
+        loadedFromApi = true;
+
+        // Cache to localStorage for offline resilience
+        try {
+          localStorage.setItem("nexo_users", JSON.stringify(users));
+          localStorage.setItem(
+            "nexo_scholarships",
+            JSON.stringify(scholarships),
+          );
+          localStorage.setItem(
+            "nexo_applications",
+            JSON.stringify(applications),
+          );
+          localStorage.setItem("nexo_drafts", JSON.stringify(drafts));
+        } catch (_) {}
+      }
+    } catch (e) {
+      console.warn("Could not fetch /api/data:", e);
+    }
+
+    if (!loadedFromApi) {
+      // Fallback to localStorage + static data.json if served via static web server
+      let staticData = {};
+      try {
+        const fallbackRes = await fetch("data.json", {
+          cache: "no-store",
+        }).catch(() => null);
+        if (fallbackRes && fallbackRes.ok) {
+          staticData = await fallbackRes.json();
+        }
+      } catch (_) {}
+
+      users = mergeById(localUsers, staticData.users);
+      scholarships = mergeById(localScholarships, staticData.scholarships);
+      applications = mergeById(localApplications, staticData.applications);
+      drafts =
+        localDrafts !== null
+          ? (Array.isArray(localDrafts)
+              ? localDrafts.filter((d) => d && !deletedIds.has(String(d.id || "")))
+              : [])
+          : Array.isArray(staticData.drafts)
+            ? staticData.drafts
+            : [];
+    }
+
+    if (liveSyncIndicator) {
+      liveSyncIndicator.style.display = "inline-flex";
+      if (loadedFromApi) {
+        liveSyncIndicator.style.background = "rgba(16, 185, 129, 0.12)";
+        liveSyncIndicator.style.color = "#10b981";
+        liveSyncIndicator.innerHTML = `<span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span> Live Sync: data.json`;
+      } else {
+        liveSyncIndicator.style.background = "rgba(239, 68, 68, 0.12)";
+        liveSyncIndicator.style.color = "#ef4444";
+        liveSyncIndicator.innerHTML = `<span style="width: 7px; height: 7px; border-radius: 50%; background: #ef4444;"></span> Server Offline (Read-Only)`;
+      }
+    }
+
+    renderAll();
+  }
+
+  // -------------------------------------------------------------
+  // 5. RENDER FUNCTIONS
+  // -------------------------------------------------------------
+  function renderAll() {
+    renderStats();
+    if (activeTab === "students") renderStudentsList();
+    else if (activeTab === "providers") renderProvidersList();
+    else if (activeTab === "scholarships") renderScholarshipsList();
+    else if (activeTab === "cleaner") renderCleanerTab();
+  }
+
+  function renderStats() {
+    const studentUsers = users.filter((u) => u.role === "student");
+    const providerUsers = users.filter(
+      (u) => u.role === "provider" || u.role === "admin",
+    );
+
+    if (statStudentCount) statStudentCount.textContent = studentUsers.length;
+    if (statProviderCount) statProviderCount.textContent = providerUsers.length;
+    if (statScholCount) statScholCount.textContent = scholarships.length;
+    if (statAppCount) statAppCount.textContent = applications.length;
+
+    if (badgeTabStudents) badgeTabStudents.textContent = studentUsers.length;
+    if (badgeTabProviders) badgeTabProviders.textContent = providerUsers.length;
+    if (badgeTabScholarships) badgeTabScholarships.textContent = scholarships.length;
+    if (cleanerScholCount) cleanerScholCount.textContent = scholarships.length;
+    if (cleanerAppCount) cleanerAppCount.textContent = applications.length;
+    if (cleanerDraftCount) cleanerDraftCount.textContent = drafts.length;
+  }
+
+  // 5A. Render Student Accounts List
+  function renderStudentsList() {
+    if (!studentsListContainer) return;
+    studentsListContainer.innerHTML = "";
+
+    const query = (
+      searchStudentsInput ? searchStudentsInput.value : ""
+    ).toLowerCase();
+    const filterStatus = filterStudentStatus
+      ? filterStudentStatus.value
+      : "all";
+
+    let studentUsers = users.filter((u) => u.role === "student");
+
+    if (filterStatus === "active") {
+      studentUsers = studentUsers.filter((u) => u.status !== "banned");
+    } else if (filterStatus === "banned") {
+      studentUsers = studentUsers.filter((u) => u.status === "banned");
+    }
+
+    if (query) {
+      studentUsers = studentUsers.filter((u) => {
+        const email = (u.email || "").toLowerCase();
+        const name = (u.name || "").toLowerCase();
+        const course = (u.course || "").toLowerCase();
+        const uni = (u.university || "").toLowerCase();
+        return (
+          email.includes(query) ||
+          name.includes(query) ||
+          course.includes(query) ||
+          uni.includes(query)
+        );
+      });
+    }
+
+    if (studentUsers.length === 0) {
+      studentsListContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 14px;">
+          <p style="margin: 0; font-size: 14.5px; color: var(--text-secondary);">No student accounts found matching your query.</p>
+          <button type="button" class="btn btn-primary" id="btn-empty-add-student" style="margin-top: 14px; font-size: 13px;">+ Create Student Account</button>
+        </div>
+      `;
+      const btnEmptyAdd = document.getElementById("btn-empty-add-student");
+      if (btnEmptyAdd) {
+        btnEmptyAdd.addEventListener("click", () => openCreateModal("student"));
+      }
+      return;
+    }
+
+    studentUsers.forEach((user) => {
+      const isBanned = user.status === "banned";
+      const name = user.name || "Student User";
+      const initials = name
+        .split(" ")
+        .map((w) => w[0] || "")
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+      // Count applications submitted by this student
+      const userApps = applications.filter((a) => {
+        const emailMatch =
+          (a.studentEmail || "").toLowerCase() === user.email.toLowerCase();
+        const idMatch = user.studentId && a.studentId === user.studentId;
+        return emailMatch || idMatch;
+      });
+
+      const card = document.createElement("div");
+      card.className = `admin-account-card ${isBanned ? "is-banned" : ""}`;
+      card.dataset.id = user.id;
+
+      card.innerHTML = `
+        <div class="admin-card-header">
+          <div class="admin-card-identity">
+            <div class="admin-account-avatar">${escapeHtml(initials || "ST")}</div>
+            <div class="admin-card-title-group">
+              <div class="admin-card-name-row">
+                <h3 class="admin-card-name">${escapeHtml(name)}</h3>
+                <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
+                  ${isBanned ? "● Banned" : "● Active"}
+                </span>
+              </div>
+              <div class="admin-card-email-row">
+                <span class="admin-card-email">${escapeHtml(user.email)}</span>
+                <span class="admin-card-pwd-chip">🔑 ${escapeHtml(user.password || "password123")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card-meta-details">
+          <span>${escapeHtml(user.course || "Course: Not Set Yet")}</span>
+          <span class="meta-dot">&bull;</span>
+          <span>${escapeHtml(user.yearLevel || "Year: Not Set Yet")}</span>
+          <span class="meta-dot">&bull;</span>
+          <span>${user.isProfileConfirmed ? '<strong style="color: #10b981;">✓ Profile Confirmed</strong>' : '<span style="color: #f59e0b;">⏳ Setup Pending</span>'}</span>
+        </div>
+
+        <div class="admin-card-footer-strip">
+          <span>Registered: <strong>${escapeHtml(user.formattedDate || "Recently")}</strong></span>
+          <span>Activity: <strong style="color: #8b5cf6;">${userApps.length} Application(s)</strong></span>
+        </div>
+
+        ${user.notes ? `<div class="admin-card-note">Note: ${escapeHtml(user.notes)}</div>` : ""}
+
+        <div class="admin-card-actions">
+          <button type="button" class="btn-admin-action ${isBanned ? "btn-admin-unban" : "btn-admin-ban"}" data-action="toggle-ban" data-id="${user.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              ${isBanned ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>'}
+            </svg>
+            ${isBanned ? "Unban Account" : "Ban Account"}
+          </button>
+
+          <button type="button" class="btn-admin-action btn-admin-delete" data-action="delete" data-id="${user.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete Account
+          </button>
+        </div>
+      `;
+
+      // Wire action buttons
+      const btnToggleBan = card.querySelector('[data-action="toggle-ban"]');
+      if (btnToggleBan) {
+        btnToggleBan.addEventListener("click", () =>
+          toggleAccountBan(user.id, !isBanned),
+        );
+      }
+
+      const btnDelete = card.querySelector('[data-action="delete"]');
+      if (btnDelete) {
+        btnDelete.addEventListener("click", () => {
+          promptDeleteConfirm({
+            type: "user",
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: "student",
+            appCount: userApps.length,
+          });
+        });
+      }
+
+      studentsListContainer.appendChild(card);
+    });
+  }
+
+  // 5B. Render Provider Accounts List
+  function renderProvidersList() {
+    if (!providersListContainer) return;
+    providersListContainer.innerHTML = "";
+
+    const query = (
+      searchProvidersInput ? searchProvidersInput.value : ""
+    ).toLowerCase();
+    const filterStatus = filterProviderStatus
+      ? filterProviderStatus.value
+      : "all";
+
+    let providerUsers = users.filter(
+      (u) => u.role === "provider" || u.role === "admin",
+    );
+
+    if (filterStatus === "active") {
+      providerUsers = providerUsers.filter((u) => u.status !== "banned");
+    } else if (filterStatus === "banned") {
+      providerUsers = providerUsers.filter((u) => u.status === "banned");
+    }
+
+    if (query) {
+      providerUsers = providerUsers.filter((u) => {
+        const email = (u.email || "").toLowerCase();
+        const name = (u.name || u.orgName || "").toLowerCase();
+        return email.includes(query) || name.includes(query);
+      });
+    }
+
+    if (providerUsers.length === 0) {
+      providersListContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 14px;">
+          <p style="margin: 0; font-size: 14.5px; color: var(--text-secondary);">No provider accounts found matching your query.</p>
+          <button type="button" class="btn btn-primary" id="btn-empty-add-provider" style="margin-top: 14px; font-size: 13px;">+ Create Provider Account</button>
+        </div>
+      `;
+      const btnEmptyAdd = document.getElementById("btn-empty-add-provider");
+      if (btnEmptyAdd) {
+        btnEmptyAdd.addEventListener("click", () => openCreateModal("provider"));
+      }
+      return;
+    }
+
+    providerUsers.forEach((user) => {
+      const isBanned = user.status === "banned";
+      const isPrimaryAdmin =
+        user.role === "admin" ||
+        String(user.email || "").toLowerCase() === "admin@admin";
+      const orgName = user.orgName || user.name || "Scholarship Provider";
+      const initials = orgName
+        .split(" ")
+        .map((w) => w[0] || "")
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+      // Count scholarships posted by this provider
+      const userSchols = scholarships.filter((s) => {
+        const nameMatch =
+          s.providerName &&
+          (s.providerName === user.name ||
+            s.providerName === user.orgName ||
+            s.providerName === user.email);
+        const emailMatch =
+          s.providerEmail &&
+          s.providerEmail.toLowerCase() === user.email.toLowerCase();
+        return nameMatch || emailMatch;
+      });
+
+      const card = document.createElement("div");
+      card.className = `admin-account-card is-provider ${isBanned ? "is-banned" : ""}`;
+      card.dataset.id = user.id;
+
+      card.innerHTML = `
+        <div class="admin-card-header">
+          <div class="admin-card-identity">
+            <div class="admin-account-avatar">${escapeHtml(initials || "PV")}</div>
+            <div class="admin-card-title-group">
+              <div class="admin-card-name-row">
+                <h3 class="admin-card-name">${escapeHtml(orgName)}</h3>
+                <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
+                  ${isBanned ? "● Banned" : "● Active"}
+                </span>
+              </div>
+              <div class="admin-card-email-row">
+                <span class="admin-card-email" style="color: #10b981;">${escapeHtml(user.email)}</span>
+                <span class="admin-card-pwd-chip" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">🔑 ${escapeHtml(user.password || "admin")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card-meta-details">
+          <span>${isPrimaryAdmin ? "NEXO System Administrator &bull; Protected Root Account" : "Scholarship Organization &bull; Verified Provider"}</span>
+        </div>
+
+        <div class="admin-card-footer-strip">
+          <span>Registered: <strong>${escapeHtml(user.formattedDate || "Recently")}</strong></span>
+          <span>Active Posts: <strong style="color: #10b981;">${userSchols.length} Scholarship(s)</strong></span>
+        </div>
+
+        ${user.notes ? `<div class="admin-card-note">Note: ${escapeHtml(user.notes)}</div>` : ""}
+
+        <div class="admin-card-actions">
+          ${
+            isPrimaryAdmin
+              ? `<span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary); padding: 8px 12px;">🔒 Protected System Admin Account</span>`
+              : `
+          <button type="button" class="btn-admin-action ${isBanned ? "btn-admin-unban" : "btn-admin-ban"}" data-action="toggle-ban" data-id="${user.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              ${isBanned ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>'}
+            </svg>
+            ${isBanned ? "Unban Account" : "Ban Account"}
+          </button>
+
+          <button type="button" class="btn-admin-action btn-admin-delete" data-action="delete" data-id="${user.id}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete Account
+          </button>
+          `
+          }
+        </div>
+      `;
+
+      // Wire action buttons
+      const btnToggleBan = card.querySelector('[data-action="toggle-ban"]');
+      if (btnToggleBan) {
+        btnToggleBan.addEventListener("click", () =>
+          toggleAccountBan(user.id, !isBanned),
+        );
+      }
+
+      const btnDelete = card.querySelector('[data-action="delete"]');
+      if (btnDelete) {
+        btnDelete.addEventListener("click", () => {
+          promptDeleteConfirm({
+            type: "user",
+            id: user.id,
+            email: user.email,
+            name: orgName,
+            role: "provider",
+            postCount: userSchols.length,
+          });
+        });
+      }
+
+      providersListContainer.appendChild(card);
+    });
+  }
+
+  // 5B-2. Render Scholarship Posts List
+  function renderScholarshipsList() {
+    if (!scholarshipsListContainer) return;
+    scholarshipsListContainer.innerHTML = "";
+
+    const query = (
+      searchScholarshipsInput ? searchScholarshipsInput.value : ""
+    ).toLowerCase();
+    const filterType = filterScholarshipType
+      ? filterScholarshipType.value
+      : "all";
+
+    let filteredSchols = [...scholarships];
+
+    if (filterType !== "all") {
+      filteredSchols = filteredSchols.filter((s) => {
+        const t = String(s.type || s.typeText || "").toLowerCase();
+        return t.includes(filterType.toLowerCase());
+      });
+    }
+
+    if (query) {
+      filteredSchols = filteredSchols.filter((s) => {
+        const title = (s.title || "").toLowerCase();
+        const provider = (s.providerName || "").toLowerCase();
+        const desc = (s.desc || "").toLowerCase();
+        const type = (s.typeText || s.type || "").toLowerCase();
+        return (
+          title.includes(query) ||
+          provider.includes(query) ||
+          desc.includes(query) ||
+          type.includes(query)
+        );
+      });
+    }
+
+    if (filteredSchols.length === 0) {
+      scholarshipsListContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 14px;">
+          <p style="margin: 0; font-size: 14.5px; color: var(--text-secondary);">No scholarship posts found matching your query.</p>
+        </div>
+      `;
+      return;
+    }
+
+    filteredSchols.forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "admin-account-card is-provider";
+
+      const appCount = applications.filter(
+        (a) =>
+          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
+      ).length;
+      const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+      const isClosed = String(s.status || "").toLowerCase().includes("closed");
+      const typeLabel = s.typeText || s.type || "General";
+
+      card.innerHTML = `
+        <div class="admin-card-top">
+          <div class="admin-account-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+          <div class="admin-card-title-group">
+            <div class="admin-card-name-row">
+              <h3 class="admin-card-name">${escapeHtml(s.title || "Untitled Scholarship")}</h3>
+              <span class="admin-status-chip ${isClosed ? "status-chip-banned" : "status-chip-active"}">
+                &bull; ${isClosed ? "Closed" : "Open"}
+              </span>
+            </div>
+            <div class="admin-card-email-row">
+              <span class="admin-card-email">${escapeHtml(s.providerName || "NEXO")}</span>
+              <span class="admin-card-pwd-chip">${escapeHtml(typeLabel)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card-meta-details">
+          <span>Deadline: <strong>${escapeHtml(s.formattedDate || s.deadline || "No Deadline")}</strong></span>
+          <span class="meta-dot">&bull;</span>
+          <span>Applicants: <strong>${appCount} / ${limit}</strong></span>
+        </div>
+
+        <div class="admin-card-note" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+          ${escapeHtml(s.desc || "No description provided.")}
+        </div>
+
+        <div class="admin-card-actions">
+          <button type="button" class="btn-admin-action btn-admin-delete" data-delete-schol-card="${escapeHtml(s.id)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete Scholarship Post
+          </button>
+        </div>
+      `;
+
+      const delBtn = card.querySelector(`[data-delete-schol-card="${s.id}"]`);
+      if (delBtn) {
+        delBtn.addEventListener("click", () => {
+          promptDeleteConfirm({
+            type: "scholarship",
+            id: s.id,
+            title: s.title,
+            appCount: appCount,
+          });
+        });
+      }
+
+      scholarshipsListContainer.appendChild(card);
+    });
+  }
+
+  // 5C. Render Cleaner Tab (Crowded Database Sanitizer)
+  function renderCleanerTab() {
+    if (!cleanerScholsList) return;
+    cleanerScholsList.innerHTML = "";
+
+    if (scholarships.length === 0) {
+      cleanerScholsList.innerHTML = `
+        <div style="text-align: center; padding: 20px; color: var(--text-secondary); background: var(--bg-surface); border-radius: 10px;">
+          No scholarships found in database.
+        </div>
+      `;
+      return;
+    }
+
+    scholarships.forEach((s) => {
+      const item = document.createElement("div");
+      item.className = "admin-clean-item";
+
+      // Count applications for this scholarship
+      const appCount = applications.filter(
+        (a) =>
+          (a.scholarshipId && s.id && String(a.scholarshipId) === String(s.id)) ||
+          (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
+      ).length;
+
+      item.innerHTML = `
+        <div style="min-width: 0; width: 100%;">
+          <h4 style="margin: 0; font-size: 15px; font-weight: 800; color: var(--text-primary); line-height: 1.35; overflow-wrap: anywhere;">
+            ${escapeHtml(s.title || "Untitled")}
+          </h4>
+          <p style="margin: 4px 0 0 0; font-size: 12.5px; color: var(--text-secondary); line-height: 1.4;">
+            Provider: ${escapeHtml(s.providerName || "NEXO")} &bull; Deadline: ${escapeHtml(s.formattedDate || "No Deadline")}
+          </p>
+          <div style="margin-top: 4px; font-size: 12px; color: #8b5cf6; font-weight: 700;">
+            ${appCount} Applications Submitted
+          </div>
+        </div>
+
+        <button type="button" class="btn-admin-action" data-delete-schol="${s.id}" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.35); width: 100%; min-height: 42px; justify-content: center; margin-top: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete Scholarship Post
+        </button>
+      `;
+
+      item
+        .querySelector(`[data-delete-schol="${s.id}"]`)
+        .addEventListener("click", () => {
+          promptDeleteConfirm({
+            type: "scholarship",
+            id: s.id,
+            title: s.title,
+            appCount: appCount,
+          });
+        });
+
+      cleanerScholsList.appendChild(item);
+    });
+  }
+
+  // Search input listeners
+  if (searchStudentsInput)
+    searchStudentsInput.addEventListener("input", renderStudentsList);
+  if (filterStudentStatus)
+    filterStudentStatus.addEventListener("change", renderStudentsList);
+  if (searchProvidersInput)
+    searchProvidersInput.addEventListener("input", renderProvidersList);
+  if (filterProviderStatus)
+    filterProviderStatus.addEventListener("change", renderProvidersList);
+  if (searchScholarshipsInput)
+    searchScholarshipsInput.addEventListener("input", renderScholarshipsList);
+  if (filterScholarshipType)
+    filterScholarshipType.addEventListener("change", renderScholarshipsList);
+
+  // -------------------------------------------------------------
+  // 6. ACCOUNT CREATION
+  // -------------------------------------------------------------
+  function openCreateModal(defaultRole = "student") {
+    activeRoleSelection = defaultRole;
+    if (activeRoleSelection === "provider") {
+      roleBtnProvider.classList.add("active");
+      roleBtnStudent.classList.remove("active");
+      if (inputUserEmail)
+        inputUserEmail.placeholder = "e.g., contact@foundation.org";
+      if (labelUserName)
+        labelUserName.textContent = "Organization Name (Optional)";
+      if (inputUserName) inputUserName.placeholder = "e.g., Ayala Foundation";
+      if (emailHint)
+        emailHint.textContent = "Any valid organization email is accepted.";
+    } else {
+      roleBtnStudent.classList.add("active");
+      roleBtnProvider.classList.remove("active");
+      if (inputUserEmail)
+        inputUserEmail.placeholder = "e.g., student@batstate-u.edu.ph";
+      if (labelUserName) labelUserName.textContent = "Full Name (Optional)";
+      if (inputUserName) inputUserName.placeholder = "e.g., Adrian Del Mundo";
+      if (emailHint)
+        emailHint.textContent =
+          "Recommended: Use .edu.ph for student accounts.";
+    }
+
+    if (inputUserEmail) inputUserEmail.value = "";
+    if (inputUserName) inputUserName.value = "";
+    if (inputUserPassword) inputUserPassword.value = "";
+    if (selectUserStatus) selectUserStatus.value = "active";
+
+    if (createModal) createModal.classList.add("active");
+    if (inputUserEmail) inputUserEmail.focus();
+  }
+
+  function closeCreateModal() {
+    if (createModal) createModal.classList.remove("active");
+  }
+
+  if (btnOpenCreate)
+    btnOpenCreate.addEventListener("click", () => openCreateModal("student"));
+  if (btnCloseCreate) btnCloseCreate.addEventListener("click", closeCreateModal);
+  if (btnCancelCreate)
+    btnCancelCreate.addEventListener("click", closeCreateModal);
+
+  if (roleBtnStudent) {
+    roleBtnStudent.addEventListener("click", () => {
+      openCreateModal("student");
+    });
+  }
+
+  if (roleBtnProvider) {
+    roleBtnProvider.addEventListener("click", () => {
+      openCreateModal("provider");
+    });
+  }
+
+  if (formCreateAccount) {
+    formCreateAccount.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = inputUserEmail ? inputUserEmail.value.trim().toLowerCase() : "";
+      const name = inputUserName ? inputUserName.value.trim() : "";
+      const password = inputUserPassword ? inputUserPassword.value.trim() : "";
+      const status = selectUserStatus ? selectUserStatus.value : "active";
+
+      if (!name) {
+        showToast("Full Name or Organization Name is required.", true);
+        if (inputUserName) inputUserName.focus();
+        return;
+      }
+
+      if (!email || !email.includes("@")) {
+        showToast("A valid email address is required.", true);
+        if (inputUserEmail) inputUserEmail.focus();
+        return;
+      }
+
+      if (!password) {
+        showToast("Password is required for the account.", true);
+        if (inputUserPassword) inputUserPassword.focus();
+        return;
+      }
+
+      if (activeRoleSelection === "student" && !email.endsWith(".edu.ph")) {
+        showToast(
+          "Access Denied: Student accounts must use an institutional @*.edu.ph email address.",
+          true,
+        );
+        if (inputUserEmail) inputUserEmail.focus();
+        return;
+      }
+
+      // Check duplicate
+      if (users.some((u) => (u.email || "").toLowerCase() === email)) {
+        showToast(`An account with email "${email}" already exists.`, true);
+        return;
+      }
+
+      const newAccountPayload = {
+        email: email,
+        password: password,
+        role: activeRoleSelection,
+        name: name,
+        university: "",
+        course: "",
+        yearLevel: "",
+        bio: "",
+        studentId: "",
+        contactNumber: "",
+        isProfileConfirmed: false,
+        status: status,
+        createdByAdmin: true,
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/users`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newAccountPayload),
+        }).catch(() => null);
+
+        if (!res) {
+          showToast(
+            "Server is offline. Start the backend server to persist new accounts to data.json.",
+            true,
+          );
+          return;
+        }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          showToast(errData.error || "Failed to create account on server.", true);
+          return;
+        }
+
+        const respData = await res.json();
+        const createdUser = respData.user;
+
+        try {
+          localStorage.removeItem(`nexo_student_settings_${email}`);
+          localStorage.removeItem(`nexo_provider_settings_${email}`);
+          localStorage.removeItem("nexo_student_settings");
+          localStorage.removeItem("nexo_provider_settings");
+          localStorage.removeItem("nexo_avatar_" + email);
+          localStorage.removeItem("nexo-student-avatar-" + email);
+        } catch (_) {}
+
+        await loadData();
+
+        showToast(
+          `Account for "${email}" created successfully as ${activeRoleSelection === "provider" ? "Provider" : "Student"}!`,
+        );
+        closeCreateModal();
+
+        // Switch to the created account tab and refresh
+        switchTab(activeRoleSelection === "provider" ? "providers" : "students");
+      } catch (err) {
+        console.error("Account creation error:", err);
+        showToast("Failed to create account. Check connection.", true);
+      }
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 7. TOGGLE BAN / UNBAN
+  // -------------------------------------------------------------
+  async function toggleAccountBan(userId, shouldBan) {
+    const targetStatus = shouldBan ? "banned" : "active";
+    try {
+      const res = await fetch(`${API_BASE}/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: targetStatus }),
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        const errData = res ? await res.json().catch(() => ({})) : {};
+        showToast(
+          errData.error ||
+            "Could not update account status in data.json. Ensure the server is running.",
+          true,
+        );
+        return;
+      }
+
+      await loadData();
+
+      showToast(
+        shouldBan
+          ? "Account has been banned. Login access restricted."
+          : "Account has been unbanned. Login access restored.",
+      );
+    } catch (err) {
+      console.error("Ban toggle error:", err);
+      showToast("Could not update account status.", true);
+    }
+  }
+
+  // -------------------------------------------------------------
+  // 8. CONFIRM & EXECUTE CASCADE DELETION
+  // -------------------------------------------------------------
+  function promptDeleteConfirm(target) {
+    pendingDeleteTarget = target;
+    if (!confirmModal || !confirmModalTitle || !confirmModalDesc) return;
+
+    if (target.type === "user") {
+      confirmModalTitle.textContent = `Delete ${target.role === "provider" ? "Provider" : "Student"} Account?`;
+      if (target.role === "provider") {
+        confirmModalDesc.innerHTML = `
+          Are you sure you want to delete <strong>${escapeHtml(target.name || target.email)}</strong>?<br><br>
+          <span style="color: #ef4444; font-weight: 600;">Cascade Warning:</span>
+          This will permanently delete this provider account, their <strong>${target.postCount || 0} scholarship post(s)</strong>, and all student applications submitted to those posts from <code>data.json</code>.
+        `;
+      } else {
+        confirmModalDesc.innerHTML = `
+          Are you sure you want to delete <strong>${escapeHtml(target.name || target.email)}</strong>?<br><br>
+          <span style="color: #ef4444; font-weight: 600;">Cascade Warning:</span>
+          This will permanently delete this student account and all <strong>${target.appCount || 0} submitted application(s)</strong> from <code>data.json</code>.
+        `;
+      }
+      btnExecuteConfirm.textContent = "Yes, Delete Account";
+    } else if (target.type === "scholarship") {
+      confirmModalTitle.textContent = "Delete Scholarship Post?";
+      confirmModalDesc.innerHTML = `
+        Are you sure you want to permanently delete <strong>"${escapeHtml(target.title)}"</strong>?<br><br>
+        This will permanently remove the scholarship post and its <strong>${target.appCount || 0} associated application(s)</strong> from the website and database.
+      `;
+      btnExecuteConfirm.textContent = "Yes, Delete Post";
+    } else if (target.type === "purge_scholarships") {
+      confirmModalTitle.textContent = "Delete All Scholarship Posts?";
+      confirmModalDesc.innerHTML = `
+        Are you sure you want to permanently delete all <strong>${scholarships.length} scholarship post(s)</strong> and their associated applications across the website?
+      `;
+      btnExecuteConfirm.textContent = "Delete All Posts";
+    } else if (target.type === "purge_apps") {
+      confirmModalTitle.textContent = "Purge All Applications?";
+      confirmModalDesc.innerHTML = `
+        Are you sure you want to permanently delete all <strong>${applications.length} student application(s)</strong>? This will clean up the crowded JSON data.
+      `;
+      btnExecuteConfirm.textContent = "Purge All Applications";
+    } else if (target.type === "purge_drafts") {
+      confirmModalTitle.textContent = "Clear All Drafts?";
+      confirmModalDesc.innerHTML = `
+        Are you sure you want to clear all <strong>${drafts.length} test draft(s)</strong>?
+      `;
+      btnExecuteConfirm.textContent = "Clear All Drafts";
+    } else if (target.type === "factory_reset") {
+      confirmModalTitle.textContent = "Reset to Factory Default State?";
+      confirmModalDesc.innerHTML = `
+        <span style="color: #ef4444; font-weight: 700;">Full Sanitization:</span>
+        This will wipe all test applications, reset applicant counters on scholarships to 0, and restore default admin accounts.
+      `;
+      btnExecuteConfirm.textContent = "Reset Database";
+    }
+
+    confirmModal.classList.add("active");
+  }
+
+  function closeConfirmModal() {
+    if (confirmModal) confirmModal.classList.remove("active");
+    pendingDeleteTarget = null;
+  }
+
+  function recordDeletedIds(idsArray) {
+    try {
+      const existing = JSON.parse(localStorage.getItem("nexo_deleted_ids") || "[]");
+      const set = new Set((Array.isArray(existing) ? existing : []).map(String));
+      (Array.isArray(idsArray) ? idsArray : []).forEach((id) => {
+        if (id !== undefined && id !== null && String(id).trim() !== "") {
+          set.add(String(id));
+        }
+      });
+      localStorage.setItem("nexo_deleted_ids", JSON.stringify(Array.from(set)));
+    } catch (_) {}
+  }
+
+  if (btnCancelConfirm)
+    btnCancelConfirm.addEventListener("click", closeConfirmModal);
+
+  if (btnExecuteConfirm) {
+    btnExecuteConfirm.addEventListener("click", async () => {
+      if (!pendingDeleteTarget) return;
+
+      btnExecuteConfirm.disabled = true;
+      btnExecuteConfirm.textContent = "Processing...";
+
+      try {
+        if (pendingDeleteTarget.type === "user") {
+          const targetId = String(pendingDeleteTarget.id || "");
+          const targetEmail = (pendingDeleteTarget.email || "").toLowerCase().trim();
+
+          await fetch(
+            `${API_BASE}/api/users/${encodeURIComponent(targetId)}`,
+            {
+              method: "DELETE",
+            },
+          ).catch(() => null);
+
+          const idsToDelete = [targetId, targetEmail];
+          if (pendingDeleteTarget.role === "student") {
+            const removedApps = applications.filter(
+              (a) => (a.studentEmail || "").toLowerCase().trim() === targetEmail,
+            );
+            removedApps.forEach((a) => idsToDelete.push(a.id));
+            applications = applications.filter(
+              (a) => (a.studentEmail || "").toLowerCase().trim() !== targetEmail,
+            );
+          } else if (pendingDeleteTarget.role === "provider") {
+            const removedSchols = scholarships.filter(
+              (s) =>
+                (s.providerEmail || "").toLowerCase().trim() === targetEmail ||
+                (pendingDeleteTarget.name &&
+                  (s.providerName || "").toLowerCase().trim() ===
+                    pendingDeleteTarget.name.toLowerCase().trim()),
+            );
+            const removedScholIds = new Set(removedSchols.map((s) => String(s.id)));
+            removedSchols.forEach((s) => idsToDelete.push(s.id));
+            scholarships = scholarships.filter((s) => !removedScholIds.has(String(s.id)));
+            const removedApps = applications.filter((a) =>
+              removedScholIds.has(String(a.scholarshipId)),
+            );
+            removedApps.forEach((a) => idsToDelete.push(a.id));
+            applications = applications.filter(
+              (a) => !removedScholIds.has(String(a.scholarshipId)),
+            );
+          }
+
+          users = users.filter(
+            (u) =>
+              String(u.id) !== targetId &&
+              (u.email || "").toLowerCase().trim() !== targetEmail,
+          );
+          recordDeletedIds(idsToDelete);
+
+          try {
+            localStorage.setItem("nexo_users", JSON.stringify(users));
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+            localStorage.setItem("nexo_applications", JSON.stringify(applications));
+          } catch (_) {}
+
+          if (pendingDeleteTarget.role === "student") {
+            const uEmail = targetEmail;
+            try {
+              localStorage.removeItem(`nexo_student_settings_${uEmail}`);
+              localStorage.removeItem("nexo_student_settings");
+              localStorage.removeItem(`nexo_avatar_${uEmail}`);
+              localStorage.removeItem(`nexo-student-avatar-${uEmail}`);
+              const profs = JSON.parse(localStorage.getItem("nexo_student_profiles") || "{}");
+              if (profs && profs[uEmail]) {
+                delete profs[uEmail];
+                localStorage.setItem("nexo_student_profiles", JSON.stringify(profs));
+              }
+              if ((localStorage.getItem("nexo-student-email") || "").toLowerCase() === uEmail) {
+                localStorage.removeItem("nexo-student-email");
+                localStorage.removeItem("nexo-student-name");
+                localStorage.removeItem("nexo-student-avatar");
+                localStorage.removeItem("nexo-logged-in");
+              }
+              if ((sessionStorage.getItem("nexo-student-email") || "").toLowerCase() === uEmail) {
+                sessionStorage.removeItem("nexo-student-email");
+                sessionStorage.removeItem("nexo-student-name");
+                sessionStorage.removeItem("nexo-student-avatar");
+                sessionStorage.removeItem("nexo-logged-in");
+              }
+            } catch (_) {}
+          } else if (pendingDeleteTarget.role === "provider") {
+            const provEmail = targetEmail;
+            try {
+              localStorage.removeItem(`nexo_provider_settings_${provEmail}`);
+              if ((localStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
+                localStorage.removeItem("nexo-provider-email");
+                localStorage.removeItem("nexo-provider-name");
+                localStorage.removeItem("nexo_provider_settings");
+                localStorage.removeItem("nexo_settings");
+                localStorage.removeItem("nexo-provider-logo");
+                localStorage.removeItem("nexo-provider-banner");
+                localStorage.removeItem("nexo-logged-in");
+              }
+              if ((sessionStorage.getItem("nexo-provider-email") || "").toLowerCase() === provEmail) {
+                sessionStorage.removeItem("nexo-provider-email");
+                sessionStorage.removeItem("nexo-provider-name");
+                sessionStorage.removeItem("nexo-logged-in");
+              }
+            } catch (_) {}
+          }
+
+          await loadData();
+          showToast("Account and associated data deleted permanently!");
+        } else if (pendingDeleteTarget.type === "scholarship") {
+          const sid = String(pendingDeleteTarget.id);
+          const stitle = String(pendingDeleteTarget.title || "").trim().toLowerCase();
+
+          // 1. Permanently remove from localStorage and record in nexo_deleted_ids
+          const removedApps = applications.filter(
+            (a) =>
+              String(a.scholarshipId) === sid ||
+              (!a.scholarshipId &&
+                stitle &&
+                String(a.scholarshipTitle || a.title || "").trim().toLowerCase() === stitle),
+          );
+          const idsToRecord = [sid, ...removedApps.map((a) => String(a.id))];
+          recordDeletedIds(idsToRecord);
+
+          scholarships = scholarships.filter((s) => String(s.id) !== sid);
+          applications = applications.filter(
+            (a) =>
+              String(a.scholarshipId) !== sid &&
+              !(
+                !a.scholarshipId &&
+                stitle &&
+                String(a.scholarshipTitle || a.title || "").trim().toLowerCase() === stitle
+              ),
+          );
+
+          try {
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+            localStorage.setItem("nexo_applications", JSON.stringify(applications));
+            const cachedNotifs = JSON.parse(
+              localStorage.getItem("nexo_notifications") || "[]",
+            );
+            const filteredNotifs = (Array.isArray(cachedNotifs) ? cachedNotifs : []).filter(
+              (n) =>
+                String(n.scholId || "") !== sid &&
+                String(n.scholarshipId || "") !== sid,
+            );
+            localStorage.setItem("nexo_notifications", JSON.stringify(filteredNotifs));
+          } catch (_) {}
+
+          // 2. Also delete on backend server if online
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete_scholarship", id: sid }),
+          }).catch(() => null);
+
+          await loadData();
+          showToast("Scholarship post deleted permanently!");
+        } else if (pendingDeleteTarget.type === "purge_scholarships") {
+          const allScholIds = scholarships.map((s) => String(s.id));
+          const allAppIds = applications.map((a) => String(a.id));
+          recordDeletedIds([...allScholIds, ...allAppIds]);
+
+          scholarships = [];
+          applications = [];
+          try {
+            localStorage.setItem("nexo_scholarships", "[]");
+            localStorage.setItem("nexo_applications", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "clear_scholarships" }),
+          }).catch(() => null);
+
+          await loadData();
+          showToast("All scholarship posts deleted permanently!");
+        } else if (pendingDeleteTarget.type === "purge_apps") {
+          const allAppIds = applications.map((a) => String(a.id));
+          recordDeletedIds(allAppIds);
+
+          applications = [];
+          scholarships.forEach((s) => {
+            const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
+            s.applicantTotal = 0;
+            s.applicantCount = `0 / ${limit} Applicants`;
+            if (String(s.status || "").toLowerCase() === "quota full") {
+              s.status = "Open";
+            }
+          });
+          try {
+            localStorage.setItem("nexo_applications", "[]");
+            localStorage.setItem("nexo_scholarships", JSON.stringify(scholarships));
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "clear_applications" }),
+          }).catch(() => null);
+
+          await loadData();
+          showToast("All applications purged permanently!");
+        } else if (pendingDeleteTarget.type === "purge_drafts") {
+          const allDraftIds = drafts.map((d) => String(d.id));
+          recordDeletedIds(allDraftIds);
+
+          drafts = [];
+          try {
+            localStorage.setItem("nexo_drafts", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "clear_drafts" }),
+          }).catch(() => null);
+
+          await loadData();
+          showToast("All drafts cleared permanently!");
+        } else if (pendingDeleteTarget.type === "factory_reset") {
+          const allIds = [
+            ...scholarships.map((s) => String(s.id)),
+            ...applications.map((a) => String(a.id)),
+            ...drafts.map((d) => String(d.id)),
+          ];
+          recordDeletedIds(allIds);
+
+          applications = [];
+          drafts = [];
+          scholarships = [];
+          try {
+            localStorage.setItem("nexo_applications", "[]");
+            localStorage.setItem("nexo_drafts", "[]");
+            localStorage.setItem("nexo_scholarships", "[]");
+          } catch (_) {}
+
+          await fetch(`${API_BASE}/api/admin/clean-database`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "reset_factory_data" }),
+          }).catch(() => null);
+
+          await loadData();
+          showToast("Database restored to clean factory state!");
+        }
+      } catch (err) {
+        console.error("Execute action error:", err);
+        showToast("Error executing action.", true);
+      } finally {
+        btnExecuteConfirm.disabled = false;
+        closeConfirmModal();
+        renderAll();
+      }
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 9. CLEANER BUTTONS & EXPORT
+  // -------------------------------------------------------------
+  if (btnPurgeScholarships) {
+    btnPurgeScholarships.addEventListener("click", () => {
+      promptDeleteConfirm({ type: "purge_scholarships" });
+    });
+  }
+
+  if (btnPurgeApps) {
+    btnPurgeApps.addEventListener("click", () => {
+      promptDeleteConfirm({ type: "purge_apps" });
+    });
+  }
+
+  if (btnPurgeDrafts) {
+    btnPurgeDrafts.addEventListener("click", () => {
+      promptDeleteConfirm({ type: "purge_drafts" });
+    });
+  }
+
+  if (btnFactoryReset) {
+    btnFactoryReset.addEventListener("click", () => {
+      promptDeleteConfirm({ type: "factory_reset" });
+    });
+  }
+
+  if (btnExportJson) {
+    btnExportJson.addEventListener("click", () => {
+      const fullDb = {
+        scholarships,
+        drafts,
+        applications,
+        users,
+      };
+      const jsonStr = JSON.stringify(fullDb, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = dlUrl;
+      a.download = `nexo_data_backup_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(dlUrl);
+      showToast("data.json downloaded to your device!");
+    });
+  }
+
+  // -------------------------------------------------------------
+  // 10. INITIAL INITIALIZATION
+  // -------------------------------------------------------------
+  loadData();
+});

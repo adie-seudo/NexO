@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard - NEXO</title>
+    <!-- Reusing master styles -->
+    <link rel="stylesheet" href="css/master.css" />
+    <script>
+      (function() {
+        var t = localStorage.getItem("nexo-theme");
+        if (t === "dark" || (!t && (new Date().getHours() < 7 || new Date().getHours() >= 18))) {
+          document.documentElement.classList.add("dark-theme");
+        }
+      })();
+    </script>
+  </head>
+  <body class="dashboard-body">
+    <!-- Universal Header -->
+
+    <!-- ========================================= -->
+    <!-- 1. GLOBAL UNIVERSAL HEADER                -->
+    <!-- ========================================= -->
+    <header class="global-header">
+      <!-- NEXO Brand Logo & Name (Clicking navigates to About Us) -->
+      <div class="logo-container">
+        <a href="student-about.html" class="nexo-brand-link" style="display: inline-flex; align-items: center; gap: 9px; text-decoration: none;" title="About Us">
+          <img src="assets/logo.png" alt="NEXO" class="nexo-brand-logo" style="width: 34px; height: 34px; object-fit: contain;" />
+          <span class="nexo-brand-text" style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.4px; line-height: 1;">NEXO</span>
+        </a>
+      </div>
+
+      <!-- Action buttons container -->
+      <div
+        class="header-actions"
+        style="display: flex; align-items: center; gap: 8px"
+      >
+        <!-- Dark Mode Toggle -->
+        <label class="theme-toggle-container">
+          <input
+            id="theme-toggle"
+            class="theme-toggle"
+            type="checkbox"
+            aria-label="Toggle Dark Mode"
+          />
+        </label>
+
+        <!-- Notification Bell (Interactive Popover, No Red Dot by Default) -->
+        <button
+          class="icon-btn notification-btn"
+          id="student-notif-btn"
+          type="button"
+          aria-label="Notifications"
+          aria-expanded="false"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="notification-dot" id="student-notif-dot"></span>
+        </button>
+
+        <!-- Clean Wrapper -->
+        <div class="nav-wrapper" id="nav-wrapper" style="margin-left: 4px">
+          <!-- Hamburger Button -->
+          <button
+            class="hamburger-btn"
+            id="avatar-menu-btn"
+            type="button"
+            aria-label="Open Menu"
+            onclick="handleMenuToggle(event)"
+          >
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </button>
+
+          <!-- Modern Side Navigation Menu (Lines Removed) -->
+          <nav class="nav-menu" id="nav-menu">
+            <a href="student-dashboard.html" class="nav-link active" data-tooltip="Home">
+              <img
+                src="assets/home-icon.png"
+                alt="Home"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Home</span>
+            </a>
+
+            <!-- Browse / Explore Scholarships -->
+            <a href="student-browse.html" class="nav-link" id="nav-browse" data-tooltip="Browse Scholarships">
+              <img
+                src="assets/draft-icon.png"
+                alt="Browse"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Browse Scholarships</span>
+            </a>
+
+            <!-- View My Submissions -->
+            <a href="student-submissions.html" class="nav-link" id="nav-submissions" data-tooltip="View My Submissions">
+              <img
+                src="assets/policy-icon.png"
+                alt="Submissions"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">View My Submissions</span>
+            </a>
+
+            <!-- Modern Spacer (No Hardcoded Lines) -->
+            <div class="nav-spacer"></div>
+
+            <a href="student-about.html" class="nav-link" data-tooltip="About Us">
+              <img
+                src="assets/about-icon.png"
+                alt="About Us"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">About Us</span>
+            </a>
+
+            <a href="privacy.html" class="nav-link" data-tooltip="Policy">
+              <img
+                src="assets/policy-icon.png"
+                alt="Policy"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Policy</span>
+            </a>
+
+            <a href="credits.html" class="nav-link" data-tooltip="Credits">
+              <img
+                src="assets/credits-icon.png"
+                alt="Credits"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Credits</span>
+            </a>
+
+            <a href="student-settings.html" class="nav-link" data-tooltip="Settings">
+              <img
+                src="assets/settings-icon.png"
+                alt="Settings"
+                class="nav-icon"
+                onerror="this.style.display = 'none'"
+              />
+              <span class="nav-text">Settings</span>
+            </a>
+
+            <!-- Spacer before logout -->
+            <div class="nav-spacer"></div>
+
+            <div class="nav-buttons">
+              <a
+                href="index.html"
+                class="btn logout-btn"
+                id="student-logout-btn"
+                data-tooltip="Log Out"
+                style="text-decoration: none !important;"
+              >
+                <img
+                  src="assets/logout-icon.png"
+                  alt="Logout"
+                  class="nav-icon"
+                  onerror="this.style.display = 'none'"
+                />
+                <span
+                  class="nav-text"
+                  style="color: white; margin: 0; font-weight: 600; text-decoration: none !important;"
+                  >Log Out</span
+                >
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================= -->
+    <!-- 2. MAIN STUDENT DASHBOARD CONTENT         -->
+    <!-- ========================================= -->
+    <main class="student-dash-main">
+      <!-- A. STUDENT MAIN PROFILE HERO BANNER (LONG HORIZONTAL RECTANGLE) -->
+      <section class="student-hero-banner" id="student-hero-banner">
+        <!-- Left Side: Profile Picture Avatar + Text Content + Academic Chips -->
+        <div class="hero-left-wrap">
+          <!-- Circular Profile Avatar Container (Clean circle, no small badge) -->
+          <div
+            class="hero-avatar-wrap"
+            id="student-card-avatar"
+            title="View Account Settings"
+            tabindex="0"
+            role="button"
+            aria-label="View Account Settings"
+          >
+            <!-- Rendered dynamically by syncGlobalStudentIdentity / student.js -->
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+
+          <div class="hero-text-wrap">
+            <span class="hero-greeting-sub" id="student-greeting-sub">GOOD MORNING, ADRIAN DEL MUNDO</span>
+            <h1 class="hero-title" id="student-hero-title">One step closer to your future.</h1>
+            <p class="hero-subtitle" id="student-hero-subtitle">Here's what's happening with your scholarship journey.</p>
+            <span id="student-name-title" style="display: none;">Adrian Del Mundo</span>
+
+            <!-- Real Academic Profile Chips (University, Course, Year) -->
+            <div class="hero-academic-chips" id="hero-academic-chips">
+              <span class="hero-chip" id="chip-university">Batangas State University</span>
+              <span class="hero-chip" id="chip-course">BS Nursing</span>
+              <span class="hero-chip" id="chip-year">3rd Year</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Chapter Tag & View My Applications Button -->
+        <div class="hero-right-wrap">
+          <span class="hero-chapter-pill">YOUR NEXT CHAPTER</span>
+          <a
+            href="student-submissions.html"
+            class="hero-view-apps-btn"
+            id="hero-view-apps-btn"
+            aria-label="View my applications"
+          >
+            <span>View my applications</span>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        </div>
+      </section>
+
+      <!-- B. 4 STATISTICS CARDS DIRECTLY UNDER THE MAIN PROFILE CARD -->
+      <section class="student-stats-row student-stats-grid" id="student-stats-row">
+        <!-- Metric 1: My applications -->
+        <div class="student-stat-card is-disabled" id="card-stat-my-apps" role="button" tabindex="0" aria-label="My applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">My applications</p>
+            <div class="student-stat-icon-badge badge-icon-apps">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-my-apps">0</h2>
+          <div class="student-stat-hint" id="hint-stat-my-apps">
+            <span>No applications submitted</span>
+          </div>
+        </div>
+
+        <!-- Metric 2: Approved -->
+        <div class="student-stat-card is-disabled" id="card-stat-approved" role="button" tabindex="0" aria-label="Approved applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Approved</p>
+            <div class="student-stat-icon-badge badge-icon-approved">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-approved">0</h2>
+          <div class="student-stat-hint" id="hint-stat-approved">
+            <span>No approvals yet</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Under review -->
+        <div class="student-stat-card is-disabled" id="card-stat-review" role="button" tabindex="0" aria-label="Under review applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Under review</p>
+            <div class="student-stat-icon-badge badge-icon-review">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-review">0</h2>
+          <div class="student-stat-hint" id="hint-stat-review">
+            <span>Filter in review</span>
+            <span class="stat-arrow">&rarr;</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Rejected -->
+        <div class="student-stat-card is-disabled" id="card-stat-rejected" role="button" tabindex="0" aria-label="Rejected applications metric">
+          <div class="student-stat-card-header">
+            <p class="student-stat-label">Rejected</p>
+            <div class="student-stat-icon-badge badge-icon-rejected">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+          </div>
+          <h2 class="student-stat-value" id="stat-rejected">0</h2>
+          <div class="student-stat-hint" id="hint-stat-rejected">
+            <span>No rejected applications</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- MIDDLE WORKSPACE ROW: YOUR NEXT STEPS (LEFT) + UPCOMING DEADLINES (RIGHT) -->
+      <div class="student-workspace-grid">
+        <!-- SECTION 1: YOUR NEXT STEPS -->
+        <section class="student-dashboard-card student-next-steps-card" id="student-next-steps-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 class="student-card-title">Your Next Steps</h3>
+                <span class="count-pill" id="next-steps-count-badge">0</span>
+              </div>
+              <p class="student-card-subtitle">Actionable items requiring your attention</p>
+            </div>
+          </div>
+          <div class="student-next-steps-list" id="student-next-steps-list">
+            <!-- Dynamic items rendered by student.js -->
+          </div>
+        </section>
+
+        <!-- SECTION 2: UPCOMING DEADLINES -->
+        <section class="student-dashboard-card student-deadlines-card" id="student-deadlines-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Upcoming Deadlines</h3>
+              <p class="student-card-subtitle">Key dates for scholarships &amp; submissions</p>
+            </div>
+            <a href="student-browse.html" class="student-subtle-link">Browse All &rarr;</a>
+          </div>
+          <div class="student-deadlines-list" id="student-deadlines-list">
+            <!-- Dynamic items rendered by student.js -->
+          </div>
+        </section>
+      </div>
+
+      <!-- C. MY SCHOLARSHIP APPLICATIONS -->
+      <section class="student-apps-section">
+        <div class="student-section-header">
+          <div class="student-section-title-wrap">
+            <h3 class="student-section-title">My Scholarship Applications</h3>
+            <p class="student-section-subtext">Manage and monitor the status of your submitted scholarship applications</p>
+          </div>
+          <button
+            type="button"
+            class="student-view-all-btn"
+            id="student-view-all-link"
+            style="display: none;"
+          >
+            <span id="student-view-all-text">View All</span>
+            <svg id="student-view-all-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+        </div>
+
+        <!-- Empty State (Shown initially when no applications exist) -->
+        <div class="student-empty-card" id="student-empty-apps">
+          <div class="student-empty-icon">
+            <svg
+              width="26"
+              height="26"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+            </svg>
+          </div>
+          <h4 class="student-empty-title">No applications yet</h4>
+          <p class="student-empty-desc">
+            You haven’t submitted any scholarship applications yet. Explore available opportunities to get started!
+          </p>
+          <a
+            href="student-browse.html"
+            class="btn btn-primary"
+            style="display: inline-block; padding: 10px 22px; font-size: 13.5px; text-decoration: none;"
+          >
+            Browse Scholarships
+          </a>
+        </div>
+
+        <!-- Dynamic Applications Feed (Rendered when applications exist) -->
+        <div class="student-apps-feed" id="student-apps-feed" style="display: none"></div>
+      </section>
+
+      <!-- LOWER DISCOVERY & ACTIVITY ROW: RECOMMENDED OPPORTUNITIES (LEFT) + RECENT ACTIVITY (RIGHT) -->
+      <div class="student-bottom-grid">
+        <!-- SECTION 3: RECOMMENDED OPPORTUNITIES -->
+        <section class="student-dashboard-card student-opps-card" id="student-opportunities-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Recommended Opportunities</h3>
+              <p class="student-card-subtitle">Active scholarships matching your student profile</p>
+            </div>
+            <a href="student-browse.html" class="student-subtle-link">View Directory &rarr;</a>
+          </div>
+          <div class="student-opportunities-feed" id="student-opportunities-feed">
+            <!-- Dynamic opportunities rendered by student.js -->
+          </div>
+        </section>
+
+        <!-- SECTION 4: RECENT ACTIVITY -->
+        <section class="student-dashboard-card student-activity-card" id="student-activity-section">
+          <div class="student-card-header-row">
+            <div class="student-card-title-group">
+              <h3 class="student-card-title">Recent Activity</h3>
+              <p class="student-card-subtitle">Chronological audit of your applications &amp; updates</p>
+            </div>
+            <a href="student-submissions.html" class="student-subtle-link">Submissions &rarr;</a>
+          </div>
+          <div class="student-activity-list" id="student-activity-list">
+            <!-- Dynamic timeline rendered by student.js -->
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="global-footer">
+      <p>Copyright 2026 Batangas State University &bull; Alangilan Campus &bull; CICS</p>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="credits.html">Credits</a>
+      </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/student.js"></script>
+  </body>
+</html>
