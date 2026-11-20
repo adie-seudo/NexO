@@ -748,7 +748,7 @@ const DEFAULT_HEADER_HTML = `
     <img src="assets/logo.png" alt="NEXO Logo" class="nexo-logo" onerror="this.style.display='none'" />
     <span class="logo-text">NEXO</span>
   </div>
-  <div class="header-actions">
+  <div class="header-actions" style="display: flex; align-items: center; gap: 8px">
     <label class="theme-toggle-container">
       <input id="theme-toggle" class="theme-toggle" type="checkbox" aria-label="Toggle Dark Mode" />
     </label>
@@ -1915,7 +1915,7 @@ function initializeHeaderFunctions() {
     });
   }
 
-  // --- D. UNIFIED SCROLL LISTENER (Header Bar & Auto-Close Expanded Side Menu) ---
+  // --- D. UNIFIED SCROLL LISTENER (Header Bar & Auto-Close Popovers) ---
   window.addEventListener(
     "scroll",
     () => {
@@ -1923,8 +1923,9 @@ function initializeHeaderFunctions() {
         // Sticky glass top bar stays permanently visible on all pages even when scrolling
         globalHeader.classList.remove("scroll-down");
       }
-      if (navMenu && navMenu.classList.contains("open")) {
-        closeMobileNav();
+      const popover = document.getElementById("header-notif-popover");
+      if (popover && popover.classList.contains("open")) {
+        closeNotifications();
       }
     },
     { passive: true },

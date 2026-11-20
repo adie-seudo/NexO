@@ -3702,12 +3702,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener(
     "scroll",
     () => {
-      const menuEl =
-        document.getElementById("nav-menu") ||
-        document.querySelector(".nav-menu");
-      if (menuEl && menuEl.classList.contains("open")) {
-        closeSideMenu();
-      }
       const popover = document.getElementById("header-notif-popover");
       if (popover && popover.classList.contains("open")) {
         closeNotifications();
