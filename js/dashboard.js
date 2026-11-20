@@ -1666,8 +1666,8 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
 
         miniCard.innerHTML = `
           <div class="mini-schol-left">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px;">
-              <h4 class="mini-schol-title" title="${escapeHtml(schol.title || 'Scholarship Program')}">${escapeHtml(schol.title || "Scholarship Program")}</h4>
+            <div class="mini-schol-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; min-width: 0; width: 100%;">
+              <h4 class="mini-schol-title" style="min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(schol.title || 'Scholarship Program')}">${escapeHtml(schol.title || "Scholarship Program")}</h4>
               <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor}; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">${escapeHtml(statusText)}</span>
             </div>
             <p class="mini-schol-meta">${escapeHtml(typeText)} &bull; ${escapeHtml(deadlineText)}</p>

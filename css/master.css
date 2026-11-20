@@ -566,8 +566,16 @@ body.dark-theme .global-header {
   gap: 8px;
 }
 
-/* Hamburger Button */
-.hamburger-btn {
+/* Global Header Controls Layering */
+.notification-container,
+.notification-btn,
+.theme-toggle-container {
+  z-index: 998 !important;
+}
+
+/* Hamburger Button & Connected Mobile Follow Drawer Motion */
+.hamburger-btn,
+#avatar-menu-btn {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -575,8 +583,14 @@ body.dark-theme .global-header {
   height: 22px;
   position: relative;
   padding: 0;
-  transition: 0.5s ease-in-out;
-  z-index: 1002 !important;
+  z-index: 1015 !important;
+  transform: translateX(0);
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.hamburger-btn.open,
+#avatar-menu-btn.open {
+  transform: translateX(calc(-1 * (min(270px, 80vw) - 66px))) !important;
 }
 .hamburger-btn .bar {
   display: block;
@@ -623,7 +637,7 @@ body.dark-theme .global-header {
   position: relative;
   display: inline-flex;
   align-items: center;
-  z-index: 1001;
+  z-index: 1010 !important;
 }
 
 .nav-label {
@@ -654,7 +668,7 @@ body.dark-theme .global-header {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  z-index: 1000;
+  z-index: 1010 !important;
   box-sizing: border-box;
 
   /* Closed: fully off-screen to the right */
@@ -7333,6 +7347,7 @@ body.dark-theme .skeleton-bone {
   .hamburger-btn.open,
   #avatar-menu-btn.open {
     right: 212px !important;
+    transform: translateX(0) !important;
   }
 
   /* Full-Height Connected Side Menu Rail (top: 0 to bottom: 0) */
@@ -9112,7 +9127,7 @@ button:disabled,
 /* Keep the side-rail nav and header controls flat (no lift jitter) */
 .nav-link,
 .nav-buttons .btn,
-.hamburger-btn,
+.hamburger-btn:not(.open),
 .logout-btn {
   transform: none;
 }
@@ -10953,6 +10968,9 @@ body.dark-theme .badge-status-action {
   cursor: pointer;
   box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .provider-mini-schol-card:hover {
@@ -10964,15 +10982,22 @@ body.dark-theme .badge-status-action {
 .mini-schol-left {
   flex: 1;
   min-width: 0;
+  max-width: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 3px;
+  overflow: hidden;
 }
 
+.mini-schol-left > div,
 .mini-schol-header {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .mini-schol-title {
@@ -10984,6 +11009,8 @@ body.dark-theme .badge-status-action {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 
 .mini-schol-meta {
@@ -11022,10 +11049,32 @@ body.dark-theme .badge-status-action {
     align-items: flex-start;
     gap: 10px;
     padding: 14px 16px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
+  .mini-schol-left {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .mini-schol-left > div,
   .mini-schol-header {
     width: 100%;
-    justify-content: space-between;
+    min-width: 0;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mini-schol-title {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .mini-schol-right,
   .mini-schol-footer {
