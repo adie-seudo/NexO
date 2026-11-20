@@ -256,7 +256,7 @@ function initNotificationBell() {
       <div class="notif-popover-header">
         <div style="display:flex; align-items:center; gap:8px;">
           <h4 class="notif-popover-title">Notifications</h4>
-          <span class="notif-badge-count" id="student-notif-badge">0 New</span>
+          <span class="notif-badge-count" id="student-notif-badge" style="display: none;">0 New</span>
         </div>
         <div style="display:flex; align-items:center; gap:6px;">
           <button type="button" class="notif-mark-read-btn" id="student-mark-read" style="background:none; border:none; color:var(--purple-600, #7c3aed); font-size:11px; font-weight:600; cursor:pointer; padding:2px 6px; border-radius:4px;">Mark all read</button>
@@ -427,41 +427,58 @@ function initNotificationBell() {
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "clear-student-notifs-modal";
-      modal.className = "nexo-modal-overlay";
-      modal.style.zIndex = "10600";
+      modal.className = "confirm-modal-overlay";
+      modal.style.display = "none";
       modal.innerHTML = `
-        <div class="nexo-modal-container" style="max-width: 420px; border-radius: 16px; padding: 24px; text-align: center;">
+        <div class="confirm-modal-box" style="max-width: 400px; text-align: center;">
           <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
           </div>
-          <h3 style="font-size: 18px; font-weight: 800; margin: 0 0 8px 0; color: var(--text-primary);">Delete All Notifications?</h3>
-          <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 20px 0; line-height: 1.45;">
+          <h3 class="confirm-modal-title" style="margin-bottom: 8px;">Delete All Notifications?</h3>
+          <p class="confirm-modal-desc" style="margin-bottom: 20px;">
             Are you sure you want to permanently clear all notifications? This action cannot be undone.
           </p>
-          <div style="display: flex; gap: 10px; justify-content: center;">
-            <button type="button" class="btn btn-secondary" id="btn-cancel-clear-student-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px;">Cancel</button>
-            <button type="button" class="btn btn-danger" id="btn-confirm-clear-student-notifs" style="padding: 8px 18px; font-size: 13px; border-radius: 8px; background: #ef4444; border-color: #ef4444; color: #fff; font-weight: 700;">Delete All</button>
+          <div class="confirm-modal-actions">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-clear-student-notifs" style="border-radius: 20px;">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-confirm-clear-student-notifs" style="background-color: #ef4444; border-color: #ef4444; border-radius: 20px;">Delete All</button>
           </div>
         </div>
       `;
       document.body.appendChild(modal);
 
+      const closeModal = () => {
+        modal.classList.remove("active", "open");
+        modal.style.display = "none";
+      };
+
       modal
         .querySelector("#btn-cancel-clear-student-notifs")
-        .addEventListener("click", () => {
-          modal.classList.remove("open");
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeModal();
         });
       modal.addEventListener("click", (e) => {
-        if (e.target === modal) modal.classList.remove("open");
+        if (e.target === modal) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeModal();
+        }
       });
       modal
         .querySelector("#btn-confirm-clear-student-notifs")
-        .addEventListener("click", async () => {
-          modal.classList.remove("open");
+        .addEventListener("click", async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeModal();
           await clearAllStudentNotifications();
         });
     }
-    modal.classList.add("open");
+
+    modal.style.display = "flex";
+    requestAnimationFrame(() => {
+      modal.classList.add("active", "open");
+    });
   }
 
   async function clearAllStudentNotifications() {
@@ -567,7 +584,17 @@ function initNotificationBell() {
     const list = Array.isArray(notifs) ? notifs : [];
     const unreadCount = list.filter((n) => !n.read).length;
 
-    if (badgeEl) badgeEl.textContent = `${unreadCount} New`;
+    if (badgeEl) {
+      if (unreadCount > 0) {
+        badgeEl.textContent = `${unreadCount} New`;
+        badgeEl.setAttribute("data-count", String(unreadCount));
+        badgeEl.style.display = "inline-flex";
+      } else {
+        badgeEl.textContent = "";
+        badgeEl.setAttribute("data-count", "0");
+        badgeEl.style.display = "none";
+      }
+    }
     if (currentDot) {
       if (unreadCount > 0) {
         currentDot.classList.add("active");

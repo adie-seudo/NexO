@@ -2394,6 +2394,12 @@ body.dark-theme .notif-popover-header {
   border-radius: 999px;
   background-color: var(--purple-100);
   color: var(--purple-800);
+  display: inline-flex;
+  align-items: center;
+}
+.notif-badge-count:empty,
+.notif-badge-count[data-count="0"] {
+  display: none !important;
 }
 
 body.dark-theme .notif-badge-count {
@@ -3702,7 +3708,8 @@ body.dark-theme .review-pill {
 }
 
 /* Custom Confirmation Modal */
-.confirm-modal-overlay {
+.confirm-modal-overlay,
+.nexo-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -3712,6 +3719,8 @@ body.dark-theme .review-pill {
   height: 100vh;
   height: 100dvh;
   background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 9999999;
   display: none;
   justify-content: center;
@@ -3719,22 +3728,35 @@ body.dark-theme .review-pill {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-.confirm-modal-overlay.active {
-  display: flex;
-  opacity: 1;
+.confirm-modal-overlay.active,
+.confirm-modal-overlay.open,
+.nexo-modal-overlay.active,
+.nexo-modal-overlay.open {
+  display: flex !important;
+  opacity: 1 !important;
 }
-.confirm-modal-box {
+.confirm-modal-box,
+.nexo-modal-container {
   background-color: var(--bg-surface);
   padding: 24px;
-  border-radius: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
   width: 90%;
-  max-width: 380px;
+  max-width: 400px;
   text-align: center;
   transform: scale(0.95);
   transition: transform 0.2s ease;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
 }
-.confirm-modal-overlay.active .confirm-modal-box {
+.confirm-modal-overlay.active .confirm-modal-box,
+.confirm-modal-overlay.open .confirm-modal-box,
+.nexo-modal-overlay.active .confirm-modal-box,
+.nexo-modal-overlay.open .confirm-modal-box,
+.confirm-modal-overlay.active .nexo-modal-container,
+.confirm-modal-overlay.open .nexo-modal-container,
+.nexo-modal-overlay.active .nexo-modal-container,
+.nexo-modal-overlay.open .nexo-modal-container {
   transform: scale(1);
 }
 .confirm-modal-title {
