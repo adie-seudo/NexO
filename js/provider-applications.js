@@ -354,14 +354,64 @@
       return false;
     });
 
+    // Check filter query params on load before initial render
+    const initialUrlParams = new URLSearchParams(window.location.search);
+    const initialFilter = initialUrlParams.get("filter");
+    if (initialFilter) {
+      const lower = initialFilter.toLowerCase();
+      if (lower.includes("review") || lower.includes("pending")) {
+        activeFilterTab = "reviewed";
+        const triggerLabel = document.getElementById("status-filter-label");
+        if (triggerLabel) triggerLabel.textContent = "Under Review";
+        const statusItems = document.querySelectorAll("[data-status-filter]");
+        statusItems.forEach((si) => {
+          if (
+            si.dataset.statusFilter === "reviewed" ||
+            si.dataset.statusFilter === "review"
+          ) {
+            si.classList.add("selected");
+          } else {
+            si.classList.remove("selected");
+          }
+        });
+        updateFilterIndicator();
+      } else if (lower.includes("approved")) {
+        activeFilterTab = "approved";
+        const triggerLabel = document.getElementById("status-filter-label");
+        if (triggerLabel) triggerLabel.textContent = "Approved";
+        const statusItems = document.querySelectorAll("[data-status-filter]");
+        statusItems.forEach((si) => {
+          if (si.dataset.statusFilter === "approved") {
+            si.classList.add("selected");
+          } else {
+            si.classList.remove("selected");
+          }
+        });
+        updateFilterIndicator();
+      } else if (lower.includes("rejected")) {
+        activeFilterTab = "rejected";
+        const triggerLabel = document.getElementById("status-filter-label");
+        if (triggerLabel) triggerLabel.textContent = "Rejected";
+        const statusItems = document.querySelectorAll("[data-status-filter]");
+        statusItems.forEach((si) => {
+          if (si.dataset.statusFilter === "rejected") {
+            si.classList.add("selected");
+          } else {
+            si.classList.remove("selected");
+          }
+        });
+        updateFilterIndicator();
+      }
+    }
+
     updateTabCounters();
     populateScholarshipFilterMenu();
     renderApplicationsList();
 
-    // Check query params on initial load
+    // Check query params on initial load for modal opening
     if (!window._initialUrlParamsHandled) {
       window._initialUrlParamsHandled = true;
-      const targetAppId = urlParams.get("appId");
+      const targetAppId = initialUrlParams.get("appId");
       if (targetAppId) {
         const targetApp = allApplications.find(
           (a) => String(a.id) === String(targetAppId),
@@ -372,22 +422,6 @@
               window.openReviewModalByAppId(targetAppId);
             }
           }, 150);
-        }
-      }
-      const initialFilter = urlParams.get("filter");
-      if (initialFilter) {
-        if (initialFilter.toLowerCase().includes("review")) {
-          activeFilterTab = "review";
-          const triggerLabel = document.getElementById("status-filter-label");
-          if (triggerLabel) triggerLabel.textContent = "Under Review";
-          const statusItems = document.querySelectorAll("[data-status-filter]");
-          statusItems.forEach((si) => {
-            if (si.dataset.statusFilter === "review")
-              si.classList.add("selected");
-            else si.classList.remove("selected");
-          });
-          updateFilterIndicator();
-          renderApplicationsList();
         }
       }
     }
@@ -758,15 +792,17 @@
     let filtered = baseApps.filter((app) => {
       const status = (app.status || "Submitted").toLowerCase();
       if (activeFilterTab === "all") return true;
-      if (activeFilterTab === "pending") {
+      if (
+        activeFilterTab === "reviewed" ||
+        activeFilterTab === "review" ||
+        activeFilterTab === "pending"
+      ) {
         return (
-          !status.includes("approved") &&
-          !status.includes("review") &&
-          !status.includes("rejected")
+          status.includes("review") ||
+          status.includes("pending") ||
+          status.includes("submitted") ||
+          (!status.includes("approved") && !status.includes("rejected"))
         );
-      }
-      if (activeFilterTab === "reviewed") {
-        return status.includes("review");
       }
       if (activeFilterTab === "approved") {
         return status.includes("approved");

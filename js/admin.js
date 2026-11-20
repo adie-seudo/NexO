@@ -682,7 +682,7 @@ document.addEventListener("DOMContentLoaded", () => {
           (s.title && (a.scholarshipTitle === s.title || a.title === s.title)),
       ).length;
       const limit = parseInt(s.applicantLimit || s.maxApplicants || 200, 10) || 200;
-      const isClosed = String(s.status || "").toLowerCase().includes("closed");
+      const isClosed = String(s.status || "").toLowerCase().includes("closed") || String(s.status || "").toLowerCase().includes("quota") || appCount >= limit;
       const typeLabel = s.typeText || s.type || "General";
 
       card.innerHTML = `

@@ -1321,6 +1321,7 @@ function renderProviderAttentionTable(myApplications) {
   if (viewAllLink) {
     viewAllLink.style.display = attentionApps.length > 3 ? "inline-flex" : "none";
     viewAllLink.textContent = `View All Applications (${attentionApps.length}) \u2192`;
+    viewAllLink.href = "provider-applications.html?filter=review";
   }
 
   const existingBottomViewAll = document.getElementById("attention-table-view-all-container");
@@ -1656,7 +1657,7 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
           return false;
         }).length;
 
-        const isClosed = (schol.status || "").toLowerCase().includes("closed");
+        const isClosed = (schol.status || "").toLowerCase().includes("closed") || (schol.status || "").toLowerCase().includes("quota") || liveCount >= limitNum;
         const statusText = isClosed ? "Closed" : "Ongoing";
         const statusBg = isClosed ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)";
         const statusColor = isClosed ? "#dc2626" : "#059669";

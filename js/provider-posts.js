@@ -761,14 +761,23 @@
     } catch (_) {}
   }
 
+  function isScholarshipClosed(schol) {
+    if (!schol) return false;
+    const st = String(schol.status || "").toLowerCase().trim();
+    if (st === "closed" || st.includes("quota")) return true;
+    const relatedApps = getPostApplications(schol);
+    const limit = parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
+    if (relatedApps.length >= limit) return true;
+    return false;
+  }
+
   function updatePostTabCounters() {
     let total = allScholarships.length;
     let openCount = 0;
     let closedCount = 0;
 
     allScholarships.forEach((s) => {
-      const status = (s.status || "Open").toLowerCase();
-      if (status === "closed") closedCount++;
+      if (isScholarshipClosed(s)) closedCount++;
       else openCount++;
     });
 
@@ -796,9 +805,9 @@
 
     // Filter by status tab
     let filtered = allScholarships.filter((s) => {
-      const status = (s.status || "Open").toLowerCase();
-      if (postFilterTab === "open") return status !== "closed";
-      if (postFilterTab === "closed") return status === "closed";
+      const closed = isScholarshipClosed(s);
+      if (postFilterTab === "open") return !closed;
+      if (postFilterTab === "closed") return closed;
       return true;
     });
 
@@ -1001,9 +1010,9 @@
       else pendingCount++;
     });
 
-    const isOpen = (schol.status || "Open").toLowerCase() !== "closed";
-    const statusText = isOpen ? "Open" : "Closed";
-    const statusClass = isOpen ? "open" : "closed";
+    const isClosed = isScholarshipClosed(schol);
+    const statusText = isClosed ? "Closed" : "Open";
+    const statusClass = isClosed ? "closed" : "open";
 
     const providerName = schol.providerName || "NEXO Provider";
     const deadlineText = schol.formattedDate || schol.deadline || "No Deadline";
@@ -1054,13 +1063,6 @@
           </svg>
           <span>${totalApps} / ${limit} Applicants</span>
         </span>
-      </div>
-
-      <div class="post-breakdown-row">
-        <span class="post-breakdown-pill review">Under Review: ${underReviewCount}</span>
-        <span class="post-breakdown-pill approved">Approved: ${approvedCount}</span>
-        <span class="post-breakdown-pill rejected">Rejected: ${rejectedCount}</span>
-        ${pendingCount > 0 ? `<span class="post-breakdown-pill">Pending: ${pendingCount}</span>` : ""}
       </div>
 
       <div class="post-actions-row">
@@ -1253,7 +1255,8 @@
     const relatedApps = getPostApplications(schol);
     const limit =
       parseInt(schol.applicantLimit || schol.maxApplicants || 200, 10) || 200;
-    const isOpen = (schol.status || "Open").toLowerCase() !== "closed";
+    const isClosed = isScholarshipClosed(schol);
+    const isOpen = !isClosed;
 
     if (titleEl) titleEl.textContent = schol.title || "Untitled Scholarship";
     if (statusPill) {

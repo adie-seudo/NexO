@@ -221,7 +221,7 @@ def sync_counts(data):
         s["applicantTotal"] = c
         s["applicantCount"] = f"{c} / {lim} Applicants"
         if c >= lim and (s.get("status") or "").lower() != "closed":
-            s["status"] = "Quota Full"
+            s["status"] = "Closed"
     schol_map = {s["id"]: s for s in data.get("scholarships", [])}
     prov_profiles = data.get("providerProfiles", {})
     users_list = data.get("users", [])
