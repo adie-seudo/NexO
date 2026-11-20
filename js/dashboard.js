@@ -1313,14 +1313,13 @@ function renderProviderAttentionTable(myApplications) {
   });
 
   if (badgeEl) {
-    badgeEl.textContent = `${attentionApps.length} Pending`;
-    badgeEl.style.display = attentionApps.length > 0 ? "inline-flex" : "none";
+    badgeEl.style.display = "none";
   }
 
   // Max of 3 contents inside; view all will eventually appear once it reaches more than 3
   if (viewAllLink) {
     viewAllLink.style.display = attentionApps.length > 3 ? "inline-flex" : "none";
-    viewAllLink.textContent = `View All Applications (${attentionApps.length}) \u2192`;
+    viewAllLink.textContent = "View All Applications \u2192";
     viewAllLink.href = "provider-applications.html?filter=review";
   }
 
@@ -1379,7 +1378,6 @@ function renderProviderAttentionTable(myApplications) {
       <td style="color: var(--text-secondary); white-space: nowrap;">${escapeHtml(dateFormatted)}</td>
       <td>
         <span class="badge-status-pill ${badgeClass}">
-          <span style="width: 6px; height: 6px; border-radius: 50%; background: ${dotColor};"></span>
           ${escapeHtml(statusText)}
         </span>
       </td>

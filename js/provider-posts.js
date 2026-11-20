@@ -657,7 +657,7 @@
       filterBtn.classList.toggle("is-filtered", activeStatus !== "all");
       const statusMap = {
         all: "Status",
-        open: "Active / Open",
+        open: "Ongoing",
         closed: "Closed",
       };
       const titleStr = statusMap[activeStatus] || "Status";
@@ -796,7 +796,7 @@
     const tabClosed = document.getElementById("tab-posts-closed");
 
     if (tabAll) tabAll.textContent = `All (${total})`;
-    if (tabOpen) tabOpen.textContent = `Active / Open (${openCount})`;
+    if (tabOpen) tabOpen.textContent = `Ongoing (${openCount})`;
     if (tabClosed) tabClosed.textContent = `Closed (${closedCount})`;
   }
 
@@ -1011,7 +1011,7 @@
     });
 
     const isClosed = isScholarshipClosed(schol);
-    const statusText = isClosed ? "Closed" : "Open";
+    const statusText = isClosed ? "Closed" : "Ongoing";
     const statusClass = isClosed ? "closed" : "open";
 
     const providerName = schol.providerName || "NEXO Provider";
@@ -1261,7 +1261,7 @@
     if (titleEl) titleEl.textContent = schol.title || "Untitled Scholarship";
     if (statusPill) {
       statusPill.className = `post-status-badge ${isOpen ? "open" : "closed"}`;
-      statusPill.textContent = isOpen ? "Open" : "Closed";
+      statusPill.textContent = isOpen ? "Ongoing" : "Closed";
     }
     if (typeEl) typeEl.textContent = formatScholarshipType(schol);
     if (deadlineEl)
@@ -1423,7 +1423,7 @@
     card.dataset.id = app.id || "";
 
     const rawStatus = (app.status || "Submitted").toLowerCase();
-    let badgeClass = "badge-status-pending";
+    let badgeClass = "badge-status-submitted";
     let badgeText = app.status || "Submitted";
 
     if (rawStatus.includes("approved")) {
@@ -1751,6 +1751,7 @@
     if (typeEl) typeEl.textContent = formattedType;
 
     const isClosed =
+      isScholarshipClosed(schol) ||
       String(schol.status || "")
         .toLowerCase()
         .includes("closed") ||
@@ -1758,7 +1759,7 @@
         .toLowerCase()
         .includes("quota");
     if (statusEl) {
-      statusEl.textContent = isClosed ? "Closed" : "Active";
+      statusEl.textContent = isClosed ? "Closed" : "Ongoing";
       statusEl.style.background = isClosed
         ? "rgba(239, 68, 68, 0.12)"
         : "rgba(16, 185, 129, 0.12)";
@@ -2214,7 +2215,7 @@
         statusPill.classList.add("badge-status-rejected");
         statusPill.textContent = "Rejected";
       } else {
-        statusPill.classList.add("badge-status-pending");
+        statusPill.classList.add("badge-status-submitted");
         statusPill.textContent = app.status || "Submitted";
       }
     }

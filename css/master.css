@@ -4759,10 +4759,17 @@ body.dark-theme .student-app-logo {
   white-space: nowrap;
   line-height: 1.2;
 }
-.badge-status-submitted {
-  background-color: #1e3a8a;
-  color: #ffffff;
+.badge-status-submitted,
+.badge-status-pending {
+  background-color: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
 }
+body.dark-theme .badge-status-submitted,
+body.dark-theme .badge-status-pending {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
 .badge-status-review {
   background-color: #d97706;
   color: #ffffff;
@@ -10912,6 +10919,15 @@ body.dark-theme .applicant-avatar-mini {
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.badge-status-submitted {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+body.dark-theme .badge-status-submitted {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
 }
 
 .badge-status-review {

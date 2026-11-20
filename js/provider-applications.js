@@ -354,53 +354,63 @@
       return false;
     });
 
-    // Check filter query params on load before initial render
-    const initialUrlParams = new URLSearchParams(window.location.search);
-    const initialFilter = initialUrlParams.get("filter");
-    if (initialFilter) {
-      const lower = initialFilter.toLowerCase();
-      if (lower.includes("review") || lower.includes("pending")) {
-        activeFilterTab = "reviewed";
-        const triggerLabel = document.getElementById("status-filter-label");
-        if (triggerLabel) triggerLabel.textContent = "Under Review";
-        const statusItems = document.querySelectorAll("[data-status-filter]");
-        statusItems.forEach((si) => {
-          if (
-            si.dataset.statusFilter === "reviewed" ||
-            si.dataset.statusFilter === "review"
-          ) {
-            si.classList.add("selected");
-          } else {
-            si.classList.remove("selected");
-          }
-        });
-        updateFilterIndicator();
-      } else if (lower.includes("approved")) {
-        activeFilterTab = "approved";
-        const triggerLabel = document.getElementById("status-filter-label");
-        if (triggerLabel) triggerLabel.textContent = "Approved";
-        const statusItems = document.querySelectorAll("[data-status-filter]");
-        statusItems.forEach((si) => {
-          if (si.dataset.statusFilter === "approved") {
-            si.classList.add("selected");
-          } else {
-            si.classList.remove("selected");
-          }
-        });
-        updateFilterIndicator();
-      } else if (lower.includes("rejected")) {
-        activeFilterTab = "rejected";
-        const triggerLabel = document.getElementById("status-filter-label");
-        if (triggerLabel) triggerLabel.textContent = "Rejected";
-        const statusItems = document.querySelectorAll("[data-status-filter]");
-        statusItems.forEach((si) => {
-          if (si.dataset.statusFilter === "rejected") {
-            si.classList.add("selected");
-          } else {
-            si.classList.remove("selected");
-          }
-        });
-        updateFilterIndicator();
+    // Check filter query params on load before initial render (Only once on initial load)
+    if (!window._initialFilterHandled) {
+      window._initialFilterHandled = true;
+      const initialUrlParams = new URLSearchParams(window.location.search);
+      const initialFilter = initialUrlParams.get("filter");
+      if (initialFilter) {
+        const lower = initialFilter.toLowerCase();
+        if (lower.includes("review") || lower.includes("pending")) {
+          activeFilterTab = "reviewed";
+          const triggerLabel = document.getElementById("status-filter-label");
+          if (triggerLabel) triggerLabel.textContent = "Under Review";
+          const statusItems = document.querySelectorAll("[data-status-filter]");
+          statusItems.forEach((si) => {
+            if (
+              si.dataset.statusFilter === "reviewed" ||
+              si.dataset.statusFilter === "review"
+            ) {
+              si.classList.add("selected");
+            } else {
+              si.classList.remove("selected");
+            }
+          });
+          updateFilterIndicator();
+        } else if (lower.includes("approved")) {
+          activeFilterTab = "approved";
+          const triggerLabel = document.getElementById("status-filter-label");
+          if (triggerLabel) triggerLabel.textContent = "Approved";
+          const statusItems = document.querySelectorAll("[data-status-filter]");
+          statusItems.forEach((si) => {
+            if (si.dataset.statusFilter === "approved") {
+              si.classList.add("selected");
+            } else {
+              si.classList.remove("selected");
+            }
+          });
+          updateFilterIndicator();
+        } else if (lower.includes("rejected")) {
+          activeFilterTab = "rejected";
+          const triggerLabel = document.getElementById("status-filter-label");
+          if (triggerLabel) triggerLabel.textContent = "Rejected";
+          const statusItems = document.querySelectorAll("[data-status-filter]");
+          statusItems.forEach((si) => {
+            if (si.dataset.statusFilter === "rejected") {
+              si.classList.add("selected");
+            } else {
+              si.classList.remove("selected");
+            }
+          });
+          updateFilterIndicator();
+        }
+
+        // Clean up filter param from URL so user can switch filters freely
+        try {
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete("filter");
+          window.history.replaceState({}, "", cleanUrl.toString());
+        } catch (_) {}
       }
     }
 
@@ -631,6 +641,11 @@
         e.stopPropagation();
         activeFilterTab = this.dataset.statusFilter || "all";
         isAppsExpanded = false;
+        try {
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete("filter");
+          window.history.replaceState({}, "", cleanUrl.toString());
+        } catch (_) {}
         const triggerLabel = document.getElementById("status-filter-label");
         if (triggerLabel) triggerLabel.textContent = this.textContent.trim();
         statusItems.forEach((si) => si.classList.remove("selected"));
@@ -668,6 +683,11 @@
         activeDocFilter = "all";
         activeSearchQuery = "";
         isAppsExpanded = false;
+        try {
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete("filter");
+          window.history.replaceState({}, "", cleanUrl.toString());
+        } catch (_) {}
         if (searchInputEl) searchInputEl.value = "";
 
         const statusLabel = document.getElementById("status-filter-label");
@@ -982,7 +1002,7 @@
 
     // Status Pill
     const rawStatus = (app.status || "Submitted").toLowerCase();
-    let badgeClass = "badge-status-pending";
+    let badgeClass = "badge-status-submitted";
     let badgeText = app.status || "Submitted";
 
     if (rawStatus.includes("approved")) {
@@ -1552,7 +1572,7 @@
         statusPill.classList.add("badge-status-rejected");
         statusPill.textContent = "Rejected";
       } else {
-        statusPill.classList.add("badge-status-pending");
+        statusPill.classList.add("badge-status-submitted");
         statusPill.textContent = app.status || "Submitted";
       }
     }

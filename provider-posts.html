@@ -625,9 +625,10 @@
         letter-spacing: 0.3px;
         white-space: nowrap;
       }
-      .badge-status-pending {
-        background-color: #fef3c7;
-        color: #92400e;
+      .badge-status-pending,
+      .badge-status-submitted {
+        background-color: rgba(37, 99, 235, 0.12);
+        color: #2563eb;
       }
       .badge-status-review {
         background-color: #ede9fe;
@@ -641,9 +642,10 @@
         background-color: #fee2e2;
         color: #991b1b;
       }
-      .dark-theme .badge-status-pending {
-        background-color: #78350f;
-        color: #fde68a;
+      .dark-theme .badge-status-pending,
+      .dark-theme .badge-status-submitted {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
       }
       .dark-theme .badge-status-review {
         background-color: #4c1d95;
@@ -1332,7 +1334,7 @@
                 data-filter="open"
                 role="menuitem"
               >
-                <span>Active / Open</span>
+                <span>Ongoing</span>
                 <span class="sub-filter-badge" id="filter-count-open">0</span>
               </button>
               <button
@@ -1456,7 +1458,7 @@
             >
               <div style="display: inline-flex; align-items: center; gap: 8px">
                 <span class="post-status-badge open" id="post-view-status-pill"
-                  >Open</span
+                  >Ongoing</span
                 >
                 <span class="directory-type-pill" id="post-view-type"
                   >Need-Based</span

@@ -403,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="admin-card-name-row">
                 <h3 class="admin-card-name">${escapeHtml(name)}</h3>
                 <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
-                  ${isBanned ? "● Banned" : "● Active"}
+                  ${isBanned ? "Banned" : "Active"}
                 </span>
               </div>
               <div class="admin-card-email-row">
@@ -555,7 +555,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <div class="admin-card-name-row">
                 <h3 class="admin-card-name">${escapeHtml(orgName)}</h3>
                 <span class="admin-status-chip ${isBanned ? "status-chip-banned" : "status-chip-active"}">
-                  ${isBanned ? "● Banned" : "● Active"}
+                  ${isBanned ? "Banned" : "Active"}
                 </span>
               </div>
               <div class="admin-card-email-row">
@@ -697,7 +697,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="admin-card-name-row">
               <h3 class="admin-card-name">${escapeHtml(s.title || "Untitled Scholarship")}</h3>
               <span class="admin-status-chip ${isClosed ? "status-chip-banned" : "status-chip-active"}">
-                &bull; ${isClosed ? "Closed" : "Open"}
+                ${isClosed ? "Closed" : "Ongoing"}
               </span>
             </div>
             <div class="admin-card-email-row">
