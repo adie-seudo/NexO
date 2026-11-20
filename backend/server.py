@@ -223,6 +223,17 @@ def sync_counts(data):
         if c >= lim and (s.get("status") or "").lower() != "closed":
             s["status"] = "Quota Full"
     schol_map = {s["id"]: s for s in data.get("scholarships", [])}
+    prov_profiles = data.get("providerProfiles", {})
+    users_list = data.get("users", [])
+    for s in data.get("scholarships", []):
+        s_email = (s.get("providerEmail") or "").strip().lower()
+        if s_email:
+            prof = prov_profiles.get(s_email, {})
+            u_match = next((u for u in users_list if (u.get("email") or "").strip().lower() == s_email), {})
+            if not s.get("providerLogo"):
+                s["providerLogo"] = prof.get("logoImage") or u_match.get("logoImage") or u_match.get("avatar") or ""
+            if not s.get("providerBanner"):
+                s["providerBanner"] = prof.get("bannerImage") or u_match.get("bannerImage") or ""
     for app in data.get("applications", []):
         sid = app.get("scholarshipId")
         matched = schol_map.get(sid)
@@ -474,6 +485,7 @@ class NexoHandler(BaseHTTPRequestHandler):
             formatted_posted = body.get("formattedPostedDate") or now_dt.strftime("%b %d, %Y")
             prov_email = (body.get("providerEmail") or "").strip().lower()
             prov_prof = data.get("providerProfiles", {}).get(prov_email, {}) if prov_email else {}
+            matched_u = next((u for u in data.get("users", []) if (u.get("email") or "").strip().lower() == prov_email), {}) if prov_email else {}
             new_sch = {
                 "id": body.get("id", f"schol_{int(time.time()*1000)}"),
                 "title": (body.get("title") or "Untitled Scholarship").strip(),
@@ -490,10 +502,10 @@ class NexoHandler(BaseHTTPRequestHandler):
                 "formattedPostedDate": formatted_posted,
                 "createdAt": posted_at,
                 "requirements": body.get("requirements", []),
-                "providerName": body.get("providerName") or prov_prof.get("orgName") or data["settings"].get("orgName", "NEXO"),
-                "providerEmail": prov_email or (data["settings"].get("email") or "").lower(),
-                "providerLogo": body.get("providerLogo") or prov_prof.get("logoImage") or data["settings"].get("logoImage", ""),
-                "providerBanner": body.get("providerBanner") or prov_prof.get("bannerImage") or data["settings"].get("bannerImage", ""),
+                "providerName": body.get("providerName") or prov_prof.get("orgName") or matched_u.get("orgName") or matched_u.get("name") or "NEXO",
+                "providerEmail": prov_email or (matched_u.get("email") or "").strip().lower(),
+                "providerLogo": body.get("providerLogo") or prov_prof.get("logoImage") or matched_u.get("logoImage") or matched_u.get("avatar") or "",
+                "providerBanner": body.get("providerBanner") or prov_prof.get("bannerImage") or matched_u.get("bannerImage") or "",
                 "status": body.get("status", "Open"),
             }
             existing_s = [i for i, s in enumerate(data.get("scholarships", [])) if str(s.get("id")) == str(new_sch["id"])]

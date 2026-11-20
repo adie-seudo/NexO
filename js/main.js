@@ -40,26 +40,7 @@
     console.warn("Storage quota full, running self-healing storage cleanup...");
     try {
       localStorage.removeItem("provider-banner-preview");
-      localStorage.removeItem("nexo-provider-banner");
-      localStorage.removeItem("nexo-provider-logo");
-      localStorage.removeItem("nexo_settings");
-      localStorage.removeItem("nexo_provider_settings");
-
-      // Slim down any bloated cached scholarships containing redundant base64 banners
-      const rawSchols = localStorage.getItem("nexo_scholarships");
-      if (rawSchols && rawSchols.includes("data:image/")) {
-        try {
-          const parsed = JSON.parse(rawSchols);
-          const slimmed = parsed.map((s) => ({
-            ...s,
-            providerBanner:
-              s.providerBanner && s.providerBanner.length > 50000
-                ? ""
-                : s.providerBanner,
-          }));
-          localStorage.setItem("nexo_scholarships", JSON.stringify(slimmed));
-        } catch (_) {}
-      }
+      sessionStorage.removeItem("provider-banner-preview");
     } catch (_) {}
   }
 })();
@@ -198,6 +179,53 @@ window.API_BASE =
         }
       }
     }
+
+    // Purge residual junk images from deleted provider account
+    const isResidualJunk = (val) => {
+      if (!val || typeof val !== "string") return false;
+      if (val.length === 36379 || val.length === 21659) {
+        if (val.startsWith("data:image/jpeg;base64,/9j/4AAQSkZJRgABA")) return true;
+      }
+      return false;
+    };
+
+    ["nexo-provider-banner", "provider-banner-preview", "nexo-provider-logo"].forEach((key) => {
+      const v = localStorage.getItem(key);
+      if (isResidualJunk(v)) localStorage.removeItem(key);
+      const sv = sessionStorage.getItem(key);
+      if (isResidualJunk(sv)) sessionStorage.removeItem(key);
+    });
+
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("nexo-provider-banner_") || k.startsWith("nexo-provider-logo_"))) {
+          const v = localStorage.getItem(k);
+          if (isResidualJunk(v)) localStorage.removeItem(k);
+        }
+      }
+    } catch (_) {}
+
+    ["nexo_settings", "nexo_provider_settings"].forEach((setKey) => {
+      try {
+        const raw = localStorage.getItem(setKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          let changed = false;
+          if (isResidualJunk(parsed.bannerImage)) {
+            parsed.bannerImage = "";
+            changed = true;
+          }
+          if (isResidualJunk(parsed.logoImage)) {
+            parsed.logoImage = "";
+            changed = true;
+          }
+          if (changed) {
+            localStorage.setItem(setKey, JSON.stringify(parsed));
+          }
+        }
+      } catch (_) {}
+    });
   } catch (_) {}
 })();
 

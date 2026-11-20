@@ -141,48 +141,53 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resolveProviderLogo(item, pSettings) {
-    if (item && item.providerLogo && String(item.providerLogo).trim()) {
-      return item.providerLogo;
+    if (!item) return "";
+    if (item.providerLogo && String(item.providerLogo).trim()) {
+      return String(item.providerLogo).trim();
     }
-    if (item && item.logoImage && String(item.logoImage).trim()) {
-      return item.logoImage;
+    if (item.logoImage && String(item.logoImage).trim()) {
+      return String(item.logoImage).trim();
     }
-    const activeOrgName =
-      (pSettings && pSettings.orgName) ||
-      localStorage.getItem("nexo-provider-name") ||
-      "NEXO";
-    const itemOrg = (item && item.providerName ? item.providerName.trim() : "");
-    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
-      const settingsLogo =
-        (pSettings && pSettings.logoImage) ||
-        localStorage.getItem("nexo-provider-logo") ||
-        "";
-      if (settingsLogo) return settingsLogo;
+    if (item.logo && String(item.logo).trim()) {
+      return String(item.logo).trim();
+    }
+    const pEmail = (item.providerEmail || "").toLowerCase().trim();
+    if (pEmail && window._providerProfilesMap && window._providerProfilesMap[pEmail]) {
+      const prof = window._providerProfilesMap[pEmail];
+      if (prof.logoImage && String(prof.logoImage).trim()) {
+        return String(prof.logoImage).trim();
+      }
+    }
+    if (pSettings && pSettings.email && pEmail && pSettings.email.toLowerCase().trim() === pEmail) {
+      if (pSettings.logoImage && String(pSettings.logoImage).trim()) {
+        return String(pSettings.logoImage).trim();
+      }
     }
     return "";
   }
 
   function resolveProviderBanner(item, pSettings) {
-    if (item && item.providerBanner && String(item.providerBanner).trim()) {
-      return item.providerBanner;
+    if (!item) return "";
+    if (item.providerBanner && String(item.providerBanner).trim()) {
+      return String(item.providerBanner).trim();
     }
-    if (item && item.bannerImage && String(item.bannerImage).trim()) {
-      return item.bannerImage;
+    if (item.bannerImage && String(item.bannerImage).trim()) {
+      return String(item.bannerImage).trim();
     }
-    if (item && item.banner && String(item.banner).trim()) {
-      return item.banner;
+    if (item.banner && String(item.banner).trim()) {
+      return String(item.banner).trim();
     }
-    const activeOrgName =
-      (pSettings && pSettings.orgName) ||
-      localStorage.getItem("nexo-provider-name") ||
-      "NEXO";
-    const itemOrg = (item && item.providerName ? item.providerName.trim() : "");
-    if (!itemOrg || itemOrg.toLowerCase() === activeOrgName.toLowerCase() || itemOrg.toLowerCase() === "nexo") {
-      const settingsBanner =
-        (pSettings && pSettings.bannerImage) ||
-        localStorage.getItem("nexo-provider-banner") ||
-        "";
-      if (settingsBanner) return settingsBanner;
+    const pEmail = (item.providerEmail || "").toLowerCase().trim();
+    if (pEmail && window._providerProfilesMap && window._providerProfilesMap[pEmail]) {
+      const prof = window._providerProfilesMap[pEmail];
+      if (prof.bannerImage && String(prof.bannerImage).trim()) {
+        return String(prof.bannerImage).trim();
+      }
+    }
+    if (pSettings && pSettings.email && pEmail && pSettings.email.toLowerCase().trim() === pEmail) {
+      if (pSettings.bannerImage && String(pSettings.bannerImage).trim()) {
+        return String(pSettings.bannerImage).trim();
+      }
     }
     return "";
   }
@@ -283,6 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
         combined = mergeById(serverScholarships, localScholarships);
         studentApplications = mergeById(serverApplications, localApplications);
 
+        if (fullData.providerProfiles) {
+          window._providerProfilesMap = fullData.providerProfiles;
+        }
+
         if (fullData.settings) {
           providerSettings = fullData.settings;
         }
@@ -344,6 +353,9 @@ document.addEventListener("DOMContentLoaded", () => {
           const staticData = await staticRes.json();
           if (Array.isArray(staticData.scholarships)) {
             staticSchols = staticData.scholarships;
+          }
+          if (staticData.providerProfiles) {
+            window._providerProfilesMap = staticData.providerProfiles;
           }
           if (staticData.settings) {
             providerSettings = staticData.settings;
@@ -433,8 +445,8 @@ document.addEventListener("DOMContentLoaded", () => {
         title: post.title || "Scholarship Program",
         providerName: post.providerName || orgName,
         providerEmail: post.providerEmail || "",
-        providerLogo: post.providerLogo || orgLogo,
-        providerBanner: post.providerBanner || orgBanner,
+        providerLogo: resolveProviderLogo(post, providerSettings),
+        providerBanner: resolveProviderBanner(post, providerSettings),
         type: post.type || "General",
         typeText: post.typeText || post.type || "General",
         deadline: post.deadline || "",

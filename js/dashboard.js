@@ -267,7 +267,18 @@ function goToStep(stepNumber = 1, isEdit = false) {
     if (reviewTypeEl) reviewTypeEl.textContent = activeProvider;
 
     const logoPlaceholder = document.getElementById("review-logo-placeholder");
-    const providerLogo = localStorage.getItem("nexo-provider-logo");
+    const activeProvEmail = (
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase().trim();
+    let providerLogo =
+      (window._activeProviderSettings && window._activeProviderSettings.logoImage) ||
+      (activeProvEmail && sessionStorage.getItem(`nexo-provider-logo_${activeProvEmail}`)) ||
+      (activeProvEmail && localStorage.getItem(`nexo-provider-logo_${activeProvEmail}`)) ||
+      sessionStorage.getItem("nexo-provider-logo") ||
+      localStorage.getItem("nexo-provider-logo") ||
+      "";
     if (logoPlaceholder) {
       if (providerLogo) {
         logoPlaceholder.innerHTML = `<img src="${providerLogo}" alt="Provider Logo">`;
@@ -782,6 +793,29 @@ function resolveProviderBanner(schol) {
     return String(schol.cover).trim();
   }
 
+  const pEmail = (
+    schol.providerEmail ||
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase().trim();
+
+  if (window._activeProviderSettings && window._activeProviderSettings.bannerImage) {
+    return String(window._activeProviderSettings.bannerImage).trim();
+  }
+
+  if (pEmail) {
+    const scoped =
+      sessionStorage.getItem(`nexo-provider-banner_${pEmail}`) ||
+      localStorage.getItem(`nexo-provider-banner_${pEmail}`);
+    if (scoped && String(scoped).trim()) return String(scoped).trim();
+  }
+
+  const sessionBanner = sessionStorage.getItem("nexo-provider-banner");
+  if (sessionBanner && String(sessionBanner).trim()) {
+    return String(sessionBanner).trim();
+  }
+
   // Fallback to provider settings or localStorage
   let settings = window._activeProviderSettings;
   if (!settings) {
@@ -818,6 +852,29 @@ function resolveProviderLogo(schol) {
   }
   if (schol.logo && String(schol.logo).trim()) {
     return String(schol.logo).trim();
+  }
+
+  const pEmail = (
+    schol.providerEmail ||
+    sessionStorage.getItem("nexo-provider-email") ||
+    localStorage.getItem("nexo-provider-email") ||
+    ""
+  ).toLowerCase().trim();
+
+  if (window._activeProviderSettings && window._activeProviderSettings.logoImage) {
+    return String(window._activeProviderSettings.logoImage).trim();
+  }
+
+  if (pEmail) {
+    const scoped =
+      sessionStorage.getItem(`nexo-provider-logo_${pEmail}`) ||
+      localStorage.getItem(`nexo-provider-logo_${pEmail}`);
+    if (scoped && String(scoped).trim()) return String(scoped).trim();
+  }
+
+  const sessionLogo = sessionStorage.getItem("nexo-provider-logo");
+  if (sessionLogo && String(sessionLogo).trim()) {
+    return String(sessionLogo).trim();
   }
 
   let settings = window._activeProviderSettings;
@@ -2076,8 +2133,18 @@ function initPublishAndDraft() {
           sessionStorage.getItem("nexo-provider-name") ||
           localStorage.getItem("nexo-provider-name") ||
           "NEXO";
-        const providerLogo = localStorage.getItem("nexo-provider-logo") || "";
-        const providerBanner =
+        let providerLogo =
+          (window._activeProviderSettings && window._activeProviderSettings.logoImage) ||
+          (providerEmail && sessionStorage.getItem(`nexo-provider-logo_${providerEmail}`)) ||
+          (providerEmail && localStorage.getItem(`nexo-provider-logo_${providerEmail}`)) ||
+          sessionStorage.getItem("nexo-provider-logo") ||
+          localStorage.getItem("nexo-provider-logo") ||
+          "";
+        let providerBanner =
+          (window._activeProviderSettings && window._activeProviderSettings.bannerImage) ||
+          (providerEmail && sessionStorage.getItem(`nexo-provider-banner_${providerEmail}`)) ||
+          (providerEmail && localStorage.getItem(`nexo-provider-banner_${providerEmail}`)) ||
+          sessionStorage.getItem("nexo-provider-banner") ||
           localStorage.getItem("nexo-provider-banner") ||
           "";
         const applicantLimit =

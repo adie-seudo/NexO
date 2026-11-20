@@ -27,6 +27,7 @@
   let isPostAppsExpanded = false;
   let studentSettings = null;
   let studentProfiles = {};
+  let providerProfiles = {};
   let users = [];
 
   function resolveStudentInfo(app) {
@@ -279,11 +280,39 @@
 
   function resolveProviderBanner(schol) {
     if (!schol) return "";
+    if (schol.providerBanner && String(schol.providerBanner).trim()) {
+      return String(schol.providerBanner).trim();
+    }
     if (schol.bannerImage && String(schol.bannerImage).trim()) {
       return String(schol.bannerImage).trim();
     }
     if (schol.banner && String(schol.banner).trim()) {
       return String(schol.banner).trim();
+    }
+
+    const scholEmail = (
+      schol.providerEmail ||
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase().trim();
+
+    if (scholEmail && providerProfiles && providerProfiles[scholEmail] && providerProfiles[scholEmail].bannerImage) {
+      return String(providerProfiles[scholEmail].bannerImage).trim();
+    }
+
+    if (scholEmail) {
+      const scopedBanner =
+        sessionStorage.getItem(`nexo-provider-banner_${scholEmail}`) ||
+        localStorage.getItem(`nexo-provider-banner_${scholEmail}`);
+      if (scopedBanner && String(scopedBanner).trim()) {
+        return String(scopedBanner).trim();
+      }
+    }
+
+    const sessionBanner = sessionStorage.getItem("nexo-provider-banner");
+    if (sessionBanner && String(sessionBanner).trim()) {
+      return String(sessionBanner).trim();
     }
 
     let settings = null;
@@ -325,6 +354,31 @@
     }
     if (schol.logo && String(schol.logo).trim()) {
       return String(schol.logo).trim();
+    }
+
+    const scholEmail = (
+      schol.providerEmail ||
+      sessionStorage.getItem("nexo-provider-email") ||
+      localStorage.getItem("nexo-provider-email") ||
+      ""
+    ).toLowerCase().trim();
+
+    if (scholEmail && providerProfiles && providerProfiles[scholEmail] && providerProfiles[scholEmail].logoImage) {
+      return String(providerProfiles[scholEmail].logoImage).trim();
+    }
+
+    if (scholEmail) {
+      const scopedLogo =
+        sessionStorage.getItem(`nexo-provider-logo_${scholEmail}`) ||
+        localStorage.getItem(`nexo-provider-logo_${scholEmail}`);
+      if (scopedLogo && String(scopedLogo).trim()) {
+        return String(scopedLogo).trim();
+      }
+    }
+
+    const sessionLogo = sessionStorage.getItem("nexo-provider-logo");
+    if (sessionLogo && String(sessionLogo).trim()) {
+      return String(sessionLogo).trim();
     }
 
     let settings = null;
@@ -439,6 +493,7 @@
             );
           } catch (_) {}
         }
+        if (data.providerProfiles) providerProfiles = data.providerProfiles;
         if (Array.isArray(data.users)) users = data.users;
         if (data.studentSettings) studentSettings = data.studentSettings;
 

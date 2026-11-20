@@ -757,6 +757,7 @@ async function saveAllSettings(saveBtn = null) {
           (isPrimary && (!s.providerName || s.providerName === "NEXO"));
         if (emailMatch || nameMatch) {
           if (finalLogo) s.providerLogo = finalLogo;
+          if (finalBanner) s.providerBanner = finalBanner;
           if (orgNameVal) s.providerName = orgNameVal;
         }
       });
