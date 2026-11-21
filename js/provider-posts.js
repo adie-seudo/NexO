@@ -1760,10 +1760,14 @@
         .includes("quota");
     if (statusEl) {
       statusEl.textContent = isClosed ? "Closed" : "Ongoing";
+      statusEl.style.borderRadius = "99px";
       statusEl.style.background = isClosed
-        ? "rgba(239, 68, 68, 0.12)"
+        ? "rgba(156, 163, 175, 0.15)"
         : "rgba(16, 185, 129, 0.12)";
-      statusEl.style.color = isClosed ? "#ef4444" : "#10b981";
+      statusEl.style.color = isClosed ? "#9ca3af" : "#10b981";
+      statusEl.style.border = isClosed
+        ? "1px solid rgba(156, 163, 175, 0.3)"
+        : "1px solid rgba(16, 185, 129, 0.3)";
     }
 
     // Dates

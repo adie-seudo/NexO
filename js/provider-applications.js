@@ -354,11 +354,13 @@
       return false;
     });
 
+    // URL Params for initial load
+    const urlParams = new URLSearchParams(window.location.search);
+
     // Check filter query params on load before initial render (Only once on initial load)
     if (!window._initialFilterHandled) {
       window._initialFilterHandled = true;
-      const initialUrlParams = new URLSearchParams(window.location.search);
-      const initialFilter = initialUrlParams.get("filter");
+      const initialFilter = urlParams.get("filter");
       if (initialFilter) {
         const lower = initialFilter.toLowerCase();
         if (lower.includes("review") || lower.includes("pending")) {
@@ -421,15 +423,42 @@
     // Check query params on initial load for modal opening
     if (!window._initialUrlParamsHandled) {
       window._initialUrlParamsHandled = true;
-      const targetAppId = initialUrlParams.get("appId");
+      const targetAppId = urlParams.get("appId");
       if (targetAppId) {
-        const targetApp = allApplications.find(
-          (a) => String(a.id) === String(targetAppId),
+        const clean = String(targetAppId).trim().toLowerCase();
+        let targetApp = allApplications.find(
+          (a) =>
+            String(a.id || "").toLowerCase() === clean ||
+            String(a.scholarshipId || "").toLowerCase() === clean ||
+            String(a.studentName || "").toLowerCase() === clean ||
+            String(a.scholarshipTitle || "").toLowerCase() === clean,
         );
+        if (!targetApp && Array.isArray(serverApps)) {
+          targetApp = serverApps.find(
+            (a) =>
+              String(a.id || "").toLowerCase() === clean ||
+              String(a.studentName || "").toLowerCase() === clean,
+          );
+        }
+        if (!targetApp && allApplications.length > 0) {
+          targetApp = allApplications.find(
+            (a) =>
+              clean.includes(String(a.id || "").toLowerCase()) ||
+              String(a.studentName || "").toLowerCase().includes(clean),
+          );
+        }
         if (targetApp) {
           setTimeout(() => {
-            if (typeof window.openReviewModalByAppId === "function") {
-              window.openReviewModalByAppId(targetAppId);
+            openReviewModal(targetApp);
+            const cardEl = document.querySelector(
+              `.provider-app-card[data-id="${targetApp.id}"]`,
+            );
+            if (cardEl) {
+              cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+              cardEl.style.boxShadow = "0 0 0 2px #3b82f6";
+              setTimeout(() => {
+                cardEl.style.boxShadow = "";
+              }, 3000);
             }
           }, 150);
         }

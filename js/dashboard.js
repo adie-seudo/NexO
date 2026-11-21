@@ -1657,8 +1657,9 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
 
         const isClosed = (schol.status || "").toLowerCase().includes("closed") || (schol.status || "").toLowerCase().includes("quota") || liveCount >= limitNum;
         const statusText = isClosed ? "Closed" : "Ongoing";
-        const statusBg = isClosed ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)";
-        const statusColor = isClosed ? "#dc2626" : "#059669";
+        const statusBg = isClosed ? "rgba(156, 163, 175, 0.15)" : "rgba(16, 185, 129, 0.12)";
+        const statusColor = isClosed ? "#9ca3af" : "#059669";
+        const statusBorder = isClosed ? "1px solid rgba(156, 163, 175, 0.3)" : "1px solid rgba(16, 185, 129, 0.3)";
 
         const deadlineText = schol.formattedDate || (schol.deadline ? (schol.deadline.includes("/") ? `Closes ${schol.deadline}` : `Closes ${new Date(schol.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`) : "Open Program");
         const typeText = schol.typeText || schol.type || "Scholarship";
@@ -1667,7 +1668,7 @@ function renderProviderScholarshipsFeed(myScholarships, myApplications) {
           <div class="mini-schol-left">
             <div class="mini-schol-header" style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; min-width: 0; width: 100%;">
               <h4 class="mini-schol-title" style="min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(schol.title || 'Scholarship Program')}">${escapeHtml(schol.title || "Scholarship Program")}</h4>
-              <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor}; font-size: 11px; padding: 2px 7px; flex-shrink: 0;">${escapeHtml(statusText)}</span>
+              <span class="badge-status-pill" style="background: ${statusBg}; color: ${statusColor}; border: ${statusBorder}; border-radius: 99px; font-size: 11px; padding: 2px 8px; flex-shrink: 0;">${escapeHtml(statusText)}</span>
             </div>
             <p class="mini-schol-meta">${escapeHtml(typeText)} &bull; ${escapeHtml(deadlineText)}</p>
           </div>
