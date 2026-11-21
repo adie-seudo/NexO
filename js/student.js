@@ -979,8 +979,12 @@ function renderStudentNextSteps(profile, myApplications, activeEmail) {
     });
   }
 
-  // 2. Pending Follow-up Documents
+  // 2. Pending Follow-up Documents (Only for Submitted or Under Review applications)
   (myApplications || []).forEach((app) => {
+    const rawStatus = (app.status || "Submitted").toLowerCase();
+    if (rawStatus.includes("approved") || rawStatus.includes("rejected")) {
+      return; // Do not prompt follow-up document submission for Approved or Rejected applications
+    }
     const rawDocs = app.documents || app.uploadedDocuments || [];
     const followUpDocs = rawDocs.filter((d) => {
       if (typeof d === "string") return d.includes("(To Follow Up)");
@@ -2594,9 +2598,13 @@ function renderApplicationCards(applications, container) {
       `;
     }
 
-    // 2. To Follow Up Pill
+    // 2. To Follow Up Pill (Only shown for Submitted and Under Review applications)
+    const isApprovedOrRejected =
+      rawStatus.includes("approved") || rawStatus.includes("rejected");
+    const canFollowUp = !isApprovedOrRejected;
+
     const followUpPillHtml =
-      followUpDocs.length > 0
+      canFollowUp && followUpDocs.length > 0
         ? `
         <span class="student-meta-pill pill-follow-up">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -2637,7 +2645,7 @@ function renderApplicationCards(applications, container) {
 
     // 5. Context-aware Button CTA Text
     let ctaLabel = "View Full Details";
-    if (followUpDocs.length > 0) {
+    if (canFollowUp && followUpDocs.length > 0) {
       ctaLabel = "Upload Requested Docs";
     } else if (hasFeedback) {
       ctaLabel = "Review Remarks";
@@ -3182,6 +3190,10 @@ function openSubmissionDetailsModal(app) {
 
       // 2. Requirements To Follow Up
       if (followUpDocs.length > 0) {
+        const isApprovedOrRejected =
+          rawStatus.includes("approved") || rawStatus.includes("rejected");
+        const canUploadFollowUp = !isApprovedOrRejected; // only Submitted and Under Review status can upload follow up requirements
+
         followUpDocs.forEach((doc, fuIdx) => {
           const reqTitle =
             typeof doc === "object"
@@ -3191,163 +3203,194 @@ function openSubmissionDetailsModal(app) {
               : String(doc).replace(" (To Follow Up)", "");
 
           const fuItem = document.createElement("div");
-          fuItem.style.cssText =
-            "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.35); gap: 10px; margin-top: 6px;";
+          fuItem.style.cssText = !canUploadFollowUp
+            ? "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 10px; background: var(--bg-canvas); border: 1px solid var(--border-color); gap: 10px; margin-top: 6px; opacity: 0.9;"
+            : "display: flex; flex-direction: column; padding: 12px 14px; border-radius: 10px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.35); gap: 10px; margin-top: 6px;";
+
+          const iconHtml = !canUploadFollowUp
+            ? `<div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(156, 163, 175, 0.15); color: #9ca3af; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+              </div>`
+            : `<div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>`;
+
+          const subStatusHtml = !canUploadFollowUp
+            ? `<span style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">Closed &bull; Application ${rawStatus.includes("approved") ? "Approved" : "Rejected"}</span>`
+            : `<span style="font-size: 11px; color: #D97706; font-weight: 600;">Pending</span>`;
+
+          const pillHtml = !canUploadFollowUp
+            ? `<span style="font-size: 11px; color: #9ca3af; font-weight: 700; background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); padding: 3px 10px; border-radius: 99px; flex-shrink: 0;">
+                Follow-up Closed
+              </span>`
+            : `<span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
+                To Follow Up
+              </span>`;
+
+          const actionRowHtml = !canUploadFollowUp
+            ? `<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                <span style="font-size: 11.5px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 5px;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                  Uploads locked &bull; Only Submitted and Under Review status can submit follow-up requirements
+                </span>
+                <span style="font-size: 11px; font-weight: 600; color: #9ca3af; background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); padding: 3px 8px; border-radius: 99px;">
+                  Closed
+                </span>
+              </div>`
+            : `<input type="file" id="fu-file-input-${fuIdx}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
+              <div style="display: flex; justify-content: flex-end; width: 100%;">
+                <button type="button" id="btn-upload-fu-${fuIdx}" class="btn-fu-upload">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span>Upload Document</span>
+                </button>
+              </div>`;
+
           fuItem.innerHTML = `
-            <input type="file" id="fu-file-input-${fuIdx}" style="display: none;" accept=".pdf,.png,.jpg,.jpeg">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
               <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(245, 158, 11, 0.15); color: #D97706; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
+                ${iconHtml}
                 <div style="min-width: 0;">
                   <p style="margin: 0; font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     ${escapeHtml(reqTitle)}
                   </p>
-                  <span style="font-size: 11px; color: #D97706; font-weight: 600;">Pending</span>
+                  ${subStatusHtml}
                 </div>
               </div>
-              <span style="font-size: 11px; color: #D97706; font-weight: 700; background: rgba(245, 158, 11, 0.18); padding: 3px 8px; border-radius: 6px; flex-shrink: 0;">
-                To Follow Up
-              </span>
+              ${pillHtml}
             </div>
-
-            <div style="display: flex; justify-content: flex-end; width: 100%;">
-              <button type="button" id="btn-upload-fu-${fuIdx}" class="btn-fu-upload">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                <span>Upload Document</span>
-              </button>
-            </div>
+            ${actionRowHtml}
           `;
 
-          const fileInput = fuItem.querySelector(`#fu-file-input-${fuIdx}`);
-          const btnUploadFu = fuItem.querySelector(`#btn-upload-fu-${fuIdx}`);
+          if (canUploadFollowUp) {
+            const fileInput = fuItem.querySelector(`#fu-file-input-${fuIdx}`);
+            const btnUploadFu = fuItem.querySelector(`#btn-upload-fu-${fuIdx}`);
 
-          if (btnUploadFu && fileInput) {
-            btnUploadFu.onclick = () => fileInput.click();
+            if (btnUploadFu && fileInput) {
+              btnUploadFu.onclick = () => fileInput.click();
 
-            fileInput.onchange = (e) => {
-              const file = e.target.files[0];
-              if (!file) return;
+              fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
 
-              if (file.size > 5 * 1024 * 1024) {
-                alert(
-                  "File size exceeds 5MB limit. Please choose a smaller file.",
-                );
-                fileInput.value = "";
-                return;
-              }
+                if (file.size > 5 * 1024 * 1024) {
+                  alert(
+                    "File size exceeds 5MB limit. Please choose a smaller file.",
+                  );
+                  fileInput.value = "";
+                  return;
+                }
 
-              showFileUploadReviewModal(file, reqTitle, async () => {
-                btnUploadFu.disabled = true;
-                btnUploadFu.innerHTML = `
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
-                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-                    <path d="M12 2a10 10 0 0 1 10 10"></path>
-                  </svg>
-                  <span>Uploading...</span>
-                `;
+                showFileUploadReviewModal(file, reqTitle, async () => {
+                  btnUploadFu.disabled = true;
+                  btnUploadFu.innerHTML = `
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin">
+                      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                      <path d="M12 2a10 10 0 0 1 10 10"></path>
+                    </svg>
+                    <span>Uploading...</span>
+                  `;
 
-                const reader = new FileReader();
-                reader.onload = async () => {
-                  const base64Data = reader.result;
-                  const formattedSize =
-                    file.size >= 1024 * 1024
-                      ? (file.size / (1024 * 1024)).toFixed(1) + " MB"
-                      : (file.size / 1024).toFixed(0) + " KB";
+                  const reader = new FileReader();
+                  reader.onload = async () => {
+                    const base64Data = reader.result;
+                    const formattedSize =
+                      file.size >= 1024 * 1024
+                        ? (file.size / (1024 * 1024)).toFixed(1) + " MB"
+                        : (file.size / 1024).toFixed(0) + " KB";
 
-                  const followUpPayload = {
-                    followUpDocument: {
-                      name: file.name,
-                      title: reqTitle,
-                      requirement: reqTitle,
-                      size: formattedSize,
-                      type: file.type || "application/pdf",
-                      data: base64Data,
-                      status: "attached",
-                      isFollowUp: false,
-                    },
-                  };
-
-                  try {
-                    const res = await fetch(
-                      `${API_BASE}/api/applications/${app.id}`,
-                      {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(followUpPayload),
+                    const followUpPayload = {
+                      followUpDocument: {
+                        name: file.name,
+                        title: reqTitle,
+                        requirement: reqTitle,
+                        size: formattedSize,
+                        type: file.type || "application/pdf",
+                        data: base64Data,
+                        status: "attached",
+                        isFollowUp: false,
                       },
-                    ).catch(() => null);
+                    };
 
-                    if (res && res.ok) {
-                      const resData = await res.json();
-                      if (resData.application) {
-                        Object.assign(app, resData.application);
-                      }
-                    } else {
-                      const updatedDocs = (app.documents || []).map((d) => {
-                        const dName =
-                          typeof d === "string"
-                            ? d
-                            : d.requirement || d.title || d.name || "";
-                        if (
-                          dName.toLowerCase().includes(reqTitle.toLowerCase())
-                        ) {
-                          return {
-                            name: file.name,
-                            title: reqTitle,
-                            requirement: reqTitle,
-                            size: formattedSize,
-                            type: file.type || "application/pdf",
-                            status: "attached",
-                            isFollowUp: false,
-                          };
+                    try {
+                      const res = await fetch(
+                        `${API_BASE}/api/applications/${app.id}`,
+                        {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(followUpPayload),
+                        },
+                      ).catch(() => null);
+
+                      if (res && res.ok) {
+                        const resData = await res.json();
+                        if (resData.application) {
+                          Object.assign(app, resData.application);
                         }
-                        return d;
-                      });
-                      app.documents = updatedDocs;
-                      app.uploadedDocuments = updatedDocs
-                        .filter((d) =>
-                          typeof d === "string"
-                            ? !d.includes("(To Follow Up)")
-                            : !d.isFollowUp,
-                        )
-                        .map((d) => (typeof d === "string" ? d : d.name));
-                    }
-                  } catch (err) {
-                    console.warn(
-                      "Could not patch application follow-up doc:",
-                      err,
-                    );
-                  }
-
-                  try {
-                    const cached = JSON.parse(
-                      localStorage.getItem("nexo_applications") || "[]",
-                    );
-                    const idx = cached.findIndex(
-                      (a) => String(a.id) === String(app.id),
-                    );
-                    if (idx !== -1) {
-                      cached[idx] = app;
-                      localStorage.setItem(
-                        "nexo_applications",
-                        JSON.stringify(cached),
+                      } else {
+                        const updatedDocs = (app.documents || []).map((d) => {
+                          const dName =
+                            typeof d === "string"
+                              ? d
+                              : d.requirement || d.title || d.name || "";
+                          if (
+                            dName.toLowerCase().includes(reqTitle.toLowerCase())
+                          ) {
+                            return {
+                              name: file.name,
+                              title: reqTitle,
+                              requirement: reqTitle,
+                              size: formattedSize,
+                              type: file.type || "application/pdf",
+                              status: "attached",
+                              isFollowUp: false,
+                            };
+                          }
+                          return d;
+                        });
+                        app.documents = updatedDocs;
+                        app.uploadedDocuments = updatedDocs
+                          .filter((d) =>
+                            typeof d === "string"
+                              ? !d.includes("(To Follow Up)")
+                              : !d.isFollowUp,
+                          )
+                          .map((d) => (typeof d === "string" ? d : d.name));
+                      }
+                    } catch (err) {
+                      console.warn(
+                        "Could not patch application follow-up doc:",
+                        err,
                       );
                     }
-                  } catch (_) {}
 
-                  showFileUploadSuccessModal(
-                    file.name,
-                    app.providerName || app.organization || "NEXO",
-                    () => {
-                      openSubmissionDetailsModal(app);
-                    },
-                  );
-                };
-                reader.readAsDataURL(file);
-              });
-            };
+                    try {
+                      const cached = JSON.parse(
+                        localStorage.getItem("nexo_applications") || "[]",
+                      );
+                      const idx = cached.findIndex(
+                        (a) => String(a.id) === String(app.id),
+                      );
+                      if (idx !== -1) {
+                        cached[idx] = app;
+                        localStorage.setItem(
+                          "nexo_applications",
+                          JSON.stringify(cached),
+                        );
+                      }
+                    } catch (_) {}
+
+                    showFileUploadSuccessModal(
+                      file.name,
+                      app.providerName || app.organization || "NEXO",
+                      () => {
+                        openSubmissionDetailsModal(app);
+                      },
+                    );
+                  };
+                  reader.readAsDataURL(file);
+                });
+              };
+            }
           }
 
           docListEl.appendChild(fuItem);

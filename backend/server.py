@@ -660,6 +660,14 @@ class NexoHandler(BaseHTTPRequestHandler):
 
                     # Handle Follow-Up Document Upload
                     if "followUpDocument" in body:
+                        # Only allow follow up upload if status is Submitted or Under Review (NOT Approved or Rejected)
+                        current_status = str(a.get("status", "Submitted")).strip().lower()
+                        if "approved" in current_status or "rejected" in current_status:
+                            return self._send_json(400, {
+                                "success": False,
+                                "error": "Follow-up documents can only be submitted for applications with Submitted or Under Review status."
+                            })
+
                         fu = body["followUpDocument"]
                         saved_doc = save_base64_file(fu, f"{app_id}_followup_{int(time.time()*1000)}")
                         if not saved_doc:

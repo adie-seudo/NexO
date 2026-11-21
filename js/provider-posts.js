@@ -2386,12 +2386,16 @@
 
     // 2. Requirements To Follow Up Section (All incomplete follow-up requirements placed together)
     if (followUpDocs.length > 0) {
+      const appStatus = String(app.status || "").toLowerCase();
+      const isClosedApp =
+        appStatus.includes("approved") || appStatus.includes("rejected");
+
       const followUpHeader = document.createElement("div");
       followUpHeader.style.cssText =
         "margin-top: 14px; margin-bottom: 8px; padding-top: 10px; border-top: 1px dashed var(--border-color);";
       followUpHeader.innerHTML = `
-        <span style="font-size: 11.5px; font-weight: 700; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; display: block;">
-          Requirements To Follow Up
+        <span style="font-size: 11.5px; font-weight: 700; color: ${isClosedApp ? "#9ca3af" : "#D97706"}; text-transform: uppercase; letter-spacing: 0.5px; display: block;">
+          Requirements To Follow Up ${isClosedApp ? "(Closed)" : ""}
         </span>
       `;
       docsContainer.appendChild(followUpHeader);
@@ -2399,23 +2403,37 @@
       followUpDocs.forEach(({ cleanDocName }) => {
         const itemEl = document.createElement("div");
         itemEl.className = "modal-doc-item";
-        itemEl.style.cssText =
-          "background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.35);";
+        itemEl.style.cssText = isClosedApp
+          ? "background: var(--bg-canvas); border: 1px dashed var(--border-color); opacity: 0.85;"
+          : "background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.35);";
+
+        const subTextHtml = isClosedApp
+          ? `<span class="modal-doc-size" style="color: var(--text-secondary); font-weight: 500;">
+              Submission closed &bull; Application ${appStatus.includes("approved") ? "Approved" : "Rejected"}
+            </span>`
+          : `<span class="modal-doc-size" style="color: #d97706; font-weight: 500;">
+              Pending student submission
+            </span>`;
+
+        const badgeHtml = isClosedApp
+          ? `<span style="font-size: 11.5px; font-weight: 700; color: #9ca3af; background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); padding: 3px 10px; border-radius: 99px; white-space: nowrap;">
+              Follow-up Closed
+            </span>`
+          : `<span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
+              To Follow Up
+            </span>`;
+
         itemEl.innerHTML = `
           <div class="modal-doc-info" style="min-width: 0;">
             <div style="min-width: 0;">
               <h5 class="modal-doc-name" style="color: var(--text-primary); font-weight: 700;">
                 ${escapeHtml(cleanDocName)}
               </h5>
-              <span class="modal-doc-size" style="color: #d97706; font-weight: 500;">
-                Pending student submission
-              </span>
+              ${subTextHtml}
             </div>
           </div>
           <div class="modal-doc-actions">
-            <span style="font-size: 11.5px; font-weight: 700; color: #d97706; background: rgba(245, 158, 11, 0.15); padding: 4px 10px; border-radius: 12px; white-space: nowrap;">
-              To Follow Up
-            </span>
+            ${badgeHtml}
           </div>
         `;
         docsContainer.appendChild(itemEl);

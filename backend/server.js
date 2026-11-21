@@ -1075,6 +1075,14 @@ async function handleRequest(req, res) {
           body.notes !== undefined ? body.notes : currentApp.notes || "";
 
         if (body.followUpDocument) {
+          const currentStatus = String(currentApp.status || "Submitted").toLowerCase();
+          if (currentStatus.includes("approved") || currentStatus.includes("rejected")) {
+            return sendJson(res, 400, {
+              success: false,
+              error: "Follow-up documents can only be submitted for applications with Submitted or Under Review status.",
+            });
+          }
+
           const fu = body.followUpDocument;
           if (!fu || !fu.data) {
             return sendJson(res, 400, {

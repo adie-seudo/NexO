@@ -965,20 +965,6 @@
       "scholId": "schol_1795167466335"
     },
     {
-      "id": "notif_1795181845452",
-      "recipient": "student",
-      "recipientEmail": "24-06295@g.batstate-u.edu.ph",
-      "title": "Application Status: Approved",
-      "message": "Your application for \"NextGen Digital Skills Scholarship – 2027\" is now Approved.",
-      "timestamp": "2026-11-20T21:37:25.452619",
-      "formattedTime": "Just now",
-      "read": false,
-      "link": "student-submissions.html?id=app_1795180148026",
-      "appId": "app_1795180148026",
-      "scholarshipId": "schol_1795167466335",
-      "scholId": "schol_1795167466335"
-    },
-    {
       "id": "notif_1795181800160",
       "recipient": "student",
       "recipientEmail": "24-03563@g.batstate-u.edu.ph",
