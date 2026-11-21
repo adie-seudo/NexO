@@ -801,8 +801,6 @@ document.addEventListener("DOMContentLoaded", () => {
           : null) ||
         (currentEmail ? localStorage.getItem("nexo_avatar_" + currentEmail) : null) ||
         (currentEmail ? localStorage.getItem("nexo-student-avatar-" + currentEmail) : null) ||
-        localStorage.getItem("nexo-student-avatar") ||
-        sessionStorage.getItem("nexo-student-avatar") ||
         "";
       if (fallbackAvatar) {
         settings.profilePicture = fallbackAvatar;

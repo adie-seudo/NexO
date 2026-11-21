@@ -3411,10 +3411,20 @@ function openSubmissionDetailsModal(app) {
   if (nameEl) nameEl.textContent = sName;
 
   if (avatarEl) {
-    const sPic =
-      app.studentProfilePic ||
-      localStorage.getItem("nexo-student-avatar") ||
-      "";
+    const appEmail = (app.studentEmail || app.email || "").trim().toLowerCase();
+    let sPic = app.studentProfilePic || "";
+
+    if (!sPic && appEmail) {
+      if (typeof window.getStudentAvatar === "function") {
+        sPic = window.getStudentAvatar(appEmail) || "";
+      } else {
+        sPic =
+          localStorage.getItem("nexo_avatar_" + appEmail) ||
+          localStorage.getItem("nexo-student-avatar-" + appEmail) ||
+          "";
+      }
+    }
+
     if (sPic && sPic.trim()) {
       avatarEl.innerHTML = `<img src="${sPic}" alt="${escapeHtml(sName)}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
     } else {

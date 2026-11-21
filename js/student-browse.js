@@ -2008,9 +2008,9 @@ document.addEventListener("DOMContentLoaded", () => {
         (studentSettings && studentSettings.bio) ||
         "";
       const sAvatar =
-        (typeof window.getStudentAvatar === "function" ? window.getStudentAvatar(sEmail) : null) ||
-        sessionStorage.getItem("nexo-student-avatar") ||
-        (studentSettings && studentSettings.profilePicture) ||
+        (sEmail && typeof window.getStudentAvatar === "function" ? window.getStudentAvatar(sEmail) : null) ||
+        (sEmail ? localStorage.getItem("nexo-student-avatar-" + sEmail) : null) ||
+        (studentSettings && (studentSettings.email || "").toLowerCase().trim() === sEmail ? studentSettings.profilePicture : "") ||
         "";
 
       // Build application object

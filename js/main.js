@@ -329,30 +329,37 @@ function getStudentAvatar(currentEmail) {
     } catch (_) {}
   }
 
-  // 1. Session storage (for immediate changes in current tab)
-  let pic = "";
-  try {
-    pic = sessionStorage.getItem("nexo-student-avatar") || "";
-  } catch (_) {}
-  if (pic) return pic;
+  const loggedEmail = (
+    sessionStorage.getItem("nexo-student-email") ||
+    localStorage.getItem("nexo-student-email") ||
+    ""
+  ).toLowerCase().trim();
+
+  // 1. Session storage (for immediate changes in current tab - ONLY if no email or matches currently logged-in student)
+  if (!email || (loggedEmail && email === loggedEmail)) {
+    try {
+      const pic = sessionStorage.getItem("nexo-student-avatar") || "";
+      if (pic) return pic;
+    } catch (_) {}
+  }
 
   // 2. Email-scoped localStorage keys
   if (email) {
     try {
-      pic =
+      const pic =
         localStorage.getItem("nexo_avatar_" + email) ||
         localStorage.getItem("nexo-student-avatar-" + email) ||
         "";
+      if (pic) return pic;
     } catch (_) {}
-    if (pic) return pic;
   }
 
-  // 3. Global localStorage avatar (only if no email or matches active student settings email)
-  if (!email) {
+  // 3. Global localStorage avatar (ONLY if no email or matches active logged-in student)
+  if (!email || (loggedEmail && email === loggedEmail)) {
     try {
-      pic = localStorage.getItem("nexo-student-avatar") || "";
+      const pic = localStorage.getItem("nexo-student-avatar") || "";
+      if (pic) return pic;
     } catch (_) {}
-    if (pic) return pic;
   }
 
   // 4. Email-scoped student settings in localStorage
@@ -471,15 +478,17 @@ function syncGlobalStudentIdentity() {
 
   if (avatarPic) {
     try {
-      if (!sessionStorage.getItem("nexo-student-avatar")) {
-        sessionStorage.setItem("nexo-student-avatar", avatarPic);
-      }
-      if (!localStorage.getItem("nexo-student-avatar")) {
-        localStorage.setItem("nexo-student-avatar", avatarPic);
-      }
-      if (currentEmail && !localStorage.getItem("nexo_avatar_" + currentEmail)) {
+      sessionStorage.setItem("nexo-student-avatar", avatarPic);
+      localStorage.setItem("nexo-student-avatar", avatarPic);
+      if (currentEmail) {
         localStorage.setItem("nexo_avatar_" + currentEmail, avatarPic);
+        localStorage.setItem("nexo-student-avatar-" + currentEmail, avatarPic);
       }
+    } catch (_) {}
+  } else {
+    try {
+      sessionStorage.removeItem("nexo-student-avatar");
+      localStorage.removeItem("nexo-student-avatar");
     } catch (_) {}
   }
 
